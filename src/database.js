@@ -288,11 +288,32 @@ async function homebrewClassFiles() {
   return Array.isArray(v?.homebrew?.classFiles) ? v.homebrew.classFiles : [];
 }
 
+// Vários arquivos do 5etools trazem a classe/subclasse DUAS vezes: a
+// entrada real e uma "casca" `{_copy:{...mesmo nome/fonte}}` usada pelo
+// build deles. Como as duas têm o mesmo id, a casca sobrescrevia a real
+// e a subclasse perdia optionalfeatureProgression / subclassFeatures.
+// Aqui ficamos sempre com a entrada mais completa (mais chaves).
+function dedupeRicher(arr, keyFn) {
+  const m = new Map();
+  for (const o of arr || []) {
+    if (!o) continue;
+    const k = keyFn(o);
+    const prev = m.get(k);
+    if (!prev || Object.keys(o).length > Object.keys(prev).length) m.set(k, o);
+  }
+  return [...m.values()];
+}
+
 function registerClassFile(file, isHomebrew = false) {
   // Homebrew traz classFluff/subclassFluff dentro do próprio arquivo
   // de classe — nenhum download extra necessário (ver README).
   if (Array.isArray(file.classFluff)) registerFluff("class", resolveCopies(file.classFluff));
   if (Array.isArray(file.subclassFluff)) registerFluff("subclass", resolveCopies(file.subclassFluff));
+  file = {
+    ...file,
+    class: dedupeRicher(file.class, (c) => `${String(c.name).toLowerCase()}|${String(c.source).toLowerCase()}`),
+    subclass: dedupeRicher(file.subclass, (s) => `${String(s.name).toLowerCase()}|${String(s.source).toLowerCase()}|${String(s.className).toLowerCase()}`),
+  };
   for (const cls of file.class || []) {
     const csrc = cls.source || "";
     classFiles.set(`${String(cls.name).toLowerCase()}|${String(csrc).toLowerCase()}`, { cls, file });
