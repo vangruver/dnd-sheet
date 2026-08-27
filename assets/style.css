@@ -429,6 +429,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .codex-toolbar{margin-bottom:14px;display:flex;flex-direction:column;gap:11px}
 .codex-toolbar>input{width:100%;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-sm);padding:11px 14px;font-size:13px}
 .codex-filters{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px}
+.codex-legacy{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--text-mut);cursor:pointer}
+.codex-legacy input{accent-color:var(--red);width:15px;height:15px}
 .codex-status{color:var(--text-mut);font-size:11px;margin:2px 2px 12px;letter-spacing:.02em}
 .codex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:13px}
 .codex-card{

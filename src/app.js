@@ -2,7 +2,7 @@ import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
   manifestEntries, isHomebrew as hb, normType, editionOf, currentVersionInfo,
-  descriptionEntries,
+  descriptionEntries, matchesEdition, isReprinted,
 } from "./database.js";
 import { clearCache } from "./store.js";
 import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack } from "./rules.js";
@@ -11,7 +11,7 @@ import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCh
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null }, details = {};
 let pickerType = null, eqCat = "inventory";
-let codexState = { type: "all", content: "all", query: "" };
+let codexState = { type: "all", content: "all", query: "", legacy: false };
 
 const fresh = () => ({
   schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official",
@@ -121,11 +121,13 @@ function unwrapSelfSection(entries, ownName) {
 }
 function classMatches(x, c) {
   if (!c) return false;
+  // Casa subclasse <-> classe SÓ pelo nome. O 5etools marca subclasses
+  // 2014 do Mago com classSource:"XPHB" (não "PHB"), então comparar a
+  // fonte descartava as subclasses oficiais. A separação 2014/2024 fica
+  // por conta de matchesEdition em quem chama.
   const n = String(c.name || "").toLowerCase();
   const cn = String(x.className || x.class || "").toLowerCase();
-  const cs = String(c.source || "").toLowerCase();
-  const xs = String(x.classSource || "").toLowerCase();
-  return (!cn || cn === n) && (!cs || !xs || cs === xs);
+  return !cn || cn === n;
 }
 
 // ------------------------------------------------------------
@@ -230,8 +232,11 @@ function primaryAbilitiesFrom(rec) {
   return [...out];
 }
 function subclassesOf(e) {
-  return manifest().filter((x) => normType(x.type) === "subclass" && classMatches(x, e))
-    .sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+  return manifest().filter((x) =>
+    normType(x.type) === "subclass" && classMatches(x, e) &&
+    matchesEdition(x, character.edition, codexState.legacy) &&
+    (codexState.content === "all" || (codexState.content === "official" && !hb(x)) || (codexState.content === "homebrew" && hb(x))))
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
 }
 function raceQuickFacts(rec) {
   const facts = [];
@@ -856,12 +861,16 @@ async function renderCodex() {
   grid.innerHTML = `<div class="empty">Carregando raças e classes…</div>`;
   await Promise.all([ensureCatalog("race"), ensureCatalog("class")]);
   const q = codexState.query.trim().toLowerCase();
+  const ed = character.edition;
   let arr = manifest().filter((e) => {
     const t = normType(e.type);
     if (t !== "race" && t !== "class") return false;
     if (codexState.type !== "all" && t !== codexState.type) return false;
     if (codexState.content === "official" && hb(e)) return false;
     if (codexState.content === "homebrew" && !hb(e)) return false;
+    // Respeita a edição escolhida (2014/2024) e o "filtro de reprint"
+    // do 5etools: sem isso, Mago PHB e Mago XPHB apareciam juntos.
+    if (!matchesEdition(e, ed, codexState.legacy)) return false;
     if (q && !`${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a, b) =>
@@ -870,7 +879,9 @@ async function renderCodex() {
     String(a.name).localeCompare(String(b.name), "pt-BR"));
   const races = arr.filter((e) => normType(e.type) === "race").length;
   const classes = arr.length - races;
-  status.textContent = `${arr.length.toLocaleString("pt-BR")} resultados · ${races.toLocaleString("pt-BR")} raças/espécies · ${classes.toLocaleString("pt-BR")} classes`;
+  const legacyCount = arr.filter((e) => !hb(e) && editionOf(e) === "2014" && ed === "2024").length;
+  status.textContent = `${arr.length.toLocaleString("pt-BR")} resultados · ${races.toLocaleString("pt-BR")} raças/espécies · ${classes.toLocaleString("pt-BR")} classes · edição ${ed}` +
+    (legacyCount ? ` (${legacyCount} de 2014 sem versão nova)` : "");
   arr = arr.slice(0, 240);
   if (!arr.length) { grid.innerHTML = `<div class="empty">Nenhuma raça ou classe encontrada com esses filtros.</div>`; return; }
   // Dados já estão carregados em memória (ensureCatalog acima) — sem
@@ -889,7 +900,11 @@ async function renderCodex() {
 async function renderCompendium() {
   const q = $("compendium-search").value.trim().toLowerCase(), t = $("compendium-type").value;
   if (t === "spell" || t === "item") { $("compendium-results").innerHTML = `<div class="empty">Carregando ${typeLabel(t).toLowerCase()}s…</div>`; await ensureCatalog(t); }
-  let arr = manifest().filter((e) => (t === "all" || normType(e.type) === t) && (!q || `${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q))).slice(0, 240);
+  let arr = manifest().filter((e) =>
+    (t === "all" || normType(e.type) === t) &&
+    matchesEdition(e, character.edition, true) &&
+    (!q || `${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q))
+  ).slice(0, 240);
   $("compendium-results").innerHTML = arr.map((e) => `<article class="catalog-card"><div class="pick-top"><strong>${esc(titleOf(e))}</strong>${sourceTag(e)}</div><div class="pick-meta">${esc(typeLabel(e.type))} · ${esc(labelMeta(e))}</div><div class="catalog-actions"><button data-comp-info="${esc(e.id)}">ⓘ Ver detalhes</button></div></article>`).join("") || `<div class="empty">Nenhum resultado.</div>`;
   $("compendium-results").querySelectorAll("[data-comp-info]").forEach((b) => b.addEventListener("click", () => { const e = manifest().find((x) => x.id === b.dataset.compInfo); if (e) openEntityModal(e); }));
 }
@@ -933,6 +948,9 @@ function setup() {
     character.classId = character.subclassId = character.raceId = character.backgroundId = "";
     refs = { class: null, subclass: null, race: null, background: null };
     refreshChoices(); saveCharacter(character);
+    const active = document.querySelector(".tab.active")?.dataset.tab;
+    if (active === "codex") renderCodex();
+    if (active === "compendium") renderCompendium();
   });
   $("content").addEventListener("change", () => { character.content = $("content").value; saveCharacter(character); refreshChoices(); });
   $("name").addEventListener("input", () => { character.name = $("name").value; saveCharacter(character); });
@@ -964,6 +982,7 @@ function setup() {
     document.querySelectorAll("#codex-content [data-codexcontent]").forEach((x) => x.classList.remove("active"));
     b.classList.add("active"); codexState.content = b.dataset.codexcontent; renderCodex();
   }));
+  $("codex-legacy")?.addEventListener("change", () => { codexState.legacy = $("codex-legacy").checked; renderCodex(); });
   document.querySelectorAll("[data-eqcat]").forEach((b) => b.addEventListener("click", async () => {
     document.querySelectorAll("[data-eqcat]").forEach((x) => x.classList.remove("active"));
     b.classList.add("active"); eqCat = b.dataset.eqcat; await equipmentTab();
