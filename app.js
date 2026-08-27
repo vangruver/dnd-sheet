@@ -22,28 +22,69 @@ const typeLabel=t=>({class:"Classe",subclass:"Subclasse",race:"Espécie/Raça",b
 
 function richText(v){
  const out=[];
- const inline=s=>String(s).replace(/\{@(b|bold|i|italic|u|note|dc|dice|damage|hit|atk|chance|condition|skill|spell|item|race|class|creature|book|link)\s+([^}|]+)(?:\|[^}]*)?\}/gi,"$2").replace(/\{@[^}]+\}/g,"");
- const walk=x=>{if(x==null)return;if(typeof x==="string"){out.push(`<p>${esc(inline(x))}</p>`);return}
-  if(Array.isArray(x)){out.push("<ul>");x.forEach(y=>{out.push("<li>");walk(y);out.push("</li>")});out.push("</ul>");return}
+ const inline=s=>String(s)
+   .replace(/\{@(b|bold|i|italic|u|note|dc|dice|damage|hit|atk|chance|condition|skill|spell|item|race|class|creature|book|link|filter|homebrew|quickref|5etools)\s+([^}|]+)(?:\|[^}]*)?\}/gi,"$2")
+   .replace(/\{@[^}]+\}/g,"");
+ const walk=x=>{
+  if(x==null)return;
+  if(typeof x==="string"){const s=inline(x).trim();if(s)out.push(`<p>${esc(s)}</p>`);return}
+  if(typeof x==="number"||typeof x==="boolean")return;
+  if(Array.isArray(x)){x.forEach(y=>walk(y));return}
   if(typeof x!=="object")return;
-  if(x.name&&x.entries){out.push(`<h3>${esc(inline(x.name))}</h3>`);walk(x.entries);return}
-  if(x.type==="table"&&Array.isArray(x.rows)){out.push("<table><tbody>");if(x.colLabels)out.push("<tr>"+x.colLabels.map(h=>`<th>${esc(inline(h))}</th>`).join("")+"</tr>");x.rows.forEach(r=>out.push("<tr>"+r.map(c=>`<td>${esc(inline(typeof c==="string"?c:JSON.stringify(c)))}</td>`).join("")+"</tr>"));out.push("</tbody></table>");return}
-  if(x.entries)walk(x.entries);else if(x.items)walk(x.items);else if(x.entry)walk(x.entry);else if(x.desc)walk(x.desc);
+  if(x.type==="table"&&Array.isArray(x.rows)){
+   out.push("<table><tbody>");
+   if(Array.isArray(x.colLabels))out.push("<tr>"+x.colLabels.map(h=>`<th>${esc(inline(h))}</th>`).join("")+"</tr>");
+   x.rows.forEach(r=>out.push("<tr>"+(Array.isArray(r)?r:[]).map(c=>`<td>${esc(inline(typeof c==="string"?c:plainValue(c)))}</td>`).join("")+"</tr>"));
+   out.push("</tbody></table>");return;
+  }
+  if(x.type==="list"&&Array.isArray(x.items)){out.push("<ul>");x.items.forEach(y=>{out.push("<li>");walk(y);out.push("</li>")});out.push("</ul>");return}
+  if(x.name && (x.entries||x.entry||x.desc||x.description)){
+   out.push(`<h3>${esc(inline(x.name))}</h3>`);
+  }
+  if(x.entries)walk(x.entries);
+  else if(x.items)walk(x.items);
+  else if(x.entry)walk(x.entry);
+  else if(x.desc)walk(x.desc);
+  else if(x.description)walk(x.description);
+  else if(x.text)walk(x.text);
+  else if(x.content)walk(x.content);
  };
- walk(v);return out.join("")||"<p class='muted'>Não há descrição estruturada disponível para este registro.</p>";
+ const plainValue=x=>typeof x==="string"?inline(x):JSON.stringify(x);
+ walk(v);
+ return out.join("")||"<p class='muted'>Não há descrição estruturada disponível para este registro.</p>";
 }
 function plain(v){const d=document.createElement("div");d.innerHTML=richText(v);return d.textContent.replace(/\s+/g," ").trim()}
 async function records(e){return e?getRecordArrays(e):[]}
 async function firstRecord(e){return e?bestRecord(e):null}
 function descriptionOf(r,e){
+ const isUseful=v=>v!=null&&(
+   (typeof v==="string"&&v.trim())||
+   (Array.isArray(v)&&v.length)||
+   (typeof v==="object"&&Object.keys(v).length)
+ );
  const candidates=[
-   r?.entries,r?.desc,r?.description,
-   r?.fluff?.entries,r?.fluff?.desc,r?.fluff?.description,
-   r?.traits,r?.featureEntries,
-   r?.__fluff?.entries,r?.__fluff?.desc,r?.__fluff?.description,
-   e?.description,e?.entries
+   r?.entries,r?.desc,r?.description,r?.text,r?.content,
+   r?.headerEntries,r?.additionalEntries,r?.intro,r?.summary,r?.shortEntries,
+   r?.fluff?.entries,r?.fluff?.desc,r?.fluff?.description,r?.fluff?.text,
+   r?.traits,r?.featureEntries,r?.features,
+   r?.__fluff?.entries,r?.__fluff?.desc,r?.__fluff?.description,r?.__fluff?.text,
+   e?.description,e?.entries,e?.text,e?.content
  ];
- return candidates.find(v=>v&&((Array.isArray(v)&&v.length)||typeof v==="string"))||"";
+ const direct=candidates.find(isUseful);
+ if(direct)return direct;
+ const seen=new Set();
+ const preferred=["entries","desc","description","text","content","headerEntries","additionalEntries","intro","summary","shortEntries"];
+ const scan=(v,depth=0)=>{
+  if(!v||depth>4||typeof v!=="object"||seen.has(v))return null;
+  seen.add(v);
+  for(const k of preferred)if(isUseful(v[k]))return v[k];
+  for(const k of Object.keys(v)){
+   if(["name","source","page","type","id","classes","class","subclasses","spellcasting"].includes(k))continue;
+   const hit=scan(v[k],depth+1);if(hit)return hit;
+  }
+  return null;
+ };
+ return scan(r)||scan(e)||"";
 }
 function classMatches(x,c){
  if(!c)return false;
@@ -197,7 +238,7 @@ function fixedSkillsFrom(v){
      if(sk&&(val===true||typeof val==="number"||typeof val==="string"))out.push(sk);
    }
    if(Array.isArray(o?.skills))o.skills.forEach(x=>{const sk=skillKey(typeof x==="string"?x:x?.name);if(sk)out.push(sk)});
- });
+ }
  return [...new Set(out)];
 }
 function savesFrom(v){
@@ -450,7 +491,7 @@ function applyLoaded(c){
  inventory:Array.isArray(c?.inventory)?c.inventory:[],preparedSpells:Array.isArray(c?.preparedSpells)?c.preparedSpells:[],
  auto:{...f.auto,...(c?.auto||{})},choiceSelections:{...f.choiceSelections,...(c?.choiceSelections||{}),abilityChoices:{...f.choiceSelections.abilityChoices,...(c?.choiceSelections?.abilityChoices||{})}},
  manualSkillProficiencies:Array.isArray(c?.manualSkillProficiencies)?c.manualSkillProficiencies:[]};
- $("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
+ $("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}$("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
 function openPdfPreview(){
  const modal=$("modal"),box=$("modal-content");
  const clone=document.querySelector(".sheet-shell").cloneNode(true);
