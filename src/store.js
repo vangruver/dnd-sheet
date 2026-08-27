@@ -94,14 +94,28 @@ function encodePath(path) {
   return String(path).split("/").map(encodeURIComponent).join("/");
 }
 
-async function fetchJson(path, bases) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Baixa `path` tentando cada CDN da lista; em caso de 429/5xx/rede,
+// espera um pouco (backoff exponencial + jitter) e tenta tudo de novo.
+// Sem isso, um pico de rate-limit do raw.githubusercontent.com fazia
+// as descrições/lore sumirem silenciosamente (tryJson devolvia null).
+async function fetchJson(path, bases, { retries = 3 } = {}) {
   let lastErr;
-  for (const base of bases) {
-    try {
-      const res = await fetch(base + encodePath(path), { mode: "cors" });
-      if (!res.ok) { lastErr = new Error(`HTTP ${res.status} — ${base + path}`); continue; }
-      return await res.json();
-    } catch (err) { lastErr = err; }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    for (const base of bases) {
+      try {
+        const res = await fetch(base + encodePath(path), { mode: "cors" });
+        if (res.ok) return await res.json();
+        lastErr = new Error(`HTTP ${res.status} — ${base + path}`);
+        // 404 real: não adianta insistir nem trocar de CDN.
+        if (res.status === 404) throw Object.assign(lastErr, { notFound: true });
+      } catch (err) {
+        if (err && err.notFound) throw err;
+        lastErr = err;
+      }
+    }
+    if (attempt < retries) await sleep(500 * 2 ** attempt + Math.random() * 250);
   }
   throw lastErr || new Error(`Falha ao baixar ${path}`);
 }

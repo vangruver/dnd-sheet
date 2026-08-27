@@ -20,7 +20,7 @@ const fresh = () => ({
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 },
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {} }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0 }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -79,7 +79,12 @@ function richText(v) {
   walk(v);
   return out.join("") || "<p class='muted'>Sem descrição estruturada disponível para este registro.</p>";
 }
-function plainOf(v) { const d = document.createElement("div"); d.innerHTML = richText(v); return d.textContent.replace(/\s+/g, " ").trim(); }
+function plainOf(v) {
+  const d = document.createElement("div");
+  // Espaço antes de fechar blocos, senão "Wizard" + "Masters of…" colam.
+  d.innerHTML = richText(v).replace(/<\/(p|h[1-6]|li|tr|blockquote|div)>/gi, " </$1>");
+  return d.textContent.replace(/\s+/g, " ").trim();
+}
 const plain = plainOf;
 
 async function records(e) { return e ? getRecordArrays(e) : []; }
@@ -93,6 +98,17 @@ function descriptionOf(r, e) { return r?.entries || r?.desc || r?.description ||
 // estruturada para aquele registro (comum em homebrew mais simples).
 function loreOf(e) { return e ? descriptionEntries(e) : null; }
 function bestDescription(e, r) { return loreOf(e) || descriptionOf(r, e); }
+// Muitos textos de lore do 5etools começam repetindo o nome da
+// raça/classe (que já aparece no título do card/modal) — tira isso do
+// começo do resumo pra não ficar "Artificer Artificers use…".
+function stripLeadingName(text, name) {
+  if (!text || !name) return text;
+  const re = new RegExp("^\\s*" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "[\\s:.,—-]+", "i");
+  return text.replace(re, "");
+}
+function teaserText(e, r, max = 190) {
+  return stripLeadingName(plain(bestDescription(e, r)), e?.name).slice(0, max);
+}
 // Alguns arquivos de lore embrulham o texto inteiro num único bloco
 // "section" cujo nome repete o nome da própria raça/classe — evita
 // duplicar o título (que já aparece no cabeçalho do card/modal).
@@ -127,7 +143,7 @@ async function updateChoice(type) {
   meta.textContent = labelMeta(e);
   card.classList.add("selected");
   const r = await firstRecord(e);
-  prev.textContent = plain(bestDescription(e, r)).slice(0, 280) || "Sem descrição estruturada.";
+  prev.textContent = teaserText(e, r, 280) || "Sem descrição estruturada.";
 }
 async function refreshChoices() {
   refs.race = manifest().find((x) => x.id === character.raceId) || null;
@@ -186,7 +202,7 @@ async function renderPicker(arr) {
   box.innerHTML = arr.map((x) => `<button class="pick-card" data-id="${esc(x.id)}"><div class="pick-top"><strong>${esc(titleOf(x))}</strong>${sourceTag(x)}</div><div class="pick-meta">${esc(labelMeta(x))}</div><div class="pick-desc">…</div></button>`).join("");
   for (const b of box.querySelectorAll(".pick-card")) {
     const e = manifest().find((x) => x.id === b.dataset.id);
-    firstRecord(e).then((r) => { const d = b.querySelector(".pick-desc"); if (d) d.textContent = plain(bestDescription(e, r)).slice(0, 160) || "Sem descrição estruturada."; });
+    firstRecord(e).then((r) => { const d = b.querySelector(".pick-desc"); if (d) d.textContent = teaserText(e, r, 160) || "Sem descrição estruturada."; });
     b.addEventListener("click", async () => { await selectRef(e); $("modal").classList.add("hidden"); });
   }
 }
@@ -236,12 +252,25 @@ function classQuickFacts(rec) {
 function factsHtml(facts) {
   return facts.length ? `<div class="codex-facts">${facts.map(([k, v]) => `<div class="codex-fact"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : "";
 }
+// Lista de características (classe/subclasse) usada como "descrição" quando
+// o 5etools não tem prosa de lore para o registro — que é o caso da
+// maioria das subclasses oficiais e de quase todo homebrew.
+function featuresListHtml(feats) {
+  if (!feats || !feats.length) return "";
+  return `<div class="lore-features">${feats.map((f) => `
+    <article class="lore-feature">
+      <div class="lore-feature-head"><b>${esc(f.name || "Característica")}</b><span>Nível ${esc(f.level ?? "—")}</span></div>
+      ${f.entries ? richText(f.entries) : "<p class='muted'>Sem texto para esta característica.</p>"}
+    </article>`).join("")}</div>`;
+}
 async function detailModalHtml(e) {
   const r = await firstRecord(e);
   const t = normType(e.type);
   const lore = loreOf(e);
   const hasLore = !!lore;
-  let facts = "", extra = "";
+  let facts = "", extra = "", body = "";
+  if (hasLore) body = richText(unwrapSelfSection(lore, e.name));
+
   if (t === "race") {
     facts = factsHtml(raceQuickFacts(r));
     if (e.subraceOf) extra += `<p class="codex-subnote">Subespécie de <strong>${esc(e.subraceOf.name)}</strong>.</p>`;
@@ -250,13 +279,20 @@ async function detailModalHtml(e) {
     if (!hasLore && !traits.length) extra += `<p class="muted">Sem texto no banco para esta raça.</p>`;
   } else if (t === "class") {
     facts = factsHtml(classQuickFacts(r));
+    if (!hasLore) {
+      const feats = await findClassFeatures(e, 20).catch(() => []);
+      if (feats.length) extra += `<h3 class="codex-divider">Características da classe</h3>${featuresListHtml(feats)}`;
+      else extra += `<p class="muted">Sem texto narrativo no banco para esta classe.</p>`;
+    }
     const subs = subclassesOf(e);
     if (subs.length) extra += `<h3 class="codex-divider">Subclasses (${subs.length})</h3><div class="codex-chip-row">${subs.map((s) => `<button class="codex-chip" data-codex-id="${esc(s.id)}">${esc(titleOf(s))} ${sourceTag(s)}</button>`).join("")}</div>`;
-    if (!hasLore) extra += `<p class="muted">Sem texto narrativo no banco para esta classe — confira as características na aba "Características" após escolher.</p>`;
   } else if (t === "subclass") {
-    if (!hasLore) extra += `<p class="muted">Sem texto narrativo no banco para esta subclasse.</p>`;
+    if (!hasLore) {
+      const feats = await findSubclassFeatures(e, 20).catch(() => []);
+      if (feats.length) extra += `<h3 class="codex-divider">Características da subclasse</h3>${featuresListHtml(feats)}`;
+      else extra += `<p class="muted">Sem texto no banco para esta subclasse.</p>`;
+    }
   }
-  const body = hasLore ? richText(unwrapSelfSection(lore, e.name)) : (t === "race" ? "" : richText(descriptionOf(r, e)));
   return `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div>${facts}<div class="modal-body">${body}${extra}</div>`;
 }
 async function openEntityModal(e) {
@@ -286,7 +322,11 @@ function pointCost(score) {
 }
 function pointBuyTotal() { return ABILITIES.reduce((n, a) => n + pointCost(character.scores[a]), 0); }
 function renderAbilities() {
-  $("ability-grid").innerHTML = ABILITIES.map((a) => `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${character.scores[a]}</b><em>${fmt(mod(character.scores[a]))}</em></div>`).join("");
+  // Mostra o valor EFETIVO (base do point buy + aumentos de espécie/background).
+  $("ability-grid").innerHTML = ABILITIES.map((a) => {
+    const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
+    return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em></div>`;
+  }).join("");
   const spent = pointBuyTotal(), remaining = 27 - spent;
   $("pointbuy-remaining").textContent = remaining;
   $("pointbuy-remaining").classList.toggle("over", remaining < 0);
@@ -434,7 +474,8 @@ async function buildAutomation() {
   renderAutoChoices({
     classChoices: skillChoicesFrom(classProf),
     backgroundChoices: skillChoicesFrom(br.skillProficiencies || bgProf),
-    abilityChoices: abilityChoicesFrom(rr).concat(abilityChoicesFrom(br)),
+    abilityChoices: abilityChoicesFrom(rr),
+    bgAbility: bgAbilitySpec(br),
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -457,8 +498,25 @@ function renderAutoChoices(data) {
   addSkillSection(`Perícias do background — ${titleOf(refs.background)}`, data.backgroundChoices, "backgroundSkills");
   data.abilityChoices.forEach((ch, idx) => {
     const selected = character.choiceSelections.abilityChoices?.[idx] || [];
-    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumentos de atributo</strong><span>Escolha ${ch.count}</span></div><div class="choice-options">${ch.from.map((k) => `<label class="choice-option"><input type="checkbox" data-ability-choice="${idx}" value="${k}" ${selected.includes(k) ? "checked" : ""}><span>${ABILITY_NAMES[k]}</span></label>`).join("")}</div></div>`);
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumentos de atributo — ${esc(titleOf(refs.race))}</strong><span>Escolha ${ch.count}</span></div><div class="choice-options">${ch.from.map((k) => `<label class="choice-option"><input type="checkbox" data-ability-choice="${idx}" value="${k}" ${selected.includes(k) ? "checked" : ""} ${!selected.includes(k) && selected.length >= ch.count ? "disabled" : ""}><span>${ABILITY_NAMES[k]}</span></label>`).join("")}</div></div>`);
   });
+  const bga = data.bgAbility;
+  if (bga && bga.hasChoice) {
+    const modeIdx = Math.max(0, Math.min(Number(character.choiceSelections.bgAbilityMode || 0), bga.modes.length - 1));
+    const weights = bga.modes[modeIdx] || [];
+    const picks = character.choiceSelections.bgAbility || [];
+    const lbl = (w) => w.map((n) => `+${n}`).join(" / ");
+    const modeBtns = bga.modes.length > 1
+      ? `<div class="asi-modes">${bga.modes.map((w, i) => `<button type="button" class="asi-mode${i === modeIdx ? " active" : ""}" data-bg-ability-mode="${i}">${lbl(w)}</button>`).join("")}</div>`
+      : "";
+    const selects = weights.map((n, i) => {
+      const chosen = picks[i] || "";
+      const used = picks.filter((_, j) => j !== i);
+      const opts = bga.from.map((k) => `<option value="${k}"${k === chosen ? " selected" : ""}${used.includes(k) ? " disabled" : ""}>${ABILITY_NAMES[k]}</option>`).join("");
+      return `<label class="asi-pick"><span>+${n}</span><select data-bg-ability="${i}"><option value="">—</option>${opts}</select></label>`;
+    }).join("");
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumento de atributo — ${esc(titleOf(refs.background))}</strong><span>${lbl(weights)}</span></div><p>Regra 2024: o background distribui esses aumentos entre os atributos.</p>${modeBtns}<div class="asi-picks">${selects}</div></div>`);
+  }
   $("auto-status").textContent = sections.length ? "Escolhas disponíveis" : "Nenhuma escolha pendente";
   if (!sections.length) { box.innerHTML = `<div class="auto-empty">As escolhas automáticas aparecerão aqui quando a classe/background/espécie fornecerem opções no banco.</div>`; return; }
   box.innerHTML = sections.join("");
@@ -482,7 +540,20 @@ function renderAutoChoices(data) {
     character.choiceSelections.abilityChoices = character.choiceSelections.abilityChoices || {};
     const cur = character.choiceSelections.abilityChoices[idx] || [];
     toggleIn(cur, i.value, i.checked);
+    const limit = data.abilityChoices[idx]?.count ?? cur.length;
+    if (cur.length > limit) { cur.pop(); i.checked = false; toast(`Você pode escolher apenas ${limit}.`); }
     character.choiceSelections.abilityChoices[idx] = cur;
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-bg-ability-mode]").forEach((b) => b.addEventListener("click", () => {
+    character.choiceSelections.bgAbilityMode = Number(b.dataset.bgAbilityMode);
+    character.choiceSelections.bgAbility = [];
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-bg-ability]").forEach((s) => s.addEventListener("change", () => {
+    const i = Number(s.dataset.bgAbility);
+    character.choiceSelections.bgAbility = character.choiceSelections.bgAbility || [];
+    character.choiceSelections.bgAbility[i] = s.value || null;
     saveCharacter(character); recalc();
   }));
 }
@@ -491,11 +562,44 @@ function renderAutoChoices(data) {
 // Cálculos
 // ------------------------------------------------------------
 function classInfo() { return refs.class ? details.classRec || {} : {}; }
+// Aumentos de atributo do background. Cobre o formato "One D&D" (2024),
+// em que o background dá um bônus ponderado — +2/+1 OU +1/+1/+1 — a ser
+// distribuído pelo jogador, e também o formato fixo simples (homebrew).
+function bgAbilitySpec(br) {
+  const blocks = Array.isArray(br?.ability) ? br.ability : [];
+  if (!blocks.length) return null;
+  const fixed = {};
+  const modes = [];
+  let from = [];
+  for (const blk of blocks) {
+    const w = blk?.choose?.weighted;
+    if (w && Array.isArray(w.from)) {
+      from = [...new Set([...from, ...w.from.map(abilityKey).filter(Boolean)])];
+      modes.push((w.weights || []).slice().sort((x, y) => y - x));
+    } else if (blk && typeof blk === "object") {
+      for (const [k, v] of Object.entries(blk)) {
+        const key = abilityKey(k);
+        if (key && typeof v === "number") fixed[key] = (fixed[key] || 0) + v;
+      }
+    }
+  }
+  if (!modes.length && !Object.keys(fixed).length) return null;
+  return { from, modes, fixed, hasChoice: modes.length > 0 };
+}
 function abilityBonusTotal(a) {
   let b = 0;
   const rr = details.raceRec || {};
   for (const blk of rr.ability || []) if (blk && typeof blk[a] === "number") b += blk[a];
   for (const list of Object.values(character.choiceSelections?.abilityChoices || {})) if (Array.isArray(list) && list.includes(a)) b += 1;
+  const spec = bgAbilitySpec(details.backgroundRec || {});
+  if (spec) {
+    if (spec.fixed[a]) b += spec.fixed[a];
+    if (spec.hasChoice) {
+      const modeIdx = Math.max(0, Math.min(Number(character.choiceSelections?.bgAbilityMode || 0), spec.modes.length - 1));
+      const weights = spec.modes[modeIdx] || [];
+      (character.choiceSelections?.bgAbility || []).forEach((k, i) => { if (k === a && weights[i]) b += weights[i]; });
+    }
+  }
   return b;
 }
 function effScore(a) { return (Number(character.scores[a]) || 10) + abilityBonusTotal(a); }
@@ -724,8 +828,14 @@ function renderDeath() {
 // ------------------------------------------------------------
 function codexTeaser(e, r) {
   const lore = loreOf(e);
-  if (lore) return { text: plain(unwrapSelfSection(lore, e.name)).slice(0, 190), lore: true };
-  const fallback = plain(descriptionOf(r, e)).slice(0, 190);
+  if (lore) return { text: stripLeadingName(plain(unwrapSelfSection(lore, e.name)), e.name).slice(0, 190), lore: true };
+  let fallback = plain(descriptionOf(r, e)).slice(0, 190);
+  if (!fallback) {
+    // Sem prosa de lore: monta um resumo a partir dos fatos rápidos.
+    const t = normType(e.type);
+    const facts = t === "class" ? classQuickFacts(r) : t === "race" ? raceQuickFacts(r) : [];
+    fallback = facts.map(([k, v]) => `${k}: ${v}`).join(" · ");
+  }
   return { text: fallback, lore: false };
 }
 function codexCardHtml(e, r) {
