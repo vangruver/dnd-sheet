@@ -197,7 +197,7 @@ function fixedSkillsFrom(v){
      if(sk&&(val===true||typeof val==="number"||typeof val==="string"))out.push(sk);
    }
    if(Array.isArray(o?.skills))o.skills.forEach(x=>{const sk=skillKey(typeof x==="string"?x:x?.name);if(sk)out.push(sk)});
- }
+ });
  return [...new Set(out)];
 }
 function savesFrom(v){
