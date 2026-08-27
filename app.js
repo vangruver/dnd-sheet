@@ -1,4 +1,4 @@
-import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,stats,manifestEntries,isHomebrew as hb,normType} from "./database.js";
+import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,recordsForEntity,stats,manifestEntries,isHomebrew as hb,normType} from "./database.js";
 import {ABILITIES,ABILITY_NAMES,SKILLS,mod,fmt,proficiency,hpAverage,abilityKey,spellDc,spellAttack} from "./rules.js";
 import {saveCharacter,loadCharacter,clearCharacter,downloadCharacter,readCharacterFile} from "./storage.js";
 
@@ -6,9 +6,11 @@ const $=id=>document.getElementById(id);
 let character, refs={class:null,subclass:null,race:null,background:null}, details={};
 let pickerType=null, eqCat="inventory";
 
-const fresh=()=>({schema:6,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",classId:"",subclassId:"",raceId:"",backgroundId:"",
+const fresh=()=>({schema:7,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",classId:"",subclassId:"",raceId:"",backgroundId:"",
 scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},saveProficiencies:[],skillProficiencies:[],skillExpertise:[],
-hpCurrent:null,hpTemp:0,ac:null,speed:"30 ft",attacks:[],inventory:[],preparedSpells:[],deathSaves:{success:0,failure:0}});
+hpCurrent:null,hpTemp:0,ac:null,speed:"30 ft",attacks:[],inventory:[],preparedSpells:[],deathSaves:{success:0,failure:0},
+auto:{classSkills:[],backgroundSkills:[],classSaves:[],fixedSkills:[],speed:null,hitDice:null,spellcastingAbility:null},
+choiceSelections:{classSkills:[],backgroundSkills:[],abilityChoices:{}},manualSkillProficiencies:[]});
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2200)};
 const manifest=()=>manifestEntries();
@@ -87,7 +89,8 @@ async function renderPicker(arr){
 async function selectRef(e){
  const t=pickerType;if(!e)return;
  character[`${t}Id`]=e.id;refs[t]=e;
- if(t==="class"){character.subclassId="";refs.subclass=null}
+ if(t==="class"){character.subclassId="";refs.subclass=null;character.choiceSelections=character.choiceSelections||{};character.choiceSelections.classSkills=[]}
+ if(t==="background"){character.choiceSelections=character.choiceSelections||{};character.choiceSelections.backgroundSkills=[]}
  await refreshChoices();
  saveCharacter(character);
  toast(`${titleOf(e)} selecionado.`);
@@ -99,12 +102,37 @@ async function openEntityModal(e){
  $("modal").classList.remove("hidden");
 }
 
+function pointCost(score){
+ score=Number(score)||10;
+ const costs={8:0,9:1,10:2,11:3,12:4,13:5,14:7,15:9};
+ return costs[Math.max(8,Math.min(15,score))]??0;
+}
+function pointBuyTotal(){return ABILITIES.reduce((n,a)=>n+pointCost(character.scores[a]),0)}
 function renderAbilities(){
  $("ability-grid").innerHTML=ABILITIES.map(a=>`<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${character.scores[a]}</b><em>${fmt(mod(character.scores[a]))}</em></div>`).join("");
- $("ability-editor").innerHTML=ABILITIES.map(a=>`<label class="ability-edit"><span>${ABILITY_NAMES[a]}</span><input data-ability="${a}" type="number" min="1" max="30" value="${character.scores[a]}"><b>${fmt(mod(character.scores[a]))}</b></label>`).join("");
- $("ability-editor").querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{character.scores[i.dataset.ability]=Number(i.value)||10;recalc()}));
+ const spent=pointBuyTotal(),remaining=27-spent;
+ $("pointbuy-remaining").textContent=remaining;
+ $("pointbuy-remaining").classList.toggle("over",remaining<0);
+ $("ability-editor").innerHTML=ABILITIES.map(a=>{
+   const v=Number(character.scores[a])||10;
+   return `<div class="ability-edit"><span>${ABILITY_NAMES[a]}</span><div class="ability-stepper"><button type="button" data-ability-dec="${a}" ${v<=8?"disabled":""}>−</button><input data-ability="${a}" type="number" min="1" max="30" value="${v}"><button type="button" data-ability-inc="${a}" ${v>=15?"disabled":""}>+</button></div><b>${fmt(mod(v))}</b><small>Custo ${pointCost(v)}</small></div>`;
+ }).join("");
+ $("ability-editor").querySelectorAll("[data-ability]").forEach(i=>i.addEventListener("change",()=>{
+   character.scores[i.dataset.ability]=Math.max(1,Math.min(30,Number(i.value)||10));recalc();saveCharacter(character);
+ }));
+ $("ability-editor").querySelectorAll("[data-ability-inc],[data-ability-dec]").forEach(b=>b.addEventListener("click",()=>{
+   const a=b.dataset.abilityInc||b.dataset.abilityDec,v=Number(character.scores[a])||10;
+   const next=v+(b.dataset.abilityInc?1:-1);
+   if(next<8||next>15)return;
+   const delta=pointCost(next)-pointCost(v);
+   if(delta>27-pointBuyTotal()){toast("Você não tem pontos suficientes.");return}
+   character.scores[a]=next;recalc();saveCharacter(character);
+ }));
+ const reset=$("reset-pointbuy");
+ if(reset)reset.onclick=()=>{ABILITIES.forEach(a=>character.scores[a]=10);saveCharacter(character);recalc();};
 }
 function chosenAbility(cls){
+ if(character?.spellAbility&&!character.manualSpellAbility)return character.spellAbility;
  const c=classInfo();
  const candidates=[c.spellcastingAbility,c.spellcastingAbilityKey,c.spellcasting?.ability,c.spellcasting?.abilityKey,c.spellcastingAbilityId];
  for(const v of candidates){const k=abilityKey(v);if(k)return k}
@@ -112,10 +140,165 @@ function chosenAbility(cls){
  for(const k of ABILITIES)if(txt.includes(`"${k}"`))return k;
  return null;
 }
+
+function flatObjects(v,out=[]){
+ if(v==null)return out;
+ if(Array.isArray(v)){v.forEach(x=>flatObjects(x,out));return out}
+ if(typeof v==="object"){out.push(v);Object.values(v).forEach(x=>{if(x&&typeof x==="object")flatObjects(x,out)});}
+ return out;
+}
+function keyText(v){return String(v??"").trim().toLowerCase().replace(/[\s_-]+/g,"");}
+function skillKey(v){
+ const k=keyText(v);
+ const aliases={acrobatics:"acrobatics",acrobacia:"acrobatics",animalhandling:"animalHandling",adestraranimais:"animalHandling",
+ arcana:"arcana",arcanismo:"arcana",athletics:"athletics",atletismo:"athletics",deception:"deception",enganacao:"deception",
+ history:"history",historia:"history",insight:"insight",intuicao:"insight",intimidation:"intimidation",intimidacao:"intimidation",
+ investigation:"investigation",investigacao:"investigation",medicine:"medicine",medicina:"medicine",nature:"nature",natureza:"nature",
+ perception:"perception",percepcao:"perception",performance:"performance",atuacao:"performance",persuasion:"persuasion",persuasao:"persuasion",
+ religion:"religion",religiao:"religion",sleightofhand:"sleightOfHand",prestidigitacao:"sleightOfHand",stealth:"stealth",furtividade:"stealth",
+ survival:"survival",sobrevivencia:"survival"};
+ return aliases[k]||null;
+}
+function abilityChoicesFrom(v){
+ const out=[];
+ flatObjects(v).forEach(o=>{
+   const ch=o?.choose;
+   if(!ch||!ch.from)return;
+   const from=Array.isArray(ch.from)?ch.from:typeof ch.from==="object"?Object.keys(ch.from):[];
+   const abilities=from.map(abilityKey).filter(Boolean);
+   if(abilities.length)out.push({from:[...new Set(abilities)],count:Number(ch.count||ch.amount||1)||1,amount:Number(ch.amount||0)||0});
+ });
+ return out;
+}
+function skillChoicesFrom(v){
+ const out=[];
+ flatObjects(v).forEach(o=>{
+   const ch=o?.choose;
+   if(!ch||!ch.from)return;
+   const from=(Array.isArray(ch.from)?ch.from:Object.keys(ch.from||{})).map(skillKey).filter(Boolean);
+   if(from.length)out.push({from:[...new Set(from)],count:Number(ch.count||ch.amount||1)||1});
+ });
+ return out;
+}
+function fixedSkillsFrom(v){
+ const out=[];
+ flatObjects(v).forEach(o=>{
+   for(const [k,val] of Object.entries(o||{})){
+     const sk=skillKey(k);
+     if(sk&&(val===true||typeof val==="number"||typeof val==="string"))out.push(sk);
+   }
+   if(Array.isArray(o?.skills))o.skills.forEach(x=>{const sk=skillKey(typeof x==="string"?x:x?.name);if(sk)out.push(sk)});
+ }
+ return [...new Set(out)];
+}
+function savesFrom(v){
+ const out=[];
+ flatObjects(v).forEach(o=>{
+   for(const k of ["savingThrows","savingThrow","saves","savingThrowProficiencies"]){
+     const a=o?.[k]; if(Array.isArray(a))a.forEach(x=>{const k2=abilityKey(x);if(k2)out.push(k2)});
+   }
+ });
+ return [...new Set(out)];
+}
+function speedFrom(r){
+ const vals=[r?.speed,r?.walk,r?.movement,r?.speed?.walk,r?.speed?.walking,r?.speed?.base];
+ for(const v of vals){
+   if(typeof v==="number")return `${v} ft`;
+   if(typeof v==="string"&&v.trim())return v;
+   if(v&&typeof v==="object"){
+     const n=v.walk??v.walking??v.base;
+     if(typeof n==="number")return `${n} ft`;
+     if(typeof n==="string")return n;
+   }
+ }
+ return null;
+}
+function hitDiceFrom(r){
+ const v=r?.hitDice??r?.hd;
+ if(typeof v==="number")return v;
+ if(v&&typeof v==="object")return Number(v.faces||v.number||v.size||0)||null;
+ const m=String(v||"").match(/d\s*(\d+)/i);return m?Number(m[1]):null;
+}
+function spellAbilityFrom(r){
+ for(const v of [r?.spellcastingAbility,r?.spellcastingAbilityKey,r?.spellcasting?.ability,r?.spellcasting?.abilityKey]){
+   const k=abilityKey(v);if(k)return k;
+ }
+ const t=JSON.stringify(r||{}).toLowerCase();
+ for(const k of ABILITIES)if(t.includes(`"${k}"`))return k;
+ return null;
+}
+async function sourceRecord(ref){return ref?await firstRecord(ref):null}
+async function buildAutomation(){
+ character.auto=character.auto||{};
+ const cr=details.classRec||{}, rr=details.raceRec||{}, br=details.backgroundRec||{};
+ const classProf=cr.startingProficiencies||cr.proficiencies||cr.proficiency||cr;
+ const bgProf=br.startingProficiencies||br.proficiencies||br;
+ const classFixedSkills=fixedSkillsFrom(classProf);
+ const bgFixedSkills=fixedSkillsFrom(bgProf);
+ const classSaves=savesFrom(classProf);
+ const previousAuto=[...(character.auto?.classSkills||[]),...(character.auto?.backgroundSkills||[])];
+ const previousChoices=[...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()];
+ if(!Array.isArray(character.manualSkillProficiencies)||!character.manualSkillProficiencies.length){
+   character.manualSkillProficiencies=(character.skillProficiencies||[]).filter(k=>!previousAuto.includes(k)&&!previousChoices.includes(k));
+ }
+ character.auto.classSkills=classFixedSkills;
+ character.auto.backgroundSkills=bgFixedSkills;
+ character.auto.classSaves=classSaves;
+ character.auto.speed=speedFrom(rr);
+ character.auto.hitDice=hitDiceFrom(cr);
+ character.auto.spellcastingAbility=spellAbilityFrom(cr);
+ const fixedSkills=[...new Set([...classFixedSkills,...bgFixedSkills])];
+ character.skillProficiencies=[...new Set([...(character.manualSkillProficiencies||[]),...fixedSkills,...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()])];
+ character.saveProficiencies=[...new Set([...(character.saveProficiencies||[]),...classSaves])];
+ if(character.auto.speed&&!character.manualSpeed)character.speed=character.auto.speed;
+ if(character.auto.spellcastingAbility&&!character.manualSpellAbility)character.spellAbility=character.auto.spellcastingAbility;
+ renderAutoChoices({classChoices:skillChoicesFrom(classProf),backgroundChoices:skillChoicesFrom(bgProf),abilityChoices:abilityChoicesFrom(cr).concat(abilityChoicesFrom(rr),abilityChoicesFrom(br))});
+}
+function choiceStore(type){return character.choiceSelections?.[type]||[]}
+function renderAutoChoices(data){
+ const box=$("auto-choices"); if(!box)return;
+ const sections=[];
+ const addSkillSection=(label,choices,type)=>{
+   choices.forEach((ch,idx)=>{
+     const selected=choiceStore(type)[idx]||[];
+     const remaining=Math.max(0,ch.count-selected.length);
+     sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>${esc(label)}</strong><span>Escolha ${ch.count}</span></div><p>${remaining?`Faltam ${remaining} escolha(s).`:"Completo."}</p><div class="choice-options">${ch.from.map(k=>{const on=selected.includes(k);return `<label class="choice-option"><input type="checkbox" data-auto-choice="${esc(type)}" data-choice-index="${idx}" data-choice-value="${esc(k)}" ${on?"checked":""} ${!on&&selected.length>=ch.count?"disabled":""}><span>${esc(SKILLS.find(x=>x[0]===k)?.[1]||k)}</span></label>`}).join("")}</div></div>`);
+   });
+ };
+ addSkillSection(`Perícias da classe — ${titleOf(refs.class)}`,data.classChoices,"classSkills");
+ addSkillSection(`Perícias do background — ${titleOf(refs.background)}`,data.backgroundChoices,"backgroundSkills");
+ data.abilityChoices.forEach((ch,idx)=>{
+   const selected=character.choiceSelections.abilityChoices?.[idx]||[];
+   sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumentos de atributo</strong><span>Escolha ${ch.count}</span></div><div class="choice-options ability-choice-options">${ch.from.map(k=>`<label class="choice-option"><input type="checkbox" data-ability-choice="${idx}" value="${k}" ${selected.includes(k)?"checked":""}><span>${ABILITY_NAMES[k]}</span></label>`).join("")}</div></div>`);
+ });
+ if($("auto-status"))$("auto-status").textContent=sections.length?"Escolhas disponíveis":"Nenhuma escolha pendente";
+ if(!sections.length){box.innerHTML=`<div class="auto-empty">As escolhas automáticas aparecerão aqui quando a classe/background/espécie fornecer opções no banco.</div>`;return}
+ box.innerHTML=sections.join("");
+ box.querySelectorAll("[data-auto-choice]").forEach(i=>i.addEventListener("change",()=>{
+   const t=i.dataset.autoChoice,idx=Number(i.dataset.choiceIndex),v=i.dataset.choiceValue;
+   character.choiceSelections=character.choiceSelections||{};character.choiceSelections[t]=character.choiceSelections[t]||[];
+   const current=character.choiceSelections[t][idx]||[];toggleIn(current,v,i.checked);
+   const limit=t==="classSkills"?data.classChoices[idx].count:data.backgroundChoices[idx].count;
+   if(current.length>limit){current.pop();i.checked=false;toast(`Você pode escolher apenas ${limit}.`)}
+   character.choiceSelections[t][idx]=current;
+   character.skillProficiencies=[...new Set([...(character.manualSkillProficiencies||[]),...(character.auto?.classSkills||[]),...(character.auto?.backgroundSkills||[]),...Object.values(character.choiceSelections.classSkills||{}).flat(),...Object.values(character.choiceSelections.backgroundSkills||{}).flat()])];
+   saveCharacter(character);recalc();
+ }));
+}
+function autoEquipFromClass(r){
+ const se=r?.startingEquipment||r?.equipment||[];
+ if(!Array.isArray(se))return;
+ const names=[];
+ flatObjects(se).forEach(o=>{if(typeof o?.item==="string")names.push(o.item);if(typeof o?.name==="string"&&/equipment|weapon|armor/i.test(o?.type||""))names.push(o.name)});
+ names.forEach(name=>{
+   const e=manifest().find(x=>String(x.name||"").toLowerCase()===String(name).toLowerCase());
+   if(e&&!character.inventory.some(i=>i.id===e.id))character.inventory.push({id:e.id,name:titleOf(e),qty:1,meta:labelMeta(e)});
+ });
+}
 function classInfo(){return refs.class?details.classRec||{}:{}}
 function raceInfo(){return refs.race?details.raceRec||{}:{}}
 function inferHP(){
- const c=classInfo(),hd=Number(c.hitDice||c.hd?.faces||c.hd?.number||0)||8;
+ const c=classInfo(),hd=Number(character.auto?.hitDice||c.hitDice||c.hd?.faces||c.hd?.number||0)||8;
  const base=hpAverage(hd)+(Number(character.scores.con)-10>>1);
  const extra=Math.max(0,Number(character.level)-1)*(Math.floor(hd/2)+1+mod(character.scores.con));
  return Math.max(1,base+extra);
@@ -123,13 +306,15 @@ function inferHP(){
 function calc(){
  const lvl=Number(character.level)||1,pb=proficiency(lvl);
  const init=mod(character.scores.dex),passive=10+mod(character.scores.wis)+(character.skillProficiencies.includes("perception")?pb:0)+(character.skillExpertise.includes("perception")?pb:0);
- const hp=inferHP(), ac=Number(character.ac)||10+mod(character.scores.dex),speed=character.speed||"30 ft";
+ const hp=inferHP(), ac=Number(character.ac)||10+mod(character.scores.dex),speed=character.speed||character.auto?.speed||"30 ft";
  const sa=chosenAbility(refs.class);const dc=sa?spellDc(pb,mod(character.scores[sa])):null,atk=sa?spellAttack(pb,mod(character.scores[sa])):null;
  return {lvl,pb,init,passive,hp,ac,speed,sa,dc,atk}
 }
 async function recalc(){
  if(!character)return;
  details.classRec=await firstRecord(refs.class);details.raceRec=await firstRecord(refs.race);details.subclassRec=await firstRecord(refs.subclass);details.backgroundRec=await firstRecord(refs.background);
+ await buildAutomation();
+ autoEquipFromClass(details.classRec);
  const c=calc();renderAbilities();
  $("v-ac").textContent=c.ac;$("v-init").textContent=fmt(c.init);$("v-speed").textContent=c.speed;$("v-pb").textContent=fmt(c.pb);$("v-passive").textContent=c.passive;
  $("v-spell-dc").textContent=c.dc??"—";$("v-spell-atk").textContent=c.atk!=null?fmt(c.atk):"—";$("v-hp-max").textContent=c.hp;
@@ -144,7 +329,11 @@ function renderSaves(c){
 }
 function renderSkills(c){
  $("skill-list").innerHTML=SKILLS.map(([k,n,a])=>{const p=character.skillProficiencies.includes(k),ex=character.skillExpertise.includes(k),v=mod(character.scores[a])+c.pb*(ex?2:p?1:0);return `<label class="skill-row"><input type="checkbox" data-skill="${k}" ${p?"checked":""}><span>${n}</span><b>${fmt(v)}</b>${ex?'<small>EXP</small>':""}</label>`}).join("");
- $("skill-list").querySelectorAll("[data-skill]").forEach(i=>i.addEventListener("change",()=>{toggleIn(character.skillProficiencies,i.dataset.skill,i.checked);recalc()}));
+ $("skill-list").querySelectorAll("[data-skill]").forEach(i=>i.addEventListener("change",()=>{
+ const k=i.dataset.skill,auto=[...(character.auto?.classSkills||[]),...(character.auto?.backgroundSkills||[]),...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()];
+ if(!auto.includes(k))toggleIn(character.manualSkillProficiencies,k,i.checked);
+ toggleIn(character.skillProficiencies,k,i.checked||auto.includes(k));saveCharacter(character);recalc();
+}));
 }
 function renderProficiencies(){$("proficiency-editor").innerHTML=`<p class="muted">Marque testes e perícias na ficha. Especialização pode ser aplicada pelo botão de detalhes quando adicionarmos escolhas específicas do banco.</p>`}
 function toggleIn(a,v,on){const i=a.indexOf(v);if(on&&i<0)a.push(v);if(!on&&i>=0)a.splice(i,1)}
@@ -246,7 +435,23 @@ async function equipmentTab(){
 function renderDeath(){
  const d=character.deathSaves||{success:0,failure:0};document.querySelectorAll("[data-death]").forEach(b=>{const k=b.dataset.death[0]==="s"?"success":"failure",i=Number(b.dataset.death[1]);b.textContent=i<d[k]?"●":"○";b.classList.toggle("on",i<d[k]);b.onclick=()=>{d[k]=i<d[k]?i:i+1;if(d[k]>3)d[k]=0;character.deathSaves=d;saveCharacter(character);renderDeath()}});
 }
-function applyLoaded(c){character={...fresh(),...c,scores:{...fresh().scores,...(c?.scores||{})},deathSaves:{...fresh().deathSaves,...(c?.deathSaves||{})},inventory:Array.isArray(c?.inventory)?c.inventory:[],preparedSpells:Array.isArray(c?.preparedSpells)?c.preparedSpells:[]};$("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
+function applyLoaded(c){
+ const f=fresh();
+ character={...f,...c,scores:{...f.scores,...(c?.scores||{})},deathSaves:{...f.deathSaves,...(c?.deathSaves||{})},
+ inventory:Array.isArray(c?.inventory)?c.inventory:[],preparedSpells:Array.isArray(c?.preparedSpells)?c.preparedSpells:[],
+ auto:{...f.auto,...(c?.auto||{})},choiceSelections:{...f.choiceSelections,...(c?.choiceSelections||{}),abilityChoices:{...f.choiceSelections.abilityChoices,...(c?.choiceSelections?.abilityChoices||{})}},
+ manualSkillProficiencies:Array.isArray(c?.manualSkillProficiencies)?c.manualSkillProficiencies:[]};
+ $("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}$("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
+function openPdfPreview(){
+ const modal=$("modal"),box=$("modal-content");
+ const clone=document.querySelector(".sheet-shell").cloneNode(true);
+ clone.querySelectorAll(".no-print").forEach(e=>e.remove());
+ clone.querySelectorAll(".tab-page").forEach(e=>{e.classList.add("active");e.style.display="block"});
+ box.innerHTML=`<div class="modal-title"><div><span class="eyebrow">PRÉ-VISUALIZAÇÃO</span><h2>Ficha pronta para PDF</h2><p class="muted">Esta visualização mostra o conteúdo que será levado para impressão. Use “Imprimir / PDF” para gerar o arquivo.</p></div><button type="button" class="preview-print" id="preview-print">Imprimir / PDF</button></div><div class="pdf-preview-host"></div>`;
+ box.querySelector(".pdf-preview-host").appendChild(clone);
+ modal.classList.remove("hidden");
+ $("preview-print").onclick=()=>window.print();
+}
 function setup(){
  $("edition").addEventListener("change",()=>{character.edition=$("edition").value;character.classId=character.subclassId=character.raceId=character.backgroundId="";refs={class:null,subclass:null,race:null,background:null};refreshChoices();saveCharacter(character)});
  $("content").addEventListener("change",()=>{character.content=$("content").value;saveCharacter(character)});
@@ -268,7 +473,7 @@ function setup(){
  $("save-character").addEventListener("click",()=>{saveCharacter(character);toast("Personagem salvo neste navegador.")});
  $("export-character").addEventListener("click",()=>downloadCharacter(character));
  $("new-character").addEventListener("click",()=>{if(confirm("Começar um novo personagem?")){clearCharacter();applyLoaded(fresh());toast("Novo personagem.")}});
- $("print-character").addEventListener("click",()=>window.print());
+ $("print-character").addEventListener("click",()=>window.print());$("preview-pdf").addEventListener("click",openPdfPreview);
  $("import-character").addEventListener("change",async e=>{try{applyLoaded(await readCharacterFile(e.target.files[0]));toast("Personagem importado.")}catch{toast("Arquivo inválido.")}});
  $("modal-close").addEventListener("click",()=>$("modal").classList.add("hidden"));$("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.add("hidden")});
 }
