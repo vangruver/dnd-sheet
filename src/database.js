@@ -62,6 +62,27 @@ export function editionOf(x) {
   return editionOfRec(x);
 }
 
+// O 5etools marca em cada registro de 2014 que foi refeito em 2024 um
+// campo `reprintedAs` (ex.: "Wizard|XPHB"). É o "filtro de reprint" da
+// interface deles: em uma sessão 2024, esconder o registro 2014 que já
+// tem versão nova evita a duplicata (Mago PHB + Mago XPHB lado a lado).
+export function isReprinted(x) {
+  const rec = (x && (x.__rec || registry.get(x.id)?.__rec)) || {};
+  return Array.isArray(rec.reprintedAs) && rec.reprintedAs.length > 0;
+}
+// O registro combina com a edição escolhida?
+//  - homebrew (edição "both"): sempre passa;
+//  - mesma edição: passa;
+//  - 2014 numa sessão 2024: passa só se `includeLegacy` e o registro
+//    NÃO tiver sido reimpresso em 2024.
+export function matchesEdition(x, edition, includeLegacy = false) {
+  const ed = editionOf(x);
+  if (ed === "both") return true;
+  if (ed === String(edition)) return true;
+  if (includeLegacy && String(edition) === "2024" && ed === "2014") return !isReprinted(x);
+  return false;
+}
+
 // ------------------------------------------------------------
 // _copy (herança) — resolução mínima para races/backgrounds
 // ------------------------------------------------------------
