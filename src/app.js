@@ -20,7 +20,7 @@ const fresh = () => ({
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 },
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {} }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, featAbility: {} }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -497,6 +497,84 @@ function optionalFeatureProgs(level) {
   return out;
 }
 
+// ------------------------------------------------------------
+// Talentos (feats) — feat de origem do background (2024) + as
+// melhorias de níveis 4/8/12/16/19 (talento OU +2/+1 de atributo).
+// ------------------------------------------------------------
+const featStubs = () => manifest().filter((x) => normType(x.type) === "feat");
+const featRec = (e) => (e && (e.__rec || recordsForEntity(e)[0])) || {};
+function featAbilityChoose(rec) {
+  for (const blk of rec?.ability || []) {
+    const ch = blk?.choose;
+    if (ch && Array.isArray(ch.from)) return { from: ch.from.map(abilityKey).filter(Boolean), count: Number(ch.count || ch.amount || 1) || 1 };
+  }
+  return null;
+}
+function featFixedAbility(rec) {
+  const out = {};
+  for (const blk of rec?.ability || []) {
+    if (!blk || blk.choose) continue;
+    for (const [k, v] of Object.entries(blk)) { const a = abilityKey(k); if (a && typeof v === "number") out[a] = (out[a] || 0) + v; }
+  }
+  return out;
+}
+function featFixedSkills(rec) {
+  const out = [];
+  for (const blk of rec?.skillProficiencies || []) {
+    if (!blk || blk.choose) continue;
+    for (const [k, v] of Object.entries(blk)) { const s = skillKey(k); if (s && v === true) out.push(s); }
+  }
+  return [...new Set(out)];
+}
+// "magic initiate; cleric|xphb" -> stub do feat "Magic Initiate" fonte XPHB
+function resolveFeatKey(key) {
+  const [rawName, src] = String(key).split("|");
+  const name = rawName.replace(/;.*$/, "").trim().toLowerCase();
+  return featStubs().find((e) => e.name.toLowerCase() === name && String(e.source || "").toLowerCase() === String(src || "").toLowerCase())
+    || featStubs().find((e) => e.name.toLowerCase() === name) || null;
+}
+function originFeatSpec(br) {
+  const blk = Array.isArray(br?.feats) ? br.feats[0] : null;
+  if (!blk) return null;
+  for (const [k, v] of Object.entries(blk)) {
+    if (k === "anyFromCategory" && v) {
+      const cats = [].concat(v.category || []).map((c) => String(c).toUpperCase());
+      return { fixed: null, categories: cats.length ? cats : ["O"] };
+    }
+    if (k === "any") return { fixed: null, categories: ["O"] };
+    if (v === true) { const e = resolveFeatKey(k); if (e) return { fixed: e, categories: null }; }
+  }
+  return null;
+}
+function asiSlotCount(classFeatures) {
+  return (classFeatures || []).filter((f) => /ability score improvement/i.test(String(f.name || ""))).length;
+}
+function chosenFeatEntities() {
+  const out = [];
+  const of = character.choiceSelections?.originFeat;
+  if (of) { const e = manifest().find((x) => x.id === of); if (e) out.push(e); }
+  for (const slot of character.choiceSelections?.asi || []) {
+    if (slot && slot.mode === "feat" && slot.feat) { const e = manifest().find((x) => x.id === slot.feat); if (e) out.push(e); }
+  }
+  return out;
+}
+// Bônus de atributo e perícias vindos dos talentos escolhidos.
+function featBonuses() {
+  const abilities = {}, skills = [];
+  for (const e of chosenFeatEntities()) {
+    const r = featRec(e);
+    const fx = featFixedAbility(r);
+    for (const [a, n] of Object.entries(fx)) abilities[a] = (abilities[a] || 0) + n;
+    const chooseSpec = featAbilityChoose(r);
+    if (chooseSpec) {
+      const picked = character.choiceSelections?.featAbility?.[e.id];
+      if (picked && chooseSpec.from.includes(picked)) abilities[picked] = (abilities[picked] || 0) + 1;
+    }
+    featFixedSkills(r).forEach((s) => skills.push(s));
+  }
+  return { abilities, skills: [...new Set(skills)] };
+}
+
 async function buildAutomation() {
   character.auto = character.auto || {};
   const cr = details.classRec || {}, rr = details.raceRec || {}, br = details.backgroundRec || {};
@@ -526,19 +604,28 @@ async function buildAutomation() {
   if (character.auto.speed && !character.manualSpeed) character.speed = character.auto.speed;
   if (character.auto.spellcastingAbility && !character.manualSpellAbility) character.spellAbility = character.auto.spellcastingAbility;
 
+  const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
+
   // Especialização: nº de perícias vem das características "Expertise" da
   // classe até o nível atual (Ladino 1/6, Bardo 3/10 = 2 cada).
-  let expertise = 0;
-  if (refs.class) {
-    const cf = await findClassFeatures(refs.class, Number(character.level)).catch(() => []);
-    expertise = cf.filter((f) => /^expertise$/i.test(String(f.name || "").trim())).length * 2;
-  }
+  const expertise = classFeats.filter((f) => /^expertise$/i.test(String(f.name || "").trim())).length * 2;
   character.auto.expertiseSlots = expertise;
-  // limpa especialização de perícias que não são mais proficiência
   character.skillExpertise = (character.skillExpertise || []).filter((k) => character.skillProficiencies.includes(k));
 
   const optFeatures = optionalFeatureProgs(Number(character.level));
   if (optFeatures.length) { try { await ensureCatalog("optionalfeature"); } catch (e) { console.warn("Catálogo de opções indisponível:", e); } }
+
+  // Talentos: feat de origem do background (2024) + slots de melhoria.
+  const asiCount = asiSlotCount(classFeats);
+  const originSpec = originFeatSpec(br);
+  if (asiCount || originSpec) { try { await ensureCatalog("feat"); } catch (e) { console.warn("Catálogo de talentos indisponível:", e); } }
+  const originSpec2 = asiCount || originSpec ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
+  if (originSpec2 && originSpec2.fixed) character.choiceSelections.originFeat = originSpec2.fixed.id;
+  else if (!originSpec2) character.choiceSelections.originFeat = null;
+  character.choiceSelections.asi = (character.choiceSelections.asi || []).slice(0, asiCount);
+  const fb = featBonuses();
+  character.auto.featSkills = fb.skills;
+  if (fb.skills.length) character.skillProficiencies = [...new Set([...character.skillProficiencies, ...fb.skills])];
 
   renderAutoChoices({
     classChoices: skillChoicesFrom(classProf),
@@ -547,6 +634,8 @@ async function buildAutomation() {
     bgAbility: bgAbilitySpec(br),
     expertise,
     optFeatures,
+    asiCount,
+    originSpec: originSpec2,
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -616,6 +705,59 @@ function renderAutoChoices(data) {
         return `<label class="choice-option"><input type="checkbox" data-optfeat="${esc(prog.name)}" value="${esc(x.id)}" ${on ? "checked" : ""} ${!on && chosen.length >= prog.count ? "disabled" : ""}><span>${esc(x.name)}${pr ? ` <em class="pr">${esc(pr)}</em>` : ""}</span></label>`;
       }).join("") : "<span class='muted'>Nenhuma opção no banco para esta edição.</span>"}</div></div>`);
   });
+
+  // --- Talentos ---
+  const eligibleFeats = (categories) => {
+    const lvl = Number(character.level);
+    return featStubs().filter((e) => {
+      if (hb(e) || /ability score improvement/i.test(e.name)) return false;
+      if (!matchesEdition(e, character.edition, true)) return false;
+      const r = featRec(e), cat = String(r.category || "").toUpperCase();
+      if (prereqLevel(r) > lvl) return false;
+      if (categories) return categories.includes(cat);
+      if (cat === "O") return false;
+      if (cat === "EB" && lvl < 19) return false;
+      return true;
+    }).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+  };
+  const featSelect = (attr, current, categories) =>
+    `<select ${attr}><option value="">— escolher talento —</option>${eligibleFeats(categories).map((e) =>
+      `<option value="${esc(e.id)}"${e.id === current ? " selected" : ""}>${esc(e.name)}${e.source ? ` (${esc(e.source)})` : ""}</option>`).join("")}</select>`;
+  const featAbilPicker = (featId) => {
+    const e = featId && manifest().find((x) => x.id === featId);
+    const spec = e && featAbilityChoose(featRec(e));
+    if (!spec || !spec.from.length) return "";
+    const cur = character.choiceSelections?.featAbility?.[featId] || "";
+    return `<label class="asi-pick"><span>talento +1</span><select data-feat-ability="${esc(featId)}"><option value="">—</option>${spec.from.map((k) => `<option value="${k}"${k === cur ? " selected" : ""}>${ABILITY_NAMES[k]}</option>`).join("")}</select></label>`;
+  };
+  if (data.originSpec) {
+    const os = data.originSpec;
+    if (os.fixed) {
+      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Talento de origem — ${esc(titleOf(refs.background))}</strong><span>Fixo</span></div>
+        <p>${esc(os.fixed.name)}${os.fixed.source ? ` (${esc(os.fixed.source)})` : ""} — concedido pelo background.</p>
+        <div class="asi-picks">${featAbilPicker(os.fixed.id)}</div></div>`);
+    } else {
+      const cur = character.choiceSelections.originFeat || "";
+      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Talento de origem — ${esc(titleOf(refs.background))}</strong><span>Escolha 1</span></div>
+        <div class="asi-picks">${featSelect("data-origin-feat", cur, os.categories)}${featAbilPicker(cur)}</div></div>`);
+    }
+  }
+  for (let i = 0; i < (data.asiCount || 0); i++) {
+    const slot = character.choiceSelections.asi[i] || { mode: "" };
+    const isAbil = slot.mode === "ability", isFeat = slot.mode === "feat";
+    let inner = `<div class="asi-modes">
+      <button type="button" class="asi-mode${isAbil ? " active" : ""}" data-asi-mode="${i}:ability">Atributo</button>
+      <button type="button" class="asi-mode${isFeat ? " active" : ""}" data-asi-mode="${i}:feat">Talento</button></div>`;
+    if (isAbil) {
+      const s = [(slot.abil || [])[0] || "", (slot.abil || [])[1] || ""];
+      const sel = (v, di) => `<select data-asi-abil="${i}:${di}"><option value="">—</option>${ABILITIES.map((k) => `<option value="${k}"${k === v ? " selected" : ""}>${ABILITY_NAMES[k]}</option>`).join("")}</select>`;
+      inner += `<p class="muted">+1 em dois atributos — ou o mesmo atributo nos dois campos para +2.</p><div class="asi-picks"><label class="asi-pick"><span>+1</span>${sel(s[0], 0)}</label><label class="asi-pick"><span>+1</span>${sel(s[1], 1)}</label></div>`;
+    } else if (isFeat) {
+      inner += `<div class="asi-picks">${featSelect(`data-asi-feat="${i}"`, slot.feat || "", null)}${featAbilPicker(slot.feat)}</div>`;
+    }
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Melhoria de atributo/talento nº ${i + 1}</strong><span>talento ou atributo</span></div>${inner}</div>`);
+  }
+
   $("auto-status").textContent = sections.length ? "Escolhas disponíveis" : "Nenhuma escolha pendente";
   if (!sections.length) { box.innerHTML = `<div class="auto-empty">As escolhas automáticas aparecerão aqui quando a classe/background/espécie fornecerem opções no banco.</div>`; return; }
   box.innerHTML = sections.join("");
@@ -671,6 +813,33 @@ function renderAutoChoices(data) {
     character.choiceSelections.optionalFeatures[key] = cur;
     saveCharacter(character); recalc();
   }));
+  box.querySelectorAll("[data-origin-feat]").forEach((s) => s.addEventListener("change", () => {
+    character.choiceSelections.originFeat = s.value || null;
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-asi-mode]").forEach((b) => b.addEventListener("click", () => {
+    const [i, m] = b.dataset.asiMode.split(":");
+    character.choiceSelections.asi[Number(i)] = { mode: m, abil: [], feat: "" };
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-asi-abil]").forEach((s) => s.addEventListener("change", () => {
+    const [i, di] = s.dataset.asiAbil.split(":").map(Number);
+    const slot = character.choiceSelections.asi[i] || { mode: "ability", abil: [] };
+    const abil = slot.abil ? slot.abil.slice() : [];
+    abil[di] = s.value || "";
+    character.choiceSelections.asi[i] = { mode: "ability", abil: abil.filter(Boolean) };
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-asi-feat]").forEach((s) => s.addEventListener("change", () => {
+    const i = Number(s.dataset.asiFeat);
+    character.choiceSelections.asi[i] = { mode: "feat", feat: s.value || "", abil: [] };
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-feat-ability]").forEach((s) => s.addEventListener("change", () => {
+    character.choiceSelections.featAbility = character.choiceSelections.featAbility || {};
+    character.choiceSelections.featAbility[s.dataset.featAbility] = s.value || "";
+    saveCharacter(character); recalc();
+  }));
 }
 
 // ------------------------------------------------------------
@@ -715,6 +884,13 @@ function abilityBonusTotal(a) {
       (character.choiceSelections?.bgAbility || []).forEach((k, i) => { if (k === a && weights[i]) b += weights[i]; });
     }
   }
+  // Melhorias de atributo dos slots de ASI (+2 em um / +1 em dois)
+  for (const slot of character.choiceSelections?.asi || []) {
+    if (slot && slot.mode === "ability") for (const k of slot.abil || []) if (k === a) b += 1;
+  }
+  // Bônus de atributo dos talentos escolhidos
+  const fb = featBonuses();
+  if (fb.abilities[a]) b += fb.abilities[a];
   return b;
 }
 function effScore(a) { return (Number(character.scores[a]) || 10) + abilityBonusTotal(a); }
@@ -829,6 +1005,11 @@ async function renderFeatures() {
     const r = await firstRecord(refs.background);
     const f = Array.isArray(r?.entries) ? r.entries.filter((x) => x && x.name && /feature|característica/i.test(x.name)) : [];
     if (f.length) groups.push(["BACKGROUND", f.map((x) => ({ name: x.name, entries: x.entries }))]);
+  }
+  // Talentos escolhidos (origem + melhorias)
+  const featEnts = chosenFeatEntities();
+  if (featEnts.length) {
+    groups.push(["TALENTOS", featEnts.map((e) => { const r = featRec(e); return { name: e.name, level: r.source || "—", entries: r.entries }; })]);
   }
   // Características opcionais escolhidas (estilo de luta, metamagia, invocações…)
   const ofSel = character.choiceSelections?.optionalFeatures || {};
