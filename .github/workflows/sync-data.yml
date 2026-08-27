@@ -2,38 +2,63 @@ name: Sincronizar banco de dados
 
 on:
   workflow_dispatch:
+
   schedule:
-    - cron: "0 5 * * *"
+    - cron: "17 4 * * *"
 
 permissions:
   contents: write
 
 jobs:
+
   sync:
+
     runs-on: ubuntu-latest
 
     steps:
-      - name: Baixar projeto
+
+      - name: Baixar seu repositório
         uses: actions/checkout@v4
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
 
-      - name: Sincronizar dados
-        run: node scripts/sync-data.mjs
-
-      - name: Salvar alterações
+      - name: Verificar Node.js
         run: |
+          node --version
+          npm --version
+
+      - name: Sincronizar banco de dados
+        run: node sync-data.mjs
+
+      - name: Verificar banco gerado
+        run: |
+          echo "Arquivos gerados:"
+          find data -maxdepth 2 -type f | head -100
+
+          echo ""
+          echo "Manifest:"
+          cat data/manifest.json | head -80
+
+      - name: Salvar banco atualizado
+        run: |
+
           git config user.name "github-actions[bot]"
+
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add data/
 
           if git diff --cached --quiet; then
+
             echo "Nenhuma alteração nos dados."
+
           else
+
             git commit -m "chore: atualizar banco de dados"
+
             git push
+
           fi
