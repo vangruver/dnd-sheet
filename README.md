@@ -18,10 +18,17 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   - **lista de magias completa** da classe, por nível, via `spells/sources.json`.
 - **Point buy** 27 pontos, atributos editáveis, especialização.
 - **Compêndio** e **catálogo de equipamento** pesquisáveis (itens e magias carregam sob demanda).
+- **Aba "Raças & Classes"**: galeria com a descrição narrativa completa (lore) de cada raça/espécie
+  e classe — texto oficial do 5etools (`fluff-races.json` / `class/fluff-class-*.json`) e, para
+  homebrew, o `raceFluff`/`classFluff` do próprio arquivo — com busca, filtro por tipo e por
+  Oficial/Homebrew, fatos rápidos (dado de vida, atributo primário, deslocamento, tamanho...) e a
+  lista de subclasses/subespécies. Quando o registro não tem lore estruturada, mostra os traços
+  mecânicos com um aviso.
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
-- **Classes e subclasses homebrew** (`TheGiddyLimit/homebrew`) aparecem lado a lado com o conteúdo
-  oficial — use o seletor **Conteúdo** (Oficial / Oficial + Homebrew / Apenas Homebrew) no topo da página.
+- **Classes, subclasses e raças/subespécies homebrew** (`TheGiddyLimit/homebrew`) aparecem lado a
+  lado com o conteúdo oficial — use o seletor **Conteúdo** (Oficial / Oficial + Homebrew / Apenas
+  Homebrew) no topo da página.
 - **Sincronização diária**: um workflow do GitHub Actions baixa a versão mais nova dos JSONs do 5etools
   e do homebrew todo dia às 05h (horário de Brasília) e as grava em `data/`. Quando há uma sincronização
   nova desde a sua última visita, um aviso aparece no topo da página de montar ficha, com um botão para
@@ -78,7 +85,7 @@ resistências do Guerreiro, listas de magia não vazias em 2014 e 2024).
 | `src/app.js` | interface, automação da ficha, abas, aviso de banco atualizado |
 | `src/storage.js` | personagem em `localStorage`, importar/exportar, versão de dados já vista |
 | `sync-data.mjs` | baixa 5etools (2014/2024) + homebrew e gera `data/raw/` + `data/manifest.json` + `data/version.json` |
-| `data/version.json` | gerado pelo `sync-data.mjs`; lista os arquivos de classe/subclasse homebrew e a data da última sincronização |
+| `data/version.json` | gerado pelo `sync-data.mjs`; lista os arquivos de classe/subclasse e de raça/subespécie homebrew, além da data da última sincronização |
 
 ## Limitações conhecidas (v1)
 

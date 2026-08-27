@@ -830,6 +830,23 @@ async function main() {
       )
     ).sort();
 
+  // Mesma lógica das classes, mas para raça/subespécie homebrew —
+  // usado pela ficha para mostrar as descrições de raças homebrew
+  // lado a lado com as oficiais (ver src/database.js -> loadRaces).
+  const homebrewRaceFiles =
+    Array.from(
+      new Set(
+        entities
+          .filter(
+            e =>
+              e.homebrew &&
+              (e.type === "race" ||
+                e.type === "subrace")
+          )
+          .map(e => e.file)
+      )
+    ).sort();
+
   const version = {
     schema: 1,
 
@@ -848,6 +865,12 @@ async function main() {
 
       classFileCount:
         homebrewClassFiles.length,
+
+      raceFiles:
+        homebrewRaceFiles,
+
+      raceFileCount:
+        homebrewRaceFiles.length,
     },
   };
 
