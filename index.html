@@ -1,17 +1,128 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ficha D&D 5e V4</title><link rel="stylesheet" href="style.css"></head>
-<body><header class="topbar"><div><h1>Ficha D&D 5e</h1><small id="db-status">Carregando banco…</small></div><div class="toolbar">
-<label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
-<label>Conteúdo<select id="content"><option value="all">Oficial + Homebrew</option><option value="official">Apenas oficial</option><option value="homebrew">Apenas Homebrew</option></select></label>
-<button id="new-character">Novo</button><button id="save-character">Salvar</button><button id="export-character">Exportar</button><label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label></div></header>
-<main class="page"><section class="panel"><div class="section-title">Criação automática</div><div class="grid four">
-<label>Nome<input id="name" placeholder="Nome"></label><label>Nível<input id="level" type="number" min="1" max="20" value="1"></label><label>Experiência<input id="xp" type="number" min="0"></label><label>Inspiração<input id="inspiration" type="number" min="0"></label></div>
-<div class="grid four choice-grid"><label>Espécie / Raça<select id="race"></select></label><label>Classe<select id="class"></select></label><label>Subclasse<select id="subclass"></select></label><label>Background<select id="background"></select></label></div><p id="selection-note" class="muted"></p></section>
-<nav class="tabs"><button class="tab active" data-tab="overview">Resumo</button><button class="tab" data-tab="abilities">Atributos</button><button class="tab" data-tab="skills">Perícias</button><button class="tab" data-tab="combat">Combate</button><button class="tab" data-tab="spells">Magias</button><button class="tab" data-tab="features">Progressão</button></nav>
-<section id="tab-overview" class="tab-panel active"><div class="two-col"><section class="panel"><div class="section-title">Calculado automaticamente</div><div class="combat-grid">
-<div class="big-stat"><span>Proficiência</span><strong id="pb">+2</strong></div><div class="big-stat"><span>PV</span><strong id="hp">—</strong></div><div class="big-stat"><span>Dado de vida</span><strong id="hit-die">—</strong></div><div class="big-stat"><span>CA</span><strong id="ac">10</strong></div><div class="big-stat"><span>Iniciativa</span><strong id="initiative">+0</strong></div><div class="big-stat"><span>Percepção passiva</span><strong id="passive">10</strong></div><div class="big-stat"><span>Deslocamento</span><strong id="speed">—</strong></div><div class="big-stat"><span>CD magia</span><strong id="spell-dc">—</strong></div><div class="big-stat"><span>Ataque mágico</span><strong id="spell-attack">—</strong></div></div></section><section class="panel"><div class="section-title">Origem</div><div id="selection-details"></div></section></div></section>
-<section id="tab-abilities" class="tab-panel"><section class="panel"><div class="section-title">Atributos</div><div id="attributes" class="ability-grid"></div></section><section class="panel"><div class="section-title">Resistências</div><div id="saves" class="skill-grid"></div></section></section>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#11151d">
+<title>Ficha D&D 5e — Super V5</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><h1>Ficha D&D 5e</h1><small id="db-status">Carregando banco…</small></div>
+  <div class="toolbar">
+    <label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
+    <label>Conteúdo<select id="content"><option value="all">Oficial + Homebrew</option><option value="official">Apenas oficial</option><option value="homebrew">Apenas Homebrew</option></select></label>
+    <button id="new-character">Novo</button><button id="save-character">Salvar</button><button id="export-character">Exportar</button>
+    <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
+  </div>
+</header>
+
+<main class="page">
+<section class="panel hero">
+  <div class="section-title">Criação automática</div>
+  <div class="grid four">
+    <label>Nome<input id="name" placeholder="Nome do personagem"></label>
+    <label>Nível<input id="level" type="number" min="1" max="20" value="1"></label>
+    <label>Experiência<input id="xp" type="number" min="0" value="0"></label>
+    <label>Inspiração<input id="inspiration" type="number" min="0" value="0"></label>
+  </div>
+  <div class="selection-grid">
+    <div class="selector-block">
+      <div class="selector-head"><label>Espécie / Raça</label><button class="info-btn" data-info="race">ⓘ</button></div>
+      <input class="search-input" id="race-search" placeholder="Pesquisar espécie/raça…">
+      <select id="race" size="6"></select>
+      <div id="race-preview" class="mini-preview"></div>
+    </div>
+    <div class="selector-block">
+      <div class="selector-head"><label>Classe</label><button class="info-btn" data-info="class">ⓘ</button></div>
+      <input class="search-input" id="class-search" placeholder="Pesquisar classe…">
+      <select id="class" size="6"></select>
+      <div id="class-preview" class="mini-preview"></div>
+    </div>
+    <div class="selector-block">
+      <div class="selector-head"><label>Subclasse</label><button class="info-btn" data-info="subclass">ⓘ</button></div>
+      <input class="search-input" id="subclass-search" placeholder="Pesquisar subclasse…">
+      <select id="subclass" size="6"></select>
+      <div id="subclass-preview" class="mini-preview"></div>
+    </div>
+    <div class="selector-block">
+      <div class="selector-head"><label>Background</label><button class="info-btn" data-info="background">ⓘ</button></div>
+      <input class="search-input" id="background-search" placeholder="Pesquisar background…">
+      <select id="background" size="6"></select>
+      <div id="background-preview" class="mini-preview"></div>
+    </div>
+  </div>
+  <div class="legend"><span class="pill official">OFICIAL</span><span class="pill brew">HOMEBREW</span><span id="selection-note" class="muted"></span></div>
+</section>
+
+<nav class="tabs">
+<button class="tab active" data-tab="overview">Resumo</button>
+<button class="tab" data-tab="abilities">Atributos</button>
+<button class="tab" data-tab="skills">Perícias</button>
+<button class="tab" data-tab="combat">Combate</button>
+<button class="tab" data-tab="spells">Magias</button>
+<button class="tab" data-tab="features">Progressão</button>
+<button class="tab" data-tab="compendium">Compêndio</button>
+</nav>
+
+<section id="tab-overview" class="tab-panel active">
+<div class="two-col">
+<section class="panel"><div class="section-title">Calculado automaticamente</div><div class="combat-grid">
+<div class="big-stat"><span>Proficiência</span><strong id="pb">+2</strong></div>
+<div class="big-stat"><span>PV máximos</span><strong id="hp">8</strong></div>
+<div class="big-stat"><span>Dado de vida</span><strong id="hit-die">d8</strong></div>
+<div class="big-stat"><span>CA</span><strong id="ac">10</strong></div>
+<div class="big-stat"><span>Iniciativa</span><strong id="initiative">+0</strong></div>
+<div class="big-stat"><span>Percepção passiva</span><strong id="passive">10</strong></div>
+<div class="big-stat"><span>Deslocamento</span><strong id="speed">30 ft</strong></div>
+<div class="big-stat"><span>CD magia</span><strong id="spell-dc">—</strong></div>
+<div class="big-stat"><span>Ataque mágico</span><strong id="spell-attack">—</strong></div>
+</div></section>
+<section class="panel"><div class="section-title">Escolhas atuais</div><div id="selection-details" class="details"></div></section>
+</div>
+</section>
+
+<section id="tab-abilities" class="tab-panel">
+<section class="panel"><div class="section-title">Atributos</div><div id="attributes" class="ability-grid"></div></section>
+<section class="panel"><div class="section-title">Testes de resistência</div><div id="saves" class="skill-grid"></div></section>
+</section>
+
 <section id="tab-skills" class="tab-panel"><section class="panel"><div class="section-title">Perícias</div><div id="skills" class="skill-grid"></div></section></section>
-<section id="tab-combat" class="tab-panel"><div class="two-col"><section class="panel"><div class="section-title">Combate</div><div class="grid four"><label>PV atuais<input id="hp-current" type="number" min="0"></label><label>PV temporários<input id="hp-temp" type="number" min="0"></label><label>CA<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input"></label></div></section><section class="panel"><div class="section-title">Ataques</div><div id="attacks"></div></section></div></section>
-<section id="tab-spells" class="tab-panel"><section class="panel"><div class="section-title">Magias</div><div class="spell-toolbar"><input id="spell-search" type="search" placeholder="Pesquisar"><select id="spell-level-filter"><option value="all">Todos</option><option value="0">Truques</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option><option value="5">5º</option><option value="6">6º</option><option value="7">7º</option><option value="8">8º</option><option value="9">9º</option></select></div><div id="spells" class="spell-grid"></div></section></section>
-<section id="tab-features" class="tab-panel"><section class="panel"><div class="section-title">Progressão por nível</div><div id="progression" class="progression"></div></section><section class="panel"><div class="section-title">Recursos de conjuração</div><div id="spell-progression"></div></section></section>
-<div id="toast" class="toast"></div></main><script type="module" src="app.js"></script></body></html>
+
+<section id="tab-combat" class="tab-panel">
+<div class="two-col">
+<section class="panel"><div class="section-title">Combate</div><div class="grid four">
+<label>PV atuais<input id="hp-current" type="number" min="0"></label>
+<label>PV temporários<input id="hp-temp" type="number" min="0"></label>
+<label>CA<input id="ac-input" type="number" min="0"></label>
+<label>Deslocamento<input id="speed-input"></label>
+</div></section>
+<section class="panel"><div class="section-title">Ataques</div><div id="attacks"></div></section>
+</div></section>
+
+<section id="tab-spells" class="tab-panel">
+<section class="panel"><div class="section-title">Magias do banco</div>
+<div class="spell-toolbar"><input id="spell-search" type="search" placeholder="Pesquisar magia…"><select id="spell-level-filter">
+<option value="all">Todos os níveis</option><option value="0">Truques</option><option value="1">1º</option><option value="2">2º</option><option value="3">3º</option><option value="4">4º</option><option value="5">5º</option><option value="6">6º</option><option value="7">7º</option><option value="8">8º</option><option value="9">9º</option>
+</select></div><div id="spells" class="spell-grid"></div></section></section>
+
+<section id="tab-features" class="tab-panel">
+<section class="panel"><div class="section-title">Progressão por nível</div><div id="progression" class="progression"></div></section>
+<section class="panel"><div class="section-title">Conjuração</div><div id="spell-progression"></div></section>
+</section>
+
+<section id="tab-compendium" class="tab-panel">
+<section class="panel">
+<div class="section-title">Compêndio</div>
+<div class="compendium-toolbar"><input id="compendium-search" type="search" placeholder="Pesquisar em classes, espécies, subclasses, backgrounds, talentos, magias…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="feat">Talentos</option><option value="spell">Magias</option><option value="item">Itens</option></select></div>
+<div id="compendium-results" class="card-grid"></div>
+</section></section>
+</main>
+
+<div id="modal" class="modal" aria-hidden="true"><div class="modal-backdrop" data-close-modal></div><article class="modal-card">
+<header><div><div id="modal-kicker" class="kicker"></div><h2 id="modal-title"></h2></div><button class="close" data-close-modal>×</button></header>
+<div id="modal-meta" class="modal-meta"></div><div id="modal-body" class="modal-body"></div>
+</article></div>
+<div id="toast" class="toast"></div>
+<script type="module" src="app.js"></script>
+</body></html>
