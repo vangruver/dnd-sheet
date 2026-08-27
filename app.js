@@ -1,4 +1,4 @@
-import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,recordsForEntity,stats,manifestEntries,isHomebrew as hb,normType} from "./database.js";
+import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,recordsForEntity,bestRecord,stats,manifestEntries,isHomebrew as hb,normType} from "./database.js";
 import {ABILITIES,ABILITY_NAMES,SKILLS,mod,fmt,proficiency,hpAverage,abilityKey,spellDc,spellAttack} from "./rules.js";
 import {saveCharacter,loadCharacter,clearCharacter,downloadCharacter,readCharacterFile} from "./storage.js";
 
@@ -34,8 +34,17 @@ function richText(v){
 }
 function plain(v){const d=document.createElement("div");d.innerHTML=richText(v);return d.textContent.replace(/\s+/g," ").trim()}
 async function records(e){return e?getRecordArrays(e):[]}
-async function firstRecord(e){const a=await records(e);return a.find(r=>String(r.name||"").toLowerCase()===String(e?.name||"").toLowerCase())||a[0]||null}
-function descriptionOf(r,e){return r?.entries||r?.desc||r?.description||r?.fluff||r?.traits||r?.featureEntries||e?.description||""}
+async function firstRecord(e){return e?bestRecord(e):null}
+function descriptionOf(r,e){
+ const candidates=[
+   r?.entries,r?.desc,r?.description,
+   r?.fluff?.entries,r?.fluff?.desc,r?.fluff?.description,
+   r?.traits,r?.featureEntries,
+   r?.__fluff?.entries,r?.__fluff?.desc,r?.__fluff?.description,
+   e?.description,e?.entries
+ ];
+ return candidates.find(v=>v&&((Array.isArray(v)&&v.length)||typeof v==="string"))||"";
+}
 function classMatches(x,c){
  if(!c)return false;
  const n=String(c.name||"").toLowerCase(),cn=String(x.className||x.class||x.classNameText||"").toLowerCase();

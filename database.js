@@ -97,5 +97,55 @@ export async function findSubclassFeatures(sub,level){
  return dedupeFeatures(out);
 }
 function dedupeFeatures(a){const m=new Map();a.forEach(x=>m.set(`${x.name}|${x.level}|${x.source}`,x));return [...m.values()].sort((a,b)=>Number(a.level||0)-Number(b.level||0))}
+
+function pluralTypeForFluff(type){
+ const map={race:"races",background:"backgrounds",item:"items",spell:"spells",creature:"creatures",condition:"conditionsdiseases",vehicle:"vehicles"};
+ return map[normType(type)]||null;
+}
+function sourceMatches(a,e){
+ const as=String(a?.source||a?.sourceId||"").toLowerCase();
+ const es=String(e?.source||e?.sourceId||"").toLowerCase();
+ return !es||!as||as===es;
+}
+function nameMatches(a,e){
+ const an=String(a?.name||a?.raceName||a?.backgroundName||"").trim().toLowerCase();
+ const en=String(e?.name||"").trim().toLowerCase();
+ return !en||!an||an===en;
+}
+async function tryCompanionFluff(e){
+ const plural=pluralTypeForFluff(e?.type);
+ if(!plural||!e?.file)return null;
+ const file=String(e.file).replace(/^\.?\//,"");
+ const dir=file.includes("/")?file.slice(0,file.lastIndexOf("/")+1):"";
+ const candidates=[
+   `${dir}fluff-${plural}.json`,
+   `${dir}fluff.json`,
+   file.replace(/(^|\/)([^/]+)\.json$/i,`$1fluff-$2.json`)
+ ];
+ for(const c of [...new Set(candidates)]){
+   try{
+     const j=await loadFile({file:c});
+     if(!j||j===e)continue;
+     const arr=arrays(j);
+     const hit=arr.find(x=>nameMatches(x,e)&&sourceMatches(x,e));
+     if(hit)return hit;
+   }catch{}
+ }
+ return null;
+}
+export async function bestRecord(e){
+ if(!e)return null;
+ const a=await recordsForEntity(e);
+ let hit=a.find(r=>nameMatches(r,e)&&sourceMatches(r,e));
+ if(!hit)hit=a.find(r=>nameMatches(r,e))||a[0]||null;
+ const fluff=await tryCompanionFluff(e);
+ if(fluff){
+   return {...hit,...fluff,__main:hit,__fluff:fluff,
+     entries: fluff.entries||fluff.desc||fluff.description||hit?.entries,
+     images: fluff.images||hit?.images};
+ }
+ return hit;
+}
+
 export async function getRecordArrays(e){return recordsForEntity(e)}
 export function stats(){const a=manifestEntries();return {entities:a.length,official:a.filter(x=>!isHomebrew(x)).length,homebrew:a.filter(isHomebrew).length}}
