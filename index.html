@@ -1,118 +1,109 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#17130f">
-<title>Ficha D&D 5e — Super V8</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ficha D&D 5e</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="appbar no-print">
-  <div class="brand">
-    <div class="brand-mark">D&D</div>
-    <div><h1>Ficha de Personagem</h1><small id="db-status">Carregando banco…</small></div>
-  </div>
-  <div class="toolbar">
-    <label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
-    <label>Conteúdo<select id="content"><option value="all">Oficial + Homebrew</option><option value="official">Apenas oficial</option><option value="homebrew">Apenas Homebrew</option></select></label>
-    <button id="new-character">Novo</button>
-    <button id="save-character">Salvar</button>
-    <button id="export-character">Exportar</button>
-    <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
-    <button id="preview-pdf" class="primary">Ficha em PDF</button><button id="print-character">Imprimir / PDF</button>
-  </div>
-</header>
-
-<main class="sheet-shell">
-  <section class="sheet-head">
-    <div class="name-block"><input id="name" class="character-name" placeholder="NOME DO PERSONAGEM" aria-label="Nome do personagem"><span>Nome do personagem</span></div>
-    <div class="head-box"><span>Classe e nível</span><strong id="head-class">—</strong></div>
-    <div class="head-box"><span>Background</span><strong id="head-background">—</strong></div>
-    <div class="head-box"><span>Espécie</span><strong id="head-race">—</strong></div>
-    <div class="head-box small-box"><span>Nível</span><input id="level" type="number" min="1" max="20" value="1"></div>
-    <div class="head-box small-box"><span>XP</span><input id="xp" type="number" min="0" value="0"></div>
-  </section>
-
-  <section class="creator no-print" id="creator">
-    <div class="creator-title"><span>CONSTRUÇÃO DO PERSONAGEM</span><div><small>Escolha uma opção. A ficha usa o banco sincronizado.</small><button id="collapse-creator" class="link-btn">Recolher</button></div></div>
-    <div class="choice-grid">
-      <article class="choice-card" id="choice-race">
-        <div class="choice-label">Espécie / Raça <button class="tiny-info" data-info="race">ⓘ</button></div>
-        <div class="choice-value" id="choice-race-value">Escolher…</div><div class="choice-meta" id="choice-race-meta">Nenhuma opção selecionada</div>
-        <p id="race-preview" class="choice-desc">Escolha uma espécie para começar.</p><button class="change-choice" data-pick="race">Escolher espécie</button>
-      </article>
-      <article class="choice-card" id="choice-class">
-        <div class="choice-label">Classe <button class="tiny-info" data-info="class">ⓘ</button></div>
-        <div class="choice-value" id="choice-class-value">Escolher…</div><div class="choice-meta" id="choice-class-meta">Nenhuma opção selecionada</div>
-        <p id="class-preview" class="choice-desc">Escolha uma classe para começar.</p><button class="change-choice" data-pick="class">Escolher classe</button>
-      </article>
-      <article class="choice-card" id="choice-subclass">
-        <div class="choice-label">Subclasse <button class="tiny-info" data-info="subclass">ⓘ</button></div>
-        <div class="choice-value" id="choice-subclass-value">Escolha a classe primeiro</div><div class="choice-meta" id="choice-subclass-meta">—</div>
-        <p id="subclass-preview" class="choice-desc">A lista será filtrada pela classe escolhida.</p><button class="change-choice" data-pick="subclass">Escolher subclasse</button>
-      </article>
-      <article class="choice-card" id="choice-background">
-        <div class="choice-label">Background <button class="tiny-info" data-info="background">ⓘ</button></div>
-        <div class="choice-value" id="choice-background-value">Escolher…</div><div class="choice-meta" id="choice-background-meta">Nenhuma opção selecionada</div>
-        <p id="background-preview" class="choice-desc">Escolha um background.</p><button class="change-choice" data-pick="background">Escolher background</button>
-      </article>
+  <header class="topbar">
+    <div>
+      <h1>Ficha de Personagem</h1>
+      <span id="dbStatus" class="status">Dados locais prontos</span>
     </div>
-    <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span id="db-count">—</span></div>
-  </section>
-
-  <section class="auto-panel paper-card no-print" id="auto-panel">
-    <div class="auto-panel-title"><div><span>AUTOMAÇÃO DA FICHA</span><small>As opções abaixo vêm diretamente do banco e são aplicadas à ficha automaticamente.</small></div><span id="auto-status" class="auto-status">Aguardando seleção</span></div>
-    <div id="auto-choices" class="auto-choices"><div class="auto-empty">Escolha uma classe e um background para ver as escolhas disponíveis.</div></div>
-  </section>
-
-  <nav class="tabs no-print" id="tabs">
-    <button class="tab active" data-tab="sheet">Ficha</button>
-    <button class="tab" data-tab="abilities">Atributos & Perícias</button>
-    <button class="tab" data-tab="combat">Combate</button>
-    <button class="tab" data-tab="spells">Magias</button>
-    <button class="tab" data-tab="features">Características</button>
-    <button class="tab" data-tab="equipment">Equipamento</button>
-    <button class="tab" data-tab="compendium">Compêndio</button>
-  </nav>
-
-  <section class="tab-page active" id="tab-sheet">
-    <div class="page-grid">
-      <section class="paper-card abilities-card"><h2>Atributos</h2><div id="ability-grid" class="ability-grid"></div></section>
-      <section class="paper-card defense-card"><h2>Defesa & Movimento</h2><div class="defense-grid">
-        <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div>
-      </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div></section>
-      <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div class="death"><span>Salvamentos contra a morte</span><div><button data-death="s0">○</button><button data-death="s1">○</button><button data-death="s2">○</button><i></i><button data-death="f0">○</button><button data-death="f1">○</button><button data-death="f2">○</button></div></div></section>
-      <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>
-      <section class="paper-card skills-card"><h2>Perícias</h2><div id="skill-list" class="skill-grid"></div></section>
-      <section class="paper-card identity-card"><h2>Identidade & Fontes</h2><div id="identity"></div></section>
+    <div class="actions">
+      <button id="previewBtn">Ficha em PDF</button>
+      <button id="printBtn">Imprimir</button>
+      <button id="saveBtn">Salvar</button>
+      <button id="clearBtn" class="ghost">Limpar</button>
     </div>
-  </section>
+  </header>
 
-  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar"><strong>Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button></div><div id="ability-editor" class="ability-editor"></div><p class="muted">Use +/− para distribuir pontos. O modo de pontos respeita o custo padrão de 8 a 15. Ajustes vindos da espécie/background podem ser aplicados depois.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section></div></section>
+  <main id="sheet" class="sheet">
+    <section class="card hero">
+      <div class="grid identity">
+        <label>Nome do personagem<input id="name" data-field="name"></label>
+        <label>Classe<select id="class" data-field="class"></select></label>
+        <label>Nível<input id="level" data-field="level" type="number" min="1" max="20" value="1"></label>
+        <label>Raça<input id="race" data-field="race"></label>
+        <label>Antecedente<input id="background" data-field="background"></label>
+        <label>Jogador<input id="player" data-field="player"></label>
+        <label>Tendência<input id="alignment" data-field="alignment"></label>
+        <label>XP<input id="xp" data-field="xp" type="number" min="0"></label>
+      </div>
+    </section>
 
-  <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section></div></section>
+    <section class="card">
+      <h2>Atributos</h2>
+      <div class="ability-grid" id="abilities"></div>
+      <div class="derived">
+        <label>Proficiência<input id="proficiency" readonly></label>
+        <label>Deslocamento<input id="speed" data-field="speed"></label>
+        <label>Inspiração<input id="inspiration" data-field="inspiration"></label>
+        <label>CA<input id="ac" data-field="ac"></label>
+        <label>Iniciativa<input id="initiative" data-field="initiative" readonly></label>
+        <label>PV máximo<input id="hpMax" data-field="hpMax" type="number"></label>
+        <label>PV atual<input id="hpCurrent" data-field="hpCurrent" type="number"></label>
+        <label>Dados de vida<input id="hitDice" data-field="hitDice"></label>
+      </div>
+    </section>
 
-  <section class="tab-page" id="tab-spells"><div class="page-title"><h2>Magias</h2><p>Quando uma classe possuir uma lista de magias no banco, todas as magias disponíveis aparecem por nível. Use as bolinhas para marcar as magias preparadas/conhecidas.</p></div>
-    <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias no banco</span><b id="spell-count">0</b></div></section>
-    <div id="spellbook"></div>
-  </section>
+    <section class="card">
+      <h2>Perícias</h2>
+      <p class="hint">Escolha as perícias permitidas pela classe. O bônus é calculado automaticamente.</p>
+      <div id="skills" class="skill-list"></div>
+    </section>
 
-  <section class="tab-page" id="tab-features"><div class="page-title"><h2>Características</h2><p>Características da classe, subclasse e espécie disponíveis até o nível atual.</p></div><div id="feature-list" class="feature-columns"></div></section>
+    <section class="card">
+      <h2>Classe e escolhas</h2>
+      <div id="classInfo" class="info-box">Selecione uma classe.</div>
+      <div id="classChoices"></div>
+    </section>
 
-  <section class="tab-page" id="tab-equipment"><div class="page-title"><h2>Equipamento & Inventário</h2><p>Catálogo completo do banco, separado por tipo. Adicione itens ao inventário e use os filtros para encontrar espadas, arcos, martelos, armaduras e muito mais.</p></div>
-    <section class="paper-card equipment-toolbar"><div class="segmented" id="equipment-cats">
-      <button class="active" data-eqcat="inventory">Meu inventário</button><button data-eqcat="armor">Armaduras</button><button data-eqcat="weapons">Armas</button><button data-eqcat="shields">Escudos</button><button data-eqcat="gear">Equipamento</button><button data-eqcat="all">Todos</button>
-    </div><div class="search-row"><input id="equipment-search" placeholder="Pesquisar: espada, arco, martelo, cota de malha…"><select id="weapon-filter"><option value="">Todas as armas</option><option value="sword">Espadas</option><option value="bow">Arcos</option><option value="hammer">Martelos</option><option value="axe">Machados</option><option value="mace">Maças</option><option value="dagger">Adagas</option></select></div></section>
-    <section id="inventory-panel" class="paper-card"><h2>Meu inventário</h2><div id="inventory-list"></div></section>
-    <section id="equipment-catalog" class="paper-card hidden"><h2>Catálogo</h2><div id="equipment-list" class="catalog-grid"></div></section>
-  </section>
+    <section class="card">
+      <h2>Magias</h2>
+      <div class="spell-toolbar">
+        <label>Filtro<input id="spellSearch" placeholder="Buscar magia..."></label>
+        <label>Nível<select id="spellLevelFilter"></select></label>
+      </div>
+      <div id="spells" class="spell-list"></div>
+    </section>
 
-  <section class="tab-page" id="tab-compendium"><div class="page-title"><h2>Compêndio</h2><p>Pesquise diretamente nas 34 mil+ entidades sincronizadas.</p></div><section class="paper-card compendium-toolbar"><input id="compendium-search" placeholder="Pesquisar no compêndio…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="spell">Magias</option><option value="item">Itens</option><option value="feat">Talentos</option></select></section><div id="compendium-results" class="catalog-grid"></div></section>
-</main>
+    <section class="card">
+      <h2>Equipamentos</h2>
+      <div class="equipment-tabs">
+        <button data-tab="weapons" class="active">Armas</button>
+        <button data-tab="armor">Armaduras</button>
+        <button data-tab="gear">Equipamentos</button>
+      </div>
+      <div id="equipment"></div>
+    </section>
 
-<div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-box"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>
-<div id="toast" class="toast"></div>
-<script type="module" src="app.js"></script>
+    <section class="card">
+      <h2>Inventário</h2>
+      <div id="inventory"></div>
+      <button id="addInventory">+ Adicionar item</button>
+    </section>
+
+    <section class="card">
+      <h2>Características, talentos e idiomas</h2>
+      <textarea id="features" data-field="features" rows="8" placeholder="Características, talentos, proficiências, idiomas..."></textarea>
+    </section>
+
+    <section class="card">
+      <h2>Personalidade e história</h2>
+      <div class="two-col">
+        <label>Traços de personalidade<textarea data-field="traits"></textarea></label>
+        <label>Ideais<textarea data-field="ideals"></textarea></label>
+        <label>Vínculos<textarea data-field="bonds"></textarea></label>
+        <label>Defeitos<textarea data-field="flaws"></textarea></label>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="database.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

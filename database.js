@@ -1,151 +1,74 @@
-const BASE=new URL("./",import.meta.url);
-const MANIFEST=new URL("data/manifest.json",BASE).href;
-let catalog=null,entriesCache=null;
-const fileCache=new Map(),recordCache=new Map();
-
-export async function initDatabase(){
- const r=await fetch(MANIFEST,{cache:"no-store"});
- if(!r.ok)throw new Error(`Manifesto ${r.status} — ${MANIFEST}`);
- catalog=await r.json(); entriesCache=null; return catalog;
-}
-export const getCatalog=()=>catalog;
-const typeMap={classes:"class",class:"class",subclasses:"subclass",subclass:"subclass",races:"race",race:"race",species:"race",
- backgrounds:"background",background:"background",spells:"spell",spell:"spell",feats:"feat",feat:"feat",items:"item",item:"item",
- classfeature:"classFeature",classfeatures:"classFeature",subclassfeature:"subclassFeature",subclassfeatures:"subclassFeature"};
-export const normType=t=>typeMap[String(t||"").toLowerCase()]||String(t||"");
-function flattenManifest(){
- if(!catalog)return [];
- const out=[],seen=new Set();
- const add=(x,inherited={})=>{
-  if(!x)return;
-  if(Array.isArray(x)){x.forEach(v=>add(v,inherited));return}
-  if(typeof x!=="object")return;
-  if(x.file||x.path||x.url||x.id||x.name){
-   const e={...inherited,...x}; e.type=normType(e.type||e.category||e.kind);
-   e.id=e.id||`${e.type}:${e.name||e.file||e.path}`;
-   if(!seen.has(e.id)){seen.add(e.id);out.push(e)}
-  }
-  for(const [k,v] of Object.entries(x)){
-   if(["file","path","url"].includes(k))continue;
-   if(v&&typeof v==="object")add(v,{...inherited,...(typeMap[String(k).toLowerCase()]?{type:normType(k)}:{})});
-  }
- };
- if(catalog.entities)add(catalog.entities);
- for(const k of ["classes","subclasses","races","species","backgrounds","spells","feats","items","files"])if(catalog[k])add(catalog[k],{type:normType(k)});
- return out;
-}
-export function manifestEntries(){return entriesCache||(entriesCache=flattenManifest())}
-export function isHomebrew(x){return !!(x?.homebrew||x?.isHomebrew||x?.brew||x?.sourceCategory==="homebrew"||x?._isBrew)}
-export function editionOf(x){return String(x?.edition||x?.rules||x?.version||"").toLowerCase()}
-function editionOK(x,edition){
- const e=editionOf(x); if(!e)return true;
- if(e==="classic"||e==="legacy")return edition==="2014";
- if(e==="one"||e==="2024")return edition==="2024";
- if(e==="both"||e==="all")return true;
- return e.includes(String(edition).toLowerCase());
-}
-export function filterEntities(type,edition,content="all",query=""){
- const q=String(query||"").trim().toLowerCase();
- return manifestEntries().filter(x=>{
-  if(normType(x.type)!==type||!editionOK(x,edition))return false;
-  const hb=isHomebrew(x); if(content==="official"&&hb)return false;if(content==="homebrew"&&!hb)return false;
-  return !q||String(x.name||"").toLowerCase().includes(q)||String(x.source||"").toLowerCase().includes(q);
- }).sort((a,b)=>Number(isHomebrew(a))-Number(isHomebrew(b))||String(a.name||"").localeCompare(String(b.name||""),"pt-BR"));
-}
-async function loadFile(e){
- const f=e?.file||e?.path||e?.url;if(!f)return e;
- const key=String(f).replace(/^\.?\//,"");if(fileCache.has(key))return fileCache.get(key);
- const url=/^https?:\/\//i.test(key)?key:new URL(`data/${key}`,BASE).href;
- const r=await fetch(url);if(!r.ok)return e;const j=await r.json();fileCache.set(key,j);return j;
-}
-export async function loadEntity(e){
- if(!e)return null;if(recordCache.has(e.id))return recordCache.get(e.id);
- const j=await loadFile(e);recordCache.set(e.id,j);return j;
-}
-function arrays(j){
- if(!j||typeof j!=="object")return [];
- const out=[];for(const [k,v] of Object.entries(j))if(Array.isArray(v))v.forEach(x=>{if(x&&typeof x==="object")out.push({...x,__type:normType(k)})});
- return out;
-}
-export async function recordsForEntity(e){
- const j=await loadEntity(e),arr=arrays(j);
- if(!arr.length&&j&&typeof j==="object")return [{...j,__type:normType(e.type)}];
- return arr.map(x=>({...x,homebrew:isHomebrew(x)||isHomebrew(e),source:x.source||e.source,edition:x.edition||e.edition}));
-}
-function sameText(a,b){return String(a||"").toLowerCase().trim()===String(b||"").toLowerCase().trim()}
-function featureEntriesFor(type,owner,level){
- const all=manifestEntries().filter(x=>normType(x.type)===type&&editionOf(x)===editionOf(owner));
- return all.filter(x=>{
-  const cn=String(x.className||x.class||x.classNameText||"").toLowerCase();
-  const on=String(owner.name||"").toLowerCase();
-  const cs=String(x.classSource||"").toLowerCase(), os=String(owner.source||"").toLowerCase();
-  const sn=String(x.subclassShortName||x.subclassName||x.subclass||"").toLowerCase();
-  const osn=String(owner.name||"").toLowerCase();
-  if(type==="classFeature")return (!cn||cn===on||cn.includes(on))&&(!cs||!os||cs===os);
-  return (!sn||sn===osn||sn.includes(osn));
- }).filter(x=>Number(x.level||x.levels?.[0]||0)<=level);
-}
-export async function findClassFeatures(cls,level){
- const refs=featureEntriesFor("classFeature",cls,level),out=[];
- for(const ref of refs){const rec=await recordsForEntity(ref);for(const f of rec)if(normType(f.__type)==="classFeature"&&Number(f.level||0)<=level)out.push({...f,__manifest:ref})}
- return dedupeFeatures(out);
-}
-export async function findSubclassFeatures(sub,level){
- if(!sub)return [];
- const refs=featureEntriesFor("subclassFeature",sub,level),out=[];
- for(const ref of refs){const rec=await recordsForEntity(ref);for(const f of rec)if(normType(f.__type)==="subclassFeature"&&Number(f.level||0)<=level)out.push({...f,__manifest:ref})}
- return dedupeFeatures(out);
-}
-function dedupeFeatures(a){const m=new Map();a.forEach(x=>m.set(`${x.name}|${x.level}|${x.source}`,x));return [...m.values()].sort((a,b)=>Number(a.level||0)-Number(b.level||0))}
-
-function pluralTypeForFluff(type){
- const map={race:"races",background:"backgrounds",item:"items",spell:"spells",creature:"creatures",condition:"conditionsdiseases",vehicle:"vehicles"};
- return map[normType(type)]||null;
-}
-function sourceMatches(a,e){
- const as=String(a?.source||a?.sourceId||"").toLowerCase();
- const es=String(e?.source||e?.sourceId||"").toLowerCase();
- return !es||!as||as===es;
-}
-function nameMatches(a,e){
- const an=String(a?.name||a?.raceName||a?.backgroundName||"").trim().toLowerCase();
- const en=String(e?.name||"").trim().toLowerCase();
- return !en||!an||an===en;
-}
-async function tryCompanionFluff(e){
- const plural=pluralTypeForFluff(e?.type);
- if(!plural||!e?.file)return null;
- const file=String(e.file).replace(/^\.?\//,"");
- const dir=file.includes("/")?file.slice(0,file.lastIndexOf("/")+1):"";
- const candidates=[
-   `${dir}fluff-${plural}.json`,
-   `${dir}fluff.json`,
-   file.replace(/(^|\/)([^/]+)\.json$/i,`$1fluff-$2.json`)
- ];
- for(const c of [...new Set(candidates)]){
-   try{
-     const j=await loadFile({file:c});
-     if(!j||j===e)continue;
-     const arr=arrays(j);
-     const hit=arr.find(x=>nameMatches(x,e)&&sourceMatches(x,e));
-     if(hit)return hit;
-   }catch{}
- }
- return null;
-}
-export async function bestRecord(e){
- if(!e)return null;
- const a=await recordsForEntity(e);
- let hit=a.find(r=>nameMatches(r,e)&&sourceMatches(r,e));
- if(!hit)hit=a.find(r=>nameMatches(r,e))||a[0]||null;
- const fluff=await tryCompanionFluff(e);
- if(fluff){
-   return {...hit,...fluff,__main:hit,__fluff:fluff,
-     entries: fluff.entries||fluff.desc||fluff.description||hit?.entries,
-     images: fluff.images||hit?.images};
- }
- return hit;
-}
-
-export async function getRecordArrays(e){return recordsForEntity(e)}
-export function stats(){const a=manifestEntries();return {entities:a.length,official:a.filter(x=>!isHomebrew(x)).length,homebrew:a.filter(isHomebrew).length}}
+window.DND_DB = {
+  classes: {
+    "Bárbaro": {hitDie:"d12", skills:2, skillOptions:["Adestramento de Animais","Atletismo","Intimidação","Natureza","Percepção","Sobrevivência"], speed:9, spellcaster:false, desc:"Combatente resistente que usa fúria e força bruta."},
+    "Bardo": {hitDie:"d8", skills:3, skillOptions:["Acrobacia","Atuação","Enganação","Furtividade","Intuição","Intimidação","Percepção","Persuasão","Prestidigitação"], speed:9, spellcaster:true, desc:"Conjurador versátil que combina magia, música e perícias."},
+    "Bruxo": {hitDie:"d8", skills:2, skillOptions:["Arcanismo","Enganação","História","Intimidação","Investigação","Natureza","Religião"], speed:9, spellcaster:true, desc:"Conjurador ligado a um patrono sobrenatural."},
+    "Clérigo": {hitDie:"d8", skills:2, skillOptions:["História","Intuição","Medicina","Persuasão","Religião"], speed:9, spellcaster:true, allSpells:true, desc:"Conjurador divino. Sua lista de magias é determinada pela classe e domínio."},
+    "Druida": {hitDie:"d8", skills:2, skillOptions:["Adestramento de Animais","Arcanismo","Intuição","Medicina","Natureza","Percepção","Religião","Sobrevivência"], speed:9, spellcaster:true, allSpells:true, desc:"Guardião da natureza com acesso amplo à magia druídica."},
+    "Feiticeiro": {hitDie:"d6", skills:2, skillOptions:["Arcanismo","Enganação","Intimidação","Intuição","Persuasão","Religião"], speed:9, spellcaster:true, desc:"Conjurador cuja magia vem de uma origem inata."},
+    "Guerreiro": {hitDie:"d10", skills:2, skillOptions:["Acrobacia","Adestramento de Animais","Atletismo","História","Intimidação","Intuição","Percepção","Sobrevivência"], speed:9, spellcaster:false, desc:"Especialista em combate e no uso de armas e armaduras."},
+    "Ladino": {hitDie:"d8", skills:4, skillOptions:["Acrobacia","Atletismo","Atuação","Enganação","Furtividade","Intimidação","Intuição","Investigação","Percepção","Persuasão","Prestidigitação"], speed:9, spellcaster:false, desc:"Especialista em perícias, furtividade e ataques precisos."},
+    "Mago": {hitDie:"d6", skills:2, skillOptions:["Arcanismo","História","Intuição","Investigação","Medicina","Religião"], speed:9, spellcaster:true, allSpells:true, desc:"Estudioso da magia com um grimório e grande variedade de magias."},
+    "Monge": {hitDie:"d8", skills:2, skillOptions:["Acrobacia","Atletismo","História","Intuição","Religião","Furtividade"], speed:9, spellcaster:false, desc:"Combatente disciplinado que domina corpo e mente."},
+    "Paladino": {hitDie:"d10", skills:2, skillOptions:["Atletismo","Intuição","Intimidação","Medicina","Persuasão","Religião"], speed:9, spellcaster:true, allSpells:true, desc:"Guerreiro sagrado com magia divina e grande resistência."},
+    "Patrulheiro": {hitDie:"d10", skills:3, skillOptions:["Adestramento de Animais","Atletismo","Furtividade","Intuição","Investigação","Natureza","Percepção","Sobrevivência"], speed:9, spellcaster:true, allSpells:true, desc:"Explorador marcial especializado em sobrevivência e caça."}
+  },
+  abilities:["Força","Destreza","Constituição","Inteligência","Sabedoria","Carisma"],
+  skills:{
+    "Acrobacia":"Destreza","Arcanismo":"Inteligência","Atletismo":"Força","Atuação":"Carisma","Adestramento de Animais":"Sabedoria",
+    "Enganação":"Carisma","Furtividade":"Destreza","História":"Inteligência","Intimidação":"Carisma","Intuição":"Sabedoria",
+    "Investigação":"Inteligência","Medicina":"Sabedoria","Natureza":"Inteligência","Percepção":"Sabedoria","Persuasão":"Carisma",
+    "Prestidigitação":"Destreza","Religião":"Inteligência","Sobrevivência":"Sabedoria"
+  },
+  spells:[
+    ["Acudir","0","Evocação","Você estabiliza uma criatura moribunda a curta distância."],
+    ["Amizade","0","Encantamento","Você melhora temporariamente a atitude de uma criatura em relação a você."],
+    ["Mãos Mágicas","0","Conjuração","Uma mão espectral manipula objetos à distância."],
+    ["Prestidigitação","0","Transmutação","Você cria pequenos efeitos mágicos inofensivos."],
+    ["Raio de Fogo","0","Evocação","Você lança um raio de fogo contra um alvo."],
+    ["Luz","0","Evocação","O objeto tocado passa a emitir luz."],
+    ["Detectar Magia","1","Adivinhação","Você percebe a presença de magia e identifica sua aura."],
+    ["Curar Ferimentos","1","Evocação","Uma criatura tocada recupera pontos de vida."],
+    ["Mísseis Mágicos","1","Evocação","Projéteis de força atingem criaturas escolhidas."],
+    ["Escudo","1","Abjuração","Uma barreira mágica aumenta sua defesa como reação."],
+    ["Bênção","1","Encantamento","Até três criaturas recebem um bônus em jogadas relevantes."],
+    ["Comando","1","Encantamento","Você dá uma ordem simples que o alvo tenta obedecer."],
+    ["Armadura Arcana","1","Abjuração","Você reforça a defesa de uma criatura sem armadura."],
+    ["Invisibilidade","2","Ilusão","Uma criatura fica invisível até a magia terminar."],
+    ["Passo Nebuloso","2","Conjuração","Você se teleporta para um espaço desocupado visível."],
+    ["Imobilizar Pessoa","2","Encantamento","Você paralisa um humanoide que falha no teste apropriado."],
+    ["Restauração Menor","2","Abjuração","Você encerra certas condições prejudiciais."],
+    ["Bola de Fogo","3","Evocação","Uma explosão de fogo causa dano em uma área."],
+    ["Dissipar Magia","3","Abjuração","Você encerra magias ativas no alvo."],
+    ["Reviver","3","Necromancia","Você devolve a vida a uma criatura que morreu recentemente."],
+    ["Invisibilidade Maior","4","Ilusão","A criatura fica invisível por mais tempo."],
+    ["Porta Dimensional","4","Conjuração","Você se teleporta para outro ponto dentro do alcance."],
+    ["Curar Ferimentos em Massa","5","Evocação","Várias criaturas recuperam pontos de vida."],
+    ["Reviver Mortos","5","Necromancia","Você devolve a vida a uma criatura morta."],
+    ["Círculo de Teletransporte","5","Conjuração","Você cria uma passagem mágica para um círculo conhecido."],
+    ["Cura Completa","6","Evocação","Uma criatura recupera grande quantidade de pontos de vida."],
+    ["Desintegrar","6","Transmutação","Um feixe devastador causa enorme dano a um alvo."],
+    ["Ressurreição","7","Necromancia","Você restaura a vida e o corpo de uma criatura morta."],
+    ["Dominar Monstro","8","Encantamento","Você tenta controlar uma criatura."],
+    ["Desejo","9","Conjuração","A mais poderosa e versátil das magias."],
+    ["Chuva de Meteoros","9","Evocação","Meteoros atingem uma grande área causando dano devastador."]
+  ],
+  weapons:[
+    ["Adaga","Acuidade, leve, arremesso","1d4","Perfurante"],["Espada curta","Acuidade, leve","1d6","Perfurante"],
+    ["Espada longa","Versátil","1d8","Cortante"],["Espada grande","Pesada, duas mãos","2d6","Cortante"],
+    ["Machado de mão","Leve, arremesso","1d6","Cortante"],["Machado grande","Pesada, duas mãos","1d12","Cortante"],
+    ["Martelo de guerra","Versátil","1d8","Contundente"],["Maça","—","1d6","Contundente"],
+    ["Arco curto","Munição, duas mãos","1d6","Perfurante"],["Arco longo","Pesada, duas mãos, alcance","1d8","Perfurante"],
+    ["Besta leve","Munição, recarga, duas mãos","1d8","Perfurante"],["Lança","Arremesso, versátil","1d6","Perfurante"]
+  ],
+  armor:[
+    ["Acolchoada","Leve","11 + DES","8"],["Couro","Leve","11 + DES","10"],["Couro batido","Leve","12 + DES","13"],
+    ["Cota de malha","Média","16","55"],["Peitoral","Média","14 + DES","20"],["Meia-armadura","Média","15 + DES","40"],
+    ["Cota de anéis","Pesada","14","40"],["Cota de malha","Pesada","16","55"],["Armadura de placas","Pesada","18","65"],
+    ["Escudo","Escudo","+2","6"]
+  ],
+  gear:[
+    ["Mochila","Contêiner para equipamento","2"],["Corda de cânhamo","Corda de 15 m","10"],["Tocha","Ilumina uma área","1"],
+    ["Rações","Comida para uma pessoa","1"],["Cantil","Recipiente para água","1"],["Pederneira e isqueiro","Acender fogo","1"]
+  ]
+};
