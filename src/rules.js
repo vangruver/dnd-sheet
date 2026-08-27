@@ -17,6 +17,45 @@ export function abilityKey(v) {
 }
 export function spellDc(pb, m) { return 8 + pb + m; }
 export function spellAttack(pb, m) { return pb + m; }
+
+// ------------------------------------------------------------
+// Espaços de magia (tabelas padrão 5e)
+// ------------------------------------------------------------
+// Conjurador completo: nível efetivo 1..20 -> [1º..9º].
+const FULL_SLOTS = [
+  [2, 0, 0, 0, 0, 0, 0, 0, 0], [3, 0, 0, 0, 0, 0, 0, 0, 0], [4, 2, 0, 0, 0, 0, 0, 0, 0],
+  [4, 3, 0, 0, 0, 0, 0, 0, 0], [4, 3, 2, 0, 0, 0, 0, 0, 0], [4, 3, 3, 0, 0, 0, 0, 0, 0],
+  [4, 3, 3, 1, 0, 0, 0, 0, 0], [4, 3, 3, 2, 0, 0, 0, 0, 0], [4, 3, 3, 3, 1, 0, 0, 0, 0],
+  [4, 3, 3, 3, 2, 0, 0, 0, 0], [4, 3, 3, 3, 2, 1, 0, 0, 0], [4, 3, 3, 3, 2, 1, 0, 0, 0],
+  [4, 3, 3, 3, 2, 1, 1, 0, 0], [4, 3, 3, 3, 2, 1, 1, 0, 0], [4, 3, 3, 3, 2, 1, 1, 1, 0],
+  [4, 3, 3, 3, 2, 1, 1, 1, 0], [4, 3, 3, 3, 2, 1, 1, 1, 1], [4, 3, 3, 3, 3, 1, 1, 1, 1],
+  [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1],
+];
+// Magia de Pacto (Bruxo): nível 1..20 -> { count, level }.
+const PACT_SLOTS = [
+  [1, 1], [2, 1], [2, 2], [2, 2], [2, 3], [2, 3], [2, 4], [2, 4], [2, 5], [2, 5],
+  [3, 5], [3, 5], [3, 5], [3, 5], [3, 5], [3, 5], [4, 5], [4, 5], [4, 5], [4, 5],
+];
+
+function fullSlotsAt(effLevel) {
+  const l = Math.max(0, Math.min(20, Math.floor(effLevel)));
+  return l < 1 ? Array(9).fill(0) : FULL_SLOTS[l - 1].slice();
+}
+// progression: "full" | "1/2" | "artificer" | "1/3" | "pact" | "pact-full"
+export function casterSlots(progression, level) {
+  const p = String(progression || "").toLowerCase();
+  level = Math.max(0, Number(level) || 0);
+  if (p === "full") return fullSlotsAt(level);
+  if (p === "1/2" || p === "half") return fullSlotsAt(level < 2 ? 0 : Math.floor(level / 2));
+  if (p === "artificer") return fullSlotsAt(Math.ceil(level / 2));
+  if (p === "1/3" || p === "third") return fullSlotsAt(level < 3 ? 0 : Math.floor(level / 3));
+  return null;
+}
+export function pactSlots(level) {
+  level = Math.max(1, Math.min(20, Number(level) || 1));
+  const [count, slot] = PACT_SLOTS[level - 1];
+  return { count, level: slot };
+}
 export function parseProgression(v, level) {
   if (v == null) return null;
   if (Array.isArray(v)) return v[Math.max(0, level - 1)] ?? null;

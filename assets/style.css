@@ -311,6 +311,20 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-summary div{background:linear-gradient(165deg,var(--surface-2),var(--inset));border:1px solid var(--border-2);border-radius:var(--radius-sm);text-align:center;padding:11px}
 .spell-summary span{display:block;font-size:7.5px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.06em}
 .spell-summary b{font:800 18px var(--font-head);color:var(--text)}
+.spell-resources{margin-bottom:12px}
+.spell-res-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:12px}
+.spell-res-head h3{margin:0;color:var(--text-dim);font:700 11px var(--font-head);letter-spacing:.13em;text-transform:uppercase}
+.spell-res-head span{font-size:11px;color:var(--text-mut)}
+.spell-res-pips{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:12px}
+.spell-res-pips>div{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:7px 12px;min-width:120px}
+.spell-res-pips span{display:block;font-size:7.5px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.06em}
+.spell-res-pips b{font:800 17px var(--font-head);color:var(--text)}
+.slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.slot-box{background:linear-gradient(165deg,var(--surface-2),var(--inset));border:1px solid var(--border-2);border-radius:var(--radius-sm);text-align:center;padding:9px 4px}
+.slot-box span{display:block;font-size:7px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.04em}
+.slot-box b{font:800 20px var(--font-head);color:var(--text)}
+.slot-box.pact{border-color:var(--red-dim);background:linear-gradient(165deg,var(--red-soft),var(--inset))}
+.slot-box.pact b{color:var(--red-hi)}
 .spell-level{margin-bottom:12px;padding:0;overflow:hidden}
 .spell-level-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--border)}
 .spell-level-head h3{margin:0;color:var(--text);font:700 13px var(--font-head);letter-spacing:.04em;text-transform:uppercase}

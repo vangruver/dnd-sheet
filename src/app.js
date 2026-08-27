@@ -5,7 +5,7 @@ import {
   descriptionEntries, matchesEdition, isReprinted,
 } from "./database.js";
 import { clearCache } from "./store.js";
-import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack } from "./rules.js";
+import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots } from "./rules.js";
 import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
@@ -726,6 +726,91 @@ async function renderFeatures() {
 }
 
 // ------------------------------------------------------------
+// Magias — recursos de conjuração (espaços, truques, preparadas)
+// ------------------------------------------------------------
+const CASTER_LABEL = { full: "Conjurador completo", "1/2": "Meio-conjurador", half: "Meio-conjurador", artificer: "Conjuração de artífice", "1/3": "Um terço de conjurador", third: "Um terço de conjurador", pact: "Magia de pacto" };
+// Lê uma coluna nomeada da tabela da classe (classTableGroups) — cobre
+// truques/preparadas do 2024 e homebrew, que não trazem fórmula.
+function tableCol(rec, level, labelRe) {
+  for (const g of rec?.classTableGroups || []) {
+    const idx = (g.colLabels || []).findIndex((l) => labelRe.test(String(l)));
+    if (idx < 0) continue;
+    const row = (g.rows || [])[Math.min(level, (g.rows || []).length) - 1];
+    if (Array.isArray(row)) {
+      const v = row[idx];
+      const n = typeof v === "number" ? v : parseInt(String(v).replace(/[^\d-]/g, ""), 10);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
+}
+function slotRowFromTable(rec, level) {
+  for (const g of rec?.classTableGroups || []) {
+    if (!Array.isArray(g.rowsSpellProgression)) continue;
+    const row = g.rowsSpellProgression[Math.min(level, g.rowsSpellProgression.length) - 1];
+    if (Array.isArray(row)) return row.slice(0, 9);
+  }
+  return null;
+}
+function preparedFromFormula(formula, level, abilMod) {
+  const f = String(formula).toLowerCase();
+  let base = level;
+  if (/\/\s*2/.test(f)) base = Math.floor(level / 2);
+  else if (/\/\s*3/.test(f)) base = Math.floor(level / 3);
+  return Math.max(1, base + (abilMod || 0));
+}
+function spellcastingInfo(level) {
+  const cr = details.classRec || {}, sr = details.subclassRec || {};
+  const src = (cr.casterProgression || cr.spellcastingAbility) ? cr
+    : (sr.casterProgression || sr.spellcasting || sr.spellcastingAbility) ? sr : null;
+  if (!src) return null;
+  const prog = src.casterProgression || (src === sr ? "1/3" : "full");
+  const abilKey = abilityKey(src.spellcastingAbility) || spellAbilityFrom(cr) || spellAbilityFrom(sr);
+  const abilMod = abilKey ? mod(effScore(abilKey)) : 0;
+
+  let slots = null, pact = null;
+  if (String(prog).toLowerCase() === "pact") pact = pactSlots(level);
+  else slots = slotRowFromTable(src, level) || casterSlots(prog, level);
+
+  let cantrips = Array.isArray(src.cantripProgression) ? src.cantripProgression[Math.min(level, src.cantripProgression.length) - 1] : null;
+  if (cantrips == null) cantrips = tableCol(src, level, /cantrip/i);
+
+  // "spellsKnownProgression" = magias conhecidas (Feiticeiro/Bruxo 2014, Ranger).
+  // NB: "spellsKnownProgressionFixed" NÃO é isso — é o nº de magias que o
+  // Mago copia pro grimório por nível — então não entra aqui.
+  let known = Array.isArray(src.spellsKnownProgression) ? src.spellsKnownProgression[Math.min(level, src.spellsKnownProgression.length) - 1] : null;
+  let prepared = null;
+  if (known == null) {
+    // 2024: coluna "Prepared Spells" na tabela da classe (sem fórmula).
+    const tp = tableCol(src, level, /prepared spells/i);
+    if (tp != null) prepared = tp;
+    else if (src.preparedSpells) prepared = preparedFromFormula(src.preparedSpells, level, abilMod);
+    else { const tk = tableCol(src, level, /spells known/i); if (tk != null) known = tk; }
+  }
+  return {
+    ability: abilKey, abilityMod: abilMod,
+    label: CASTER_LABEL[String(prog).toLowerCase()] || "Conjurador",
+    slots, pact, cantrips: cantrips ?? null, known: known ?? null, prepared: prepared ?? null,
+  };
+}
+function renderSpellResources(si) {
+  const box = $("spell-resources");
+  if (!box) return;
+  if (!si) { box.innerHTML = ""; return; }
+  const pips = [];
+  if (si.cantrips != null) pips.push(["Truques", si.cantrips]);
+  if (si.prepared != null) pips.push(["Magias preparadas", si.prepared]);
+  if (si.known != null) pips.push(["Magias conhecidas", si.known]);
+  const slotBoxes = (si.slots || []).map((n, i) => n ? `<div class="slot-box"><span>${i + 1}º nível</span><b>${n}</b></div>` : "").join("");
+  const pactBox = si.pact ? `<div class="slot-box pact"><span>Pacto · ${si.pact.level}º nível</span><b>${si.pact.count}</b></div>` : "";
+  box.innerHTML = `<section class="paper-card spell-resources">
+    <div class="spell-res-head"><h3>Recursos de conjuração</h3><span>${esc(si.label)}${si.ability ? ` · ${ABILITY_NAMES[si.ability]}` : ""}</span></div>
+    ${pips.length ? `<div class="spell-res-pips">${pips.map(([k, v]) => `<div><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>` : ""}
+    ${slotBoxes || pactBox ? `<div class="slot-grid">${slotBoxes}${pactBox}</div>` : `<p class="muted">Sem espaços de magia neste nível.</p>`}
+  </section>`;
+}
+
+// ------------------------------------------------------------
 // Magias
 // ------------------------------------------------------------
 function spellLevel(sp) { return Number(sp.level ?? 0); }
@@ -739,6 +824,7 @@ async function renderSpells() {
   $("spell-ability").textContent = ab ? ABILITY_NAMES[ab] : "—";
   $("spell-dc-big").textContent = c.dc ?? "—";
   $("spell-atk-big").textContent = c.atk != null ? fmt(c.atk) : "—";
+  renderSpellResources(spellcastingInfo(c.lvl));
   if (!refs.class) { $("spell-count").textContent = "0"; box.innerHTML = `<div class="paper-card empty">Escolha uma classe para carregar a lista de magias.</div>`; return; }
   box.innerHTML = `<div class="paper-card loading">Carregando lista de magias de ${esc(titleOf(refs.class))}…</div>`;
   let spells = [];
