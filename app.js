@@ -9,7 +9,7 @@ let pickerType=null, eqCat="inventory";
 const fresh=()=>({schema:7,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",classId:"",subclassId:"",raceId:"",backgroundId:"",
 scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},saveProficiencies:[],skillProficiencies:[],skillExpertise:[],
 hpCurrent:null,hpTemp:0,ac:null,speed:"30 ft",attacks:[],inventory:[],preparedSpells:[],deathSaves:{success:0,failure:0},
-auto:{classSkills:[],backgroundSkills:[],classSaves:[],fixedSkills:[],speed:null,hitDice:null,spellcastingAbility:null},
+auto:{classSkills:[],backgroundSkills:[],classSaves:[],Skills:[],speed:null,hitDice:null,spellcastingAbility:null},
 choiceSelections:{classSkills:[],backgroundSkills:[],abilityChoices:{}},manualSkillProficiencies:[]});
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2200)};
@@ -231,24 +231,24 @@ function skillChoicesFrom(v){
  return out;
 }
 function fixedSkillsFrom(v){
- const out=[];
- flatObjects(v).forEach(o=>{
-   for(const [k,val] of Object.entries(o||{})){
-     const sk=skillKey(k);
-     if(sk&&(val===true||typeof val==="number"||typeof val==="string"))out.push(sk);
-   }
-   if(Array.isArray(o?.skills))o.skills.forEach(x=>{const sk=skillKey(typeof x==="string"?x:x?.name);if(sk)out.push(sk)});
- }
- return [...new Set(out)];
-}
-function savesFrom(v){
- const out=[];
- flatObjects(v).forEach(o=>{
-   for(const k of ["savingThrows","savingThrow","saves","savingThrowProficiencies"]){
-     const a=o?.[k]; if(Array.isArray(a))a.forEach(x=>{const k2=abilityKey(x);if(k2)out.push(k2)});
-   }
- });
- return [...new Set(out)];
+  const out=[];
+  flatObjects(v).forEach(o=>{
+    for(const [k,val] of Object.entries(o||{})){
+      const sk=skillKey(k);
+      if(sk&&(val===true||typeof val==="number"||typeof val==="string")){
+        out.push(sk);
+      }
+    }
+
+    if(Array.isArray(o?.skills)){
+      o.skills.forEach(x=>{
+        const sk=skillKey(typeof x==="string" ? x : x?.name);
+        if(sk) out.push(sk);
+      });
+    }
+  });
+
+  return [...new Set(out)];
 }
 function speedFrom(r){
  const vals=[r?.speed,r?.walk,r?.movement,r?.speed?.walk,r?.speed?.walking,r?.speed?.base];
@@ -283,22 +283,22 @@ async function buildAutomation(){
  const cr=details.classRec||{}, rr=details.raceRec||{}, br=details.backgroundRec||{};
  const classProf=cr.startingProficiencies||cr.proficiencies||cr.proficiency||cr;
  const bgProf=br.startingProficiencies||br.proficiencies||br;
- const classFixedSkills=fixedSkillsFrom(classProf);
- const bgFixedSkills=fixedSkillsFrom(bgProf);
+ const classSkills=SkillsFrom(classProf);
+ const bgSkills=SkillsFrom(bgProf);
  const classSaves=savesFrom(classProf);
  const previousAuto=[...(character.auto?.classSkills||[]),...(character.auto?.backgroundSkills||[])];
  const previousChoices=[...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()];
  if(!Array.isArray(character.manualSkillProficiencies)||!character.manualSkillProficiencies.length){
    character.manualSkillProficiencies=(character.skillProficiencies||[]).filter(k=>!previousAuto.includes(k)&&!previousChoices.includes(k));
  }
- character.auto.classSkills=classFixedSkills;
- character.auto.backgroundSkills=bgFixedSkills;
+ character.auto.classSkills=classSkills;
+ character.auto.backgroundSkills=bgSkills;
  character.auto.classSaves=classSaves;
  character.auto.speed=speedFrom(rr);
  character.auto.hitDice=hitDiceFrom(cr);
  character.auto.spellcastingAbility=spellAbilityFrom(cr);
- const fixedSkills=[...new Set([...classFixedSkills,...bgFixedSkills])];
- character.skillProficiencies=[...new Set([...(character.manualSkillProficiencies||[]),...fixedSkills,...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()])];
+ const Skills=[...new Set([...classSkills,...bgSkills])];
+ character.skillProficiencies=[...new Set([...(character.manualSkillProficiencies||[]),...Skills,...Object.values(character.choiceSelections?.classSkills||{}).flat(),...Object.values(character.choiceSelections?.backgroundSkills||{}).flat()])];
  character.saveProficiencies=[...new Set([...(character.saveProficiencies||[]),...classSaves])];
  if(character.auto.speed&&!character.manualSpeed)character.speed=character.auto.speed;
  if(character.auto.spellcastingAbility&&!character.manualSpellAbility)character.spellAbility=character.auto.spellcastingAbility;
