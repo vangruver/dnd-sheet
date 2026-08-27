@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ficha D&D 5e Automatizada (5eTools Data)</title>
+  <style>
+    :root {
+      --bg: #121417;
+      --card-bg: #1e222b;
+      --accent: #b22222;
+      --accent-hover: #d93838;
+      --text: #f0f2f5;
+      --text-muted: #9aa0a6;
+      --border: #333a46;
+      --input-bg: #16181f;
+      --highlight: #e5a93c;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      max-width: 1000px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    header {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--highlight);
+    }
+
+    .status-badge {
+      font-size: 0.8rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background: #2a303c;
+      color: var(--highlight);
+      align-self: center;
+      grid-column: 1 / -1;
+      text-align: center;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 220px 1fr 1fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 850px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      color: var(--highlight);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+
+    /* Atributos */
+    .attributes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .attribute-box {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+      display: grid;
+      grid-template-columns: 1fr 50px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .attr-name {
+      font-size: 0.85rem;
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .attr-mod {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--highlight);
+    }
+
+    .attr-racial {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* Combate & Info rápida */
+    .combat-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      text-align: center;
+    }
+
+    .stat-box {
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--highlight);
+      margin-top: 4px;
+    }
+
+    /* Perícias e Salvaguardas */
+    .skill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 480px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .skill-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .skill-row:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .skill-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .skill-mod {
+      font-weight: bold;
+      color: var(--highlight);
+      min-width: 32px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="status-bar" class="status-badge">Carregando base de dados do 5eTools...</div>
+
+    <!-- Cabeçalho -->
+    <header>
+      <div class="form-group">
+        <label for="char-name">Nome do Personagem</label>
+        <input type="text" id="char-name" placeholder="Ex: Maelor">
+      </div>
+
+      <div class="form-group">
+        <label for="char-race">Raça (5eTools)</label>
+        <select id="char-race">
+          <option value="">Selecione a Raça...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="char-class">Classe (5eTools)</label>
+        <select id="char-class">
+          <option value="">Selecione a Classe...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="char-level">Nível</label>
+        <input type="number" id="char-level" value="1" min="1" max="20">
+      </div>
+    </header>
+
+    <!-- Grade Principal -->
+    <div class="main-grid">
+      
+      <!-- Coluna 1: Atributos -->
+      <div class="card">
+        <div class="card-title">Atributos</div>
+        <div class="attributes-list" id="attributes-container">
+          <!-- Gerado via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Coluna 2: Combate e Salvaguardas -->
+      <div class="card">
+        <div class="card-title">Estatísticas de Combate</div>
+        <div class="combat-stats">
+          <div class="stat-box">
+            <label>CA</label>
+            <div class="stat-value" id="stat-ac">10</div>
+          </div>
+          <div class="stat-box">
+            <label>Iniciativa</label>
+            <div class="stat-value" id="stat-init">+0</div>
+          </div>
+          <div class="stat-box">
+            <label>Deslocamento</label>
+            <div class="stat-value" id="stat-speed">30 ft</div>
+          </div>
+        </div>
+
+        <div class="combat-stats" style="margin-top: 10px;">
+          <div class="stat-box" style="grid-column: span 3;">
+            <label>PV Máximos (Estimados)</label>
+            <div class="stat-value" id="stat-hp">--</div>
+          </div>
+        </div>
+
+        <div class="card-title" style="margin-top: 10px;">Salvaguardas</div>
+        <div class="skill-list" id="saves-container">
+          <!-- Gerado via JavaScript -->
+        </div>
+      </div>
+
+      <!-- Coluna 3: Perícias -->
+      <div class="card">
+        <div class="card-title">
+          Perícias (Bônus Prof.: <span id="prof-bonus-display">+2</span>)
+        </div>
+        <div class="skill-list" id="skills-container">
+          <!-- Gerado via JavaScript -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Configurações e endpoints do 5eTools (GitHub raw)
+    const BASE_URL = "https://raw.githubusercontent.com/5etools-mirror-3/5etools-src/main/data/";
+    
+    // Lista de Atributos e Perícias
+    const ATTRS = [
+      { id: "str", name: "Força" },
+      { id: "dex", name: "Destreza" },
+      { id: "con", name: "Constituição" },
+      { id: "int", name: "Inteligência" },
+      { id: "wis", name: "Sabedoria" },
+      { id: "cha", name: "Carisma" }
+    ];
+
+    const SKILLS = [
+      { id: "acrobatics", name: "Acrobacia", attr: "dex" },
+      { id: "animal_handling", name: "Adestramento", attr: "wis" },
+      { id: "arcana", name: "Arcanismo", attr: "int" },
+      { id: "athletics", name: "Atletismo", attr: "str" },
+      { id: "deception", name: "Enganação", attr: "cha" },
+      { id: "history", name: "História", attr: "int" },
+      { id: "insight", name: "Intuição", attr: "wis" },
+      { id: "intimidation", name: "Intimidação", attr: "cha" },
+      { id: "investigation", name: "Investigação", attr: "int" },
+      { id: "medicine", name: "Medicina", attr: "wis" },
+      { id: "nature", name: "Natureza", attr: "int" },
+      { id: "perception", name: "Percepção", attr: "wis" },
+      { id: "performance", name: "Atuação", attr: "cha" },
+      { id: "persuasion", name: "Persuasão", attr: "cha" },
+      { id: "religion", name: "Religião", attr: "int" },
+      { id: "sleight_of_hand", name: "Prestidigitação", attr: "dex" },
+      { id: "stealth", name: "Furtividade", attr: "dex" },
+      { id: "survival", name: "Sobrevivência", attr: "wis" }
+    ];
+
+    // Estado da Ficha
+    const state = {
+      races: [],
+      classes: [],
+      selectedRace: null,
+      selectedClass: null,
+      baseScores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
+      proficientSkills: new Set(),
+      proficientSaves: new Set(),
+      level: 1
+    };
+
+    // Inicialização da interface
+    function initUI() {
+      // Monta inputs de atributos
+      const attrContainer = document.getElementById("attributes-container");
+      attrContainer.innerHTML = ATTRS.map(a => `
+        <div class="attribute-box">
+          <div>
+            <div class="attr-name">${a.name}</div>
+            <div class="attr-racial" id="racial-${a.id}">Bônus Raça: +0</div>
+          </div>
+          <div>
+            <input type="number" id="input-${a.id}" value="10" min="1" max="30" style="width: 50px; text-align: center;">
+            <div class="attr-mod" id="mod-${a.id}">+0</div>
+          </div>
+        </div>
+      `).join("");
+
+      // Monta lista de salvaguardas
+      const savesContainer = document.getElementById("saves-container");
+      savesContainer.innerHTML = ATTRS.map(a => `
+        <div class="skill-row">
+          <div class="skill-info">
+            <input type="checkbox" id="save-check-${a.id}">
+            <span>${a.name}</span>
+          </div>
+          <span class="skill-mod" id="save-val-${a.id}">+0</span>
+        </div>
+      `).join("");
+
+      // Monta lista de perícias
+      const skillsContainer = document.getElementById("skills-container");
+      skillsContainer.innerHTML = SKILLS.map(s => `
+        <div class="skill-row">
+          <div class="skill-info">
+            <input type="checkbox" id="skill-check-${s.id}">
+            <span>${s.name} <small style="color:var(--text-muted)">(${s.attr.toUpperCase()})</small></span>
+          </div>
+          <span class="skill-mod" id="skill-val-${s.id}">+0</span>
+        </div>
+      `).join("");
+
+      // Event Listeners
+      ATTRS.forEach(a => {
+        document.getElementById(`input-${a.id}`).addEventListener("input", (e) => {
+          state.baseScores[a.id] = parseInt(e.target.value) || 10;
+          calculateAll();
+        });
+        document.getElementById(`save-check-${a.id}`).addEventListener("change", (e) => {
+          if (e.target.checked) state.proficientSaves.add(a.id);
+          else state.proficientSaves.delete(a.id);
+          calculateAll();
+        });
+      });
+
+      SKILLS.forEach(s => {
+        document.getElementById(`skill-check-${s.id}`).addEventListener("change", (e) => {
+          if (e.target.checked) state.proficientSkills.add(s.id);
+          else state.proficientSkills.delete(s.id);
+          calculateAll();
+        });
+      });
+
+      document.getElementById("char-level").addEventListener("input", (e) => {
+        state.level = parseInt(e.target.value) || 1;
+        calculateAll();
+      });
+
+      document.getElementById("char-race").addEventListener("change", onRaceChange);
+      document.getElementById("char-class").addEventListener("change", onClassChange);
+    }
+
+    // Carregamento dos dados do 5eTools
+    async function load5eToolsData() {
+      const statusBar = document.getElementById("status-bar");
+      try {
+        // Carrega Raças
+        const racesRes = await fetch(`${BASE_URL}races.json`);
+        const racesData = await racesRes.json();
+        state.races = racesData.race || [];
+
+        const raceSelect = document.getElementById("char-race");
+        state.races.sort((a, b) => a.name.localeCompare(b.name)).forEach((r, idx) => {
+          const opt = document.createElement("option");
+          opt.value = idx;
+          opt.textContent = `${r.name} (${r.source || 'PHB'})`;
+          raceSelect.appendChild(opt);
+        });
+
+        // Carrega Lista de Classes Core
+        const coreClasses = [
+          "barbarian", "bard", "cleric", "druid", "fighter", 
+          "monk", "paladin", "ranger", "rogue", "sorcerer", "warlock", "wizard"
+        ];
+        
+        state.classes = [];
+        for (const cls of coreClasses) {
+          try {
+            const clsRes = await fetch(`${BASE_URL}class/class-${cls}.json`);
+            const clsData = await clsRes.json();
+            if (clsData.class && clsData.class[0]) {
+              state.classes.push(clsData.class[0]);
+            }
+          } catch (e) {
+            console.warn("Falha ao carregar classe:", cls);
+          }
+        }
+
+        const classSelect = document.getElementById("char-class");
+        state.classes.forEach((c, idx) => {
+          const opt = document.createElement("option");
+          opt.value = idx;
+          opt.textContent = `${c.name} (${c.source || 'PHB'})`;
+          classSelect.appendChild(opt);
+        });
+
+        statusBar.textContent = "🟢 Dados do 5eTools carregados com sucesso!";
+        statusBar.style.color = "#4ade80";
+      } catch (err) {
+        console.error(err);
+        statusBar.textContent = "⚠️ Não foi possível conectar ao GitHub do 5eTools. Usando dados locais básicos.";
+        statusBar.style.color = "#f87171";
+      }
+    }
+
+    // Handlers de Mudança
+    function onRaceChange(e) {
+      const idx = e.target.value;
+      state.selectedRace = idx !== "" ? state.races[idx] : null;
+      calculateAll();
+    }
+
+    function onClassChange(e) {
+      const idx = e.target.value;
+      state.selectedClass = idx !== "" ? state.classes[idx] : null;
+      
+      // Auto-preenche salvaguardas da classe
+      state.proficientSaves.clear();
+      if (state.selectedClass && state.selectedClass.proficiency) {
+        state.selectedClass.proficiency.forEach(save => {
+          state.proficientSaves.add(save.toLowerCase());
+        });
+      }
+      
+      // Atualiza os checkboxes de salvaguarda
+      ATTRS.forEach(a => {
+        const checkbox = document.getElementById(`save-check-${a.id}`);
+        checkbox.checked = state.proficientSaves.has(a.id);
+      });
+
+      calculateAll();
+    }
+
+    // Cálculos da Ficha
+    function calculateAll() {
+      // 1. Bônus de Proficiência: ceil(level / 4) + 1
+      const profBonus = Math.ceil(state.level / 4) + 1;
+      document.getElementById("prof-bonus-display").textContent = `+${profBonus}`;
+
+      // 2. Bônus Raciais de Atributo
+      const racialBonuses = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 };
+      if (state.selectedRace && state.selectedRace.ability) {
+        state.selectedRace.ability.forEach(ab => {
+          ATTRS.forEach(a => {
+            if (ab[a.id]) racialBonuses[a.id] += ab[a.id];
+          });
+        });
+      }
+
+      // 3. Modificadores Totais
+      const totalMods = {};
+      ATTRS.forEach(a => {
+        const base = state.baseScores[a.id] || 10;
+        const racial = racialBonuses[a.id] || 0;
+        const total = base + racial;
+        const mod = Math.floor((total - 10) / 2);
+        totalMods[a.id] = mod;
+
+        document.getElementById(`racial-${a.id}`).textContent = `Bônus Raça: +${racial}`;
+        document.getElementById(`mod-${a.id}`).textContent = mod >= 0 ? `+${mod}` : `${mod}`;
+      });
+
+      // 4. Salvaguardas
+      ATTRS.forEach(a => {
+        let val = totalMods[a.id];
+        if (state.proficientSaves.has(a.id)) val += profBonus;
+        document.getElementById(`save-val-${a.id}`).textContent = val >= 0 ? `+${val}` : `${val}`;
+      });
+
+      // 5. Perícias
+      SKILLS.forEach(s => {
+        let val = totalMods[s.attr];
+        if (state.proficientSkills.has(s.id)) val += profBonus;
+        document.getElementById(`skill-val-${s.id}`).textContent = val >= 0 ? `+${val}` : `${val}`;
+      });
+
+      // 6. Combate: CA, Iniciativa, Deslocamento e PV
+      const dexMod = totalMods["dex"];
+      const conMod = totalMods["con"];
+
+      document.getElementById("stat-ac").textContent = 10 + dexMod;
+      document.getElementById("stat-init").textContent = dexMod >= 0 ? `+${dexMod}` : `${dexMod}`;
+
+      // Velocidade
+      let speed = 30;
+      if (state.selectedRace && state.selectedRace.speed) {
+        if (typeof state.selectedRace.speed === "number") speed = state.selectedRace.speed;
+        else if (state.selectedRace.speed.walk) speed = state.selectedRace.speed.walk;
+      }
+      document.getElementById("stat-speed").textContent = `${speed} ft`;
+
+      // PV Estimados
+      if (state.selectedClass && state.selectedClass.hd) {
+        const hitDie = state.selectedClass.hd.faces || 8;
+        const level1HP = hitDie + conMod;
+        const avgPerLevel = Math.floor(hitDie / 2) + 1 + conMod;
+        const totalHP = level1HP + (state.level - 1) * Math.max(1, avgPerLevel);
+        document.getElementById("stat-hp").textContent = `${totalHP} (d${hitDie})`;
+      } else {
+        document.getElementById("stat-hp").textContent = "--";
+      }
+    }
+
+    // Inicialização
+    window.addEventListener("DOMContentLoaded", () => {
+      initUI();
+      calculateAll();
+      load5eToolsData();
+    });
+  </script>
+</body>
+</html>
