@@ -3,142 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ficha de D&D Automatizada</title>
+  <title>Ficha D&D 5e Automatizada</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Ficha de Personagem D&D 5e</h1>
-      <div class="edition-selector">
-        <label for="editionSelect"><strong>Versão das Regras:</strong></label>
-        <select id="editionSelect">
-          <option value="2024">D&D 5e (2024 - Atual)</option>
+  <div class="sheet-container">
+    
+    <!-- HEADER E SELEÇÃO DE REGRAS -->
+    <div class="top-header">
+      <h1 class="main-title">Ficha de Personagem D&D 5e</h1>
+      <div class="rules-select-container">
+        <label for="rules-version">Versão das Regras:</label>
+        <select id="rules-version">
           <option value="2014">D&D 5e (2014 - Legado)</option>
+          <option value="2024">D&D 5.5e (2024)</option>
         </select>
-        <span id="loadingStatus" class="status-badge">Carregando dados...</span>
+        <span id="status-bar" class="status-bar loading">Aguardando...</span>
       </div>
-    </header>
+    </div>
 
-    <!-- Dados Básicos -->
-    <section class="card">
+    <!-- INFORMAÇÕES DO PERSONAGEM -->
+    <div class="box">
       <h2>Informações do Personagem</h2>
-      <div class="grid-3">
-        <div class="form-group">
-          <label for="charName">Nome do Personagem</label>
-          <input type="text" id="charName" placeholder="Ex: Mialee">
+      <div class="grid-5">
+        <div class="field">
+          <label>Nome do Personagem</label>
+          <input type="text" id="char-name" placeholder="Ex: Mialee">
         </div>
-        <div class="form-group">
-          <label for="charClass">Classe</label>
-          <select id="charClass">
-            <option value="">Selecione uma classe...</option>
-          </select>
+        <div class="field">
+          <label>Classe</label>
+          <select id="char-class"><option value="">Selecione uma classe...</option></select>
         </div>
-        <div class="form-group">
-          <label for="charLevel">Nível</label>
-          <input type="number" id="charLevel" value="1" min="1" max="20">
+        <div class="field">
+          <label>Nível</label>
+          <input type="number" id="char-level" value="1" min="1" max="20">
         </div>
-        <div class="form-group">
-          <label for="charRace">Raça / Espécie</label>
-          <select id="charRace">
-            <option value="">Selecione uma raça...</option>
-          </select>
+        <div class="field">
+          <label>Raça / Espécie</label>
+          <select id="char-race"><option value="">Selecione uma raça...</option></select>
         </div>
-        <div class="form-group">
-          <label for="charBackground">Antecedente (Background)</label>
-          <select id="charBackground">
-            <option value="">Selecione um antecedente...</option>
-          </select>
+        <div class="field">
+          <label>Antecedente (Background)</label>
+          <select id="char-background"><option value="">Selecione um antecedente...</option></select>
         </div>
-        <div class="form-group">
-          <label for="profBonus">Bônus de Proficiência</label>
-          <input type="text" id="profBonus" value="+2" readonly>
+        <div class="field">
+          <label>Bônus de Proficiência</label>
+          <input type="text" id="prof-bonus" value="+2" readonly>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Atributos Principais -->
-    <section class="card">
+    <!-- ATRIBUTOS -->
+    <div class="box">
       <h2>Atributos</h2>
-      <div class="grid-6 attributes-grid">
-        <div class="attr-box" data-attr="str">
-          <label>FOR (STR)</label>
-          <input type="number" id="attr-str" value="10" min="1" max="30">
-          <span class="modifier" id="mod-str">+0</span>
-        </div>
-        <div class="attr-box" data-attr="dex">
-          <label>DES (DEX)</label>
-          <input type="number" id="attr-dex" value="10" min="1" max="30">
-          <span class="modifier" id="mod-dex">+0</span>
-        </div>
-        <div class="attr-box" data-attr="con">
-          <label>CON (CON)</label>
-          <input type="number" id="attr-con" value="10" min="1" max="30">
-          <span class="modifier" id="mod-con">+0</span>
-        </div>
-        <div class="attr-box" data-attr="int">
-          <label>INT (INT)</label>
-          <input type="number" id="attr-int" value="10" min="1" max="30">
-          <span class="modifier" id="mod-int">+0</span>
-        </div>
-        <div class="attr-box" data-attr="wis">
-          <label>SAB (WIS)</label>
-          <input type="number" id="attr-wis" value="10" min="1" max="30">
-          <span class="modifier" id="mod-wis">+0</span>
-        </div>
-        <div class="attr-box" data-attr="cha">
-          <label>CAR (CHA)</label>
-          <input type="number" id="attr-cha" value="10" min="1" max="30">
-          <span class="modifier" id="mod-cha">+0</span>
-        </div>
+      <div class="attributes-grid" id="attributes-container">
+        <!-- Gerado pelo Javascript -->
       </div>
-    </section>
+    </div>
 
-    <!-- Estatísticas de Combate -->
-    <section class="card grid-3 combat-grid">
-      <div class="stat-box">
-        <label>Pontos de Vida (HP Máximo)</label>
-        <input type="number" id="maxHp" value="10">
+    <!-- COMBATE E VITAIS -->
+    <div class="box">
+      <div class="grid-4">
+        <div class="field"><label>Pontos de Vida (HP Máximo)</label><input type="number" id="hp-max" value="10"></div>
+        <div class="field"><label>Classe de Armadura (CA)</label><input type="number" id="armor-class" value="10"></div>
+        <div class="field"><label>Iniciativa</label><input type="text" id="initiative" value="+0" readonly></div>
+        <div class="field"><label>Deslocamento (Speed)</label><input type="text" id="speed" value="30 ft" readonly></div>
+        <div class="field"><label>Dado de Vida (Hit Die)</label><input type="text" id="hit-dice" value="d8" readonly></div>
+        <div class="field"><label>Percepção Passiva</label><input type="text" id="passive-perception" value="10" readonly></div>
       </div>
-      <div class="stat-box">
-        <label>Classe de Armadura (CA)</label>
-        <input type="number" id="armorClass" value="10">
-      </div>
-      <div class="stat-box">
-        <label>Iniciativa</label>
-        <input type="text" id="initiative" value="+0" readonly>
-      </div>
-      <div class="stat-box">
-        <label>Deslocamento (Speed)</label>
-        <input type="text" id="charSpeed" value="30 ft" readonly>
-      </div>
-      <div class="stat-box">
-        <label>Dado de Vida (Hit Die)</label>
-        <input type="text" id="hitDie" value="d8" readonly>
-      </div>
-      <div class="stat-box">
-        <label>Percepção Passiva</label>
-        <input type="text" id="passivePerception" value="10" readonly>
-      </div>
-    </section>
+    </div>
 
-    <!-- Perícias (Skills) -->
-    <section class="card">
-      <h2>Perícias (Skills)</h2>
-      <div class="skills-grid" id="skillsContainer">
-        <!-- Gerado dinamicamente via JS -->
+    <!-- PERÍCIAS E SALVAGUARDAS -->
+    <div class="grid-2">
+      <div class="box">
+        <h2>Testes de Resistência</h2>
+        <div class="list-container" id="saves-list"></div>
       </div>
-    </section>
+      <div class="box">
+        <h2>Perícias (Skills)</h2>
+        <div class="list-container" id="skills-list"></div>
+      </div>
+    </div>
 
-    <!-- Detalhes e Características Importadas -->
-    <section class="card">
-      <h2>Características e Traços Importados</h2>
-      <div id="featuresDisplay" class="features-box">
-        <p>Selecione uma classe, raça ou antecedente para visualizar os traços obtidos diretamente do repositório 5etools.</p>
-      </div>
-    </section>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
