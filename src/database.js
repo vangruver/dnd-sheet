@@ -185,7 +185,13 @@ async function loadAllClasses(onProgress) {
 // O homebrew já traz classFluff/subclassFluff dentro do próprio
 // arquivo de classe (ver registerClassFile), então não precisa disso.
 async function loadOfficialClassFluff() {
-  const idx = await tryJson("class/fluff-index.json").then((v) => v || {});
+  let idx = await tryJson("class/fluff-index.json").then((v) => v || {});
+  // Se o índice de lore falhar/vier vazio, deriva os nomes de arquivo
+  // a partir do índice de classes (class/fluff-class-<slug>.json).
+  if (!Object.keys(idx).length) {
+    const classIdx = await tryJson("class/index.json").then((v) => v || {});
+    idx = Object.fromEntries(Object.keys(classIdx).map((slug) => [slug, `fluff-class-${slug}.json`]));
+  }
   await Promise.all(Object.values(idx).map(async (fname) => {
     const file = await tryJson(`class/${fname}`);
     if (!file) return;
