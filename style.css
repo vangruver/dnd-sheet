@@ -27,3 +27,12 @@ button{cursor:pointer}
 .toast{position:fixed;right:20px;bottom:20px;background:#252c37;border:1px solid #475264;border-radius:8px;padding:10px 14px;opacity:0;transform:translateY(8px);transition:.2s;z-index:50}.toast.show{opacity:1;transform:none}
 @media(max-width:950px){.grid.four,.two-col{grid-template-columns:1fr 1fr}.ability-grid{grid-template-columns:repeat(3,1fr)}.spell-grid{grid-template-columns:repeat(2,1fr)}.topbar{position:static;align-items:flex-start;flex-direction:column}}
 @media(max-width:600px){.grid.four,.two-col,.ability-grid,.combat-grid,.skill-grid,.spell-grid{grid-template-columns:1fr}.toolbar{width:100%}.attack-row{grid-template-columns:1fr 1fr}.attack-row input:first-child{grid-column:1/-1}}
+
+.feature-level{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #ddd}
+.feature-level:last-child{border-bottom:0}.feature-level .lvl{min-width:38px;font-weight:700}
+.feature-level h3{margin:0 0 4px}.feature-level p{margin:0;line-height:1.45}
+.progression{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.progress-card{padding:12px;border:1px solid #ddd;border-radius:10px;background:rgba(255,255,255,.5)}
+.progress-card h3{margin-top:0}.progress-card ul{margin:6px 0 0;padding-left:20px}
+.spell-slots{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}.spell-slots div{border:1px solid #ddd;border-radius:7px;padding:6px;text-align:center}
+.badge{display:inline-block;font-size:.72rem;padding:2px 6px;border-radius:999px;border:1px solid #bbb;margin-left:5px}
