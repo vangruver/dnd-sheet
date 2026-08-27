@@ -162,6 +162,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .auto-choice-head span{font-size:10px;color:var(--red-hi);font-weight:700;white-space:nowrap}
 .auto-choice p{font-size:10px;color:var(--text-mut);margin:6px 0}
 .choice-options{display:flex;flex-wrap:wrap;gap:6px}
+.choice-options.scroll{max-height:230px;overflow-y:auto;padding-right:4px;align-content:flex-start}
+.choice-option .pr{font-style:normal;color:var(--text-mut);font-size:9px;margin-left:2px}
 .choice-option{display:flex;align-items:center;gap:6px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:6px 9px;font-size:10px;cursor:pointer;transition:.13s}
 .choice-option:hover{border-color:var(--red-dim)}
 .choice-option:has(input:checked){border-color:var(--red);background:var(--red-soft);color:#fff}

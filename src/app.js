@@ -20,7 +20,7 @@ const fresh = () => ({
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 },
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0 }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {} }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -448,6 +448,55 @@ function spellAbilityFrom(r) {
   for (const v of [r?.spellcastingAbility, r?.spellcasting?.ability]) { const k = abilityKey(v); if (k) return k; }
   return null;
 }
+
+// ------------------------------------------------------------
+// Características opcionais — estilo de luta, metamagia, invocações,
+// manobras, infusões, dádiva de pacto (optionalfeatures do 5etools).
+// ------------------------------------------------------------
+const OFT_LABEL = {
+  "FS:F": "Estilo de luta", "FS:R": "Estilo de luta", "FS:P": "Estilo de luta", "FS:B": "Estilo de luta",
+  MM: "Metamagia", EI: "Invocação mística", "MV:B": "Manobra", AI: "Infusão de artífice",
+  AS: "Disparo arcano", ED: "Disciplina elemental", RN: "Runa", PB: "Dádiva de pacto", RP: "Opção", RN2: "Runa",
+};
+function progressionAt(progression, level) {
+  if (Array.isArray(progression)) return Number(progression[Math.min(level, progression.length) - 1]) || 0;
+  if (progression && typeof progression === "object") {
+    let best = 0;
+    for (const [k, v] of Object.entries(progression)) if (Number(k) <= level) best = Math.max(best, Number(v) || 0);
+    return best;
+  }
+  return 0;
+}
+function prereqLevel(o) {
+  let max = 0;
+  for (const p of o?.prerequisite || []) {
+    const l = typeof p.level === "number" ? p.level : p.level?.level;
+    if (l) max = Math.max(max, Number(l) || 0);
+  }
+  return max;
+}
+function prereqText(o) {
+  const parts = [];
+  for (const p of o?.prerequisite || []) {
+    if (p.level) parts.push(`nível ${typeof p.level === "number" ? p.level : p.level.level}`);
+    if (p.pact) parts.push(`Pacto d${{ Blade: "a Lâmina", Tome: "o Tomo", Chain: "a Corrente", Talisman: "o Talismã" }[p.pact] || "e " + p.pact}`);
+    if (p.patron) parts.push(String(p.patron));
+    if (Array.isArray(p.spell)) parts.push(p.spell.map((s) => String(s).replace(/#.*/, "")).join(", "));
+    if (p.otherSummary?.entry) parts.push(inlineTags(p.otherSummary.entry));
+  }
+  return parts.join(" · ");
+}
+function optionalFeatureProgs(level) {
+  const out = [];
+  for (const rec of [details.classRec || {}, details.subclassRec || {}]) {
+    for (const p of rec.optionalfeatureProgression || []) {
+      const count = progressionAt(p.progression, level);
+      if (count > 0) out.push({ name: p.name, featureType: p.featureType || [], count });
+    }
+  }
+  return out;
+}
+
 async function buildAutomation() {
   character.auto = character.auto || {};
   const cr = details.classRec || {}, rr = details.raceRec || {}, br = details.backgroundRec || {};
@@ -488,12 +537,16 @@ async function buildAutomation() {
   // limpa especialização de perícias que não são mais proficiência
   character.skillExpertise = (character.skillExpertise || []).filter((k) => character.skillProficiencies.includes(k));
 
+  const optFeatures = optionalFeatureProgs(Number(character.level));
+  if (optFeatures.length) { try { await ensureCatalog("optionalfeature"); } catch (e) { console.warn("Catálogo de opções indisponível:", e); } }
+
   renderAutoChoices({
     classChoices: skillChoicesFrom(classProf),
     backgroundChoices: skillChoicesFrom(br.skillProficiencies || bgProf),
     abilityChoices: abilityChoicesFrom(rr),
     bgAbility: bgAbilitySpec(br),
     expertise,
+    optFeatures,
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -545,6 +598,24 @@ function renderAutoChoices(data) {
         return `<label class="choice-option"><input type="checkbox" data-expertise="${k}" ${on ? "checked" : ""} ${!on && chosen.length >= data.expertise ? "disabled" : ""}><span>${esc(n)}</span></label>`;
       }).join("") : "<span class='muted'>Escolha perícias com proficiência primeiro.</span>"}</div></div>`);
   }
+  (data.optFeatures || []).forEach((prog) => {
+    const types = new Set(prog.featureType);
+    const lvl = Number(character.level);
+    const opts = manifest().filter((x) =>
+      normType(x.type) === "optionalfeature" && !hb(x) &&
+      ((x.__rec || recordsForEntity(x)[0])?.featureType || []).some((t) => types.has(t)) &&
+      matchesEdition(x, character.edition, true) &&
+      prereqLevel(x.__rec || recordsForEntity(x)[0] || {}) <= lvl
+    ).sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+    const chosen = character.choiceSelections.optionalFeatures?.[prog.name] || [];
+    const label = OFT_LABEL[prog.featureType[0]] || prog.name;
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>${esc(label)}${prog.name && prog.name !== label ? ` (${esc(prog.name)})` : ""}</strong><span>Escolha ${prog.count}</span></div>
+      <div class="choice-options scroll">${opts.length ? opts.map((x) => {
+        const on = chosen.includes(x.id);
+        const pr = prereqText(x.__rec || recordsForEntity(x)[0] || {});
+        return `<label class="choice-option"><input type="checkbox" data-optfeat="${esc(prog.name)}" value="${esc(x.id)}" ${on ? "checked" : ""} ${!on && chosen.length >= prog.count ? "disabled" : ""}><span>${esc(x.name)}${pr ? ` <em class="pr">${esc(pr)}</em>` : ""}</span></label>`;
+      }).join("") : "<span class='muted'>Nenhuma opção no banco para esta edição.</span>"}</div></div>`);
+  });
   $("auto-status").textContent = sections.length ? "Escolhas disponíveis" : "Nenhuma escolha pendente";
   if (!sections.length) { box.innerHTML = `<div class="auto-empty">As escolhas automáticas aparecerão aqui quando a classe/background/espécie fornecerem opções no banco.</div>`; return; }
   box.innerHTML = sections.join("");
@@ -588,6 +659,16 @@ function renderAutoChoices(data) {
     character.skillExpertise = character.skillExpertise || [];
     toggleIn(character.skillExpertise, i.dataset.expertise, i.checked);
     if (character.skillExpertise.length > data.expertise) { character.skillExpertise.pop(); i.checked = false; toast(`Você pode escolher apenas ${data.expertise}.`); }
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-optfeat]").forEach((i) => i.addEventListener("change", () => {
+    const key = i.dataset.optfeat;
+    character.choiceSelections.optionalFeatures = character.choiceSelections.optionalFeatures || {};
+    const cur = character.choiceSelections.optionalFeatures[key] || [];
+    toggleIn(cur, i.value, i.checked);
+    const prog = (data.optFeatures || []).find((p) => p.name === key);
+    if (prog && cur.length > prog.count) { cur.pop(); i.checked = false; toast(`Você pode escolher apenas ${prog.count}.`); }
+    character.choiceSelections.optionalFeatures[key] = cur;
     saveCharacter(character); recalc();
   }));
 }
@@ -749,8 +830,19 @@ async function renderFeatures() {
     const f = Array.isArray(r?.entries) ? r.entries.filter((x) => x && x.name && /feature|característica/i.test(x.name)) : [];
     if (f.length) groups.push(["BACKGROUND", f.map((x) => ({ name: x.name, entries: x.entries }))]);
   }
+  // Características opcionais escolhidas (estilo de luta, metamagia, invocações…)
+  const ofSel = character.choiceSelections?.optionalFeatures || {};
+  const ofItems = Object.values(ofSel).flat().map((id) => manifest().find((x) => x.id === id)).filter(Boolean);
+  if (ofItems.length) {
+    groups.push(["OPÇÕES ESCOLHIDAS", ofItems.map((e) => {
+      const r = recordsForEntity(e)[0] || {};
+      const tl = OFT_LABEL[(r.featureType || [])[0]] || "";
+      return { name: e.name, level: tl || "—", entries: r.entries };
+    })]);
+  }
+  const lvlLabel = (v) => (v == null || v === "") ? "—" : (typeof v === "number" || /^\d/.test(String(v))) ? `Nível ${esc(v)}` : esc(v);
   box.innerHTML = groups.filter((g) => g[1]?.length).map(([name, arr]) =>
-    `<section class="feature-group"><h3>${name}</h3>${arr.map((f) => `<article class="feature"><div><b>${esc(f.name || "Característica")}</b><span>Nível ${esc(f.level || "—")}</span></div><div>${f.entries ? richText(f.entries) : "<p class='muted'>Sem texto no banco para esta característica.</p>"}</div></article>`).join("")}</section>`
+    `<section class="feature-group"><h3>${name}</h3>${arr.map((f) => `<article class="feature"><div><b>${esc(f.name || "Característica")}</b><span>${lvlLabel(f.level)}</span></div><div>${f.entries ? richText(f.entries) : "<p class='muted'>Sem texto no banco para esta característica.</p>"}</div></article>`).join("")}</section>`
   ).join("") || `<div class="empty">Escolha uma classe/espécie para carregar as características.</div>`;
 }
 
