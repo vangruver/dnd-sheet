@@ -1,31 +1,36 @@
-const CATALOG_URL="data/manifest.json";
-let catalog=null;
-const cache=new Map();
+export const ABILITIES = ["str","dex","con","int","wis","cha"];
 
-export async function initDatabase(){
-  const r=await fetch(`${CATALOG_URL}?v=${Date.now()}`);
-  if(!r.ok) throw new Error(`Banco indisponível (${r.status})`);
-  catalog=await r.json();
-  return catalog;
+export const ABILITY_NAMES = {
+  str: "Força", dex: "Destreza", con: "Constituição",
+  int: "Inteligência", wis: "Sabedoria", cha: "Carisma"
+};
+
+export const SKILLS = [
+  ["acrobatics","Acrobacia","dex"], ["animalHandling","Adestrar Animais","wis"],
+  ["arcana","Arcanismo","int"], ["athletics","Atletismo","str"],
+  ["deception","Enganação","cha"], ["history","História","int"],
+  ["insight","Intuição","wis"], ["intimidation","Intimidação","cha"],
+  ["investigation","Investigação","int"], ["medicine","Medicina","wis"],
+  ["nature","Natureza","int"], ["perception","Percepção","wis"],
+  ["performance","Atuação","cha"], ["persuasion","Persuasão","cha"],
+  ["religion","Religião","int"], ["sleightOfHand","Prestidigitação","dex"],
+  ["stealth","Furtividade","dex"], ["survival","Sobrevivência","wis"]
+];
+
+export function mod(score) {
+  return Math.floor((Number(score || 0) - 10) / 2);
 }
-export function getCatalog(){return catalog}
-export function filterEntities(type,edition,content){
-  if(!catalog) return [];
-  return (catalog.entities||[]).filter(x=>{
-    if(x.type!==type) return false;
-    if(x.edition && x.edition!==edition && x.edition!=="both") return false;
-    if(content==="official" && x.homebrew) return false;
-    if(content==="homebrew" && !x.homebrew) return false;
-    return true;
-  }).sort((a,b)=>(a.homebrew-b.homebrew)||a.name.localeCompare(b.name));
+export function fmt(n) {
+  return n >= 0 ? `+${n}` : `${n}`;
 }
-export async function loadEntity(entity){
-  if(!entity?.file) return entity;
-  const key=entity.file;
-  if(cache.has(key)) return cache.get(key);
-  const r=await fetch(`data/${key}`);
-  if(!r.ok) return entity;
-  const json=await r.json();
-  cache.set(key,json);
-  return json;
+export function proficiency(level) {
+  return 2 + Math.floor((Math.max(1, Number(level || 1)) - 1) / 4);
+}
+export function hpAverage(faces) {
+  return Math.floor(Number(faces || 8) / 2) + 1;
+}
+export function ruleFor(edition) {
+  return edition === "2014"
+    ? { spellDc:(pb,m)=>8+pb+m, spellAttack:(pb,m)=>pb+m }
+    : { spellDc:(pb,m)=>8+pb+m, spellAttack:(pb,m)=>pb+m };
 }

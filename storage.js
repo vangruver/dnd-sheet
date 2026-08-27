@@ -1,1 +1,32 @@
-*{box-sizing:border-box}body{margin:0;background:#0f1218;color:#e8ebf0;font:14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}button,select,input{font:inherit}.topbar{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;gap:18px;align-items:center;padding:14px 20px;background:#151922;border-bottom:1px solid #303746}.topbar h1{margin:0 0 3px;font-size:20px}.topbar small,.muted{color:#8d96a6}.toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.toolbar label,.grid label{display:flex;flex-direction:column;gap:5px;color:#9da6b6;font-size:12px}.toolbar select,.toolbar button,.file-button{background:#202633;color:#fff;border:1px solid #394253;border-radius:7px;padding:8px 10px;cursor:pointer}.file-button{align-self:end}.file-button input{display:none}.page{max-width:1250px;margin:20px auto;padding:0 15px}.panel{background:#171c25;border:1px solid #2d3543;border-radius:10px;padding:18px;margin-bottom:16px}.section-title{font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.08em;border-bottom:1px solid #303846;padding-bottom:8px;margin-bottom:14px}.grid{display:grid;gap:12px}.grid.four{grid-template-columns:repeat(4,minmax(0,1fr))}.grid input,.grid select,.spell-toolbar input,.spell-toolbar select{background:#10141b;color:#fff;border:1px solid #343d4c;border-radius:6px;padding:9px}.tabs{display:flex;gap:6px;overflow:auto;margin:16px 0}.tab{border:1px solid #343d4c;background:#171c25;color:#aeb6c4;padding:9px 14px;border-radius:7px;cursor:pointer;white-space:nowrap}.tab.active{background:#a62f3a;color:#fff;border-color:#c14a55}.tab-panel{display:none}.tab-panel.active{display:block}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}.ability-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.ability{background:#10141b;border:1px solid #303847;border-radius:8px;padding:12px;text-align:center}.ability h3{font-size:11px;color:#9ca5b5;margin:0 0 8px}.ability input{width:70px;background:transparent;color:#fff;border:0;border-bottom:1px solid #4a5362;text-align:center;font-size:24px;font-weight:800}.ability .mod{font-size:18px;color:#d04b55;font-weight:800;margin-top:6px}.combat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.big-stat{background:#10141b;border:1px solid #303847;border-radius:8px;padding:14px;text-align:center}.big-stat span{display:block;color:#8d96a6;font-size:10px;text-transform:uppercase}.big-stat strong{display:block;font-size:24px;margin-top:4px}.skill-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}.skill{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;background:#10141b;border:1px solid #303847;border-radius:6px;padding:8px}.skill .ability-name{color:#737d8e;font-size:11px}.skill .value{font-weight:800;color:#d04b55}.spell-toolbar{display:flex;gap:8px;margin-bottom:12px}.spell-toolbar input{flex:1}.spell-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.spell{background:#10141b;border:1px solid #303847;border-radius:7px;padding:10px}.spell h3{margin:0 0 5px;font-size:14px}.spell small{color:#8d96a6}.feature{background:#10141b;border-left:3px solid #a62f3a;padding:10px;margin-bottom:7px;border-radius:4px}.feature h3{margin:0 0 4px;font-size:13px}.feature p{margin:0;color:#aeb6c4}.hb{color:#e5a93c;font-size:10px}.toast{position:fixed;right:20px;bottom:20px;background:#232a36;border:1px solid #475264;border-radius:8px;padding:10px 14px;opacity:0;transform:translateY(8px);transition:.2s}.toast.show{opacity:1;transform:none}@media(max-width:900px){.grid.four,.two-col{grid-template-columns:1fr 1fr}.topbar{position:static;align-items:flex-start;flex-direction:column}}@media(max-width:600px){.grid.four,.two-col,.ability-grid,.combat-grid,.skill-grid,.spell-grid{grid-template-columns:1fr}.toolbar{width:100%}}
+const KEY = "dnd-sheet-character-v2";
+
+export function saveCharacter(character) {
+  localStorage.setItem(KEY, JSON.stringify(character));
+}
+
+export function loadCharacter() {
+  try {
+    const value = localStorage.getItem(KEY);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearCharacter() {
+  localStorage.removeItem(KEY);
+}
+
+export function downloadCharacter(character) {
+  const blob = new Blob([JSON.stringify(character, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(character.name || "personagem").replace(/[^a-z0-9-_]+/gi,"_")}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function readCharacterFile(file) {
+  return JSON.parse(await file.text());
+}

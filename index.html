@@ -1,28 +1,191 @@
-import {ABILITIES,SKILLS,PROFICIENCY_BY_LEVEL,mod,fmt,getRule} from "./rules.js";
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ficha D&D 5e</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1>Ficha D&D 5e</h1>
+    <small id="db-status">Carregando banco…</small>
+  </div>
+  <div class="toolbar">
+    <label>Regras
+      <select id="edition">
+        <option value="2024">2024</option>
+        <option value="2014">2014</option>
+      </select>
+    </label>
+    <label>Conteúdo
+      <select id="content">
+        <option value="all">Oficial + Homebrew</option>
+        <option value="official">Apenas oficial</option>
+        <option value="homebrew">Apenas Homebrew</option>
+      </select>
+    </label>
+    <button id="new-character" type="button">Novo</button>
+    <button id="save-character" type="button">Salvar</button>
+    <button id="export-character" type="button">Exportar</button>
+    <label class="file-button">Importar
+      <input id="import-character" type="file" accept=".json,application/json">
+    </label>
+  </div>
+</header>
 
-export function defaultCharacter(){
- return {schema:1,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",
-   classId:"",subclassId:"",raceId:"",backgroundId:"",
-   scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},
-   saveProficiencies:[],skillProficiencies:[],skillExpertise:[],equipment:[],spells:[]};
-}
-export function calculate(c,selectedClass){
- const pb=PROFICIENCY_BY_LEVEL(c.level);
- const faces=selectedClass?.hd?.faces||8;
- const con=mod(c.scores.con),dex=mod(c.scores.dex);
- const hp=Math.max(1,faces+con+(c.level-1)*(getRule(c.edition).hpAverage(faces)+con));
- const spellAbility=selectedClass?.spellcastingAbility||null;
- const spellMod=spellAbility?mod(c.scores[spellAbility]):0;
- return {pb,hp,faces,initiative:dex,ac:10+dex,passive:10+skillBonus(c,"perception","wis",pb),
-   spellAbility,spellDc:spellAbility?getRule(c.edition).spellDc(pb,spellMod):null,
-   spellAttack:spellAbility?getRule(c.edition).spellAttack(pb,spellMod):null};
-}
-export function skillBonus(c,id,ability,pb=PROFICIENCY_BY_LEVEL(c.level)){
- let v=mod(c.scores[ability]);
- if(c.skillProficiencies.includes(id)) v+=pb;
- if(c.skillExpertise.includes(id)) v+=pb;
- return v;
-}
-export function saveBonus(c,a,pb=PROFICIENCY_BY_LEVEL(c.level)){
- return mod(c.scores[a])+(c.saveProficiencies.includes(a)?pb:0);
-}
+<main class="page">
+  <section class="panel">
+    <div class="section-title">Identidade e criação</div>
+    <div class="grid four">
+      <label>Nome
+        <input id="name" type="text" placeholder="Nome do personagem">
+      </label>
+      <label>Nível
+        <input id="level" type="number" min="1" max="20" value="1">
+      </label>
+      <label>Experiência
+        <input id="xp" type="number" min="0" value="0">
+      </label>
+      <label>Inspiração
+        <input id="inspiration" type="number" min="0" value="0">
+      </label>
+    </div>
+
+    <div class="grid four choice-grid">
+      <label>Espécie / Raça
+        <select id="race"><option value="">Carregando…</option></select>
+      </label>
+      <label>Classe
+        <select id="class"><option value="">Carregando…</option></select>
+      </label>
+      <label>Subclasse
+        <select id="subclass"><option value="">Escolha a classe primeiro</option></select>
+      </label>
+      <label>Background
+        <select id="background"><option value="">Carregando…</option></select>
+      </label>
+    </div>
+
+    <p id="selection-note" class="muted"></p>
+  </section>
+
+  <nav class="tabs" aria-label="Seções da ficha">
+    <button class="tab active" data-tab="overview">Resumo</button>
+    <button class="tab" data-tab="abilities">Atributos</button>
+    <button class="tab" data-tab="skills">Perícias</button>
+    <button class="tab" data-tab="combat">Combate</button>
+    <button class="tab" data-tab="spells">Magias</button>
+    <button class="tab" data-tab="features">Características</button>
+  </nav>
+
+  <section id="tab-overview" class="tab-panel active">
+    <div class="two-col">
+      <section class="panel">
+        <div class="section-title">Resumo</div>
+        <div class="combat-grid">
+          <div class="big-stat"><span>Bônus de proficiência</span><strong id="pb">+2</strong></div>
+          <div class="big-stat"><span>Pontos de vida</span><strong id="hp">—</strong></div>
+          <div class="big-stat"><span>Dado de vida</span><strong id="hit-die">—</strong></div>
+          <div class="big-stat"><span>Classe de armadura</span><strong id="ac">10</strong></div>
+          <div class="big-stat"><span>Iniciativa</span><strong id="initiative">+0</strong></div>
+          <div class="big-stat"><span>Percepção passiva</span><strong id="passive">10</strong></div>
+          <div class="big-stat"><span>Deslocamento</span><strong id="speed">—</strong></div>
+          <div class="big-stat"><span>CD de magia</span><strong id="spell-dc">—</strong></div>
+          <div class="big-stat"><span>Ataque mágico</span><strong id="spell-attack">—</strong></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="section-title">Origem selecionada</div>
+        <div id="selection-details" class="details">
+          <p>Escolha espécie, classe e background para ver um resumo.</p>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-abilities" class="tab-panel">
+    <section class="panel">
+      <div class="section-title">Atributos</div>
+      <div id="attributes" class="ability-grid"></div>
+    </section>
+    <section class="panel">
+      <div class="section-title">Testes de resistência</div>
+      <div id="saves" class="skill-grid"></div>
+    </section>
+  </section>
+
+  <section id="tab-skills" class="tab-panel">
+    <section class="panel">
+      <div class="section-title">Perícias</div>
+      <div id="skills" class="skill-grid"></div>
+    </section>
+  </section>
+
+  <section id="tab-combat" class="tab-panel">
+    <div class="two-col">
+      <section class="panel">
+        <div class="section-title">Combate</div>
+        <div class="grid four">
+          <label>PV atuais<input id="hp-current" type="number" min="0"></label>
+          <label>PV temporários<input id="hp-temp" type="number" min="0" value="0"></label>
+          <label>CA<input id="ac-input" type="number" min="0" value="10"></label>
+          <label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="section-title">Ataques</div>
+        <div id="attacks" class="list"></div>
+      </section>
+    </div>
+  </section>
+
+  <section id="tab-spells" class="tab-panel">
+    <section class="panel">
+      <div class="section-title">Magias</div>
+      <div class="spell-toolbar">
+        <input id="spell-search" type="search" placeholder="Pesquisar magia…">
+        <select id="spell-level-filter">
+          <option value="all">Todos os níveis</option>
+          <option value="0">Truques</option>
+          <option value="1">1º nível</option><option value="2">2º nível</option>
+          <option value="3">3º nível</option><option value="4">4º nível</option>
+          <option value="5">5º nível</option><option value="6">6º nível</option>
+          <option value="7">7º nível</option><option value="8">8º nível</option>
+          <option value="9">9º nível</option>
+        </select>
+      </div>
+      <div id="spells" class="spell-grid"></div>
+    </section>
+  </section>
+
+  <section id="tab-features" class="tab-panel">
+    <div class="two-col">
+      <section class="panel">
+        <div class="section-title">Características da classe</div>
+        <div id="class-features" class="feature-list"></div>
+      </section>
+      <section class="panel">
+        <div class="section-title">Características da subclasse</div>
+        <div id="subclass-features" class="feature-list"></div>
+      </section>
+    </div>
+    <div class="two-col">
+      <section class="panel">
+        <div class="section-title">Características da espécie</div>
+        <div id="race-features" class="feature-list"></div>
+      </section>
+      <section class="panel">
+        <div class="section-title">Background</div>
+        <div id="background-features" class="feature-list"></div>
+      </section>
+    </div>
+  </section>
+
+  <div id="toast" class="toast" role="status"></div>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
