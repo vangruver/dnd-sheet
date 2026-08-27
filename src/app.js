@@ -20,7 +20,7 @@ const fresh = () => ({
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 },
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, featAbility: {} }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {} }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -213,8 +213,9 @@ async function selectRef(e) {
   if (!e) return;
   character[`${t}Id`] = e.id;
   refs[t] = e;
-  if (t === "class") { character.subclassId = ""; refs.subclass = null; character.choiceSelections.classSkills = []; }
-  if (t === "background") character.choiceSelections.backgroundSkills = [];
+  if (t === "class") { character.subclassId = ""; refs.subclass = null; character.choiceSelections.classSkills = []; character.choiceSelections.optionalFeatures = {}; }
+  if (t === "background") { character.choiceSelections.backgroundSkills = []; character.choiceSelections.bgAbility = []; character.choiceSelections.originFeat = null; }
+  if (t === "race") { character.choiceSelections.raceSkills = {}; character.choiceSelections.abilityChoices = {}; character.choiceSelections.raceFeat = null; }
   await refreshChoices();
   saveCharacter(character);
   toast(`${titleOf(e)} selecionado.`);
@@ -397,11 +398,16 @@ function abilityChoicesFrom(v) {
 }
 function skillChoicesFrom(v) {
   const out = [];
+  const ALL = SKILLS.map(([k]) => k);
   flatObjects(v).forEach((o) => {
     const ch = o?.choose;
-    if (!ch || !ch.from) return;
-    const from = (Array.isArray(ch.from) ? ch.from : Object.keys(ch.from || {})).map(skillKey).filter(Boolean);
-    if (from.length) out.push({ from: [...new Set(from)], count: Number(ch.count || ch.amount || 1) || 1 });
+    if (ch && ch.from) {
+      const from = (Array.isArray(ch.from) ? ch.from : Object.keys(ch.from || {})).map(skillKey).filter(Boolean);
+      if (from.length) out.push({ from: [...new Set(from)], count: Number(ch.count || ch.amount || 1) || 1 });
+    } else if (typeof o?.any === "number" && o.any > 0) {
+      // "escolha 2 perícias quaisquer" (Meio-Elfo, Linhagem Personalizada)
+      out.push({ from: ALL, count: o.any });
+    }
   });
   return out;
 }
@@ -533,26 +539,32 @@ function resolveFeatKey(key) {
   return featStubs().find((e) => e.name.toLowerCase() === name && String(e.source || "").toLowerCase() === String(src || "").toLowerCase())
     || featStubs().find((e) => e.name.toLowerCase() === name) || null;
 }
-function originFeatSpec(br) {
-  const blk = Array.isArray(br?.feats) ? br.feats[0] : null;
+// Espec. de talento a partir de um campo `feats` (background ou espécie).
+// anyMeansOrigin: no background 2024, "any" = talento de origem; na
+// espécie (Linhagem Personalizada / Humano Variante), "any" = qualquer.
+function featSpecFrom(rec, anyMeansOrigin) {
+  const blk = Array.isArray(rec?.feats) ? rec.feats[0] : null;
   if (!blk) return null;
   for (const [k, v] of Object.entries(blk)) {
     if (k === "anyFromCategory" && v) {
       const cats = [].concat(v.category || []).map((c) => String(c).toUpperCase());
-      return { fixed: null, categories: cats.length ? cats : ["O"] };
+      return { fixed: null, categories: cats.length ? cats : null };
     }
-    if (k === "any") return { fixed: null, categories: ["O"] };
+    if (k === "any") return { fixed: null, categories: anyMeansOrigin ? ["O"] : null };
     if (v === true) { const e = resolveFeatKey(k); if (e) return { fixed: e, categories: null }; }
   }
   return null;
 }
+const originFeatSpec = (br) => featSpecFrom(br, true);
+const raceFeatSpec = (rr) => featSpecFrom(rr, false);
 function asiSlotCount(classFeatures) {
   return (classFeatures || []).filter((f) => /ability score improvement/i.test(String(f.name || ""))).length;
 }
 function chosenFeatEntities() {
   const out = [];
-  const of = character.choiceSelections?.originFeat;
-  if (of) { const e = manifest().find((x) => x.id === of); if (e) out.push(e); }
+  for (const id of [character.choiceSelections?.originFeat, character.choiceSelections?.raceFeat]) {
+    if (id) { const e = manifest().find((x) => x.id === id); if (e) out.push(e); }
+  }
   for (const slot of character.choiceSelections?.asi || []) {
     if (slot && slot.mode === "feat" && slot.feat) { const e = manifest().find((x) => x.id === slot.feat); if (e) out.push(e); }
   }
@@ -582,6 +594,7 @@ async function buildAutomation() {
   const bgProf = br.skillProficiencies ? br : (br.startingProficiencies || br);
   const classFixedSkills = fixedSkillsFrom(classProf);
   const bgFixedSkills = fixedSkillsFrom(br.skillProficiencies || bgProf);
+  const raceFixedSkills = fixedSkillsFrom(rr.skillProficiencies);
   const classSaves = savesFrom(cr);
   const previousAuto = [...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || [])];
   const previousChoices = [...Object.values(character.choiceSelections?.classSkills || {}).flat(), ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat()];
@@ -590,15 +603,17 @@ async function buildAutomation() {
   }
   character.auto.classSkills = classFixedSkills;
   character.auto.backgroundSkills = bgFixedSkills;
+  character.auto.raceSkills = raceFixedSkills;
   character.auto.classSaves = classSaves;
   character.auto.speed = speedFrom(rr);
   character.auto.hitDice = hitDiceFrom(cr);
   character.auto.spellcastingAbility = spellAbilityFrom(cr);
-  const fixedSkills = [...new Set([...classFixedSkills, ...bgFixedSkills])];
+  const fixedSkills = [...new Set([...classFixedSkills, ...bgFixedSkills, ...raceFixedSkills])];
   character.skillProficiencies = [...new Set([
     ...(character.manualSkillProficiencies || []), ...fixedSkills,
     ...Object.values(character.choiceSelections?.classSkills || {}).flat(),
     ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat(),
+    ...Object.values(character.choiceSelections?.raceSkills || {}).flat(),
   ])];
   character.saveProficiencies = [...new Set([...classSaves, ...(character.manualSaveProficiencies || [])])];
   if (character.auto.speed && !character.manualSpeed) character.speed = character.auto.speed;
@@ -615,13 +630,17 @@ async function buildAutomation() {
   const optFeatures = optionalFeatureProgs(Number(character.level));
   if (optFeatures.length) { try { await ensureCatalog("optionalfeature"); } catch (e) { console.warn("Catálogo de opções indisponível:", e); } }
 
-  // Talentos: feat de origem do background (2024) + slots de melhoria.
+  // Talentos: feat de origem do background (2024), talento de espécie
+  // (Linhagem Personalizada / Humano Variante) + slots de melhoria.
   const asiCount = asiSlotCount(classFeats);
-  const originSpec = originFeatSpec(br);
-  if (asiCount || originSpec) { try { await ensureCatalog("feat"); } catch (e) { console.warn("Catálogo de talentos indisponível:", e); } }
-  const originSpec2 = asiCount || originSpec ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
+  const wantsFeats = asiCount || originFeatSpec(br) || raceFeatSpec(rr);
+  if (wantsFeats) { try { await ensureCatalog("feat"); } catch (e) { console.warn("Catálogo de talentos indisponível:", e); } }
+  const originSpec2 = wantsFeats ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
+  const raceSpec = wantsFeats ? raceFeatSpec(rr) : null;
   if (originSpec2 && originSpec2.fixed) character.choiceSelections.originFeat = originSpec2.fixed.id;
   else if (!originSpec2) character.choiceSelections.originFeat = null;
+  if (raceSpec && raceSpec.fixed) character.choiceSelections.raceFeat = raceSpec.fixed.id;
+  else if (!raceSpec) character.choiceSelections.raceFeat = null;
   character.choiceSelections.asi = (character.choiceSelections.asi || []).slice(0, asiCount);
   const fb = featBonuses();
   character.auto.featSkills = fb.skills;
@@ -630,12 +649,14 @@ async function buildAutomation() {
   renderAutoChoices({
     classChoices: skillChoicesFrom(classProf),
     backgroundChoices: skillChoicesFrom(br.skillProficiencies || bgProf),
+    raceChoices: skillChoicesFrom(rr.skillProficiencies),
     abilityChoices: abilityChoicesFrom(rr),
     bgAbility: bgAbilitySpec(br),
     expertise,
     optFeatures,
     asiCount,
     originSpec: originSpec2,
+    raceSpec,
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -656,6 +677,7 @@ function renderAutoChoices(data) {
   };
   addSkillSection(`Perícias da classe — ${titleOf(refs.class)}`, data.classChoices, "classSkills");
   addSkillSection(`Perícias do background — ${titleOf(refs.background)}`, data.backgroundChoices, "backgroundSkills");
+  addSkillSection(`Perícias da espécie — ${titleOf(refs.race)}`, data.raceChoices || [], "raceSkills");
   data.abilityChoices.forEach((ch, idx) => {
     const selected = character.choiceSelections.abilityChoices?.[idx] || [];
     sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumentos de atributo — ${esc(titleOf(refs.race))}</strong><span>Escolha ${ch.count}</span></div><div class="choice-options">${ch.from.map((k) => `<label class="choice-option"><input type="checkbox" data-ability-choice="${idx}" value="${k}" ${selected.includes(k) ? "checked" : ""} ${!selected.includes(k) && selected.length >= ch.count ? "disabled" : ""}><span>${ABILITY_NAMES[k]}</span></label>`).join("")}</div></div>`);
@@ -730,18 +752,18 @@ function renderAutoChoices(data) {
     const cur = character.choiceSelections?.featAbility?.[featId] || "";
     return `<label class="asi-pick"><span>talento +1</span><select data-feat-ability="${esc(featId)}"><option value="">—</option>${spec.from.map((k) => `<option value="${k}"${k === cur ? " selected" : ""}>${ABILITY_NAMES[k]}</option>`).join("")}</select></label>`;
   };
-  if (data.originSpec) {
-    const os = data.originSpec;
-    if (os.fixed) {
-      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Talento de origem — ${esc(titleOf(refs.background))}</strong><span>Fixo</span></div>
-        <p>${esc(os.fixed.name)}${os.fixed.source ? ` (${esc(os.fixed.source)})` : ""} — concedido pelo background.</p>
-        <div class="asi-picks">${featAbilPicker(os.fixed.id)}</div></div>`);
+  const featGrantSection = (spec, title, sourceLabel, selAttr, curId) => {
+    if (spec.fixed) {
+      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>${esc(title)}</strong><span>Fixo</span></div>
+        <p>${esc(spec.fixed.name)}${spec.fixed.source ? ` (${esc(spec.fixed.source)})` : ""} — ${esc(sourceLabel)}.</p>
+        <div class="asi-picks">${featAbilPicker(spec.fixed.id)}</div></div>`);
     } else {
-      const cur = character.choiceSelections.originFeat || "";
-      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Talento de origem — ${esc(titleOf(refs.background))}</strong><span>Escolha 1</span></div>
-        <div class="asi-picks">${featSelect("data-origin-feat", cur, os.categories)}${featAbilPicker(cur)}</div></div>`);
+      sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>${esc(title)}</strong><span>Escolha 1</span></div>
+        <div class="asi-picks">${featSelect(selAttr, curId, spec.categories)}${featAbilPicker(curId)}</div></div>`);
     }
-  }
+  };
+  if (data.originSpec) featGrantSection(data.originSpec, `Talento de origem — ${titleOf(refs.background)}`, "concedido pelo background", "data-origin-feat", character.choiceSelections.originFeat || "");
+  if (data.raceSpec) featGrantSection(data.raceSpec, `Talento da espécie — ${titleOf(refs.race)}`, "concedido pela espécie", "data-race-feat", character.choiceSelections.raceFeat || "");
   for (let i = 0; i < (data.asiCount || 0); i++) {
     const slot = character.choiceSelections.asi[i] || { mode: "" };
     const isAbil = slot.mode === "ability", isFeat = slot.mode === "feat";
@@ -766,13 +788,14 @@ function renderAutoChoices(data) {
     character.choiceSelections[t] = character.choiceSelections[t] || [];
     const current = character.choiceSelections[t][idx] || [];
     toggleIn(current, v, i.checked);
-    const limit = t === "classSkills" ? data.classChoices[idx].count : data.backgroundChoices[idx].count;
+    const limit = (t === "classSkills" ? data.classChoices : t === "backgroundSkills" ? data.backgroundChoices : data.raceChoices || [])[idx]?.count ?? current.length;
     if (current.length > limit) { current.pop(); i.checked = false; toast(`Você pode escolher apenas ${limit}.`); }
     character.choiceSelections[t][idx] = current;
     character.skillProficiencies = [...new Set([
-      ...(character.manualSkillProficiencies || []), ...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || []),
+      ...(character.manualSkillProficiencies || []), ...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || []), ...(character.auto?.raceSkills || []),
       ...Object.values(character.choiceSelections.classSkills || {}).flat(),
       ...Object.values(character.choiceSelections.backgroundSkills || {}).flat(),
+      ...Object.values(character.choiceSelections.raceSkills || {}).flat(),
     ])];
     saveCharacter(character); recalc();
   }));
@@ -815,6 +838,10 @@ function renderAutoChoices(data) {
   }));
   box.querySelectorAll("[data-origin-feat]").forEach((s) => s.addEventListener("change", () => {
     character.choiceSelections.originFeat = s.value || null;
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-race-feat]").forEach((s) => s.addEventListener("change", () => {
+    character.choiceSelections.raceFeat = s.value || null;
     saveCharacter(character); recalc();
   }));
   box.querySelectorAll("[data-asi-mode]").forEach((b) => b.addEventListener("click", () => {
