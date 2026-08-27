@@ -71,4 +71,23 @@ window.DND_DB = {
     ["Mochila","Contêiner para equipamento","2"],["Corda de cânhamo","Corda de 15 m","10"],["Tocha","Ilumina uma área","1"],
     ["Rações","Comida para uma pessoa","1"],["Cantil","Recipiente para água","1"],["Pederneira e isqueiro","Acender fogo","1"]
   ]
+,
+  rulesets: {
+    "2014": {
+      name: "D&D 5e — 2014",
+      classes: {
+        "Bárbaro": "Bárbaro","Bardo":"Bardo","Bruxo":"Bruxo","Clérigo":"Clérigo","Druida":"Druida",
+        "Feiticeiro":"Feiticeiro","Guerreiro":"Guerreiro","Ladino":"Ladino","Mago":"Mago",
+        "Monge":"Monge","Paladino":"Paladino","Patrulheiro":"Patrulheiro"
+      }
+    },
+    "2024": {
+      name: "D&D 5e — 2024",
+      classes: {
+        "Bárbaro":"Bárbaro","Bardo":"Bardo","Bruxo":"Bruxo","Clérigo":"Clérigo","Druida":"Druida",
+        "Feiticeiro":"Feiticeiro","Guerreiro":"Guerreiro","Ladino":"Ladino","Mago":"Mago",
+        "Monge":"Monge","Paladino":"Paladino","Patrulheiro":"Patrulheiro"
+      }
+    }
+  }
 };
