@@ -491,7 +491,8 @@ function applyLoaded(c){
  inventory:Array.isArray(c?.inventory)?c.inventory:[],preparedSpells:Array.isArray(c?.preparedSpells)?c.preparedSpells:[],
  auto:{...f.auto,...(c?.auto||{})},choiceSelections:{...f.choiceSelections,...(c?.choiceSelections||{}),abilityChoices:{...f.choiceSelections.abilityChoices,...(c?.choiceSelections?.abilityChoices||{})}},
  manualSkillProficiencies:Array.isArray(c?.manualSkillProficiencies)?c.manualSkillProficiencies:[]};
- $("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}$("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
+ $("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices();
+}
 function openPdfPreview(){
  const modal=$("modal"),box=$("modal-content");
  const clone=document.querySelector(".sheet-shell").cloneNode(true);
