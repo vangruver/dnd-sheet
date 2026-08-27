@@ -1,244 +1,266 @@
-// Configuração das URLs dos dados no GitHub (via jsDelivr CDN para evitar rate limits e problemas de CORS no GitHub Pages)
-const DATA_SOURCES = {
-  "2024": "https://cdn.jsdelivr.net/gh/5etools-mirror-3/5etools-src@main/data/",
-  "2014": "https://cdn.jsdelivr.net/gh/5etools-mirror-3/5etools-2014-src@main/data/"
-};
-
-// Lista de perícias padrão do D&D 5e e seus atributos associados
+const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'];
+const ABILITY_LABELS = { str: 'FOR (STR)', dex: 'DES (DEX)', con: 'CON (CON)', int: 'INT (INT)', wis: 'SAB (WIS)', cha: 'CAR (CHA)' };
 const SKILLS = [
-  { name: "Acrobacia (Acrobatics)", attr: "dex" },
-  { name: "Adestrar Animais (Animal Handling)", attr: "wis" },
-  { name: "Arcanismo (Arcana)", attr: "int" },
-  { name: "Atletismo (Athletics)", attr: "str" },
-  { name: "Atuação (Performance)", attr: "cha" },
-  { name: "Blefar (Deception)", attr: "cha" },
-  { name: "Furtividade (Stealth)", attr: "dex" },
-  { name: "História (History)", attr: "int" },
-  { name: "Intimidação (Intimidation)", attr: "cha" },
-  { name: "Intuição (Insight)", attr: "wis" },
-  { name: "Investigação (Investigation)", attr: "int" },
-  { name: "Medicina (Medicine)", attr: "wis" },
-  { name: "Natureza (Nature)", attr: "int" },
-  { name: "Percepção (Perception)", attr: "wis" },
-  { name: "Persuasão (Persuasion)", attr: "cha" },
-  { name: "Prestidigitação (Sleight of Hand)", attr: "dex" },
-  { name: "Religião (Religion)", attr: "int" },
-  { name: "Sobrevivência (Survival)", attr: "wis" }
+  { key: 'acrobatics', name: 'Acrobacia', ability: 'dex' },
+  { key: 'animal_handling', name: 'Adestrar Animais', ability: 'wis' },
+  { key: 'arcana', name: 'Arcanismo', ability: 'int' },
+  { key: 'athletics', name: 'Atletismo', ability: 'str' },
+  { key: 'deception', name: 'Enganação', ability: 'cha' },
+  { key: 'history', name: 'História', ability: 'int' },
+  { key: 'insight', name: 'Intuição', ability: 'wis' },
+  { key: 'intimidation', name: 'Intimidação', ability: 'cha' },
+  { key: 'investigation', name: 'Investigação', ability: 'int' },
+  { key: 'medicine', name: 'Medicina', ability: 'wis' },
+  { key: 'nature', name: 'Natureza', ability: 'int' },
+  { key: 'perception', name: 'Percepção', ability: 'wis' },
+  { key: 'performance', name: 'Atuação', ability: 'cha' },
+  { key: 'persuasion', name: 'Persuasão', ability: 'cha' },
+  { key: 'religion', name: 'Religião', ability: 'int' },
+  { key: 'sleight_of_hand', name: 'Prestidigitação', ability: 'dex' },
+  { key: 'stealth', name: 'Furtividade', ability: 'dex' },
+  { key: 'survival', name: 'Sobrevivência', ability: 'wis' }
 ];
 
-let rawData = {
-  classes: [],
-  races: [],
-  backgrounds: []
-};
-
-// Inicialização
-document.addEventListener("DOMContentLoaded", () => {
-  renderSkills();
-  bindEvents();
-  loadEditionData("2024");
-});
-
-// Vincula todos os inputs e selects
-function bindEvents() {
-  document.getElementById("editionSelect").addEventListener("change", (e) => {
-    loadEditionData(e.target.value);
-  });
-
-  // Atualização em cascata de atributos
-  ["str", "dex", "con", "int", "wis", "cha"].forEach(attr => {
-    document.getElementById(`attr-${attr}`).addEventListener("input", recalculateAll);
-  });
-
-  document.getElementById("charLevel").addEventListener("input", () => {
-    updateProficiencyBonus();
-    recalculateAll();
-  });
-
-  document.getElementById("charClass").addEventListener("change", onClassSelect);
-  document.getElementById("charRace").addEventListener("change", onRaceSelect);
-}
-
-// Renderiza a lista de perícias
-function renderSkills() {
-  const container = document.getElementById("skillsContainer");
-  container.innerHTML = "";
-
-  SKILLS.forEach((skill, index) => {
-    const div = document.createElement("div");
-    div.className = "skill-item";
-    div.innerHTML = `
-      <input type="checkbox" id="skill-check-${index}" data-attr="${skill.attr}">
-      <span class="skill-name">${skill.name}</span>
-      <span class="skill-mod" id="skill-val-${index}">+0</span>
-    `;
-    div.querySelector("input").addEventListener("change", recalculateAll);
-    container.appendChild(div);
-  });
-}
-
-// Carrega os dados da edição selecionada
-async function loadEditionData(edition) {
-  const statusEl = document.getElementById("loadingStatus");
-  statusEl.textContent = `Carregando dados (${edition})...`;
-  statusEl.style.color = "var(--text-muted)";
-
-  const baseUrl = DATA_SOURCES[edition] || DATA_SOURCES["2024"];
-
-  try {
-    const [classesRes, racesRes, bgRes] = await Promise.all([
-      fetch(`${baseUrl}classes.json`).catch(() => fetch(`${baseUrl}class/index.json`)),
-      fetch(`${baseUrl}races.json`),
-      fetch(`${baseUrl}backgrounds.json`)
-    ]);
-
-    const classesData = await classesRes.json();
-    const racesData = await racesRes.json();
-    const bgData = await bgRes.json();
-
-    rawData.classes = classesData.class || [];
-    rawData.races = racesData.race || [];
-    rawData.backgrounds = bgData.background || [];
-
-    populateSelect("charClass", rawData.classes.map(c => ({ name: c.name, value: c.name })));
-    populateSelect("charRace", rawData.races.map(r => ({ name: r.name, value: r.name })));
-    populateSelect("charBackground", rawData.backgrounds.map(b => ({ name: b.name, value: b.name })));
-
-    statusEl.textContent = `Online (${edition})`;
-    statusEl.style.color = "#43d692";
-  } catch (err) {
-    console.error("Erro ao carregar dados do 5etools:", err);
-    statusEl.textContent = "Erro ao carregar dados";
-    statusEl.style.color = "#e0443e";
+class FiveEToolsDataService {
+  constructor() {
+    this.cache = new Map();
+    // A correção está aqui: Utilizando CDN jsDelivr para ignorar o bloqueio CORS do navegador
+    this.endpoints = {
+      '2014': 'https://cdn.jsdelivr.net/gh/5etools-mirror-3/5etools-2014-src@main/data',
+      '2024': 'https://cdn.jsdelivr.net/gh/5etools-mirror-3/5etools-src@main/data'
+    };
+    this.currentVersion = '2014';
   }
-}
-
-function populateSelect(elementId, items) {
-  const select = document.getElementById(elementId);
-  const currentValue = select.value;
-  select.innerHTML = `<option value="">Selecione...</option>`;
   
-  // Remove duplicados e ordena por nome
-  const uniqueItems = Array.from(new Set(items.map(i => i.name)))
-    .sort()
-    .map(name => items.find(i => i.name === name));
+  setVersion(version) {
+    this.currentVersion = version;
+    this.cache.clear(); // Limpa cache antigo para forçar o download dos livros novos
+  }
+  
+  get baseUrl() { return this.endpoints[this.currentVersion]; }
 
-  uniqueItems.forEach(item => {
-    const opt = document.createElement("option");
-    opt.value = item.value;
-    opt.textContent = item.name;
-    select.appendChild(opt);
-  });
-
-  if (currentValue) select.value = currentValue;
-}
-
-// Ações ao selecionar Classe
-function onClassSelect() {
-  const selectedName = document.getElementById("charClass").value;
-  const cls = rawData.classes.find(c => c.name === selectedName);
-  if (!cls) return;
-
-  if (cls.hd) {
-    document.getElementById("hitDie").value = `d${cls.hd.faces || 8}`;
+  async fetchJson(endpoint) {
+    if (this.cache.has(endpoint)) return this.cache.get(endpoint);
+    try {
+      const response = await fetch(`${this.baseUrl}/${endpoint}`);
+      if (!response.ok) throw new Error(`Falha HTTP ao carregar ${endpoint}: ${response.status}`);
+      const data = await response.json();
+      this.cache.set(endpoint, data);
+      return data;
+    } catch (err) {
+      console.error(`Erro ao carregar dados do 5etools (${endpoint}):`, err);
+      throw err;
+    }
   }
 
-  updateHp();
-  updateFeatures();
+  async getRaces() {
+    const data = await this.fetchJson('races.json');
+    return data.race || [];
+  }
+  async getBackgrounds() {
+    const data = await this.fetchJson('backgrounds.json');
+    return data.background || [];
+  }
+  async getClassesIndex() {
+    try { return await this.fetchJson('class/index.json'); }
+    catch { return null; }
+  }
+  async getClassDetails(classFileName) {
+    return await this.fetchJson(`class/${classFileName}`);
+  }
 }
 
-// Ações ao selecionar Raça
-function onRaceSelect() {
-  const selectedName = document.getElementById("charRace").value;
-  const race = rawData.races.find(r => r.name === selectedName);
-  if (!race) return;
+class CharacterSheetApp {
+  constructor() {
+    this.service = new FiveEToolsDataService();
+    this.scores = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 };
+    this.proficientSaves = new Set();
+    this.proficientSkills = new Set();
+    this.level = 1;
+    this.classData = null;
+    this.raceData = null;
 
-  if (race.speed) {
-    const speed = typeof race.speed === "object" ? race.speed.walk || 30 : race.speed;
-    document.getElementById("charSpeed").value = `${speed} ft`;
+    this.initUI();
+    this.bindEvents();
+    this.loadData();
   }
 
-  updateFeatures();
-}
+  initUI() {
+    const attrContainer = document.getElementById('attributes-container');
+    attrContainer.innerHTML = ABILITIES.map(ab => `
+      <div class="attr-card">
+        <label>${ABILITY_LABELS[ab]}</label>
+        <input type="number" id="score-${ab}" value="10" min="1" max="30">
+        <span class="attr-mod" id="mod-${ab}">+0</span>
+      </div>
+    `).join('');
 
-// Atualização de bônus e modificadores
-function getModifier(score) {
-  return Math.floor((score - 10) / 2);
-}
+    const savesList = document.getElementById('saves-list');
+    savesList.innerHTML = ABILITIES.map(ab => `
+      <div class="list-item">
+        <label><input type="checkbox" id="save-check-${ab}"> ${ABILITY_LABELS[ab].split(' ')[0]}</label>
+        <span class="mod" id="save-val-${ab}">+0</span>
+      </div>
+    `).join('');
 
-function formatMod(val) {
-  return val >= 0 ? `+${val}` : `${val}`;
-}
-
-function updateProficiencyBonus() {
-  const level = parseInt(document.getElementById("charLevel").value, 10) || 1;
-  const prof = Math.ceil(1 + level / 4);
-  document.getElementById("profBonus").value = formatMod(prof);
-}
-
-function updateHp() {
-  const level = parseInt(document.getElementById("charLevel").value, 10) || 1;
-  const conScore = parseInt(document.getElementById("attr-con").value, 10) || 10;
-  const conMod = getModifier(conScore);
-  const hitDieStr = document.getElementById("hitDie").value.replace("d", "");
-  const hitDieVal = parseInt(hitDieStr, 10) || 8;
-
-  // Cálculo padrão: Dado máximo no nível 1 + média nos níveis subsequentes
-  const avgGain = Math.floor(hitDieVal / 2) + 1;
-  const maxHp = (hitDieVal + conMod) + (level - 1) * (avgGain + conMod);
-  document.getElementById("maxHp").value = Math.max(1, maxHp);
-}
-
-function recalculateAll() {
-  const profStr = document.getElementById("profBonus").value;
-  const profBonus = parseInt(profStr, 10) || 2;
-
-  // Atualiza modificadores dos atributos
-  const mods = {};
-  ["str", "dex", "con", "int", "wis", "cha"].forEach(attr => {
-    const score = parseInt(document.getElementById(`attr-${attr}`).value, 10) || 10;
-    const mod = getModifier(score);
-    mods[attr] = mod;
-    document.getElementById(`mod-${attr}`).textContent = formatMod(mod);
-  });
-
-  // Iniciativa e CA básica
-  document.getElementById("initiative").value = formatMod(mods.dex);
-  document.getElementById("armorClass").value = 10 + mods.dex;
-
-  // Atualiza Perícias
-  SKILLS.forEach((skill, index) => {
-    const isProf = document.getElementById(`skill-check-${index}`).checked;
-    const total = mods[skill.attr] + (isProf ? profBonus : 0);
-    document.getElementById(`skill-val-${index}`).textContent = formatMod(total);
-  });
-
-  // Percepção Passiva (10 + Mod Sabedoria + Proficiência se marcada)
-  const perceptionIndex = SKILLS.findIndex(s => s.name.includes("Percepção"));
-  const isPerceptionProf = perceptionIndex !== -1 && document.getElementById(`skill-check-${perceptionIndex}`).checked;
-  const passivePerc = 10 + mods.wis + (isPerceptionProf ? profBonus : 0);
-  document.getElementById("passivePerception").value = passivePerc;
-
-  updateHp();
-}
-
-function updateFeatures() {
-  const className = document.getElementById("charClass").value;
-  const raceName = document.getElementById("charRace").value;
-  const bgName = document.getElementById("charBackground").value;
-
-  const display = document.getElementById("featuresDisplay");
-  display.innerHTML = "";
-
-  if (!className && !raceName && !bgName) {
-    display.innerHTML = "<p>Selecione opções acima para carregar traços automáticos.</p>";
-    return;
+    const skillsList = document.getElementById('skills-list');
+    skillsList.innerHTML = SKILLS.map(s => `
+      <div class="list-item">
+        <label><input type="checkbox" id="skill-check-${s.key}"> ${s.name} <small style="color:#777">(${s.ability.toUpperCase()})</small></label>
+        <span class="mod" id="skill-val-${s.key}">+0</span>
+      </div>
+    `).join('');
   }
 
-  let html = "";
-  if (className) html += `<p><strong>Classe Selecionada:</strong> ${className}</p>`;
-  if (raceName) html += `<p><strong>Raça Selecionada:</strong> ${raceName}</p>`;
-  if (bgName) html += `<p><strong>Antecedente Selecionado:</strong> ${bgName}</p>`;
+  bindEvents() {
+    document.getElementById('rules-version').addEventListener('change', (e) => {
+      this.service.setVersion(e.target.value);
+      this.loadData();
+    });
 
-  display.innerHTML = html;
+    document.getElementById('char-level').addEventListener('input', (e) => {
+      this.level = parseInt(e.target.value) || 1;
+      this.updateCalculations();
+    });
+
+    document.getElementById('char-class').addEventListener('change', async (e) => {
+      const fileName = e.target.value;
+      if (!fileName) return;
+      try {
+        const data = await this.service.getClassDetails(fileName);
+        this.classData = data.class ? data.class[0] : null;
+        if (this.classData && this.classData.hd) {
+          document.getElementById('hit-dice').value = `d${this.classData.hd.faces}`;
+        }
+        
+        this.proficientSaves.clear();
+        if (this.classData && this.classData.proficiency) {
+          this.classData.proficiency.forEach(p => {
+            this.proficientSaves.add(p.toLowerCase());
+            const el = document.getElementById(`save-check-${p.toLowerCase()}`);
+            if (el) el.checked = true;
+          });
+        }
+        this.updateCalculations();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    document.getElementById('char-race').addEventListener('change', (e) => {
+      const idx = e.target.value;
+      if (idx !== "") {
+        this.raceData = this.racesList[idx];
+        if (this.raceData && this.raceData.speed) {
+          const spd = typeof this.raceData.speed === 'number' ? this.raceData.speed : (this.raceData.speed.walk || 30);
+          document.getElementById('speed').value = `${spd} ft`;
+        }
+      }
+    });
+
+    ABILITIES.forEach(ab => {
+      document.getElementById(`score-${ab}`).addEventListener('input', (e) => {
+        this.scores[ab] = parseInt(e.target.value) || 10;
+        this.updateCalculations();
+      });
+      document.getElementById(`save-check-${ab}`).addEventListener('change', (e) => {
+        if(e.target.checked) this.proficientSaves.add(ab);
+        else this.proficientSaves.delete(ab);
+        this.updateCalculations();
+      });
+    });
+
+    SKILLS.forEach(s => {
+      document.getElementById(`skill-check-${s.key}`).addEventListener('change', (e) => {
+        if(e.target.checked) this.proficientSkills.add(s.key);
+        else this.proficientSkills.delete(s.key);
+        this.updateCalculations();
+      });
+    });
+  }
+
+  async loadData() {
+    const statusEl = document.getElementById('status-bar');
+    statusEl.textContent = "Baixando livros da " + (this.service.currentVersion === '2024' ? 'Edição 2024' : 'Edição 2014') + "...";
+    statusEl.className = "status-bar loading";
+
+    try {
+      const [races, classIndex, backgrounds] = await Promise.all([
+        this.service.getRaces(),
+        this.service.getClassesIndex(),
+        this.service.getBackgrounds()
+      ]);
+
+      // Popula Raças
+      this.racesList = races.filter(r => r.source === 'PHB' || r.source === 'XPHB' || !r._isBaseRace);
+      const raceSelect = document.getElementById('char-race');
+      raceSelect.innerHTML = '<option value="">Selecione uma raça...</option>' + 
+        this.racesList.map((r, i) => `<option value="${i}">${r.name}</option>`).join('');
+
+      // Popula Classes
+      if (classIndex) {
+        const classSelect = document.getElementById('char-class');
+        classSelect.innerHTML = '<option value="">Selecione uma classe...</option>' + 
+          Object.keys(classIndex).map(c => `<option value="${classIndex[c]}">${c.charAt(0).toUpperCase() + c.slice(1)}</option>`).join('');
+      }
+
+      // Popula Antecedentes
+      const bgs = backgrounds.filter(b => b.source === 'PHB' || b.source === 'XPHB');
+      const bgSelect = document.getElementById('char-background');
+      bgSelect.innerHTML = '<option value="">Selecione um antecedente...</option>' + 
+        bgs.map(b => `<option value="${b.name}">${b.name}</option>`).join('');
+
+      statusEl.textContent = "✓ Dados Carregados e Sincronizados!";
+      statusEl.className = "status-bar success";
+      this.updateCalculations();
+
+    } catch (err) {
+      statusEl.textContent = "❌ Erro ao baixar dados do 5eTools.";
+      statusEl.className = "status-bar error";
+    }
+  }
+
+  updateCalculations() {
+    const pb = Math.floor((this.level - 1) / 4) + 2;
+    document.getElementById('prof-bonus').value = `+${pb}`;
+
+    const getMod = score => Math.floor((score - 10) / 2);
+    const formatMod = mod => mod >= 0 ? `+${mod}` : `${mod}`;
+
+    ABILITIES.forEach(ab => {
+      const mod = getMod(this.scores[ab]);
+      document.getElementById(`mod-${ab}`).textContent = formatMod(mod);
+
+      let saveTotal = mod;
+      if (this.proficientSaves.has(ab)) saveTotal += pb;
+      document.getElementById(`save-val-${ab}`).textContent = formatMod(saveTotal);
+    });
+
+    let percMod = 0;
+    SKILLS.forEach(s => {
+      const baseMod = getMod(this.scores[s.ability]);
+      let skillTotal = baseMod;
+      if (this.proficientSkills.has(s.key)) skillTotal += pb;
+      document.getElementById(`skill-val-${s.key}`).textContent = formatMod(skillTotal);
+
+      if (s.key === 'perception') percMod = skillTotal;
+    });
+
+    document.getElementById('passive-perception').value = 10 + percMod;
+    
+    const dexMod = getMod(this.scores.dex);
+    document.getElementById('initiative').value = formatMod(dexMod);
+    document.getElementById('armor-class').value = 10 + dexMod;
+
+    const conMod = getMod(this.scores.con);
+    if (this.classData && this.classData.hd) {
+      const hd = this.classData.hd.faces || 8;
+      const totalHp = (hd + conMod) + (this.level - 1) * (Math.floor(hd / 2) + 1 + conMod);
+      document.getElementById('hp-max').value = Math.max(1, totalHp);
+    }
+  }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  new CharacterSheetApp();
+});
