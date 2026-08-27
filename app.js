@@ -1,211 +1,286 @@
-import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,stats,manifestEntries,isHomebrew as hb} from "./database.js";
+import {initDatabase,filterEntities,loadEntity,findClassFeatures,findSubclassFeatures,getRecordArrays,stats,manifestEntries,isHomebrew as hb,normType} from "./database.js";
 import {ABILITIES,ABILITY_NAMES,SKILLS,mod,fmt,proficiency,hpAverage,abilityKey,spellDc,spellAttack} from "./rules.js";
 import {saveCharacter,loadCharacter,clearCharacter,downloadCharacter,readCharacterFile} from "./storage.js";
 
 const $=id=>document.getElementById(id);
-let character,refs={class:null,subclass:null,race:null,background:null},details={};
-let pickerType=null,pickerFilter="all";
+let character, refs={class:null,subclass:null,race:null,background:null}, details={};
+let pickerType=null, eqCat="inventory";
 
-const fresh=()=>({schema:5,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",classId:"",subclassId:"",raceId:"",backgroundId:"",scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},saveProficiencies:[],skillProficiencies:[],skillExpertise:[],hpCurrent:null,hpTemp:0,ac:null,speed:"",attacks:[]});
+const fresh=()=>({schema:6,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",classId:"",subclassId:"",raceId:"",backgroundId:"",
+scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},saveProficiencies:[],skillProficiencies:[],skillExpertise:[],
+hpCurrent:null,hpTemp:0,ac:null,speed:"30 ft",attacks:[],inventory:[],preparedSpells:[],deathSaves:{success:0,failure:0}});
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("show"),2200)};
+const manifest=()=>manifestEntries();
 const list=(t,q="")=>filterEntities(t,character.edition,character.content,q);
-const byId=id=>manifestEntries().find(x=>x.id===id)||null;
 const labelMeta=x=>`${hb(x)?"Homebrew":"Oficial"} · ${x?.edition||character.edition}${x?.source?" · "+x.source:""}`;
-function sourceTag(x){return `<span class="tag ${hb(x)?"brew":"official"}">${hb(x)?"HOMEBREW":"OFICIAL"}${x?.source?` · ${esc(x.source)}`:""}</span>`}
+const sourceTag=x=>`<span class="tag ${hb(x)?"brew":"official"}">${hb(x)?"HOMEBREW":"OFICIAL"}${x?.source?` · ${esc(x.source)}`:""}</span>`;
+const titleOf=x=>String(x?.name||"Sem nome");
+const typeLabel=t=>({class:"Classe",subclass:"Subclasse",race:"Espécie/Raça",background:"Background",spell:"Magia",item:"Item",feat:"Talento",classFeature:"Característica",subclassFeature:"Característica"}[normType(t)]||t);
 
-function classMatches(x,c){
- if(!c)return false;
- const n=String(c.name||"").toLowerCase(),cn=String(x.className||x.class||"").toLowerCase();
- const cs=String(c.source||"").toLowerCase(),xs=String(x.classSource||"").toLowerCase();
- return (!cn||cn===n||cn.includes(n))&&(!cs||!xs||cs===xs);
-}
-function classInfo(){const j=details.class;return j?.class?.[0]||j?.class||j||{}}
-function raceInfo(){const j=details.race;return j?.race?.[0]||j?.race||j||{}}
 function richText(v){
  const out=[];
  const inline=s=>String(s).replace(/\{@(b|bold|i|italic|u|note|dc|dice|damage|hit|atk|chance|condition|skill|spell|item|race|class|creature|book|link)\s+([^}|]+)(?:\|[^}]*)?\}/gi,"$2").replace(/\{@[^}]+\}/g,"");
- const walk=x=>{
-  if(x==null)return;
-  if(typeof x==="string"){out.push(`<p>${esc(inline(x))}</p>`);return}
-  if(Array.isArray(x)){out.push("<ul>");x.forEach(y=>{if(typeof y==="string")out.push(`<li>${esc(inline(y))}</li>`);else{out.push("<li>");walk(y);out.push("</li>")}});out.push("</ul>");return}
+ const walk=x=>{if(x==null)return;if(typeof x==="string"){out.push(`<p>${esc(inline(x))}</p>`);return}
+  if(Array.isArray(x)){out.push("<ul>");x.forEach(y=>{out.push("<li>");walk(y);out.push("</li>")});out.push("</ul>");return}
   if(typeof x!=="object")return;
   if(x.name&&x.entries){out.push(`<h3>${esc(inline(x.name))}</h3>`);walk(x.entries);return}
-  if(x.type==="entries"&&x.name){out.push(`<h3>${esc(inline(x.name))}</h3>`);walk(x.entries);return}
-  if(x.type==="list"||x.items){walk(x.items||x.entries);return}
-  if(x.type==="item"){walk(x.entry||x.entries||x.name);return}
   if(x.type==="table"&&Array.isArray(x.rows)){out.push("<table><tbody>");if(x.colLabels)out.push("<tr>"+x.colLabels.map(h=>`<th>${esc(inline(h))}</th>`).join("")+"</tr>");x.rows.forEach(r=>out.push("<tr>"+r.map(c=>`<td>${esc(inline(typeof c==="string"?c:JSON.stringify(c)))}</td>`).join("")+"</tr>"));out.push("</tbody></table>");return}
-  if(x.entries)walk(x.entries);else if(x.entry)walk(x.entry);else if(x.desc)walk(x.desc);
+  if(x.entries)walk(x.entries);else if(x.items)walk(x.items);else if(x.entry)walk(x.entry);else if(x.desc)walk(x.desc);
  };
  walk(v);return out.join("")||"<p class='muted'>Não há descrição estruturada disponível para este registro.</p>";
 }
-function plainText(v){const tmp=document.createElement("div");tmp.innerHTML=richText(v);return tmp.textContent.replace(/\s+/g," ").trim()}
-async function recordFor(e){if(!e)return null;const j=await getRecordArrays(e);if(!j.length)return null;return j.find(r=>String(r.name||"").toLowerCase()===String(e.name||"").toLowerCase())||j[0]}
+function plain(v){const d=document.createElement("div");d.innerHTML=richText(v);return d.textContent.replace(/\s+/g," ").trim()}
+async function records(e){return e?getRecordArrays(e):[]}
+async function firstRecord(e){const a=await records(e);return a.find(r=>String(r.name||"").toLowerCase()===String(e?.name||"").toLowerCase())||a[0]||null}
 function descriptionOf(r,e){return r?.entries||r?.desc||r?.description||r?.fluff||r?.traits||r?.featureEntries||e?.description||""}
+function classMatches(x,c){
+ if(!c)return false;
+ const n=String(c.name||"").toLowerCase(),cn=String(x.className||x.class||x.classNameText||"").toLowerCase();
+ const cs=String(c.source||"").toLowerCase(),xs=String(x.classSource||"").toLowerCase();
+ return (!cn||cn===n||cn.includes(n))&&(!cs||!xs||cs===xs);
+}
+function selectedText(type){return refs[type]?titleOf(refs[type]):"Escolher…"}
 
-async function updateChoiceCard(type){
- const e=refs[type], val=$(`choice-${type}-value`),meta=$(`choice-${type}-meta`),desc=$(`${type}-preview`),card=$(`choice-${type}`);
- if(!e){val.textContent=type==="subclass"&&!refs.class?"Escolha a classe primeiro":"Escolher…";meta.textContent=type==="subclass"&&!refs.class?"—":"Nenhuma opção selecionada";desc.textContent=type==="subclass"&&!refs.class?"A lista será filtrada pela classe escolhida.":"Escolha uma opção para ver sua descrição.";card.classList.remove("selected");return}
- card.classList.add("selected");val.textContent=e.name||"Sem nome";meta.innerHTML=`${sourceTag(e)} <span>${esc(e.edition||character.edition)}${e.source?` · ${esc(e.source)}`:""}</span>`;
- desc.textContent="Carregando descrição…";
- try{const r=await recordFor(e),txt=plainText(descriptionOf(r,e));desc.textContent=txt?`${txt.slice(0,230)}${txt.length>230?"…":""}`:"Descrição não estruturada disponível. Clique em ⓘ para ver os dados."}
- catch{desc.textContent="Descrição indisponível."}
+async function updateChoice(type){
+ const e=refs[type], value=$(`choice-${type}-value`),meta=$(`choice-${type}-meta`),prev=$(`${type}-preview`),card=$(`choice-${type}`);
+ if(!e){value.textContent=type==="subclass"?"Escolha a classe primeiro":"Escolher…";meta.textContent=type==="subclass"?"—":"Nenhuma opção selecionada";prev.textContent=type==="subclass"?"A lista será filtrada pela classe escolhida.":"Escolha uma opção para começar.";card.classList.remove("selected");return}
+ value.textContent=titleOf(e);meta.textContent=labelMeta(e);card.classList.add("selected");
+ const r=await firstRecord(e);prev.textContent=plain(descriptionOf(r,e)).slice(0,280)||"Sem descrição estruturada.";
 }
-async function refreshSelectors(){
- refs.class=byId(character.classId);refs.race=byId(character.raceId);refs.background=byId(character.backgroundId);refs.subclass=byId(character.subclassId);
- if(refs.subclass&&!classMatches(refs.subclass,refs.class)){character.subclassId="";refs.subclass=null}
- details.class=refs.class?await loadEntity(refs.class):null;
- details.subclass=refs.subclass?await loadEntity(refs.subclass):null;
- details.race=refs.race?await loadEntity(refs.race):null;
- details.background=refs.background?await loadEntity(refs.background):null;
- await Promise.all(["race","class","subclass","background"].map(updateChoiceCard));
- renderHeader();renderDetails();renderSpellStats();
+async function refreshChoices(){
+ refs.race=manifest().find(x=>x.id===character.raceId)||null;
+ refs.class=manifest().find(x=>x.id===character.classId)||null;
+ refs.subclass=manifest().find(x=>x.id===character.subclassId)||null;
+ refs.background=manifest().find(x=>x.id===character.backgroundId)||null;
+ for(const t of ["race","class","subclass","background"])await updateChoice(t);
+ $("head-class").textContent=refs.class?`${titleOf(refs.class)}${refs.subclass?" · "+titleOf(refs.subclass):""}`:"—";
+ $("head-background").textContent=titleOf(refs.background);
+ $("head-race").textContent=titleOf(refs.race);
+ await recalc();
 }
-function ability(a){return mod(character.scores[a])}
-function skill(id,a){let v=ability(a),p=proficiency(character.level);if(character.skillProficiencies.includes(id))v+=p;if(character.skillExpertise.includes(id))v+=p;return v}
-function faces(){const c=classInfo();return Number(c.hd?.faces||c.hitDie?.faces||8)||8}
-function spellAbility(){const c=classInfo();return abilityKey(c.spellcastingAbility||c.spellcasting?.ability)}
-function calc(){
- const pb=proficiency(character.level),f=faces(),con=ability("con");
- const hp=Math.max(1,f+con+(character.level-1)*(hpAverage(f)+con)),sa=spellAbility(),sm=sa?ability(sa):0;
- const ri=raceInfo(),speed=character.speed||ri.speed||"30 ft";
- return {pb,f,hp,initiative:ability("dex"),ac:character.ac??10+ability("dex"),passive:10+skill("perception","wis"),speed,spellAbility:sa,spellDc:sa?spellDc(pb,sm):null,spellAttack:sa?spellAttack(pb,sm):null};
+function filteredPicker(type,q){
+ if(type==="subclass"){
+   if(!refs.class)return [];
+   return manifest().filter(x=>normType(x.type)==="subclass"&&String(x.edition||"")===String(character.edition)&&(!character.content||character.content==="all"||(character.content==="official"&&!hb(x))||(character.content==="homebrew"&&hb(x)))&&classMatches(x,refs.class)&&(!q||titleOf(x).toLowerCase().includes(q.toLowerCase())));
+ }
+ return list(type,q);
 }
-function renderHeader(){
- const c=refs.class,sc=refs.subclass,r=refs.race,b=refs.background;
- $("head-class").textContent=c?`${c.name}${sc?` · ${sc.name}`:""}`:"—";
- $("head-background").textContent=b?.name||"—";$("head-race").textContent=r?.name||"—";
- $("level").value=character.level;$("name").value=character.name;$("xp").value=character.xp;
+async function openPicker(type){
+ pickerType=type;
+ if(type==="subclass"&&!refs.class){toast("Escolha a classe primeiro.");return}
+ const modal=$("modal"),content=$("modal-content");
+ content.innerHTML=`<div class="modal-title"><div><span class="eyebrow">ESCOLHER</span><h2>${typeLabel(type)}</h2></div></div>
+ <div class="picker-controls"><input id="picker-search" placeholder="Pesquisar ${typeLabel(type).toLowerCase()}…"><div class="filter-pills"><button class="active" data-pfilter="all">Todos</button><button data-pfilter="official">Oficial</button><button data-pfilter="homebrew">Homebrew</button></div></div>
+ <div id="picker-results" class="picker-grid"></div>`;
+ modal.classList.remove("hidden");
+ const render=()=>{const q=$("picker-search").value.trim();let arr=filteredPicker(type,q);const pf=content.querySelector(".filter-pills .active")?.dataset.pfilter||"all";if(pf==="official")arr=arr.filter(x=>!hb(x));if(pf==="homebrew")arr=arr.filter(x=>hb(x));renderPicker(arr.slice(0,160));};
+ $("picker-search").addEventListener("input",render);
+ content.querySelectorAll("[data-pfilter]").forEach(b=>b.addEventListener("click",()=>{content.querySelectorAll("[data-pfilter]").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()}));
+ render();setTimeout(()=>$("picker-search").focus(),50);
 }
-function renderOverviewAbilities(){
- $("overview-abilities").innerHTML=ABILITIES.map(a=>`<div class="mini-ability"><span>${ABILITY_NAMES[a].slice(0,3).toUpperCase()}</span><strong>${character.scores[a]}</strong><em>${fmt(ability(a))}</em></div>`).join("");
+async function renderPicker(arr){
+ const box=$("picker-results"); if(!arr.length){box.innerHTML=`<div class="empty">Nenhum resultado encontrado.</div>`;return}
+ box.innerHTML=arr.map(x=>`<button class="pick-card" data-id="${esc(x.id)}"><div class="pick-top"><strong>${esc(titleOf(x))}</strong>${sourceTag(x)}</div><div class="pick-meta">${esc(labelMeta(x))}</div><div class="pick-desc" data-desc="${esc(x.id)}">Carregando descrição…</div></button>`).join("");
+ for(const b of box.querySelectorAll(".pick-card")){const e=manifest().find(x=>x.id===b.dataset.id);firstRecord(e).then(r=>{const d=b.querySelector(".pick-desc");if(d)d.textContent=plain(descriptionOf(r,e)).slice(0,150)||"Sem descrição estruturada.";});b.addEventListener("click",async()=>{await selectRef(e);$("modal").classList.add("hidden")})}
 }
+async function selectRef(e){
+ const t=pickerType;if(!e)return;
+ character[`${t}Id`]=e.id;refs[t]=e;
+ if(t==="class"){character.subclassId="";refs.subclass=null}
+ await refreshChoices();
+ saveCharacter(character);
+ toast(`${titleOf(e)} selecionado.`);
+}
+function openInfo(type){const e=refs[type];if(!e){toast("Nada selecionado.");return}openEntityModal(e)}
+async function openEntityModal(e){
+ const r=await firstRecord(e),d=descriptionOf(r,e);
+ $("modal-content").innerHTML=`<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(e.edition||character.edition)}</span></div></div></div><div class="modal-body">${richText(d)}</div>`;
+ $("modal").classList.remove("hidden");
+}
+
 function renderAbilities(){
- $("attributes").innerHTML=ABILITIES.map(a=>`<div class="ability"><h3>${ABILITY_NAMES[a]}</h3><input data-ab="${a}" type="number" min="1" max="30" value="${character.scores[a]}"><div class="mod">${fmt(ability(a))}</div></div>`).join("");
- document.querySelectorAll("[data-ab]").forEach(e=>e.oninput=()=>{character.scores[e.dataset.ab]=Number(e.value)||0;renderAbilities();renderOverviewAbilities();renderCombat();renderSaves();renderSkills()});
+ $("ability-grid").innerHTML=ABILITIES.map(a=>`<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${character.scores[a]}</b><em>${fmt(mod(character.scores[a]))}</em></div>`).join("");
+ $("ability-editor").innerHTML=ABILITIES.map(a=>`<label class="ability-edit"><span>${ABILITY_NAMES[a]}</span><input data-ability="${a}" type="number" min="1" max="30" value="${character.scores[a]}"><b>${fmt(mod(character.scores[a]))}</b></label>`).join("");
+ $("ability-editor").querySelectorAll("input").forEach(i=>i.addEventListener("input",()=>{character.scores[i.dataset.ability]=Number(i.value)||10;recalc()}));
 }
-function renderSaves(){
- const p=proficiency(character.level);
- $("saves").innerHTML=ABILITIES.map(a=>`<label class="skill"><input data-save="${a}" type="checkbox" ${character.saveProficiencies.includes(a)?"checked":""}><span>${ABILITY_NAMES[a]}</span><strong>${fmt(ability(a)+(character.saveProficiencies.includes(a)?p:0))}</strong></label>`).join("");
- document.querySelectorAll("[data-save]").forEach(e=>e.onchange=()=>{const a=e.dataset.save;character.saveProficiencies=e.checked?[...new Set([...character.saveProficiencies,a])]:character.saveProficiencies.filter(x=>x!==a);renderSaves()});
+function chosenAbility(cls){
+ const c=classInfo();
+ const candidates=[c.spellcastingAbility,c.spellcastingAbilityKey,c.spellcasting?.ability,c.spellcasting?.abilityKey,c.spellcastingAbilityId];
+ for(const v of candidates){const k=abilityKey(v);if(k)return k}
+ const txt=JSON.stringify(c).toLowerCase();
+ for(const k of ABILITIES)if(txt.includes(`"${k}"`))return k;
+ return null;
 }
-function renderSkills(){
- $("skills").innerHTML=SKILLS.map(([id,n,a])=>`<label class="skill"><input data-skill="${id}" type="checkbox" ${character.skillProficiencies.includes(id)?"checked":""}><span>${n}<small>${a.toUpperCase()}</small></span><strong>${fmt(skill(id,a))}</strong></label>`).join("");
- document.querySelectorAll("[data-skill]").forEach(e=>e.onchange=()=>{const id=e.dataset.skill;character.skillProficiencies=e.checked?[...new Set([...character.skillProficiencies,id])]:character.skillProficiencies.filter(x=>x!==id);renderSkills();renderCombat()});
+function classInfo(){return refs.class?details.classRec||{}:{}}
+function raceInfo(){return refs.race?details.raceRec||{}:{}}
+function inferHP(){
+ const c=classInfo(),hd=Number(c.hitDice||c.hd?.faces||c.hd?.number||0)||8;
+ const base=hpAverage(hd)+(Number(character.scores.con)-10>>1);
+ const extra=Math.max(0,Number(character.level)-1)*(Math.floor(hd/2)+1+mod(character.scores.con));
+ return Math.max(1,base+extra);
 }
-function renderCombat(){
- const c=calc();["pb"].forEach(id=>$(id).textContent=fmt(c.pb));$("hp").textContent=c.hp;$("hit-die").textContent=`d${c.f}`;$("ac").textContent=c.ac;$("initiative").textContent=fmt(c.initiative);$("passive").textContent=c.passive;$("speed").textContent=c.speed;$("spell-dc").textContent=c.spellDc??"—";$("spell-attack").textContent=c.spellAttack==null?"—":fmt(c.spellAttack);
- $("ac-combat").textContent=c.ac;$("initiative-combat").textContent=fmt(c.initiative);$("speed-combat").textContent=c.speed;
- $("hp-current").value=character.hpCurrent??c.hp;$("hp-temp").value=character.hpTemp;$("ac-input").value=c.ac;$("speed-input").value=character.speed||"";
+function calc(){
+ const lvl=Number(character.level)||1,pb=proficiency(lvl);
+ const init=mod(character.scores.dex),passive=10+mod(character.scores.wis)+(character.skillProficiencies.includes("perception")?pb:0)+(character.skillExpertise.includes("perception")?pb:0);
+ const hp=inferHP(), ac=Number(character.ac)||10+mod(character.scores.dex),speed=character.speed||"30 ft";
+ const sa=chosenAbility(refs.class);const dc=sa?spellDc(pb,mod(character.scores[sa])):null,atk=sa?spellAttack(pb,mod(character.scores[sa])):null;
+ return {lvl,pb,init,passive,hp,ac,speed,sa,dc,atk}
 }
-function renderSpellStats(){
- const c=calc(),name=c.spellAbility?ABILITY_NAMES[c.spellAbility]:"—";
- $("spell-ability-name").textContent=name;$("spell-dc-2").textContent=c.spellDc??"—";$("spell-attack-2").textContent=c.spellAttack==null?"—":fmt(c.spellAttack);
+async function recalc(){
+ if(!character)return;
+ details.classRec=await firstRecord(refs.class);details.raceRec=await firstRecord(refs.race);details.subclassRec=await firstRecord(refs.subclass);details.backgroundRec=await firstRecord(refs.background);
+ const c=calc();renderAbilities();
+ $("v-ac").textContent=c.ac;$("v-init").textContent=fmt(c.init);$("v-speed").textContent=c.speed;$("v-pb").textContent=fmt(c.pb);$("v-passive").textContent=c.passive;
+ $("v-spell-dc").textContent=c.dc??"—";$("v-spell-atk").textContent=c.atk!=null?fmt(c.atk):"—";$("v-hp-max").textContent=c.hp;
+ $("hp-current").value=character.hpCurrent==null?c.hp:character.hpCurrent;$("hp-temp").value=character.hpTemp||0;
+ $("combat-ac").textContent=c.ac;$("combat-init").textContent=fmt(c.init);$("combat-speed").textContent=c.speed;$("combat-pb").textContent=fmt(c.pb);
+ $("ac-input").value=character.ac??"";$("speed-input").value=character.speed||"30 ft";
+ renderSaves(c);renderSkills(c);renderIdentity();renderAttacks();renderFeatures();renderSpells();renderInventory();renderProficiencies();renderDeath();
+}
+function renderSaves(c){
+ $("save-list").innerHTML=ABILITIES.map(a=>{const ok=character.saveProficiencies.includes(a),v=mod(character.scores[a])+(ok?c.pb:0);return `<label class="check-row"><input type="checkbox" data-save="${a}" ${ok?"checked":""}><span>${ABILITY_NAMES[a]}</span><b>${fmt(v)}</b></label>`}).join("");
+ $("save-list").querySelectorAll("[data-save]").forEach(i=>i.addEventListener("change",()=>{toggleIn(character.saveProficiencies,i.dataset.save,i.checked);recalc()}));
+}
+function renderSkills(c){
+ $("skill-list").innerHTML=SKILLS.map(([k,n,a])=>{const p=character.skillProficiencies.includes(k),ex=character.skillExpertise.includes(k),v=mod(character.scores[a])+c.pb*(ex?2:p?1:0);return `<label class="skill-row"><input type="checkbox" data-skill="${k}" ${p?"checked":""}><span>${n}</span><b>${fmt(v)}</b>${ex?'<small>EXP</small>':""}</label>`}).join("");
+ $("skill-list").querySelectorAll("[data-skill]").forEach(i=>i.addEventListener("change",()=>{toggleIn(character.skillProficiencies,i.dataset.skill,i.checked);recalc()}));
+}
+function renderProficiencies(){$("proficiency-editor").innerHTML=`<p class="muted">Marque testes e perícias na ficha. Especialização pode ser aplicada pelo botão de detalhes quando adicionarmos escolhas específicas do banco.</p>`}
+function toggleIn(a,v,on){const i=a.indexOf(v);if(on&&i<0)a.push(v);if(!on&&i>=0)a.splice(i,1)}
+function renderIdentity(){
+ const rows=[["Espécie",refs.race],["Classe",refs.class],["Subclasse",refs.subclass],["Background",refs.background]];
+ $("identity").innerHTML=rows.map(([k,e])=>`<div class="identity-row"><span>${k}</span><strong>${e?esc(titleOf(e)):"—"}</strong>${e?sourceTag(e):""}</div>`).join("");
 }
 function renderAttacks(){
- const a=character.attacks.length?character.attacks:[{name:"",bonus:"",damage:""}];
- $("attacks").innerHTML=a.map((x,i)=>`<div class="attack-row"><input data-ai="${i}" data-k="name" value="${esc(x.name)}" placeholder="Ataque"><input data-ai="${i}" data-k="bonus" value="${esc(x.bonus)}" placeholder="+0"><input data-ai="${i}" data-k="damage" value="${esc(x.damage)}" placeholder="Dano / tipo"><button data-del="${i}" title="Remover">×</button></div>`).join("")+`<button id="add-attack" class="outline-btn">+ Adicionar ataque</button>`;
- document.querySelectorAll("[data-ai]").forEach(e=>e.oninput=()=>{const i=+e.dataset.ai;character.attacks[i]??={};character.attacks[i][e.dataset.k]=e.value});
- document.querySelectorAll("[data-del]").forEach(e=>e.onclick=()=>{character.attacks.splice(+e.dataset.del,1);renderAttacks()});
- $("add-attack").onclick=()=>{character.attacks.push({name:"",bonus:"",damage:""});renderAttacks()};
+ const arr=character.attacks||[];
+ $("attacks").innerHTML=(arr.length?arr.map((a,i)=>`<div class="attack-row"><input data-a="name" data-i="${i}" value="${esc(a.name||"")}"><input data-a="bonus" data-i="${i}" value="${esc(a.bonus||"")}"><input data-a="damage" data-i="${i}" value="${esc(a.damage||"")}"><input data-a="notes" data-i="${i}" value="${esc(a.notes||"")}"><button class="remove-btn no-print" data-remove-attack="${i}">×</button></div>`).join(""):`<div class="empty">Nenhum ataque adicionado.</div>`);
+ $("attacks").querySelectorAll("[data-a]").forEach(i=>i.addEventListener("input",()=>{character.attacks[Number(i.dataset.i)][i.dataset.a]=i.value;saveCharacter(character)}));
+ $("attacks").querySelectorAll("[data-remove-attack]").forEach(b=>b.addEventListener("click",()=>{character.attacks.splice(Number(b.dataset.removeAttack),1);renderAttacks()}));
 }
-function renderSpells(){
- const q=$("spell-search").value.toLowerCase(),lv=$("spell-level-filter").value;
- const l=list("spell",q).filter(x=>lv==="all"||String(x.level??0)===lv).slice(0,180);
- $("spells").innerHTML=l.length?l.map(x=>`<article class="spell-card" data-entity-id="${esc(x.id)}"><div class="spell-name">${esc(x.name)}</div><div class="spell-meta">${x.level===0?"Truque":`${x.level||0}º nível`} · ${esc(x.edition||character.edition)} · ${esc(x.source||"")}</div>${sourceTag(x)}</article>`).join(""):"<div class='empty'>Nenhuma magia encontrada.</div>";
- document.querySelectorAll("#spells [data-entity-id]").forEach(e=>e.onclick=()=>openEntity(byId(e.dataset.entityId)));
-}
-function featureText(f){return f?.entries||f?.desc||f?.description||""}
-async function renderProgression(){
- const cf=refs.class?await findClassFeatures(refs.class,character.level):[],sf=refs.subclass?await findSubclassFeatures(refs.subclass,character.level):[];
- const map=new Map();[...cf.map(x=>({...x,__kind:"Classe"})),...sf.map(x=>({...x,__kind:"Subclasse"}))].forEach(f=>{const l=Number(f.level||1);if(!map.has(l))map.set(l,[]);map.get(l).push(f)});
- $("progression").innerHTML=Array.from({length:character.level},(_,i)=>i+1).map(l=>{const fs=map.get(l)||[];return `<div class="progress-card"><div class="level-num">${l}</div><div class="level-content"><h3>Nível ${l}${l===character.level?" · atual":""}</h3>${fs.length?fs.map(f=>`<div class="feature-level"><span class="feature-kind">${esc(f.__kind)}</span><div><strong>${esc(f.name||"Característica")}</strong>${plainText(featureText(f))?`<p>${esc(plainText(featureText(f)).slice(0,430))}${plainText(featureText(f)).length>430?"…":""}</p>`:""}</div></div>`).join(""):"<p class='muted'>Nenhuma característica estruturada encontrada.</p>"}</div></div>`}).join("");
- const c=classInfo(),prog=c.casterProgression||c.casterProgressionByLevel||c.spellcastingProgression;
- $("spell-progression").innerHTML=prog?`<p>Progressão de conjuração: <strong>${esc(String(prog))}</strong></p>`:"<p class='muted'>A classe selecionada não expõe uma progressão estruturada neste registro.</p>";
-}
-function renderDetails(){
- const vals=[refs.race,refs.class,refs.subclass,refs.background].filter(Boolean);
- $("selection-details").innerHTML=vals.map(x=>`<div class="detail-line"><strong>${esc(x.name)}</strong><div>${sourceTag(x)} <span>${esc(x.edition||character.edition)}${x.source?` · ${esc(x.source)}`:""}</span></div></div>`).join("")||"<p class='muted'>Escolha suas opções no construtor acima.</p>";
- const s=stats();$("selection-note").textContent=`${s.entities.toLocaleString("pt-BR")} registros · ${s.official.toLocaleString("pt-BR")} oficiais · ${s.homebrew.toLocaleString("pt-BR")} Homebrew`;
-}
-async function renderAll(){renderOverviewAbilities();renderAbilities();renderSaves();renderSkills();renderCombat();renderAttacks();renderSpells();renderDetails();renderSpellStats();await renderProgression()}
-
-function openModal(title,kicker,meta,body){
- $("modal-title").textContent=title||"Detalhes";$("modal-kicker").textContent=kicker||"COMPÊNDIO";$("modal-meta").innerHTML=meta||"";$("modal-body").innerHTML=body||"<p>Sem dados.</p>";$("modal").classList.add("open");$("modal").setAttribute("aria-hidden","false");
-}
-async function openEntity(e){
- if(!e)return;
- openModal(e.name,"DETALHES",`${sourceTag(e)} <span class="source-tag">Edição ${esc(e.edition||character.edition)}${e.source?` · ${esc(e.source)}`:""}</span>`,"<p>Carregando descrição…</p>");
- try{const r=await recordFor(e),info=r||e,body=descriptionOf(info,e);let extra=[];
- [["Tamanho","size"],["Deslocamento","speed"],["Raridade","rarity"],["Tipo","type"],["Escola","school"],["Alcance","range"],["Duração","duration"],["Tempo","time"],["Componentes","components"],["Pré-requisito","prerequisite"]].forEach(([lab,k])=>{if(info[k]!=null)extra.push(`<p><strong>${lab}:</strong> ${esc(Array.isArray(info[k])?info[k].join(", "):typeof info[k]==="object"?JSON.stringify(info[k]):info[k])}</p>`)});
- openModal(info.name||e.name,"DETALHES",`${sourceTag(e)} <span class="source-tag">Edição ${esc(e.edition||character.edition)}${e.source?` · ${esc(e.source)}`:""}</span>`,extra.join("")+richText(body));
- }catch(err){openModal(e.name,"DETALHES","",`<p>Não foi possível carregar a descrição.</p><p class="muted">${esc(err.message||err)}</p>`)}
+async function renderFeatures(){
+ const box=$("feature-list");box.innerHTML=`<div class="empty">Carregando características…</div>`;
+ let groups=[];
+ if(refs.class)groups.push(["CLASSE",await findClassFeatures(refs.class,Number(character.level))]);
+ if(refs.subclass)groups.push(["SUBCLASSE",await findSubclassFeatures(refs.subclass,Number(character.level))]);
+ if(refs.race){const r=await firstRecord(refs.race);const f=(r?.traits||r?.entries||r?.features||[]);if(f.length)groups.push(["ESPÉCIE / RAÇA",Array.isArray(f)?f.map((x,i)=>({name:x.name||`Característica ${i+1}`,entries:x.entries||x})):[]])}
+ box.innerHTML=groups.filter(g=>g[1]?.length).map(([name,arr])=>`<section class="feature-group"><h3>${name}</h3>${arr.map(f=>`<article class="feature"><div><b>${esc(f.name||"Característica")}</b><span>Nível ${esc(f.level||"—")}</span></div><div>${richText(f.entries||f.desc||f.description)}</div></article>`).join("")}</section>`).join("")||`<div class="empty">Escolha uma classe/espécie para carregar as características.</div>`;
 }
 
-function openPicker(type){
- pickerType=type;pickerFilter="all";
- $("picker-title").textContent={race:"Escolher espécie / raça",class:"Escolher classe",subclass:"Escolher subclasse",background:"Escolher background"}[type];
- $("picker-kicker").textContent=type==="subclass"&&!refs.class?"CLASSE NECESSÁRIA":"COMPÊNDIO";
- $("picker-search").value="";
- document.querySelectorAll("#picker-filters button").forEach(b=>b.classList.toggle("active",b.dataset.filter==="all"));
- $("picker").classList.add("open");$("picker").setAttribute("aria-hidden","false");renderPicker();
- setTimeout(()=>$("picker-search").focus(),50);
+function spellOwnerMatch(spell,c,sub){
+ const classes=spell?.classes;
+ const cn=String(c?.name||"").toLowerCase(), cs=String(c?.source||"").toLowerCase();
+ if(classes){
+  const text=JSON.stringify(classes).toLowerCase();
+  if(text.includes(cn) && (!cs||text.includes(cs)))return true;
+ }
+ const arr=[spell.className,spell.class,spell.classNameText].filter(Boolean).map(String).join(" ").toLowerCase();
+ if(arr&&(arr.includes(cn)))return true;
+ if(sub){
+  const sn=String(sub.name||"").toLowerCase(), st=JSON.stringify(spell?.classes||spell?.subclasses||{}).toLowerCase();
+  if(sn&&st.includes(sn))return true;
+ }
+ return false;
 }
-function renderPicker(){
- const q=$("picker-search").value.toLowerCase().trim();
- let items=list(pickerType,q);
- if(pickerType==="subclass")items=items.filter(x=>classMatches(x,refs.class));
- if(pickerFilter==="official")items=items.filter(x=>!hb(x));
- if(pickerFilter==="homebrew")items=items.filter(hb);
- items=items.slice(0,240);
- $("picker-count").textContent=`${items.length}${items.length===240?"+":""} opções encontradas`;
- $("picker-results").innerHTML=items.length?items.map(x=>`<button class="pick-card" data-pick-id="${esc(x.id)}">
-   <div class="pick-top"><strong>${esc(x.name||"Sem nome")}</strong>${sourceTag(x)}</div>
-   <div class="pick-meta">${esc(x.edition||character.edition)}${x.source?` · ${esc(x.source)}`:""}</div>
-   <div class="pick-desc" data-desc-for="${esc(x.id)}">Clique para selecionar · ⓘ abre detalhes</div>
- </button>`).join(""):`<div class="empty picker-empty">Nenhuma opção encontrada. Tente outro filtro ou pesquisa.</div>`;
- document.querySelectorAll(".pick-card").forEach(btn=>btn.onclick=async()=>{
-   const e=byId(btn.dataset.pickId);if(!e)return;
-   character[`${pickerType}Id`]=e.id;
-   if(pickerType==="class")character.subclassId="";
-   closePicker();await refreshSelectors();await renderAll();toast(`${e.name} selecionado.`);
- });
+function spellLevel(sp){return Number(sp.level??sp.spellLevel??0)}
+async function allSpellsForClass(){
+ if(!refs.class)return [];
+ const candidates=list("spell","");
+ const out=[];
+ for(const e of candidates.slice(0,12000)){
+  const rs=await records(e);
+  for(const r of rs){
+   if(spellOwnerMatch(r,refs.class,refs.subclass)||spellOwnerMatch(e,refs.class,refs.subclass)){out.push({...r,__manifest:e});break}
+  }
+ }
+ const seen=new Set();return out.filter(s=>{const k=`${s.name}|${s.source||""}`;if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>spellLevel(a)-spellLevel(b)||String(a.name).localeCompare(String(b.name),"pt-BR"));
 }
-function closePicker(){$("picker").classList.remove("open");$("picker").setAttribute("aria-hidden","true");pickerType=null}
+async function renderSpells(){
+ const box=$("spellbook"),c=calc(),ab=c.sa;$("spell-ability").textContent=ab?ABILITY_NAMES[ab]:"—";$("spell-dc-big").textContent=c.dc??"—";$("spell-atk-big").textContent=c.atk!=null?fmt(c.atk):"—";
+ if(!refs.class){$("spell-count").textContent="0";box.innerHTML=`<div class="paper-card empty">Escolha uma classe para carregar a lista de magias.</div>`;return}
+ box.innerHTML=`<div class="paper-card loading">Carregando lista de magias de ${esc(titleOf(refs.class))}…</div>`;
+ const spells=await allSpellsForClass();$("spell-count").textContent=spells.length;
+ const groups=Array.from({length:10},(_,i)=>spells.filter(s=>spellLevel(s)===i));
+ box.innerHTML=groups.map((arr,lvl)=>arr.length?`<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl===0?"Truques":`${lvl}º nível`}</h3><span>${arr.length} magias</span></div><div class="spell-list">${arr.map((s,i)=>{const key=`${s.name}|${s.source||s.__manifest?.source||""}`;const checked=character.preparedSpells.includes(key);return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked?"checked":""}><span class="spell-dot">${checked?"●":"○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${sourceTag(s.__manifest||s)} ${s.school?` · ${esc(s.school)}`:""} ${s.time?` · ${esc(s.time)}`:""}</span><button type="button" class="spell-info" data-spell-info="${esc(s.__manifest?.id||"")}">ⓘ</button></label>`}).join("")}</div></section>`:"").join("")||`<div class="paper-card empty">Nenhuma magia foi associada a esta classe pelo formato do banco.</div>`;
+ box.querySelectorAll("[data-spell]").forEach(i=>i.addEventListener("change",()=>{toggleIn(character.preparedSpells,i.dataset.spell,i.checked);saveCharacter(character);i.nextElementSibling.textContent=i.checked?"●":"○"}));
+ box.querySelectorAll("[data-spell-info]").forEach(b=>b.addEventListener("click",()=>{const e=manifest().find(x=>x.id===b.dataset.spellInfo);if(e)openEntityModal(e)}));
+}
 
-async function renderCompendium(){
- const q=$("compendium-search").value.toLowerCase(),t=$("compendium-type").value;
- const types=t==="all"?["class","subclass","race","background","feat","spell","item"]:[t];
- let items=[];for(const ty of types)items.push(...list(ty,q));
- items=items.sort((a,b)=>Number(hb(a))-Number(hb(b))||String(a.name).localeCompare(String(b.name),"pt-BR")).slice(0,150);
- $("compendium-results").innerHTML=items.length?items.map(x=>`<article class="entity-card" data-entity-id="${esc(x.id)}"><div class="card-top"><h3>${esc(x.name)}</h3>${sourceTag(x)}</div><div class="card-meta">${esc(x.type)} · ${esc(x.edition||character.edition)}${x.source?` · ${esc(x.source)}`:""}</div><p>Clique para abrir descrição e detalhes.</p></article>`).join(""):"<div class='empty'>Nenhum registro encontrado.</div>";
- document.querySelectorAll("#compendium-results [data-entity-id]").forEach(e=>e.onclick=()=>openEntity(byId(e.dataset.entityId)));
+function equipmentKind(e,r){
+ const s=JSON.stringify({...e,...r}).toLowerCase();
+ if(/armor|armadura|shield|escudo/.test(s))return /shield|escudo/.test(s)?"shields":"armor";
+ if(/weapon|meleeweapon|rangedweapon|martial|simple weapon|weapon/.test(s))return "weapons";
+ return "gear";
+}
+function weaponFamily(s){s=String(s).toLowerCase();if(/sword|espada/.test(s))return"sword";if(/bow|arco/.test(s))return"bow";if(/hammer|martelo/.test(s))return"hammer";if(/axe|machado/.test(s))return"axe";if(/mace|maça|maca/.test(s))return"mace";if(/dagger|adaga/.test(s))return"dagger";return""}
+async function equipmentEntities(){
+ const arr=list("item","");
+ const out=[];
+ for(const e of arr.slice(0,12000)){const r=await firstRecord(e);out.push({e,r,kind:equipmentKind(e,r),family:weaponFamily(JSON.stringify({...e,...r}))})}
+ return out;
+}
+async function renderInventory(){
+ const arr=character.inventory||[];
+ $("inventory-list").innerHTML=arr.length?arr.map((x,i)=>`<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta||"")}</small></div><input type="number" min="0" value="${Number(x.qty)||1}" data-qty="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`).join(""):`<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
+ $("inventory-list").querySelectorAll("[data-qty]").forEach(i=>i.addEventListener("input",()=>{character.inventory[Number(i.dataset.qty)].qty=Number(i.value)||0;saveCharacter(character)}));
+ $("inventory-list").querySelectorAll("[data-remove-inv]").forEach(b=>b.addEventListener("click",()=>{character.inventory.splice(Number(b.dataset.removeInv),1);renderInventory()}));
+}
+async function renderEquipmentCatalog(){
+ const box=$("equipment-list"),q=$("equipment-search").value.trim().toLowerCase(),wf=$("weapon-filter").value;
+ box.innerHTML=`<div class="empty">Carregando catálogo…</div>`;
+ let arr=await equipmentEntities();
+ if(eqCat!=="all"&&eqCat!=="inventory")arr=arr.filter(x=>x.kind===eqCat);
+ if(wf)arr=arr.filter(x=>x.family===wf);
+ if(q)arr=arr.filter(x=>`${titleOf(x.e)} ${JSON.stringify(x.r)} ${x.e.source||""}`.toLowerCase().includes(q));
+ arr=arr.slice(0,240);
+ box.innerHTML=arr.length?arr.map(x=>`<article class="catalog-card"><div class="pick-top"><strong>${esc(titleOf(x.e))}</strong>${sourceTag(x.e)}</div><div class="pick-meta">${esc(labelMeta(x.e))} · ${typeLabel(x.kind)}</div><p>${esc(plain(descriptionOf(x.r,x.e)).slice(0,180)||"Sem descrição.")}</p><div class="catalog-actions"><button data-add-item="${esc(x.e.id)}">+ Inventário</button><button data-info-item="${esc(x.e.id)}">ⓘ</button></div></article>`).join(""):`<div class="empty">Nenhum item encontrado.</div>`;
+ box.querySelectorAll("[data-add-item]").forEach(b=>b.addEventListener("click",()=>addInventory(b.dataset.addItem)));
+ box.querySelectorAll("[data-info-item]").forEach(b=>b.addEventListener("click",()=>{const e=manifest().find(x=>x.id===b.dataset.infoItem);if(e)openEntityModal(e)}));
+}
+function addInventory(id){const e=manifest().find(x=>x.id===id);if(!e)return;const f=character.inventory.find(x=>x.id===id);if(f)f.qty=(f.qty||1)+1;else character.inventory.push({id,name:titleOf(e),qty:1,meta:labelMeta(e)});saveCharacter(character);renderInventory();toast(`${titleOf(e)} adicionado.`)}
+async function equipmentTab(){
+ $("inventory-panel").classList.toggle("hidden",eqCat!=="inventory");$("equipment-catalog").classList.toggle("hidden",eqCat==="inventory");
+ if(eqCat!=="inventory")await renderEquipmentCatalog();else await renderInventory();
 }
 
-async function sync(){
- await refreshSelectors();renderHeader();$("edition").value=character.edition;$("content").value=character.content;await renderAll();
+function renderDeath(){
+ const d=character.deathSaves||{success:0,failure:0};document.querySelectorAll("[data-death]").forEach(b=>{const k=b.dataset.death[0]==="s"?"success":"failure",i=Number(b.dataset.death[1]);b.textContent=i<d[k]?"●":"○";b.classList.toggle("on",i<d[k]);b.onclick=()=>{d[k]=i<d[k]?i:i+1;if(d[k]>3)d[k]=0;character.deathSaves=d;saveCharacter(character);renderDeath()}});
 }
-function wire(){
- $("edition").onchange=async e=>{character.edition=e.target.value;character.classId=character.subclassId=character.raceId=character.backgroundId="";await sync()};
- $("content").onchange=async e=>{character.content=e.target.value;await sync()};
- document.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>openPicker(b.dataset.pick));
- document.querySelectorAll("[data-info]").forEach(b=>b.onclick=()=>openEntity(refs[b.dataset.info]));
- document.querySelectorAll("#picker-filters button").forEach(b=>b.onclick=()=>{pickerFilter=b.dataset.filter;document.querySelectorAll("#picker-filters button").forEach(x=>x.classList.toggle("active",x===b));renderPicker()});
- $("picker-search").oninput=renderPicker;
- document.querySelectorAll("[data-close-picker]").forEach(e=>e.onclick=closePicker);
- document.querySelectorAll("[data-close-modal]").forEach(e=>e.onclick=()=>{$("modal").classList.remove("open");$("modal").setAttribute("aria-hidden","true")});
- document.addEventListener("keydown",e=>{if(e.key==="Escape"){closePicker();$("modal").classList.remove("open");$("modal").setAttribute("aria-hidden","true")}});
- $("name").oninput=e=>{character.name=e.target.value;renderHeader()};
- $("level").oninput=async e=>{character.level=Math.max(1,Math.min(20,+e.target.value||1));await renderAll()};
- $("xp").oninput=e=>character.xp=+e.target.value||0;
- $("hp-current").oninput=e=>character.hpCurrent=+e.target.value||0;$("hp-temp").oninput=e=>character.hpTemp=+e.target.value||0;
- $("ac-input").oninput=e=>{character.ac=+e.target.value||0;renderCombat()};$("speed-input").oninput=e=>{character.speed=e.target.value;renderCombat()};
- $("spell-search").oninput=renderSpells;$("spell-level-filter").onchange=renderSpells;
- $("compendium-search").oninput=renderCompendium;$("compendium-type").onchange=renderCompendium;
- document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tab-panel").forEach(x=>x.classList.remove("active"));t.classList.add("active");$(`tab-${t.dataset.tab}`).classList.add("active");if(t.dataset.tab==="compendium")renderCompendium()});
- $("save-character").onclick=()=>{saveCharacter(character);toast("Personagem salvo.")};
- $("export-character").onclick=()=>downloadCharacter(character);
- $("new-character").onclick=async()=>{if(confirm("Criar novo personagem?")){clearCharacter();character=fresh();await sync();toast("Novo personagem.")}};
- $("import-character").onchange=async e=>{try{const imported=await readCharacterFile(e.target.files[0]);character={...fresh(),...imported,scores:{...fresh().scores,...(imported.scores||{})}};await sync();toast("Personagem importado.")}catch{toast("JSON inválido.")}e.target.value=""};
+function applyLoaded(c){character={...fresh(),...c,scores:{...fresh().scores,...(c?.scores||{})},deathSaves:{...fresh().deathSaves,...(c?.deathSaves||{})},inventory:Array.isArray(c?.inventory)?c.inventory:[],preparedSpells:Array.isArray(c?.preparedSpells)?c.preparedSpells:[]};$("edition").value=character.edition;$("content").value=character.content;$("name").value=character.name;$("level").value=character.level;$("xp").value=character.xp;refreshChoices()}
+function setup(){
+ $("edition").addEventListener("change",()=>{character.edition=$("edition").value;character.classId=character.subclassId=character.raceId=character.backgroundId="";refs={class:null,subclass:null,race:null,background:null};refreshChoices();saveCharacter(character)});
+ $("content").addEventListener("change",()=>{character.content=$("content").value;saveCharacter(character)});
+ $("name").addEventListener("input",()=>{character.name=$("name").value});
+ $("level").addEventListener("input",()=>{character.level=Math.max(1,Math.min(20,Number($("level").value)||1));recalc()});
+ $("xp").addEventListener("input",()=>character.xp=Number($("xp").value)||0);
+ $("hp-current").addEventListener("input",()=>character.hpCurrent=Number($("hp-current").value)||0);
+ $("hp-temp").addEventListener("input",()=>character.hpTemp=Number($("hp-temp").value)||0);
+ $("ac-input").addEventListener("input",()=>{character.ac=Number($("ac-input").value)||null;recalc()});
+ $("speed-input").addEventListener("input",()=>{character.speed=$("speed-input").value||"30 ft";recalc()});
+ document.querySelectorAll(".change-choice").forEach(b=>b.addEventListener("click",()=>openPicker(b.dataset.pick)));
+ document.querySelectorAll(".tiny-info").forEach(b=>b.addEventListener("click",()=>openInfo(b.dataset.info)));
+ document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",async()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");document.querySelectorAll(".tab-page").forEach(x=>x.classList.remove("active"));$(`tab-${b.dataset.tab}`).classList.add("active");if(b.dataset.tab==="equipment")await equipmentTab();if(b.dataset.tab==="spells")await renderSpells();if(b.dataset.tab==="features")await renderFeatures()}));
+ document.querySelectorAll("[data-eqcat]").forEach(b=>b.addEventListener("click",async()=>{document.querySelectorAll("[data-eqcat]").forEach(x=>x.classList.remove("active"));b.classList.add("active");eqCat=b.dataset.eqcat;await equipmentTab()}));
+ $("equipment-search").addEventListener("input",()=>{if(eqCat!=="inventory")renderEquipmentCatalog()});$("weapon-filter").addEventListener("change",()=>{if(eqCat!=="inventory")renderEquipmentCatalog()});
+ $("compendium-search").addEventListener("input",renderCompendium);$("compendium-type").addEventListener("change",renderCompendium);
+ $("collapse-creator").addEventListener("click",()=>{$("creator").classList.toggle("collapsed");$("collapse-creator").textContent=$("creator").classList.contains("collapsed")?"Expandir":"Recolher"});
+ $("add-attack").addEventListener("click",()=>{character.attacks.push({name:"",bonus:"",damage:"",notes:""});renderAttacks()});
+ $("save-character").addEventListener("click",()=>{saveCharacter(character);toast("Personagem salvo neste navegador.")});
+ $("export-character").addEventListener("click",()=>downloadCharacter(character));
+ $("new-character").addEventListener("click",()=>{if(confirm("Começar um novo personagem?")){clearCharacter();applyLoaded(fresh());toast("Novo personagem.")}});
+ $("print-character").addEventListener("click",()=>window.print());
+ $("import-character").addEventListener("change",async e=>{try{applyLoaded(await readCharacterFile(e.target.files[0]));toast("Personagem importado.")}catch{toast("Arquivo inválido.")}});
+ $("modal-close").addEventListener("click",()=>$("modal").classList.add("hidden"));$("modal").addEventListener("click",e=>{if(e.target===$("modal"))$("modal").classList.add("hidden")});
 }
-(async()=>{try{await initDatabase();const s=stats();$("db-status").textContent=`Banco carregado · ${s.entities.toLocaleString("pt-BR")} registros`;character=loadCharacter()||fresh();wire();await sync()}catch(e){console.error(e);$("db-status").textContent="Erro no banco";console.error(e)}})();
+function renderCompendium(){
+ const q=$("compendium-search").value.trim().toLowerCase(),t=$("compendium-type").value;
+ let arr=manifest().filter(e=>(t==="all"||normType(e.type)===t)&&(!q||`${titleOf(e)} ${e.source||""}`.toLowerCase().includes(q))).slice(0,180);
+ $("compendium-results").innerHTML=arr.map(e=>`<article class="catalog-card"><div class="pick-top"><strong>${esc(titleOf(e))}</strong>${sourceTag(e)}</div><div class="pick-meta">${esc(typeLabel(e.type))} · ${esc(labelMeta(e))}</div><div class="catalog-actions"><button data-comp-info="${esc(e.id)}">ⓘ Ver detalhes</button></div></article>`).join("")||`<div class="empty">Nenhum resultado.</div>`;
+ $("compendium-results").querySelectorAll("[data-comp-info]").forEach(b=>b.addEventListener("click",()=>{const e=manifest().find(x=>x.id===b.dataset.compInfo);if(e)openEntityModal(e)}));
+}
+async function start(){
+ character=loadCharacter()||fresh();setup();
+ try{const c=await initDatabase();const s=stats();$("db-status").textContent=`Banco sincronizado · ${s.entities.toLocaleString("pt-BR")} registros`;$("db-count").textContent=`${s.entities.toLocaleString("pt-BR")} registros · ${s.official.toLocaleString("pt-BR")} oficiais · ${s.homebrew.toLocaleString("pt-BR")} Homebrew`;applyLoaded(character);renderCompendium()}
+ catch(e){console.error(e);$("db-status").textContent="Erro ao carregar banco";$("db-count").textContent="Verifique a pasta data/ e o GitHub Pages";applyLoaded(character)}
+}
+start();
