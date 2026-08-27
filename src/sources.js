@@ -17,6 +17,18 @@ export const DATA_BASES = [
 ];
 
 // ------------------------------------------------------------
+// Banco "local" — este mesmo repositório.
+// ------------------------------------------------------------
+// O workflow .github/workflows/sync-data.yml roda todo dia às
+// 05h (horário de Brasília) e regrava data/raw/homebrew/... e
+// data/version.json com o material do TheGiddyLimit/homebrew
+// (classes/subclasses homebrew, entre outros). A ficha lê esses
+// arquivos direto do próprio site publicado — funciona tanto no
+// GitHub Pages quanto rodando localmente via `python -m http.server`,
+// já que "data/" fica ao lado do index.html.
+export const LOCAL_DATA_BASE = new URL("data/", document.baseURI).href;
+
+// ------------------------------------------------------------
 // Siglas de fonte que pertencem à edição de 2024 ("One D&D").
 // Qualquer sigla fora desta lista é tratada como 2014, a menos
 // que o próprio registro traga edition: "one" / "classic".

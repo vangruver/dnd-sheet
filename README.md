@@ -20,12 +20,24 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 - **Compêndio** e **catálogo de equipamento** pesquisáveis (itens e magias carregam sob demanda).
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
+- **Classes e subclasses homebrew** (`TheGiddyLimit/homebrew`) aparecem lado a lado com o conteúdo
+  oficial — use o seletor **Conteúdo** (Oficial / Oficial + Homebrew / Apenas Homebrew) no topo da página.
+- **Sincronização diária**: um workflow do GitHub Actions baixa a versão mais nova dos JSONs do 5etools
+  e do homebrew todo dia às 05h (horário de Brasília) e as grava em `data/`. Quando há uma sincronização
+  nova desde a sua última visita, um aviso aparece no topo da página de montar ficha, com um botão para
+  atualizar na hora.
 
 ## Fonte dos dados
 
-`https://raw.githubusercontent.com/5etools-mirror-3/5etools-src` (com alternativa em `cdn.jsdelivr.net`).
-Nenhum dado do 5etools é copiado para este repositório — apenas o código da ficha.
-Homebrew (`TheGiddyLimit/homebrew`) está previsto como fonte opcional numa próxima etapa.
+- **Oficial (2014/2024)**: `https://raw.githubusercontent.com/5etools-mirror-3/5etools-src` (com
+  alternativa em `cdn.jsdelivr.net`), lido direto do navegador, em tempo de execução. Nenhum dado
+  oficial é copiado para este repositório — apenas o código da ficha.
+- **Homebrew**: `https://github.com/TheGiddyLimit/homebrew`. Diferente do oficial, o homebrew *é*
+  baixado e normalizado neste repositório (pasta `data/raw/homebrew/`) pelo script `sync-data.mjs`,
+  rodado automaticamente todo dia às 05h (horário de Brasília) pelo workflow
+  [`.github/workflows/sync-data.yml`](.github/workflows/sync-data.yml). A ficha lê esses arquivos do
+  próprio site publicado (`data/version.json` lista os arquivos de classe/subclasse homebrew
+  disponíveis) — por isso o homebrew não depende de CORS de um repositório de terceiros.
 
 ## Publicar no GitHub Pages
 
@@ -63,8 +75,10 @@ resistências do Guerreiro, listas de magia não vazias em 2014 e 2024).
 | `src/store.js` | download + cache em IndexedDB + fila de requisições |
 | `src/database.js` | catálogos, características, lista de magias, consultas |
 | `src/rules.js` | atributos, perícias, fórmulas 5e |
-| `src/app.js` | interface, automação da ficha, abas |
-| `src/storage.js` | personagem em `localStorage`, importar/exportar |
+| `src/app.js` | interface, automação da ficha, abas, aviso de banco atualizado |
+| `src/storage.js` | personagem em `localStorage`, importar/exportar, versão de dados já vista |
+| `sync-data.mjs` | baixa 5etools (2014/2024) + homebrew e gera `data/raw/` + `data/manifest.json` + `data/version.json` |
+| `data/version.json` | gerado pelo `sync-data.mjs`; lista os arquivos de classe/subclasse homebrew e a data da última sincronização |
 
 ## Limitações conhecidas (v1)
 

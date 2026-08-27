@@ -12,3 +12,10 @@ export function downloadCharacter(c) {
   setTimeout(() => URL.revokeObjectURL(url), 500);
 }
 export async function readCharacterFile(file) { return JSON.parse(await file.text()); }
+
+// Última versão do banco (data/version.json → generatedAt) que o
+// usuário já viu, usada para mostrar o aviso de "banco atualizado"
+// só quando há de fato uma sincronização nova desde a última visita.
+const VERSION_KEY = "dnd-ficha-auto-data-version-seen";
+export function getSeenDataVersion() { try { return localStorage.getItem(VERSION_KEY); } catch { return null; } }
+export function setSeenDataVersion(v) { try { if (v) localStorage.setItem(VERSION_KEY, v); } catch { /* modo privado */ } }
