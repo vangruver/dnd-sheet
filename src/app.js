@@ -476,11 +476,24 @@ async function buildAutomation() {
   character.saveProficiencies = [...new Set([...classSaves, ...(character.manualSaveProficiencies || [])])];
   if (character.auto.speed && !character.manualSpeed) character.speed = character.auto.speed;
   if (character.auto.spellcastingAbility && !character.manualSpellAbility) character.spellAbility = character.auto.spellcastingAbility;
+
+  // Especialização: nº de perícias vem das características "Expertise" da
+  // classe até o nível atual (Ladino 1/6, Bardo 3/10 = 2 cada).
+  let expertise = 0;
+  if (refs.class) {
+    const cf = await findClassFeatures(refs.class, Number(character.level)).catch(() => []);
+    expertise = cf.filter((f) => /^expertise$/i.test(String(f.name || "").trim())).length * 2;
+  }
+  character.auto.expertiseSlots = expertise;
+  // limpa especialização de perícias que não são mais proficiência
+  character.skillExpertise = (character.skillExpertise || []).filter((k) => character.skillProficiencies.includes(k));
+
   renderAutoChoices({
     classChoices: skillChoicesFrom(classProf),
     backgroundChoices: skillChoicesFrom(br.skillProficiencies || bgProf),
     abilityChoices: abilityChoicesFrom(rr),
     bgAbility: bgAbilitySpec(br),
+    expertise,
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -522,6 +535,16 @@ function renderAutoChoices(data) {
     }).join("");
     sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumento de atributo — ${esc(titleOf(refs.background))}</strong><span>${lbl(weights)}</span></div><p>Regra 2024: o background distribui esses aumentos entre os atributos.</p>${modeBtns}<div class="asi-picks">${selects}</div></div>`);
   }
+  if (data.expertise > 0) {
+    const proficient = SKILLS.filter(([k]) => character.skillProficiencies.includes(k));
+    const chosen = character.skillExpertise || [];
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Especialização — ${esc(titleOf(refs.class))}</strong><span>Escolha ${data.expertise}</span></div>
+      <p>Dobra a proficiência na perícia. Só vale para perícias em que você já tem proficiência.</p>
+      <div class="choice-options">${proficient.length ? proficient.map(([k, n]) => {
+        const on = chosen.includes(k);
+        return `<label class="choice-option"><input type="checkbox" data-expertise="${k}" ${on ? "checked" : ""} ${!on && chosen.length >= data.expertise ? "disabled" : ""}><span>${esc(n)}</span></label>`;
+      }).join("") : "<span class='muted'>Escolha perícias com proficiência primeiro.</span>"}</div></div>`);
+  }
   $("auto-status").textContent = sections.length ? "Escolhas disponíveis" : "Nenhuma escolha pendente";
   if (!sections.length) { box.innerHTML = `<div class="auto-empty">As escolhas automáticas aparecerão aqui quando a classe/background/espécie fornecerem opções no banco.</div>`; return; }
   box.innerHTML = sections.join("");
@@ -559,6 +582,12 @@ function renderAutoChoices(data) {
     const i = Number(s.dataset.bgAbility);
     character.choiceSelections.bgAbility = character.choiceSelections.bgAbility || [];
     character.choiceSelections.bgAbility[i] = s.value || null;
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-expertise]").forEach((i) => i.addEventListener("change", () => {
+    character.skillExpertise = character.skillExpertise || [];
+    toggleIn(character.skillExpertise, i.dataset.expertise, i.checked);
+    if (character.skillExpertise.length > data.expertise) { character.skillExpertise.pop(); i.checked = false; toast(`Você pode escolher apenas ${data.expertise}.`); }
     saveCharacter(character); recalc();
   }));
 }
