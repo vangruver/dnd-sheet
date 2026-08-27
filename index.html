@@ -20,7 +20,7 @@
     <button id="save-character">Salvar</button>
     <button id="export-character">Exportar</button>
     <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
-    <button id="print-character" class="primary">Imprimir / PDF</button>
+    <button id="preview-pdf" class="primary">Ficha em PDF</button><button id="print-character">Imprimir / PDF</button>
   </div>
 </header>
 
@@ -61,6 +61,11 @@
     <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span id="db-count">—</span></div>
   </section>
 
+  <section class="auto-panel paper-card no-print" id="auto-panel">
+    <div class="auto-panel-title"><div><span>AUTOMAÇÃO DA FICHA</span><small>As opções abaixo vêm diretamente do banco e são aplicadas à ficha automaticamente.</small></div><span id="auto-status" class="auto-status">Aguardando seleção</span></div>
+    <div id="auto-choices" class="auto-choices"><div class="auto-empty">Escolha uma classe e um background para ver as escolhas disponíveis.</div></div>
+  </section>
+
   <nav class="tabs no-print" id="tabs">
     <button class="tab active" data-tab="sheet">Ficha</button>
     <button class="tab" data-tab="abilities">Atributos & Perícias</button>
@@ -84,7 +89,7 @@
     </div>
   </section>
 
-  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div id="ability-editor" class="ability-editor"></div></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section></div></section>
+  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar"><strong>Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button></div><div id="ability-editor" class="ability-editor"></div><p class="muted">Use +/− para distribuir pontos. O modo de pontos respeita o custo padrão de 8 a 15. Ajustes vindos da espécie/background podem ser aplicados depois.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section></div></section>
 
   <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section></div></section>
 
