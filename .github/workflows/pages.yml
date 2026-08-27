@@ -5,26 +5,53 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+
 permissions:
   contents: read
   pages: write
   id-token: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configurar Pages
+      - name: Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload
+      - name: Preparar arquivos do site
+        run: |
+          echo "Preparando site..."
+
+          if [ ! -f index.html ]; then
+            echo "ERRO: index.html não encontrado!"
+            exit 1
+          fi
+
+          echo "Site preparado com sucesso."
+
+      - name: Upload do site
         uses: actions/upload-pages-artifact@v3
         with:
           path: .
 
-      - name: Publicar
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
