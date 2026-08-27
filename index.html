@@ -1,0 +1,28 @@
+import {ABILITIES,SKILLS,PROFICIENCY_BY_LEVEL,mod,fmt,getRule} from "./rules.js";
+
+export function defaultCharacter(){
+ return {schema:1,name:"",level:1,xp:0,inspiration:0,edition:"2024",content:"all",
+   classId:"",subclassId:"",raceId:"",backgroundId:"",
+   scores:{str:10,dex:10,con:10,int:10,wis:10,cha:10},
+   saveProficiencies:[],skillProficiencies:[],skillExpertise:[],equipment:[],spells:[]};
+}
+export function calculate(c,selectedClass){
+ const pb=PROFICIENCY_BY_LEVEL(c.level);
+ const faces=selectedClass?.hd?.faces||8;
+ const con=mod(c.scores.con),dex=mod(c.scores.dex);
+ const hp=Math.max(1,faces+con+(c.level-1)*(getRule(c.edition).hpAverage(faces)+con));
+ const spellAbility=selectedClass?.spellcastingAbility||null;
+ const spellMod=spellAbility?mod(c.scores[spellAbility]):0;
+ return {pb,hp,faces,initiative:dex,ac:10+dex,passive:10+skillBonus(c,"perception","wis",pb),
+   spellAbility,spellDc:spellAbility?getRule(c.edition).spellDc(pb,spellMod):null,
+   spellAttack:spellAbility?getRule(c.edition).spellAttack(pb,spellMod):null};
+}
+export function skillBonus(c,id,ability,pb=PROFICIENCY_BY_LEVEL(c.level)){
+ let v=mod(c.scores[ability]);
+ if(c.skillProficiencies.includes(id)) v+=pb;
+ if(c.skillExpertise.includes(id)) v+=pb;
+ return v;
+}
+export function saveBonus(c,a,pb=PROFICIENCY_BY_LEVEL(c.level)){
+ return mod(c.scores[a])+(c.saveProficiencies.includes(a)?pb:0);
+}
