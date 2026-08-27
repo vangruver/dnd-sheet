@@ -1,31 +1,74 @@
-export const ABILITIES=["str","dex","con","int","wis","cha"];
-export const ABILITY_NAMES={str:"Força",dex:"Destreza",con:"Constituição",int:"Inteligência",wis:"Sabedoria",cha:"Carisma"};
-export const SKILLS=[
- ["acrobatics","Acrobacia","dex"],["animalHandling","Adestrar Animais","wis"],
- ["arcana","Arcanismo","int"],["athletics","Atletismo","str"],["deception","Enganação","cha"],
- ["history","História","int"],["insight","Intuição","wis"],["intimidation","Intimidação","cha"],
- ["investigation","Investigação","int"],["medicine","Medicina","wis"],["nature","Natureza","int"],
- ["perception","Percepção","wis"],["performance","Atuação","cha"],["persuasion","Persuasão","cha"],
- ["religion","Religião","int"],["sleightOfHand","Prestidigitação","dex"],["stealth","Furtividade","dex"],
- ["survival","Sobrevivência","wis"]
-];
-export const PROFICIENCY_BY_LEVEL=level=>Math.floor((Math.max(1,level)-1)/4)+2;
-export const mod=score=>Math.floor((Number(score||10)-10)/2);
-export const fmt=n=>n>=0?`+${n}`:`${n}`;
+# Ficha de D&D 5e automatizada
 
-export const RULES={
-  "2014":{
-    defaultSpeed:30,
-    hpAverage:faces=>Math.floor(faces/2)+1,
-    spellDc:(pb,m)=>8+pb+m,
-    spellAttack:(pb,m)=>pb+m
-  },
-  "2024":{
-    defaultSpeed:30,
-    hpAverage:faces=>Math.floor(faces/2)+1,
-    spellDc:(pb,m)=>8+pb+m,
-    spellAttack:(pb,m)=>pb+m
-  }
-};
+Ficha de personagem que **lê os dados oficiais do 5etools direto do GitHub**, em tempo de
+execução, e preenche sozinha o máximo possível a partir de **classe + espécie + background + nível**.
+Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 
-export function getRule(edition){return RULES[edition]||RULES["2024"]}
+## O que ela faz
+
+- **Duas edições**: alterne entre **2014** e **2024**. As listas de classes, subclasses,
+  espécies, backgrounds e magias são filtradas pela edição escolhida.
+- **Automação da ficha** a partir do banco do 5etools:
+  - dado de vida e **PV máximos** por nível;
+  - **testes de resistência** da classe;
+  - **perícias** fixas + as escolhas de perícia da classe/background (painel "Automação");
+  - **deslocamento**, tamanho, visão no escuro e traços da espécie;
+  - **atributo de conjuração**, CD de magia e bônus de ataque mágico;
+  - **características** de classe/subclasse/espécie/background até o nível atual;
+  - **lista de magias completa** da classe, por nível, via `spells/sources.json`.
+- **Point buy** 27 pontos, atributos editáveis, especialização.
+- **Compêndio** e **catálogo de equipamento** pesquisáveis (itens e magias carregam sob demanda).
+- **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
+- **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
+
+## Fonte dos dados
+
+`https://raw.githubusercontent.com/5etools-mirror-3/5etools-src` (com alternativa em `cdn.jsdelivr.net`).
+Nenhum dado do 5etools é copiado para este repositório — apenas o código da ficha.
+Homebrew (`TheGiddyLimit/homebrew`) está previsto como fonte opcional numa próxima etapa.
+
+## Publicar no GitHub Pages
+
+1. Crie um repositório e suba estes arquivos na branch `main`.
+2. Em **Settings → Pages → Build and deployment**, selecione **GitHub Actions**.
+3. O workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) publica a cada push.
+4. Abra a URL `https://<usuário>.github.io/<repo>/`.
+
+O arquivo `.nojekyll` garante que a pasta `src/` seja servida sem processamento do Jekyll.
+
+## Rodar localmente
+
+```bash
+python -m http.server 8000
+# abra http://localhost:8000
+```
+
+Precisa ser servido por HTTP (os módulos ES não carregam via `file://`).
+
+## Teste rápido da camada de dados
+
+```bash
+node tests/smoke.mjs
+```
+
+Baixa alguns arquivos do 5etools e confere valores conhecidos (dado de vida do Mago,
+resistências do Guerreiro, listas de magia não vazias em 2014 e 2024).
+
+## Estrutura
+
+| Arquivo | Papel |
+|---|---|
+| `index.html` / `assets/style.css` | interface e tema "papel" |
+| `src/sources.js` | repositório-fonte e heurística de edição |
+| `src/store.js` | download + cache em IndexedDB + fila de requisições |
+| `src/database.js` | catálogos, características, lista de magias, consultas |
+| `src/rules.js` | atributos, perícias, fórmulas 5e |
+| `src/app.js` | interface, automação da ficha, abas |
+| `src/storage.js` | personagem em `localStorage`, importar/exportar |
+
+## Limitações conhecidas (v1)
+
+- Herança `_copy`/`_mod` do 5etools é resolvida de forma parcial.
+- Renderização das tags `{@...}` cobre as mais comuns; tags raras aparecem como texto simples.
+- Equipamento inicial da classe/background é mostrado como texto, não adicionado automaticamente ao inventário.
+- Escolhas como ancestralidade dracônica, estilo de luta e talentos ainda não têm seletor dedicado.
