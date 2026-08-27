@@ -55,4 +55,4 @@ function wire(){
  $("new-character").onclick=async()=>{if(confirm("Criar novo personagem?")){clearCharacter();character=fresh();await sync();toast("Novo personagem.")}};
  $("import-character").onchange=async e=>{try{character={...fresh(),...(await readCharacterFile(e.target.files[0]))};character.scores={...fresh().scores,...character.scores};await sync();toast("Importado.")}catch{toast("JSON inválido.")}e.target.value=""}
 }
-(async()=>{try{await initDatabase();const s=stats();$("db-status").textContent=`Banco carregado · ${s.entities} registros`;character=loadCharacter()||fresh();wire();await sync()}catch(e){console.error(e);$("db-status").textContent="Erro no banco";$("selection-note").textContent="Não foi possível ler data/manifest.json."}})();
+(async()=>{try{await initDatabase();const s=stats();$("db-status").textContent=`Banco carregado · ${s.entities} registros`;character=loadCharacter()||fresh();wire();await sync()}catch(e){console.error(e);$("db-status").textContent="Erro no banco";$("selection-note").textContent=e?.message||"Não foi possível ler data/manifest.json."}})();
