@@ -1,0 +1,259 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #1a1a1d;
+  color: #e0e0e0;
+  padding: 20px;
+}
+
+.sheet-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #25262b;
+  border: 2px solid #5c1d1d;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.character-header {
+  border-bottom: 2px solid #5c1d1d;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.header-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 8px;
+}
+
+.header-field label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #e69a28;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.header-field input, .header-field select {
+  background: #1a1a1d;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 2fr 1fr;
+  gap: 10px;
+}
+
+.status-bar {
+  font-size: 0.8rem;
+  background-color: #2d3748;
+  color: #90cdf4;
+  padding: 6px 12px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.sheet-body {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  gap: 15px;
+}
+
+.box {
+  background: #1f2023;
+  border: 1px solid #38393e;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.box h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: #e69a28;
+  border-bottom: 1px solid #38393e;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+
+/* ATRIBUTOS */
+.abilities-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ability-card {
+  background: #191a1c;
+  border: 1px solid #444;
+  border-radius: 6px;
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.ability-card label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  color: #e69a28;
+}
+
+.ability-card .modifier {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #48bb78;
+}
+
+.ability-card input {
+  width: 45px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #666;
+  color: #bbb;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* LISTAS DE PERÍCIAS E SALVAGUARDAS */
+.skill-row, .save-row {
+  display: flex;
+  align-items: center;
+  font-size: 0.8rem;
+  padding: 3px 0;
+}
+
+.skill-row input[type="checkbox"], .save-row input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.skill-bonus, .save-bonus {
+  width: 30px;
+  font-weight: bold;
+  color: #48bb78;
+  text-align: right;
+  margin-right: 8px;
+}
+
+/* COMBATE */
+.combat-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stat-card {
+  background: #191a1c;
+  border: 1px solid #444;
+  border-radius: 6px;
+  text-align: center;
+  padding: 10px;
+}
+
+.stat-card label {
+  display: block;
+  font-size: 0.7rem;
+  color: #e69a28;
+  margin-bottom: 4px;
+}
+
+.stat-card input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #fff;
+  text-align: center;
+}
+
+.hp-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.hp-row label {
+  display: block;
+  font-size: 0.7rem;
+  color: #bbb;
+  margin-bottom: 4px;
+}
+
+.hp-row input {
+  width: 100%;
+  background: #191a1c;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.spell-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.spell-stats-grid span {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #63b3ed;
+  margin-top: 4px;
+}
+
+/* MAGIAS & CARACTERÍSTICAS */
+.spell-filter-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.spell-filter-controls input, .spell-filter-controls select {
+  background: #191a1c;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  flex: 1;
+}
+
+.spells-list, .features-content {
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 0.8rem;
+}
+
+.spell-item, .feature-item {
+  background: #191a1c;
+  padding: 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  border-left: 3px solid #e69a28;
+}
+
+.spell-item h4, .feature-item h4 {
+  color: #e69a28;
+  margin-bottom: 4px;
+}
+
+.placeholder-text {
+  color: #777;
+  font-style: italic;
+}
