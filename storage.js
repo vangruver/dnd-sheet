@@ -1,4 +1,4 @@
-const KEY="dnd-sheet-character-v3";
+const KEY="dnd-sheet-character-v4";
 export function saveCharacter(c){localStorage.setItem(KEY,JSON.stringify(c));}
 export function loadCharacter(){try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null}catch{return null}}
 export function clearCharacter(){localStorage.removeItem(KEY)}
