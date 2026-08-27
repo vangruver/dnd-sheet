@@ -24,6 +24,7 @@
     <section class="card hero">
       <div class="grid identity">
         <label>Nome do personagem<input id="name" data-field="name"></label>
+        <label>Regra<select id="ruleset" data-field="ruleset"><option value="2014">D&D 5e — 2014</option><option value="2024">D&D 5e — 2024</option></select></label>
         <label>Classe<select id="class" data-field="class"></select></label>
         <label>Nível<input id="level" data-field="level" type="number" min="1" max="20" value="1"></label>
         <label>Raça<input id="race" data-field="race"></label>
@@ -77,7 +78,7 @@
         <button data-tab="armor">Armaduras</button>
         <button data-tab="gear">Equipamentos</button>
       </div>
-      <div id="equipment"></div>
+      <div class="equipment-filter"><label>Categoria<select id="equipmentCategory"><option value="">Todas</option></select></label></div><div id="equipment"></div>
     </section>
 
     <section class="card">
