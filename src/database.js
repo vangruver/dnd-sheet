@@ -7,7 +7,7 @@
 // os catálogos são baixados sob demanda e ficam em cache.
 // ============================================================
 
-import { getJson, tryJson } from "./store.js";
+import { getJson, tryJson, tryLocalJson, getVersionInfo } from "./store.js";
 import { editionOf as editionOfRec, editionMatches } from "./sources.js";
 
 // ------------------------------------------------------------
@@ -57,8 +57,9 @@ export function isHomebrew(x) {
   return !!(x && (x.homebrew || x._isBrew || x.brew));
 }
 export function editionOf(x) {
-  // stub já traz string "2014"/"2024"; registro cru é derivado.
-  if (x && (x.edition === "2014" || x.edition === "2024")) return x.edition;
+  // stub já traz string "2014"/"2024"/"both" (homebrew não amarrado a
+  // uma edição específica); registro cru é derivado via heurística.
+  if (x && (x.edition === "2014" || x.edition === "2024" || x.edition === "both")) return x.edition;
   return editionOfRec(x);
 }
 
@@ -116,25 +117,64 @@ export async function ensureCatalog(type, onProgress) {
 }
 
 async function loadAllClasses(onProgress) {
-  const index = await getJson("class/index.json"); // { wizard: "class-wizard.json", ... }
-  const files = Object.values(index);
+  // Classes/subclasses oficiais (5etools) + homebrew compatível com
+  // 5etools (TheGiddyLimit/homebrew), este último já baixado e
+  // normalizado neste próprio repositório pelo workflow diário de
+  // sincronização (ver data/version.json).
+  // Não deixamos uma falha ao buscar o índice oficial (rede fora do
+  // ar, mirror bloqueado etc.) impedir o carregamento do homebrew —
+  // por isso tryJson aqui em vez de getJson.
+  const [index, homebrewFiles] = await Promise.all([
+    tryJson("class/index.json").then((v) => v || {}), // { wizard: "class-wizard.json", ... }
+    homebrewClassFiles(),
+  ]);
+  const officialFiles = Object.values(index);
+
+  const total = officialFiles.length + homebrewFiles.length;
   let done = 0;
-  await Promise.all(files.map(async (fname) => {
-    const file = await tryJson(`class/${fname}`);
-    done++; onProgress && onProgress(done, files.length);
-    if (!file) return;
-    registerClassFile(file);
-  }));
+  const tick = () => { done++; onProgress && onProgress(done, total); };
+
+  await Promise.all([
+    ...officialFiles.map(async (fname) => {
+      const file = await tryJson(`class/${fname}`);
+      tick();
+      if (file) registerClassFile(file, false);
+    }),
+    ...homebrewFiles.map(async (fname) => {
+      const file = await tryLocalJson(fname);
+      tick();
+      if (file) registerClassFile(file, true);
+    }),
+  ]);
 }
 
-function registerClassFile(file) {
+// data/version.json é buscado uma única vez por sessão e reaproveitado
+// tanto para saber quais arquivos de classe/subclasse homebrew existem
+// quanto para o aviso de "banco atualizado" (ver currentVersionInfo,
+// usado por app.js). Em caso de falha (offline, version.json ausente
+// etc.) simplesmente não há homebrew nesta sessão — o resto da ficha
+// continua funcionando normalmente.
+let versionInfoPromise = null;
+function loadVersionInfo() {
+  if (!versionInfoPromise) {
+    versionInfoPromise = getVersionInfo().catch((err) => { console.warn("Banco local/homebrew indisponível:", err); return null; });
+  }
+  return versionInfoPromise;
+}
+export async function currentVersionInfo() { return loadVersionInfo(); }
+async function homebrewClassFiles() {
+  const v = await loadVersionInfo();
+  return Array.isArray(v?.homebrew?.classFiles) ? v.homebrew.classFiles : [];
+}
+
+function registerClassFile(file, isHomebrew = false) {
   for (const cls of file.class || []) {
     const csrc = cls.source || "";
     classFiles.set(`${String(cls.name).toLowerCase()}|${String(csrc).toLowerCase()}`, { cls, file });
     register({
       id: edId(["class", csrc, cls.name]),
       type: "class", name: cls.name, source: csrc,
-      edition: editionOfRec(cls), homebrew: false,
+      edition: isHomebrew ? "both" : editionOfRec(cls), homebrew: isHomebrew,
       __rec: cls, __file: file,
     });
   }
@@ -149,8 +189,8 @@ function registerClassFile(file) {
       className: sub.className || "",
       classSource: csrc,
       shortName: sub.shortName || sub.name,
-      edition: editionOfRec(sub.edition ? sub : { source: ssrc }),
-      homebrew: false,
+      edition: isHomebrew ? "both" : editionOfRec(sub.edition ? sub : { source: ssrc }),
+      homebrew: isHomebrew,
       __rec: sub, __file: file,
     });
   }
@@ -298,7 +338,9 @@ export function filterEntities(type, edition, content = "all", query = "") {
   return manifestEntries()
     .filter((x) => {
       if (normType(x.type) !== type) return false;
-      if (edition && editionOf(x) !== String(edition)) return false;
+      // Homebrew é marcado como edition "both" (não sabemos se é
+      // 2014 ou 2024) — deixamos passar em qualquer edição escolhida.
+      if (edition && editionOf(x) !== "both" && editionOf(x) !== String(edition)) return false;
       const hb = isHomebrew(x);
       if (content === "official" && hb) return false;
       if (content === "homebrew" && !hb) return false;

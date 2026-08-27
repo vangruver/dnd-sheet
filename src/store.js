@@ -6,7 +6,7 @@
 // Leituras seguintes vêm do cache até expirar o TTL.
 // ============================================================
 
-import { DATA_BASES } from "./sources.js";
+import { DATA_BASES, LOCAL_DATA_BASE } from "./sources.js";
 
 const DB_NAME = "dnd5e-cache";
 const STORE = "files";
@@ -87,11 +87,18 @@ function pump() {
   }
 }
 
-async function fetchJson(path) {
+// Alguns nomes de arquivo (principalmente do homebrew) trazem
+// espaços, ponto-e-vírgula, apóstrofo etc. — precisam ir
+// codificados na URL, segmento por segmento (preservando "/").
+function encodePath(path) {
+  return String(path).split("/").map(encodeURIComponent).join("/");
+}
+
+async function fetchJson(path, bases) {
   let lastErr;
-  for (const base of DATA_BASES) {
+  for (const base of bases) {
     try {
-      const res = await fetch(base + path, { mode: "cors" });
+      const res = await fetch(base + encodePath(path), { mode: "cors" });
       if (!res.ok) { lastErr = new Error(`HTTP ${res.status} — ${base + path}`); continue; }
       return await res.json();
     } catch (err) { lastErr = err; }
@@ -99,28 +106,51 @@ async function fetchJson(path) {
   throw lastErr || new Error(`Falha ao baixar ${path}`);
 }
 
-// path relativo a data/, ex.: "class/class-wizard.json"
-export async function getJson(path) {
-  path = String(path).replace(/^\.?\/*/, "");
-  if (memory.has(path)) return memory.get(path);
-  if (inflight.has(path)) return inflight.get(path);
+function makeLoader(bases, keyPrefix) {
+  async function getJson(path) {
+    path = String(path).replace(/^\.?\/*/, "");
+    const key = keyPrefix + path;
+    if (memory.has(key)) return memory.get(key);
+    if (inflight.has(key)) return inflight.get(key);
 
-  const p = (async () => {
-    const cached = await cacheGet(path);
-    if (cached != null) { memory.set(path, cached); return cached; }
-    const data = await schedule(() => fetchJson(path));
-    memory.set(path, data);
-    cachePut(path, data);
-    return data;
-  })();
+    const p = (async () => {
+      const cached = await cacheGet(key);
+      if (cached != null) { memory.set(key, cached); return cached; }
+      const data = await schedule(() => fetchJson(path, bases));
+      memory.set(key, data);
+      cachePut(key, data);
+      return data;
+    })();
 
-  inflight.set(path, p);
-  try { return await p; }
-  finally { inflight.delete(path); }
+    inflight.set(key, p);
+    try { return await p; }
+    finally { inflight.delete(key); }
+  }
+  async function tryJson(path) {
+    try { return await getJson(path); }
+    catch { return null; }
+  }
+  return { getJson, tryJson };
 }
 
-// Tenta baixar; devolve null em vez de lançar (para arquivos opcionais).
-export async function tryJson(path) {
-  try { return await getJson(path); }
-  catch { return null; }
+// Banco oficial (5etools, via GitHub raw / jsDelivr) — path relativo
+// a data/, ex.: "class/class-wizard.json".
+const official = makeLoader(DATA_BASES, "");
+export const getJson = official.getJson;
+export const tryJson = official.tryJson;
+
+// Banco "local" (este mesmo repositório, atualizado todo dia pelo
+// workflow de sincronização — inclui o homebrew do TheGiddyLimit).
+const local = makeLoader([LOCAL_DATA_BASE], "local:");
+export const getLocalJson = local.getJson;
+export const tryLocalJson = local.tryJson;
+
+// data/version.json é pequeno e é a nossa "sonda" de atualização:
+// buscamos sempre fresco (sem cache de HTTP nem de IndexedDB) para
+// saber, a cada carregamento da página, se o banco foi atualizado
+// desde a última visita.
+export async function getVersionInfo() {
+  const res = await fetch(LOCAL_DATA_BASE + "version.json?t=" + Date.now(), { mode: "cors", cache: "no-store" });
+  if (!res.ok) throw new Error(`HTTP ${res.status} — version.json`);
+  return await res.json();
 }

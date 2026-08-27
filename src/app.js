@@ -1,11 +1,11 @@
 import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
-  manifestEntries, isHomebrew as hb, normType, editionOf,
+  manifestEntries, isHomebrew as hb, normType, editionOf, currentVersionInfo,
 } from "./database.js";
 import { clearCache } from "./store.js";
 import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack } from "./rules.js";
-import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile } from "./storage.js";
+import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null }, details = {};
@@ -24,7 +24,8 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
 const manifest = () => manifestEntries();
 const list = (t, q = "") => filterEntities(t, character.edition, character.content, q);
-const labelMeta = (x) => `${hb(x) ? "Homebrew" : "Oficial"} · ${editionOf(x)}${x?.source ? " · " + x.source : ""}`;
+const editionLabel = (x) => (editionOf(x) === "both" ? "2014/2024" : editionOf(x));
+const labelMeta = (x) => `${hb(x) ? "Homebrew" : "Oficial"} · ${editionLabel(x)}${x?.source ? " · " + x.source : ""}`;
 const sourceTag = (x) => `<span class="tag ${hb(x) ? "brew" : "official"}">${hb(x) ? "HOMEBREW" : "OFICIAL"}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
 const titleOf = (x) => String(x?.name || "Sem nome");
 const typeLabel = (t) => ({ class: "Classe", subclass: "Subclasse", race: "Espécie/Raça", background: "Background", spell: "Magia", item: "Item", feat: "Talento", optionalfeature: "Opção", classFeature: "Característica", subclassFeature: "Característica" }[normType(t)] || t);
@@ -124,7 +125,7 @@ function filteredPicker(type, q) {
     const cn = String(refs.class.name).toLowerCase();
     return manifest().filter((x) =>
       normType(x.type) === "subclass" &&
-      editionOf(x) === String(character.edition) &&
+      (editionOf(x) === "both" || editionOf(x) === String(character.edition)) &&
       String(x.className || "").toLowerCase() === cn &&
       (character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x))) &&
       (!q || titleOf(x).toLowerCase().includes(q.toLowerCase())));
@@ -182,7 +183,7 @@ async function selectRef(e) {
 function openInfo(type) { const e = refs[type]; if (!e) { toast("Nada selecionado."); return; } openEntityModal(e); }
 async function openEntityModal(e) {
   const r = await firstRecord(e), d = descriptionOf(r, e);
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionOf(e))}</span></div></div></div><div class="modal-body">${richText(d)}</div>`;
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div><div class="modal-body">${richText(d)}</div>`;
   $("modal").classList.remove("hidden");
 }
 
@@ -727,6 +728,48 @@ function setup() {
     await clearCache();
     location.reload();
   });
+  $("data-update-refresh")?.addEventListener("click", async () => {
+    markDataUpdateSeen();
+    await clearCache();
+    location.reload();
+  });
+  $("data-update-dismiss")?.addEventListener("click", () => {
+    markDataUpdateSeen();
+    $("data-update-banner")?.classList.add("hidden");
+  });
+}
+
+// ------------------------------------------------------------
+// Aviso de "banco de dados atualizado"
+// ------------------------------------------------------------
+// O workflow .github/workflows/sync-data.yml roda todo dia às 05h
+// (horário de Brasília) e baixa a versão mais recente dos JSONs do
+// 5etools + homebrew. Comparamos data/version.json (generatedAt) com
+// a última versão que este navegador já viu para saber se rolou uma
+// sincronização nova desde a última visita.
+function markDataUpdateSeen() {
+  const v = $("data-update-banner")?.dataset.version;
+  if (v) setSeenDataVersion(v);
+}
+async function checkDataUpdateNotice() {
+  const version = await currentVersionInfo();
+  if (!version || !version.generatedAt) return;
+  const seen = getSeenDataVersion();
+  if (!seen) { setSeenDataVersion(version.generatedAt); return; } // primeira visita: nada para "avisar"
+  if (seen === version.generatedAt) return; // já é a versão que o usuário viu
+
+  const banner = $("data-update-banner");
+  if (!banner) return;
+  banner.dataset.version = version.generatedAt;
+  const date = new Date(version.generatedAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  const hbFiles = version.homebrew?.classFileCount ?? 0;
+  const totalHb = version.totals?.homebrew ?? null;
+  $("data-update-text").textContent =
+    `Banco de dados atualizado em ${date} (sincronização diária do 5etools + homebrew)` +
+    (hbFiles ? ` — ${hbFiles.toLocaleString("pt-BR")} arquivos de classes homebrew` : "") +
+    (totalHb ? `, ${totalHb.toLocaleString("pt-BR")} itens homebrew ao todo` : "") +
+    `. Clique em "Atualizar agora" para recarregar com os dados novos.`;
+  banner.classList.remove("hidden");
 }
 async function start() {
   character = loadCharacter() || fresh();
@@ -740,6 +783,7 @@ async function start() {
     $("db-count").textContent = `${s.entities.toLocaleString("pt-BR")} registros · dados do 5etools (${character.edition})`;
     applyLoaded(character);
     renderCompendium();
+    checkDataUpdateNotice().catch((err) => console.warn("Aviso de atualização indisponível:", err));
   } catch (e) {
     console.error(e);
     $("db-status").textContent = "Erro ao carregar dados do 5etools";

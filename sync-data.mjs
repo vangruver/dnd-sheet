@@ -806,6 +806,68 @@ async function main() {
   );
 
   // ----------------------------------------------------------
+  // version.json — resumo leve para o navegador
+  // ----------------------------------------------------------
+  //
+  // manifest.json tem todas as ~35 mil entidades e pesa vários MB —
+  // pesado demais para baixar a cada carregamento da ficha só para
+  // (1) saber quais arquivos trazem classe/subclasse homebrew e
+  // (2) detectar se o banco foi atualizado desde a última visita.
+  // version.json cobre só isso, então fica pequeno (dezenas de KB).
+  // ----------------------------------------------------------
+
+  const homebrewClassFiles =
+    Array.from(
+      new Set(
+        entities
+          .filter(
+            e =>
+              e.homebrew &&
+              (e.type === "class" ||
+                e.type === "subclass")
+          )
+          .map(e => e.file)
+      )
+    ).sort();
+
+  const version = {
+    schema: 1,
+
+    generatedAt:
+      manifest.generatedAt,
+
+    sources:
+      repositoryInfo,
+
+    totals:
+      manifest.totals,
+
+    homebrew: {
+      classFiles:
+        homebrewClassFiles,
+
+      classFileCount:
+        homebrewClassFiles.length,
+    },
+  };
+
+  const versionFile =
+    path.join(
+      OUT,
+      "version.json"
+    );
+
+  await fs.writeFile(
+    versionFile,
+    JSON.stringify(
+      version,
+      null,
+      2
+    ),
+    "utf8"
+  );
+
+  // ----------------------------------------------------------
   // Criar README do banco
   // ----------------------------------------------------------
 
@@ -882,6 +944,10 @@ Eles serão substituídos na próxima sincronização.
 
   console.log(
     "data/manifest.json"
+  );
+
+  console.log(
+    "data/version.json"
   );
 
   console.log("");
