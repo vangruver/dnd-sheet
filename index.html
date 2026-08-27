@@ -82,6 +82,7 @@
     <button class="tab" data-tab="spells">Magias</button>
     <button class="tab" data-tab="features">Características</button>
     <button class="tab" data-tab="equipment">Equipamento</button>
+    <button class="tab" data-tab="codex">Raças & Classes</button>
     <button class="tab" data-tab="compendium">Compêndio</button>
   </nav>
 
@@ -115,6 +116,27 @@
     </div><div class="search-row"><input id="equipment-search" placeholder="Pesquisar: espada, arco, martelo, cota de malha…"><select id="weapon-filter"><option value="">Todas as armas</option><option value="sword">Espadas</option><option value="bow">Arcos</option><option value="hammer">Martelos</option><option value="axe">Machados</option><option value="mace">Maças</option><option value="dagger">Adagas</option></select></div></section>
     <section id="inventory-panel" class="paper-card"><h2>Meu inventário</h2><div id="inventory-list"></div></section>
     <section id="equipment-catalog" class="paper-card hidden"><h2>Catálogo</h2><div id="equipment-list" class="catalog-grid"></div></section>
+  </section>
+
+  <section class="tab-page" id="tab-codex">
+    <div class="page-title"><h2>Raças & Classes</h2><p>Descrições narrativas completas de cada raça e classe — oficiais do 5etools e homebrew da comunidade, lado a lado.</p></div>
+    <section class="paper-card codex-toolbar">
+      <input id="codex-search" placeholder="Pesquisar raça ou classe… (ex.: elfo, tiefling, bardo)">
+      <div class="codex-filters">
+        <div class="segmented" id="codex-type">
+          <button class="active" data-codextype="all">Tudo</button>
+          <button data-codextype="race">Raças / Espécies</button>
+          <button data-codextype="class">Classes</button>
+        </div>
+        <div class="filter-pills" id="codex-content">
+          <button class="active" data-codexcontent="all">Oficial + Homebrew</button>
+          <button data-codexcontent="official">Apenas oficial</button>
+          <button data-codexcontent="homebrew">Apenas homebrew</button>
+        </div>
+      </div>
+    </section>
+    <div id="codex-status" class="codex-status"></div>
+    <div id="codex-grid" class="codex-grid"></div>
   </section>
 
   <section class="tab-page" id="tab-compendium"><div class="page-title"><h2>Compêndio</h2><p>Pesquise diretamente nos registros carregados do 5etools.</p></div><section class="paper-card compendium-toolbar"><input id="compendium-search" placeholder="Pesquisar no compêndio…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="spell">Magias</option><option value="item">Itens</option><option value="feat">Talentos</option></select></section><div id="compendium-results" class="catalog-grid"></div></section>

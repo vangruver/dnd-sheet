@@ -2,6 +2,7 @@ import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
   manifestEntries, isHomebrew as hb, normType, editionOf, currentVersionInfo,
+  descriptionEntries,
 } from "./database.js";
 import { clearCache } from "./store.js";
 import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack } from "./rules.js";
@@ -10,6 +11,7 @@ import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCh
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null }, details = {};
 let pickerType = null, eqCat = "inventory";
+let codexState = { type: "all", content: "all", query: "" };
 
 const fresh = () => ({
   schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official",
@@ -67,6 +69,10 @@ function richText(v) {
       x.rows.forEach((r) => out.push("<tr>" + r.map((c) => `<td>${esc(inlineTags(typeof c === "string" ? c : JSON.stringify(c)))}</td>`).join("") + "</tr>"));
       out.push("</tbody></table>"); return;
     }
+    if (x.type === "quote" && Array.isArray(x.entries)) {
+      out.push(`<blockquote class="lore-quote">${x.entries.map((t) => `<p>${esc(inlineTags(t))}</p>`).join("")}${x.by ? `<cite>— ${esc(inlineTags(x.by))}</cite>` : ""}</blockquote>`);
+      return;
+    }
     if (x.name && x.entries) { out.push(`<h3>${esc(inlineTags(x.name))}</h3>`); walk(x.entries); return; }
     if (x.entries) walk(x.entries); else if (x.items) walk(x.items); else if (x.entry) walk(x.entry); else if (x.desc) walk(x.desc);
   };
@@ -82,6 +88,21 @@ async function firstRecord(e) {
   return a.find((r) => String(r.name || "").toLowerCase() === String(e?.name || "").toLowerCase()) || a[0] || null;
 }
 function descriptionOf(r, e) { return r?.entries || r?.desc || r?.description || r?.fluff || r?.traits || e?.description || ""; }
+// Lore de raça/classe/subclasse (texto narrativo real do 5etools),
+// com fallback pros dados mecânicos quando o banco não tem prosa
+// estruturada para aquele registro (comum em homebrew mais simples).
+function loreOf(e) { return e ? descriptionEntries(e) : null; }
+function bestDescription(e, r) { return loreOf(e) || descriptionOf(r, e); }
+// Alguns arquivos de lore embrulham o texto inteiro num único bloco
+// "section" cujo nome repete o nome da própria raça/classe — evita
+// duplicar o título (que já aparece no cabeçalho do card/modal).
+function unwrapSelfSection(entries, ownName) {
+  if (Array.isArray(entries) && entries.length === 1 && entries[0]?.type === "section" &&
+      String(entries[0].name || "").toLowerCase() === String(ownName || "").toLowerCase()) {
+    return entries[0].entries;
+  }
+  return entries;
+}
 function classMatches(x, c) {
   if (!c) return false;
   const n = String(c.name || "").toLowerCase();
@@ -106,7 +127,7 @@ async function updateChoice(type) {
   meta.textContent = labelMeta(e);
   card.classList.add("selected");
   const r = await firstRecord(e);
-  prev.textContent = plain(descriptionOf(r, e)).slice(0, 280) || "Sem descrição estruturada.";
+  prev.textContent = plain(bestDescription(e, r)).slice(0, 280) || "Sem descrição estruturada.";
 }
 async function refreshChoices() {
   refs.race = manifest().find((x) => x.id === character.raceId) || null;
@@ -165,7 +186,7 @@ async function renderPicker(arr) {
   box.innerHTML = arr.map((x) => `<button class="pick-card" data-id="${esc(x.id)}"><div class="pick-top"><strong>${esc(titleOf(x))}</strong>${sourceTag(x)}</div><div class="pick-meta">${esc(labelMeta(x))}</div><div class="pick-desc">…</div></button>`).join("");
   for (const b of box.querySelectorAll(".pick-card")) {
     const e = manifest().find((x) => x.id === b.dataset.id);
-    firstRecord(e).then((r) => { const d = b.querySelector(".pick-desc"); if (d) d.textContent = plain(descriptionOf(r, e)).slice(0, 160) || "Sem descrição estruturada."; });
+    firstRecord(e).then((r) => { const d = b.querySelector(".pick-desc"); if (d) d.textContent = plain(bestDescription(e, r)).slice(0, 160) || "Sem descrição estruturada."; });
     b.addEventListener("click", async () => { await selectRef(e); $("modal").classList.add("hidden"); });
   }
 }
@@ -181,10 +202,78 @@ async function selectRef(e) {
   toast(`${titleOf(e)} selecionado.`);
 }
 function openInfo(type) { const e = refs[type]; if (!e) { toast("Nada selecionado."); return; } openEntityModal(e); }
+
+// ------------------------------------------------------------
+// Fichas de detalhe de raça / classe / subclasse — lore real do
+// 5etools (oficial e homebrew) + fatos rápidos + traços mecânicos,
+// usadas tanto no modal padrão quanto no Codex (aba Raças & Classes).
+// ------------------------------------------------------------
+function primaryAbilitiesFrom(rec) {
+  const out = new Set();
+  (rec?.primaryAbility || []).forEach((o) => Object.entries(o || {}).forEach(([k, v]) => { if (!v) return; const a = abilityKey(k); if (a) out.add(a); }));
+  return [...out];
+}
+function subclassesOf(e) {
+  return manifest().filter((x) => normType(x.type) === "subclass" && classMatches(x, e))
+    .sort((a, b) => String(a.name).localeCompare(String(b.name), "pt-BR"));
+}
+function raceQuickFacts(rec) {
+  const facts = [];
+  const speed = speedFrom(rec); if (speed) facts.push(["Deslocamento", speed]);
+  const size = Array.isArray(rec?.size) ? rec.size.join("/") : rec?.size; if (size) facts.push(["Tamanho", size]);
+  const abilities = (rec?.ability || []).map((blk) => Object.entries(blk || {})
+    .filter(([k]) => k !== "choose").map(([k, v]) => `${(ABILITY_NAMES[abilityKey(k)] || k.toUpperCase())} ${fmt(v)}`).join(", ")).filter(Boolean);
+  if (abilities.length) facts.push(["Atributos", abilities.join(" · ")]);
+  return facts;
+}
+function classQuickFacts(rec) {
+  const facts = [];
+  const hd = hitDiceFrom(rec); if (hd) facts.push(["Dado de vida", `d${hd}`]);
+  const prim = primaryAbilitiesFrom(rec).map((a) => ABILITY_NAMES[a]).filter(Boolean); if (prim.length) facts.push(["Atributo primário", prim.join(" ou ")]);
+  const saves = savesFrom(rec).map((a) => ABILITY_NAMES[a]).filter(Boolean); if (saves.length) facts.push(["Resistências", saves.join(", ")]);
+  return facts;
+}
+function factsHtml(facts) {
+  return facts.length ? `<div class="codex-facts">${facts.map(([k, v]) => `<div class="codex-fact"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div>` : "";
+}
+async function detailModalHtml(e) {
+  const r = await firstRecord(e);
+  const t = normType(e.type);
+  const lore = loreOf(e);
+  const hasLore = !!lore;
+  let facts = "", extra = "";
+  if (t === "race") {
+    facts = factsHtml(raceQuickFacts(r));
+    if (e.subraceOf) extra += `<p class="codex-subnote">Subespécie de <strong>${esc(e.subraceOf.name)}</strong>.</p>`;
+    const traits = Array.isArray(r?.entries) ? r.entries : [];
+    if (traits.length) extra += `<h3 class="codex-divider">Traços</h3>${richText(traits)}`;
+    if (!hasLore && !traits.length) extra += `<p class="muted">Sem texto no banco para esta raça.</p>`;
+  } else if (t === "class") {
+    facts = factsHtml(classQuickFacts(r));
+    const subs = subclassesOf(e);
+    if (subs.length) extra += `<h3 class="codex-divider">Subclasses (${subs.length})</h3><div class="codex-chip-row">${subs.map((s) => `<button class="codex-chip" data-codex-id="${esc(s.id)}">${esc(titleOf(s))} ${sourceTag(s)}</button>`).join("")}</div>`;
+    if (!hasLore) extra += `<p class="muted">Sem texto narrativo no banco para esta classe — confira as características na aba "Características" após escolher.</p>`;
+  } else if (t === "subclass") {
+    if (!hasLore) extra += `<p class="muted">Sem texto narrativo no banco para esta subclasse.</p>`;
+  }
+  const body = hasLore ? richText(unwrapSelfSection(lore, e.name)) : (t === "race" ? "" : richText(descriptionOf(r, e)));
+  return `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div>${facts}<div class="modal-body">${body}${extra}</div>`;
+}
 async function openEntityModal(e) {
+  const t = normType(e.type);
+  if (t === "race" || t === "class" || t === "subclass") { await openCodexModal(e); return; }
   const r = await firstRecord(e), d = descriptionOf(r, e);
   $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div><div class="modal-body">${richText(d)}</div>`;
   $("modal").classList.remove("hidden");
+}
+async function openCodexModal(e) {
+  $("modal-content").innerHTML = `<div class="loading">Carregando…</div>`;
+  $("modal").classList.remove("hidden");
+  $("modal-content").innerHTML = await detailModalHtml(e);
+  $("modal-content").querySelectorAll("[data-codex-id]").forEach((b) => b.addEventListener("click", async () => {
+    const sub = manifest().find((x) => x.id === b.dataset.codexId);
+    if (sub) await openCodexModal(sub);
+  }));
 }
 
 // ------------------------------------------------------------
@@ -631,6 +720,60 @@ function renderDeath() {
 }
 
 // ------------------------------------------------------------
+// Codex — Raças & Classes (lore oficial + homebrew lado a lado)
+// ------------------------------------------------------------
+function codexTeaser(e, r) {
+  const lore = loreOf(e);
+  if (lore) return { text: plain(unwrapSelfSection(lore, e.name)).slice(0, 190), lore: true };
+  const fallback = plain(descriptionOf(r, e)).slice(0, 190);
+  return { text: fallback, lore: false };
+}
+function codexCardHtml(e, r) {
+  const t = normType(e.type);
+  const teaser = codexTeaser(e, r);
+  const sub = e.subraceOf ? `<div class="codex-subof">↳ Subespécie de ${esc(e.subraceOf.name)}</div>` : "";
+  return `<article class="codex-card ${hb(e) ? "brew" : "official"}" data-codex-id="${esc(e.id)}">
+    <div class="codex-card-top"><span class="codex-kind ${t}">${t === "race" ? "Raça" : "Classe"}</span>${sourceTag(e)}</div>
+    <h3>${esc(titleOf(e))}</h3>
+    ${sub}
+    <p class="codex-teaser">${esc(teaser.text) || "Sem descrição disponível neste registro."}${teaser.text.length >= 190 ? "…" : ""}</p>
+    ${!teaser.lore ? `<span class="codex-nolore">Sem lore estruturada · mostrando traços</span>` : ""}
+    <button type="button" class="codex-open">Ler descrição completa →</button>
+  </article>`;
+}
+async function renderCodex() {
+  const grid = $("codex-grid"), status = $("codex-status");
+  grid.innerHTML = `<div class="empty">Carregando raças e classes…</div>`;
+  await Promise.all([ensureCatalog("race"), ensureCatalog("class")]);
+  const q = codexState.query.trim().toLowerCase();
+  let arr = manifest().filter((e) => {
+    const t = normType(e.type);
+    if (t !== "race" && t !== "class") return false;
+    if (codexState.type !== "all" && t !== codexState.type) return false;
+    if (codexState.content === "official" && hb(e)) return false;
+    if (codexState.content === "homebrew" && !hb(e)) return false;
+    if (q && !`${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a, b) =>
+    Number(normType(a.type) !== "race") - Number(normType(b.type) !== "race") ||
+    Number(hb(a)) - Number(hb(b)) ||
+    String(a.name).localeCompare(String(b.name), "pt-BR"));
+  const races = arr.filter((e) => normType(e.type) === "race").length;
+  const classes = arr.length - races;
+  status.textContent = `${arr.length.toLocaleString("pt-BR")} resultados · ${races.toLocaleString("pt-BR")} raças/espécies · ${classes.toLocaleString("pt-BR")} classes`;
+  arr = arr.slice(0, 240);
+  if (!arr.length) { grid.innerHTML = `<div class="empty">Nenhuma raça ou classe encontrada com esses filtros.</div>`; return; }
+  // Dados já estão carregados em memória (ensureCatalog acima) — sem
+  // chamadas de rede aqui, então dá pra montar tudo síncrono.
+  grid.innerHTML = arr.map((e) => codexCardHtml(e, recordsForEntity(e)[0])).join("");
+  grid.querySelectorAll("[data-codex-id]").forEach((card) => {
+    const open = () => { const e = manifest().find((x) => x.id === card.dataset.codexId); if (e) openCodexModal(e); };
+    card.querySelector(".codex-open")?.addEventListener("click", open);
+    card.addEventListener("click", (ev) => { if (ev.target.closest(".codex-open")) return; open(); });
+  });
+}
+
+// ------------------------------------------------------------
 // Compêndio
 // ------------------------------------------------------------
 async function renderCompendium() {
@@ -699,7 +842,17 @@ function setup() {
     if (b.dataset.tab === "equipment") await equipmentTab();
     if (b.dataset.tab === "spells") await renderSpells();
     if (b.dataset.tab === "features") await renderFeatures();
+    if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
+  }));
+  $("codex-search")?.addEventListener("input", () => { codexState.query = $("codex-search").value; renderCodex(); });
+  document.querySelectorAll("#codex-type [data-codextype]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#codex-type [data-codextype]").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); codexState.type = b.dataset.codextype; renderCodex();
+  }));
+  document.querySelectorAll("#codex-content [data-codexcontent]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#codex-content [data-codexcontent]").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); codexState.content = b.dataset.codexcontent; renderCodex();
   }));
   document.querySelectorAll("[data-eqcat]").forEach((b) => b.addEventListener("click", async () => {
     document.querySelectorAll("[data-eqcat]").forEach((x) => x.classList.remove("active"));

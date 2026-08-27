@@ -28,7 +28,6 @@ const TYPE_ALIASES = {
 export const normType = (t) => TYPE_ALIASES[String(t || "").toLowerCase()] || String(t || "");
 
 const CATALOG_FILE = {
-  race: "races.json",
   background: "backgrounds.json",
   feat: "feats.json",
   optionalfeature: "optionalfeatures.json",
@@ -87,6 +86,37 @@ function resolveCopies(arr) {
 }
 
 // ------------------------------------------------------------
+// Fluff (texto narrativo / lore) de raça e classe
+// ------------------------------------------------------------
+// O 5etools guarda a prosa (lore) separada dos dados mecânicos:
+// fluff-races.json / class/fluff-class-<slug>.json (oficial), ou a
+// própria chave "raceFluff"/"classFluff"/"subclassFluff" dentro do
+// arquivo homebrew. Indexamos tudo por "tipo|nome|fonte" para achar
+// rapidamente o texto de qualquer raça/classe/subclasse.
+const fluffIndex = new Map();
+function fluffKey(type, name, source) {
+  return `${type}|${String(name || "").trim().toLowerCase()}|${String(source || "").trim().toLowerCase()}`;
+}
+function registerFluff(type, arr) {
+  for (const f of arr || []) {
+    if (!f || !f.name || !f.entries) continue;
+    fluffIndex.set(fluffKey(type, f.name, f.source), f.entries);
+  }
+}
+// Devolve as entries de lore (ou null se o banco não tiver texto
+// narrativo estruturado para esse registro).
+export function fluffFor(type, name, source) {
+  type = normType(type);
+  return fluffIndex.get(fluffKey(type, name, source)) || null;
+}
+export function descriptionEntries(e) {
+  if (!e) return null;
+  const t = normType(e.type);
+  if (t !== "race" && t !== "class" && t !== "subclass") return null;
+  return fluffFor(t, e.name, e.source);
+}
+
+// ------------------------------------------------------------
 // Carga de catálogos
 // ------------------------------------------------------------
 export async function ensureCatalog(type, onProgress) {
@@ -94,6 +124,7 @@ export async function ensureCatalog(type, onProgress) {
   if (type === "subclass") type = "class";
   if (loaded.has(type)) return;
 
+  if (type === "race") { await loadRaces(onProgress); loaded.add("race"); return; }
   if (type === "class") { await loadAllClasses(onProgress); loaded.add("class"); return; }
   if (type === "spell") { await loadSpellCatalog(onProgress); loaded.add("spell"); return; }
   if (type === "item") { await loadItemCatalog(onProgress); loaded.add("item"); return; }
@@ -135,6 +166,7 @@ async function loadAllClasses(onProgress) {
   const tick = () => { done++; onProgress && onProgress(done, total); };
 
   await Promise.all([
+    loadOfficialClassFluff().catch((err) => console.warn("Lore de classes oficiais indisponível:", err)),
     ...officialFiles.map(async (fname) => {
       const file = await tryJson(`class/${fname}`);
       tick();
@@ -146,6 +178,68 @@ async function loadAllClasses(onProgress) {
       if (file) registerClassFile(file, true);
     }),
   ]);
+}
+
+// Lore oficial de classe/subclasse mora em arquivos separados
+// (class/fluff-class-<slug>.json), listados em class/fluff-index.json.
+// O homebrew já traz classFluff/subclassFluff dentro do próprio
+// arquivo de classe (ver registerClassFile), então não precisa disso.
+async function loadOfficialClassFluff() {
+  const idx = await tryJson("class/fluff-index.json").then((v) => v || {});
+  await Promise.all(Object.values(idx).map(async (fname) => {
+    const file = await tryJson(`class/${fname}`);
+    if (!file) return;
+    if (Array.isArray(file.classFluff)) registerFluff("class", resolveCopies(file.classFluff));
+    if (Array.isArray(file.subclassFluff)) registerFluff("subclass", resolveCopies(file.subclassFluff));
+  }));
+}
+
+// ------------------------------------------------------------
+// Raças / espécies — oficiais + homebrew, com subespécies e lore
+// ------------------------------------------------------------
+// Diferente de classe, o homebrew de raça normalmente NÃO tem uma
+// classe própria (não filtra por className/edição) — por isso não
+// reaproveitamos loadAllClasses. version.json precisa listar os
+// arquivos de raça homebrew (`homebrew.raceFiles`, gerado pelo
+// sync-data.mjs) para sabermos quais baixar.
+async function homebrewRaceFiles() {
+  const v = await loadVersionInfo();
+  return Array.isArray(v?.homebrew?.raceFiles) ? v.homebrew.raceFiles : [];
+}
+function registerRaceRecords(arr, isHomebrew) {
+  for (const rec of arr || []) {
+    if (!rec || !rec.name) continue;
+    const source = rec.source || "";
+    // Subespécie: 5etools amarra `raceName`/`raceSource` à raça-mãe.
+    const subraceOf = rec.raceName ? { name: rec.raceName, source: rec.raceSource || source } : null;
+    register({
+      id: edId(["race", source, rec.name, rec.raceName || ""]),
+      type: "race", name: rec.name, source,
+      edition: isHomebrew ? "both" : editionOfRec(rec),
+      homebrew: isHomebrew,
+      subraceOf,
+      __rec: rec,
+    });
+  }
+}
+async function loadRaces(onProgress) {
+  const [officialJson, raceFluffJson, homebrewFiles] = await Promise.all([
+    tryJson("races.json").then((v) => v || {}),
+    tryJson("fluff-races.json").then((v) => v || {}),
+    homebrewRaceFiles(),
+  ]);
+  registerFluff("race", resolveCopies(raceFluffJson.raceFluff || []));
+  registerRaceRecords(resolveCopies([...(officialJson.race || []), ...(officialJson.subrace || [])]), false);
+
+  let done = 0;
+  const total = homebrewFiles.length;
+  await Promise.all(homebrewFiles.map(async (fname) => {
+    const file = await tryLocalJson(fname);
+    done++; onProgress && onProgress(done, total);
+    if (!file) return;
+    if (Array.isArray(file.raceFluff)) registerFluff("race", resolveCopies(file.raceFluff));
+    registerRaceRecords(resolveCopies([...(file.race || []), ...(file.subrace || [])]), true);
+  }));
 }
 
 // data/version.json é buscado uma única vez por sessão e reaproveitado
@@ -168,6 +262,10 @@ async function homebrewClassFiles() {
 }
 
 function registerClassFile(file, isHomebrew = false) {
+  // Homebrew traz classFluff/subclassFluff dentro do próprio arquivo
+  // de classe — nenhum download extra necessário (ver README).
+  if (Array.isArray(file.classFluff)) registerFluff("class", resolveCopies(file.classFluff));
+  if (Array.isArray(file.subclassFluff)) registerFluff("subclass", resolveCopies(file.subclassFluff));
   for (const cls of file.class || []) {
     const csrc = cls.source || "";
     classFiles.set(`${String(cls.name).toLowerCase()}|${String(csrc).toLowerCase()}`, { cls, file });
