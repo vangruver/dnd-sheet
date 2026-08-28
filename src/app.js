@@ -1533,7 +1533,7 @@ function renderAttacks() {
       <div class="attack-card-top">
         <input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome (ex.: Espada Longa)">
         <input data-a="damage" data-i="${i}" value="${esc(a.damage || "")}" placeholder="Dano (ex.: 1d8 cortante)">
-        <div class="attack-total" title="Bônus de ataque calculado">${fmt(total)}</div>
+        <div class="attack-total" data-attack-total="${i}" title="Bônus de ataque calculado">${fmt(total)}</div>
         <input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas">
         <button class="remove-btn no-print" data-remove-attack="${i}" title="Remover ataque">×</button>
       </div>
@@ -1550,8 +1550,21 @@ function renderAttacks() {
       </div>
     </div>`;
   }).join("") : `<div class="empty">Nenhum ataque adicionado.</div>`;
+  // Reconstruir o innerHTML inteiro a cada tecla digitada destrói e recria
+  // o próprio campo focado (perde o foco/cursor a cada letra) e junto todo
+  // o resto do card, inclusive a checkbox "Proficiente" — por isso ela
+  // parecia "desmarcar sozinha" ao digitar. Só "bonus" (manual) afeta o
+  // total exibido, então só ele precisa atualizar algo após o input — e
+  // atualiza só o <div class="attack-total">, sem re-renderizar a lista.
+  const updateAttackTotal = (idx) => {
+    const el = $("attacks").querySelector(`[data-attack-total="${idx}"]`);
+    if (el) el.textContent = fmt(computeAttackBonus(character.attacks[idx]));
+  };
   $("attacks").querySelectorAll("[data-a]").forEach((i) => i.addEventListener("input", () => {
-    character.attacks[Number(i.dataset.i)][i.dataset.a] = i.value; saveCharacter(character); renderAttacks();
+    const idx = Number(i.dataset.i);
+    character.attacks[idx][i.dataset.a] = i.value;
+    saveCharacter(character);
+    if (i.dataset.a === "bonus") updateAttackTotal(idx);
   }));
   $("attacks").querySelectorAll("[data-a-mode]").forEach((s) => s.addEventListener("change", () => {
     character.attacks[Number(s.dataset.aMode)].abilityMode = s.value; saveCharacter(character); renderAttacks();
@@ -1560,7 +1573,10 @@ function renderAttacks() {
     character.attacks[Number(c.dataset.aProf)].proficient = c.checked; saveCharacter(character); renderAttacks();
   }));
   $("attacks").querySelectorAll("[data-a-item]").forEach((n) => n.addEventListener("input", () => {
-    character.attacks[Number(n.dataset.aItem)].itemBonus = Number(n.value) || 0; saveCharacter(character); renderAttacks();
+    const idx = Number(n.dataset.aItem);
+    character.attacks[idx].itemBonus = Number(n.value) || 0;
+    saveCharacter(character);
+    updateAttackTotal(idx);
   }));
   $("attacks").querySelectorAll("[data-remove-attack]").forEach((b) => b.addEventListener("click", () => {
     delete attackRollMessages[Number(b.dataset.removeAttack)];
