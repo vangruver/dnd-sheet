@@ -47,6 +47,7 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 - **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
   atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
+- **Instalável (PWA)**: `manifest.json` + service worker cacheiam a casca do app (HTML/JS/CSS/ícones), então dá pra "instalar" a ficha no celular/desktop e abrir offline direto como um app — sem afetar o cache dos dados do 5etools, que continua na camada acima.
 - **Classes, subclasses e raças/subespécies homebrew** (`TheGiddyLimit/homebrew`) aparecem lado a
   lado com o conteúdo oficial — use o seletor **Conteúdo** (Oficial / Oficial + Homebrew / Apenas
   Homebrew) no topo da página.
