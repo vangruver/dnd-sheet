@@ -63,3 +63,60 @@ export function parseProgression(v, level) {
   if (typeof v === "string") return v.replaceAll("<$level$>", String(level));
   return null;
 }
+
+// ------------------------------------------------------------
+// Dados (rolagens)
+// ------------------------------------------------------------
+export function rollDie(faces) { return 1 + Math.floor(Math.random() * Math.max(1, Number(faces) || 6)); }
+export function rollDice(n, faces) {
+  n = Math.max(1, Number(n) || 1);
+  const rolls = Array.from({ length: n }, () => rollDie(faces));
+  return { rolls, total: rolls.reduce((a, b) => a + b, 0) };
+}
+// "2d6+3" -> { n, faces, bonus }. Aceita também só "1d8" ou "d10".
+export function parseDiceExpr(expr) {
+  const m = String(expr || "").match(/(\d*)d(\d+)\s*([+-]\s*\d+)?/i);
+  if (!m) return null;
+  return { n: Number(m[1] || 1), faces: Number(m[2]), bonus: m[3] ? Number(m[3].replace(/\s+/g, "")) : 0 };
+}
+
+// ------------------------------------------------------------
+// Recursos de classe lidos genericamente das colunas da tabela da
+// classe (classTableGroups) — cobre Fúria, Pontos de Ki, Pontos de
+// Feitiçaria, Inspiração de Bardo, Canalizar Divindade, Dados de
+// Superioridade, Forma Selvagem etc. sem precisar de dados por classe
+// escritos à mão: qualquer classe (oficial ou homebrew) cuja tabela
+// tenha uma coluna com um desses nomes ganha o rastreador automaticamente.
+export const CLASS_RESOURCE_COLUMNS = [
+  { key: "rage", re: /^rage/i, label: "Fúria", rest: "long", die: null },
+  { key: "ki", re: /^ki points?/i, label: "Pontos de Ki", rest: "short", die: null },
+  { key: "sorcery", re: /^sorcery points?/i, label: "Pontos de Feitiçaria", rest: "long", die: null },
+  { key: "bardic", re: /^bardic inspiration/i, label: "Inspiração de Bardo", rest: "long", die: null },
+  { key: "channelDivinity", re: /^channel divinity/i, label: "Canalizar Divindade", rest: "short", die: null },
+  { key: "superiority", re: /^superiority dice/i, label: "Dados de Superioridade", rest: "short", die: null },
+  { key: "wildShape", re: /^wild shape/i, label: "Forma Selvagem", rest: "short", die: null },
+  { key: "arcaneRecovery", re: /^arcane recovery/i, label: "Recuperação Arcana", rest: "long", die: null },
+  { key: "secondWind", re: /^second wind/i, label: "Retomar o Fôlego", rest: "short", die: null },
+];
+
+// ------------------------------------------------------------
+// Condições de combate (regras 5e) — usadas pelo rastreador de
+// condições do modo combate.
+// ------------------------------------------------------------
+export const CONDITIONS = [
+  { key: "blinded", label: "Cego", effect: "Falha automaticamente em testes que exigem visão; ataques contra você têm vantagem; seus ataques têm desvantagem." },
+  { key: "charmed", label: "Encantado", effect: "Não pode atacar quem o encantou nem alvejá-lo com magias/efeitos prejudiciais; quem o encantou tem vantagem em testes sociais." },
+  { key: "deafened", label: "Surdo", effect: "Falha automaticamente em testes que exigem audição." },
+  { key: "exhaustion", label: "Exaustão", effect: "Níveis acumulativos: cada nível dá -2 em testes de D20, reduz deslocamento e outros efeitos crescentes (ver regra completa)." },
+  { key: "frightened", label: "Amedrontado", effect: "Desvantagem em testes de habilidade e ataques enquanto a fonte do medo estiver à vista; não pode se aproximar voluntariamente dela." },
+  { key: "grappled", label: "Agarrado", effect: "Deslocamento reduzido a 0; termina se quem agarrou for incapacitado ou você for afastado." },
+  { key: "incapacitated", label: "Incapacitado", effect: "Não pode realizar ações nem reações." },
+  { key: "invisible", label: "Invisível", effect: "Considerado fortemente obscurecido; ataques contra você têm desvantagem; seus ataques têm vantagem." },
+  { key: "paralyzed", label: "Paralisado", effect: "Incapacitado, não pode se mover nem falar; falha automaticamente em salvamentos de FOR/DES; ataques contra você têm vantagem e acertos a 1,5m são críticos automáticos." },
+  { key: "petrified", label: "Petrificado", effect: "Transformado em substância sólida inanimada; incapacitado, não pode se mover/falar; resistência a todo dano; imune a veneno e doença." },
+  { key: "poisoned", label: "Envenenado", effect: "Desvantagem em testes de ataque e testes de habilidade." },
+  { key: "prone", label: "Caído", effect: "Só pode se mover rastejando (ou usa metade do deslocamento pra ficar em pé); desvantagem em ataques; ataques corpo a corpo contra você têm vantagem, ataques à distância têm desvantagem." },
+  { key: "restrained", label: "Contido", effect: "Deslocamento 0; desvantagem em ataques e em salvamentos de DES; ataques contra você têm vantagem." },
+  { key: "stunned", label: "Atordoado", effect: "Incapacitado, não pode se mover, fala confusa; falha automaticamente em salvamentos de FOR/DES; ataques contra você têm vantagem." },
+  { key: "unconscious", label: "Inconsciente", effect: "Incapacitado, não pode se mover/falar, larga o que segura, cai caído; falha automaticamente em salvamentos de FOR/DES; ataques contra você têm vantagem e acertos a 1,5m são críticos automáticos." },
+];
