@@ -6,12 +6,30 @@ import {
 } from "./database.js";
 import { clearCache } from "./store.js";
 import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots } from "./rules.js";
-import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion } from "./storage.js";
+import {
+  saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
+  getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode,
+} from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
 let pickerType = null, eqCat = "inventory", pickerLegacy = true, spellBookClassId = null;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
+
+// ------------------------------------------------------------
+// Assistente guiado de criação — passo a passo (espécie → classe →
+// background → atributos → revisão) como alternativa ao "modo livre"
+// (todos os cards visíveis de uma vez, comportamento original).
+// ------------------------------------------------------------
+const WIZARD_STEPS = [
+  { key: "race", type: "race", title: "Espécie", hint: "Escolha a espécie/raça do seu personagem — ela define deslocamento, traços e, em muitos casos, um bônus de atributo." },
+  { key: "class", type: "class", title: "Classe", hint: "Escolha a classe — ela define dado de vida, testes de resistência com proficiência e a lista de magias disponível." },
+  { key: "background", type: "background", title: "Background", hint: "Escolha um background — ele concede perícias, ferramentas e, na edição 2024, um talento de origem." },
+  { key: "abilities", title: "Atributos", hint: "Distribua seus atributos. Bônus de espécie, background, talentos e melhorias entram automaticamente — clique no ⓘ de cada atributo pra ver de onde vêm." },
+  { key: "review", title: "Revisão", hint: "Revise as escolhas e finalize. Dá pra ajustar tudo depois, a qualquer momento, no modo livre." },
+];
+let wizardIndex = 0;
+let creationMode = getSavedCreationMode();
 
 const fresh = () => ({
   schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official", abilityMode: "pointbuy",
@@ -257,16 +275,24 @@ async function openPicker(type) {
   render();
   setTimeout(() => $("picker-search")?.focus(), 50);
 }
-async function renderPicker(arr) {
-  const box = $("picker-results");
+function pickCardHtml(x) {
+  return `<button class="pick-card" data-id="${esc(x.id)}"><div class="pick-top"><strong>${esc(titleOf(x))}</strong>${sourceTag(x)}</div><div class="pick-meta">${esc(labelMeta(x))}</div><div class="pick-desc">…</div></button>`;
+}
+// Pinta uma grade de cartões pesquisáveis (raça/classe/subclasse/background) e
+// liga o clique a `onPick` — usado tanto pelo modal de seleção quanto pelo
+// assistente guiado, que reaproveita a mesma grade dentro do passo atual.
+function paintPickResults(box, arr, onPick) {
   if (!box) return;
   if (!arr.length) { box.innerHTML = `<div class="empty">Nenhum resultado encontrado.</div>`; return; }
-  box.innerHTML = arr.map((x) => `<button class="pick-card" data-id="${esc(x.id)}"><div class="pick-top"><strong>${esc(titleOf(x))}</strong>${sourceTag(x)}</div><div class="pick-meta">${esc(labelMeta(x))}</div><div class="pick-desc">…</div></button>`).join("");
+  box.innerHTML = arr.map(pickCardHtml).join("");
   for (const b of box.querySelectorAll(".pick-card")) {
     const e = manifest().find((x) => x.id === b.dataset.id);
     firstRecord(e).then((r) => { const d = b.querySelector(".pick-desc"); if (d) d.textContent = teaserText(e, r, 160) || "Sem descrição estruturada."; });
-    b.addEventListener("click", async () => { await selectRef(e); $("modal").classList.add("hidden"); });
+    b.addEventListener("click", () => onPick(e));
   }
+}
+async function renderPicker(arr) {
+  paintPickResults($("picker-results"), arr, async (e) => { await selectRef(e); $("modal").classList.add("hidden"); });
 }
 async function selectRef(e) {
   const t = pickerType;
@@ -467,32 +493,45 @@ function pointCost(score) {
   return costs[Math.max(8, Math.min(15, score))] ?? 0;
 }
 function pointBuyTotal() { return ABILITIES.reduce((n, a) => n + pointCost(character.scores[a]), 0); }
-function renderAbilities() {
+// Pinta o grid de atributos (somente leitura, com ⓘ pra ver a origem de
+// cada bônus) + o editor de point buy/valores livres. Recebe um prefixo de
+// id (`ns`) pra poder existir em dois lugares ao mesmo tempo com a MESMA
+// lógica: a aba "Atributos & Perícias" (ns="") e o passo de atributos do
+// assistente guiado (ns="wiz-"). Se os elementos daquele ns não existem no
+// DOM no momento (ex.: passo do assistente fechado), não faz nada.
+function paintAbilityEditor(ns) {
+  const el = (id) => document.getElementById(ns + id);
+  const grid = el("ability-grid"), editor = el("ability-editor");
+  if (!grid && !editor) return;
   const free = character.abilityMode === "free";
   const lo = free ? 1 : 8, hi = free ? 30 : 15;
-  // Mostra o valor EFETIVO (base do point buy + aumentos de espécie/background).
-  $("ability-grid").innerHTML = ABILITIES.map((a) => {
-    const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
-    return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em></div>`;
-  }).join("");
+  // Mostra o valor EFETIVO (base do point buy + aumentos de espécie/background/talentos).
+  if (grid) {
+    grid.innerHTML = ABILITIES.map((a) => {
+      const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
+      const info = bonus ? `<button type="button" class="ability-info-btn" data-ability-detail="${a}" title="Ver de onde vêm esses pontos">ⓘ</button>` : "";
+      return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em>${info}</div>`;
+    }).join("");
+  }
+  if (!editor) return;
   const spent = pointBuyTotal(), remaining = 27 - spent;
-  $("pointbuy-remaining").textContent = remaining;
-  $("pointbuy-remaining").classList.toggle("over", remaining < 0);
-  if ($("ability-mode")) $("ability-mode").value = free ? "free" : "pointbuy";
-  $("pointbuy-remaining-wrap")?.classList.toggle("hidden", free);
-  $("reset-pointbuy")?.classList.toggle("hidden", free);
-  if ($("ability-editor-hint")) $("ability-editor-hint").textContent = free
+  const remEl = el("pointbuy-remaining");
+  if (remEl) { remEl.textContent = remaining; remEl.classList.toggle("over", remaining < 0); }
+  if (el("ability-mode")) el("ability-mode").value = free ? "free" : "pointbuy";
+  el("pointbuy-remaining-wrap")?.classList.toggle("hidden", free);
+  el("reset-pointbuy")?.classList.toggle("hidden", free);
+  if (el("ability-editor-hint")) el("ability-editor-hint").textContent = free
     ? "Digite qualquer valor de 1 a 30 (rolagem, array padrão, homebrew). Ajustes de espécie/background continuam entrando automaticamente."
     : "Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.";
-  $("ability-editor").innerHTML = ABILITIES.map((a) => {
+  editor.innerHTML = ABILITIES.map((a) => {
     const v = Number(character.scores[a]) || 10;
     return `<div class="ability-edit"><span>${ABILITY_NAMES[a]}</span><div class="ability-stepper"><button type="button" data-ability-dec="${a}" ${v <= lo ? "disabled" : ""}>−</button><input data-ability="${a}" type="number" min="1" max="30" value="${v}"><button type="button" data-ability-inc="${a}" ${v >= hi ? "disabled" : ""}>+</button></div><b>${fmt(mod(v))}</b><small>${free ? "" : `Custo ${pointCost(v)}`}</small></div>`;
   }).join("");
-  $("ability-editor").querySelectorAll("[data-ability]").forEach((i) => i.addEventListener("change", () => {
+  editor.querySelectorAll("[data-ability]").forEach((i) => i.addEventListener("change", () => {
     character.scores[i.dataset.ability] = Math.max(1, Math.min(30, Number(i.value) || 10));
     recalc(); saveCharacter(character);
   }));
-  $("ability-editor").querySelectorAll("[data-ability-inc],[data-ability-dec]").forEach((b) => b.addEventListener("click", () => {
+  editor.querySelectorAll("[data-ability-inc],[data-ability-dec]").forEach((b) => b.addEventListener("click", () => {
     const a = b.dataset.abilityInc || b.dataset.abilityDec, v = Number(character.scores[a]) || 10;
     const next = v + (b.dataset.abilityInc ? 1 : -1);
     if (next < lo || next > hi) return;
@@ -502,11 +541,12 @@ function renderAbilities() {
     }
     character.scores[a] = next; recalc(); saveCharacter(character);
   }));
-  const reset = $("reset-pointbuy");
+  const reset = el("reset-pointbuy");
   if (reset) reset.onclick = () => { ABILITIES.forEach((a) => (character.scores[a] = 10)); saveCharacter(character); recalc(); };
-  const modeSel = $("ability-mode");
+  const modeSel = el("ability-mode");
   if (modeSel) modeSel.onchange = () => { character.abilityMode = modeSel.value === "free" ? "free" : "pointbuy"; saveCharacter(character); recalc(); };
 }
+function renderAbilities() { paintAbilityEditor(""); paintAbilityEditor("wiz-"); }
 
 // ------------------------------------------------------------
 // Automação
@@ -1083,30 +1123,70 @@ function bgAbilitySpec(br) {
   if (!modes.length && !Object.keys(fixed).length) return null;
   return { from, modes, fixed, hasChoice: modes.length > 0 };
 }
-function abilityBonusTotal(a) {
-  let b = 0;
+// Detalha, fonte a fonte, de onde vem cada ponto de bônus de um atributo
+// (espécie fixa/escolhida, background fixo/escolhido, melhorias de nível,
+// talentos) — usado tanto para somar o total quanto pro popup "de onde vêm
+// esses pontos" na ficha e no assistente guiado.
+function abilityBonusBreakdown(a) {
+  const parts = [];
+  const raceName = refs.race ? titleOf(refs.race) : "Espécie";
+  const bgName = refs.background ? titleOf(refs.background) : "Background";
   const rr = details.raceRec || {};
-  for (const blk of rr.ability || []) if (blk && typeof blk[a] === "number") b += blk[a];
-  for (const list of Object.values(character.choiceSelections?.abilityChoices || {})) if (Array.isArray(list) && list.includes(a)) b += 1;
+  let raceFixed = 0;
+  for (const blk of rr.ability || []) if (blk && typeof blk[a] === "number") raceFixed += blk[a];
+  if (raceFixed) parts.push({ label: raceName, value: raceFixed });
+  let raceChoice = 0;
+  for (const list of Object.values(character.choiceSelections?.abilityChoices || {})) if (Array.isArray(list) && list.includes(a)) raceChoice += 1;
+  if (raceChoice) parts.push({ label: `${raceName} (escolha)`, value: raceChoice });
   const spec = bgAbilitySpec(details.backgroundRec || {});
   if (spec) {
-    if (spec.fixed[a]) b += spec.fixed[a];
+    if (spec.fixed[a]) parts.push({ label: bgName, value: spec.fixed[a] });
     if (spec.hasChoice) {
       const modeIdx = Math.max(0, Math.min(Number(character.choiceSelections?.bgAbilityMode || 0), spec.modes.length - 1));
       const weights = spec.modes[modeIdx] || [];
-      (character.choiceSelections?.bgAbility || []).forEach((k, i) => { if (k === a && weights[i]) b += weights[i]; });
+      (character.choiceSelections?.bgAbility || []).forEach((k, i) => { if (k === a && weights[i]) parts.push({ label: `${bgName} (escolha)`, value: weights[i] }); });
     }
   }
   // Melhorias de atributo dos slots de ASI (+2 em um / +1 em dois)
   for (const slot of character.choiceSelections?.asi || []) {
-    if (slot && slot.mode === "ability") for (const k of slot.abil || []) if (k === a) b += 1;
+    if (slot && slot.mode === "ability") {
+      const n = (slot.abil || []).filter((k) => k === a).length;
+      if (n) parts.push({ label: "Melhoria de atributo (ASI)", value: n });
+    }
   }
-  // Bônus de atributo dos talentos escolhidos
-  const fb = featBonuses();
-  if (fb.abilities[a]) b += fb.abilities[a];
-  return b;
+  // Bônus de atributo dos talentos escolhidos (fixo ou de escolha)
+  for (const e of chosenFeatEntities()) {
+    const r = featRec(e);
+    const fx = featFixedAbility(r);
+    if (fx[a]) parts.push({ label: `Talento: ${e.name}`, value: fx[a] });
+    const chooseSpec = featAbilityChoose(r);
+    if (chooseSpec) {
+      const picked = character.choiceSelections?.featAbility?.[e.id];
+      if (picked === a) parts.push({ label: `Talento: ${e.name}`, value: 1 });
+    }
+  }
+  return parts;
 }
+function abilityBonusTotal(a) { return abilityBonusBreakdown(a).reduce((n, p) => n + p.value, 0); }
 function effScore(a) { return (Number(character.scores[a]) || 10) + abilityBonusTotal(a); }
+function openAbilityDetail(a) {
+  if (!ABILITIES.includes(a)) return;
+  const base = Number(character.scores[a]) || 10;
+  const eff = effScore(a);
+  const baseLabel = character.abilityMode === "free" ? "Valor base (livre)" : "Point buy / rolagem";
+  const parts = abilityBonusBreakdown(a);
+  const rows = [{ label: baseLabel, value: base, plain: true }, ...parts];
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">ATRIBUTO</span><h2>${esc(ABILITY_NAMES[a])}</h2></div></div>
+    <div class="modal-body">
+      <p class="muted">De onde vêm os ${eff} pontos de ${ABILITY_NAMES[a]} deste personagem.</p>
+      <div class="ability-breakdown">
+        ${rows.map((r) => `<div class="ability-breakdown-row"><span>${esc(r.label)}</span><b>${r.plain ? r.value : fmt(r.value)}</b></div>`).join("")}
+        <div class="ability-breakdown-row total"><span>Total efetivo</span><b>${eff}</b></div>
+      </div>
+      <p class="muted">Modificador: ${fmt(mod(eff))}</p>
+    </div>`;
+  $("modal").classList.remove("hidden");
+}
 // PV médios: 1º nível da classe primária sempre no máximo do dado de
 // vida; todos os outros níveis (restante da primária + TODAS as
 // classes de multiclasse) usam a média do respectivo dado + CON.
@@ -1444,11 +1524,24 @@ async function renderSpells() {
   try { spells = await spellsForClass(active.classEntry, active.subclassEntry, spellEd); }
   catch (err) { console.error(err); box.innerHTML = `<div class="paper-card empty">Não foi possível carregar as magias.</div>`; return; }
   $("spell-count").textContent = spells.length;
+  // Com subclasse escolhida, deixa explícito se cada magia vem da lista da
+  // classe, é concedida pela subclasse (domínio/círculo/patrono…) ou as duas.
+  const hasSubclass = !!active.subclassEntry;
+  const spellOrigin = (s) => {
+    if (!hasSubclass) return "";
+    if (s._fromClass && s._fromSubclass) return `Classe + ${titleOf(active.subclassEntry)}`;
+    if (s._fromSubclass) return titleOf(active.subclassEntry);
+    if (s._fromClass) return titleOf(active.classEntry);
+    return "";
+  };
   const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
   box.innerHTML = groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} magias</span></div><div class="spell-list">${arr.map((s) => {
     const key = `${s.name}|${s.source || ""}`;
     const checked = character.preparedSpells.includes(key);
-    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button></label>`;
+    const origin = spellOrigin(s);
+    const originCls = s._fromSubclass && s._fromClass ? "from-both" : s._fromSubclass ? "from-subclass" : "from-class";
+    const originTag = origin ? ` · <b class="spell-origin ${originCls}">${esc(origin)}</b>` : "";
+    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button></label>`;
   }).join("")}</div></section>` : "").join("") || `<div class="paper-card empty">Nenhuma magia foi associada a esta classe nesta edição.</div>`;
   box.querySelectorAll("[data-spell]").forEach((i) => i.addEventListener("change", () => {
     toggleIn(character.preparedSpells, i.dataset.spell, i.checked);
@@ -1753,6 +1846,101 @@ function openPdfPreview() {
   modal.classList.remove("hidden");
   $("preview-print").onclick = () => window.print();
 }
+// ------------------------------------------------------------
+// Assistente guiado — alterna entre "modo livre" (choice-grid completo,
+// comportamento original) e o passo a passo do `.wizard`.
+// ------------------------------------------------------------
+function setCreationMode(mode) {
+  creationMode = mode === "guided" ? "guided" : "free";
+  saveCreationMode(creationMode);
+  document.querySelectorAll("#creation-mode-toggle [data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === creationMode));
+  $("wizard")?.classList.toggle("hidden", creationMode !== "guided");
+  $("free-mode-content")?.classList.toggle("hidden", creationMode === "guided");
+  if (creationMode === "guided") { $("creator")?.classList.remove("collapsed"); renderWizardStep(); }
+}
+function renderWizardSteps() {
+  const box = $("wizard-steps");
+  if (!box) return;
+  box.innerHTML = WIZARD_STEPS.map((s, i) => `<button type="button" class="wizard-step-chip${i === wizardIndex ? " active" : ""}${i < wizardIndex ? " done" : ""}" data-step-index="${i}">${i + 1}. ${esc(s.title)}</button>`).join("");
+  box.querySelectorAll("[data-step-index]").forEach((b) => b.addEventListener("click", () => { wizardIndex = Number(b.dataset.stepIndex); renderWizardStep(); }));
+}
+async function renderWizardPickStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  const current = refs[step.type];
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
+    <div class="wizard-current${current ? " picked" : ""}">${current ? `Selecionado: <strong>${esc(titleOf(current))}</strong> ${sourceTag(current)}` : "Nada selecionado ainda."}</div>
+    <div class="picker-controls"><input id="wizard-search" placeholder="Pesquisar ${esc(typeLabel(step.type).toLowerCase())}…"></div>
+    <div id="wizard-results" class="picker-grid"><div class="loading">Carregando catálogo…</div></div>`;
+  try { await ensureCatalog(step.type); } catch (err) { console.error(err); }
+  const render = () => {
+    const q = $("wizard-search")?.value.trim() || "";
+    paintPickResults($("wizard-results"), filteredPicker(step.type, q).slice(0, 120), async (e) => {
+      pickerType = step.type;
+      await selectRef(e);
+      await renderWizardStep();
+    });
+  };
+  $("wizard-search")?.addEventListener("input", render);
+  render();
+}
+function renderWizardAbilitiesStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
+    <div id="wiz-ability-grid" class="ability-grid"></div>
+    <div class="pointbuy-bar" id="wiz-pointbuy-bar">
+      <label class="ability-mode-label">Modo<select id="wiz-ability-mode"><option value="pointbuy">Point buy (27)</option><option value="free">Valores livres</option></select></label>
+      <strong id="wiz-pointbuy-remaining-wrap">Pontos restantes: <b id="wiz-pointbuy-remaining">27</b></strong>
+      <button type="button" class="no-print" id="wiz-reset-pointbuy">Resetar 10/10/10/10/10/10</button>
+    </div>
+    <div id="wiz-ability-editor" class="ability-editor"></div>
+    <p class="muted" id="wiz-ability-editor-hint"></p>`;
+  paintAbilityEditor("wiz-");
+}
+function renderWizardReviewStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  const rows = [["Espécie", refs.race], ["Classe", refs.class], ["Background", refs.background]];
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
+    <div class="wizard-review-grid">${rows.map(([label, e]) => `<div class="identity-row"><span>${esc(label)}</span><strong>${e ? esc(titleOf(e)) : "—"}</strong>${e ? sourceTag(e) : ""}</div>`).join("")}</div>
+    <div class="two-input" style="margin-top:14px">
+      <label>Nome do personagem<input id="wizard-name" value="${esc(character.name || "")}" placeholder="Nome do personagem"></label>
+      <label>Nível<input id="wizard-level" type="number" min="1" max="20" value="${Number(character.level) || 1}"></label>
+    </div>`;
+  $("wizard-name").addEventListener("input", () => { character.name = $("wizard-name").value; $("name").value = character.name; saveCharacter(character); });
+  $("wizard-level").addEventListener("input", () => {
+    character.level = Math.max(1, Math.min(20, Number($("wizard-level").value) || 1));
+    $("level").value = character.level; saveCharacter(character); recalc();
+  });
+}
+async function renderWizardStep() {
+  renderWizardSteps();
+  const step = WIZARD_STEPS[wizardIndex];
+  if ($("wizard-progress")) $("wizard-progress").textContent = `Passo ${wizardIndex + 1} de ${WIZARD_STEPS.length}`;
+  if ($("wizard-back")) $("wizard-back").disabled = wizardIndex === 0;
+  if ($("wizard-next")) $("wizard-next").textContent = wizardIndex === WIZARD_STEPS.length - 1 ? "Concluir →" : "Próximo →";
+  if (step.type) await renderWizardPickStep(step);
+  else if (step.key === "abilities") renderWizardAbilitiesStep(step);
+  else if (step.key === "review") renderWizardReviewStep(step);
+}
+function finishWizard() {
+  setCreationMode("free");
+  $("creator")?.classList.add("collapsed");
+  if ($("collapse-creator")) $("collapse-creator").textContent = "Expandir";
+  toast("Personagem pronto! Ajuste os detalhes na ficha abaixo.");
+  document.querySelector('.tab[data-tab="sheet"]')?.click();
+  $("tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function wizardNext() {
+  const step = WIZARD_STEPS[wizardIndex];
+  if (step.type === "race" && !refs.race) { toast("Escolha uma espécie antes de continuar."); return; }
+  if (step.type === "class" && !refs.class) { toast("Escolha uma classe antes de continuar."); return; }
+  if (wizardIndex < WIZARD_STEPS.length - 1) { wizardIndex++; renderWizardStep(); }
+  else finishWizard();
+}
+function wizardBack() { if (wizardIndex > 0) { wizardIndex--; renderWizardStep(); } }
+
 function setup() {
   $("edition").addEventListener("change", () => {
     character.edition = $("edition").value;
@@ -1843,6 +2031,26 @@ function setup() {
     markDataUpdateSeen();
     $("data-update-banner")?.classList.add("hidden");
   });
+
+  document.querySelectorAll("#creation-mode-toggle [data-mode]").forEach((b) => b.addEventListener("click", () => setCreationMode(b.dataset.mode)));
+  $("wizard-back")?.addEventListener("click", wizardBack);
+  $("wizard-next")?.addEventListener("click", wizardNext);
+  document.addEventListener("click", (e) => { const b = e.target.closest("[data-ability-detail]"); if (b) openAbilityDetail(b.dataset.abilityDetail); });
+
+  $("theme-toggle")?.addEventListener("click", () => {
+    const light = document.documentElement.getAttribute("data-theme") === "light";
+    if (light) document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", "light");
+    saveTheme(light ? "dark" : "light");
+    updateThemeToggleLabel();
+  });
+  updateThemeToggleLabel();
+}
+function updateThemeToggleLabel() {
+  const btn = $("theme-toggle");
+  if (!btn) return;
+  const light = document.documentElement.getAttribute("data-theme") === "light";
+  btn.textContent = light ? "🌙 Escuro" : "☀️ Claro";
+  btn.setAttribute("aria-pressed", light ? "true" : "false");
 }
 
 // ------------------------------------------------------------
@@ -1880,6 +2088,10 @@ async function checkDataUpdateNotice() {
 async function start() {
   character = loadCharacter() || fresh();
   setup();
+  // O modo "livre" (padrão) não depende do banco pra aparecer; o modo
+  // "guiado" precisa de ensureCatalog(), então só liga a UI do assistente
+  // depois que o banco terminar de carregar, abaixo.
+  if (creationMode !== "guided") setCreationMode("free");
   try {
     await initDatabase((label, done, total) => {
       $("db-status").textContent = `${label}… ${done}/${total}`;
@@ -1888,6 +2100,7 @@ async function start() {
     $("db-status").textContent = `Pronto · ${s.entities.toLocaleString("pt-BR")} registros carregados`;
     $("db-count").textContent = `${s.entities.toLocaleString("pt-BR")} registros · dados do 5etools (${character.edition})`;
     applyLoaded(character);
+    if (creationMode === "guided") setCreationMode("guided");
     renderCompendium();
     checkDataUpdateNotice().catch((err) => console.warn("Aviso de atualização indisponível:", err));
   } catch (e) {
