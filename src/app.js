@@ -10,8 +10,9 @@ import {
   rollDie, rollDice, parseDiceExpr, rollAbilityScore, ABILITY_ARRAYS, ABILITY_MODE_LABELS, CLASS_RESOURCE_COLUMNS, CONDITIONS,
 } from "./rules.js";
 import {
-  saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
+  saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
   getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
+  migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
 } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
@@ -2768,6 +2769,73 @@ function openTemplatesModal() {
 }
 
 // ------------------------------------------------------------
+// Múltiplos personagens salvos — cada um vira um slot próprio no
+// localStorage (ver storage.js); esta modal lista, alterna, duplica,
+// renomeia e apaga os personagens salvos neste navegador.
+// ------------------------------------------------------------
+function openCharactersModal() {
+  const list = listCharacters();
+  const activeId = getActiveCharacterId();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">PERSONAGENS</span><h2>Meus Personagens</h2><p class="muted">Salvos neste navegador. Alterne, duplique ou apague fichas — cada uma guarda seu próprio progresso.</p></div></div>
+    <div class="modal-body">
+      <button type="button" class="add-btn" id="char-new-btn">+ Novo personagem</button>
+      <div class="char-list">
+        ${list.length ? list.map((c) => `<div class="char-row${c.id === activeId ? " active" : ""}">
+          <div class="char-row-info"><strong>${esc(c.name)}</strong><small>Nível ${c.level}${c.id === activeId ? " · aberto agora" : ""}</small></div>
+          <div class="char-row-actions">
+            ${c.id === activeId ? "" : `<button type="button" data-char-switch="${esc(c.id)}">Abrir</button>`}
+            <button type="button" data-char-duplicate="${esc(c.id)}">Duplicar</button>
+            <button type="button" class="remove-btn" data-char-delete="${esc(c.id)}" title="Apagar">×</button>
+          </div>
+        </div>`).join("") : `<p class="muted">Nenhum personagem salvo ainda.</p>`}
+      </div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("char-new-btn")?.addEventListener("click", () => { $("modal").classList.add("hidden"); createNewCharacter(); });
+  $("modal-content").querySelectorAll("[data-char-switch]").forEach((b) => b.addEventListener("click", () => switchCharacter(b.dataset.charSwitch)));
+  $("modal-content").querySelectorAll("[data-char-duplicate]").forEach((b) => b.addEventListener("click", () => duplicateCharacter(b.dataset.charDuplicate)));
+  $("modal-content").querySelectorAll("[data-char-delete]").forEach((b) => b.addEventListener("click", () => deleteCharacterFlow(b.dataset.charDelete)));
+}
+function createNewCharacter() {
+  const id = createCharacterSlot();
+  setActiveCharacterId(id);
+  attackRollMessages = {}; hdRollMessages = {};
+  applyLoaded(fresh());
+  saveCharacter(character); // salva já, pra aparecer na lista mesmo sem editar nada ainda
+  toast('Novo personagem criado — o anterior continua salvo em "Meus Personagens".');
+}
+function switchCharacter(id) {
+  if (id === getActiveCharacterId()) { $("modal").classList.add("hidden"); return; }
+  setActiveCharacterId(id);
+  attackRollMessages = {}; hdRollMessages = {};
+  applyLoaded(loadCharacterById(id) || fresh());
+  $("modal").classList.add("hidden");
+  toast("Personagem carregado.");
+}
+function duplicateCharacter(id) {
+  const src = loadCharacterById(id);
+  if (!src) return;
+  const newId = createCharacterSlot();
+  saveCharacterAs(newId, { ...src, name: `${src.name || "Personagem"} (cópia)` });
+  toast("Personagem duplicado.");
+  openCharactersModal();
+}
+function deleteCharacterFlow(id) {
+  const list = listCharacters();
+  if (list.length <= 1) { toast("Mantenha ao menos um personagem — apague pelo botão \"Novo\" só depois de criar outro."); return; }
+  const c = list.find((x) => x.id === id);
+  if (!confirm(`Apagar "${c?.name || "este personagem"}" definitivamente? Essa ação não pode ser desfeita.`)) return;
+  const wasActive = id === getActiveCharacterId();
+  deleteCharacterSlot(id);
+  if (wasActive) {
+    const nextId = listCharacters()[0]?.id;
+    if (nextId) { setActiveCharacterId(nextId); attackRollMessages = {}; hdRollMessages = {}; applyLoaded(loadCharacterById(nextId) || fresh()); }
+  }
+  openCharactersModal();
+  toast("Personagem apagado.");
+}
+
+// ------------------------------------------------------------
 // Ciclo de vida
 // ------------------------------------------------------------
 function applyLoaded(c) {
@@ -3288,7 +3356,8 @@ function setup() {
   });
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
-  $("new-character").addEventListener("click", () => { if (confirm("Começar um novo personagem?")) { clearCharacter(); attackRollMessages = {}; hdRollMessages = {}; applyLoaded(fresh()); toast("Novo personagem."); } });
+  $("new-character").addEventListener("click", createNewCharacter);
+  $("characters-btn")?.addEventListener("click", openCharactersModal);
   $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
   $("preview-pdf").addEventListener("click", openPdfPreview);
   $("import-character").addEventListener("change", async (e) => { try { attackRollMessages = {}; hdRollMessages = {}; applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
@@ -3364,7 +3433,10 @@ async function checkDataUpdateNotice() {
   banner.classList.remove("hidden");
 }
 async function start() {
+  migrateLegacyCharacter();
+  if (!getActiveCharacterId()) setActiveCharacterId(createCharacterSlot());
   character = loadCharacter() || fresh();
+  if (!loadCharacterById(getActiveCharacterId())) saveCharacter(character); // slot novo: já aparece em "Meus Personagens" mesmo sem editar nada
   setup();
   // O modo "livre" (padrão) não depende do banco pra aparecer; o modo
   // "guiado" precisa de ensureCatalog(), então só liga a UI do assistente
