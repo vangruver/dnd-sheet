@@ -70,6 +70,13 @@
         <p id="background-preview" class="choice-desc">Escolha um background.</p><button class="change-choice" data-pick="background">Escolher background</button>
       </article>
     </div>
+    <div class="multiclass-section" id="multiclass-section">
+      <div class="multiclass-head">
+        <div><span>Multiclasse <button class="tiny-info" data-info="multiclass">ⓘ</button></span><small>Adicione outras classes para um personagem multiclasse. Nível e subclasse são independentes por classe.</small></div>
+        <button class="add-btn" id="add-multiclass" type="button">+ Adicionar classe</button>
+      </div>
+      <div id="multiclass-list" class="multiclass-list"></div>
+    </div>
     <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span id="db-count">—</span></div>
   </section>
 
@@ -109,6 +116,7 @@
   <section class="tab-page" id="tab-spells"><div class="page-title"><h2>Magias</h2><p>A lista completa de magias da classe aparece por nível, filtrada pela edição escolhida. Use as bolinhas para marcar as magias preparadas/conhecidas.</p></div>
     <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias na lista</span><b id="spell-count">0</b></div></section>
     <div id="spell-resources"></div>
+    <div id="spellbook-tabs" class="segmented no-print"></div>
     <div id="spellbook"></div>
   </section>
 
