@@ -38,6 +38,8 @@ const fresh = () => ({
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
+  alignment: "", languages: "", appearance: "", backstory: "",
+  coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
   choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
 });
@@ -1279,13 +1281,16 @@ function profLabel(x) {
   if (x && typeof x === "object") return inlineTags(x.full || x.proficiency || x.name || "");
   return "";
 }
-function renderProficiencies() {
+// Armaduras/armas/ferramentas com proficiência — computado uma vez e
+// reaproveitado pela aba "Atributos & Perícias" e pela ficha oficial em PDF.
+function computeProficiencySummary() {
   const cr = details.classRec || {}, br = details.backgroundRec || {}, sp = cr.startingProficiencies || {};
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   const toLabels = (arr) => (arr || []).map(profLabel).map(cap).filter(Boolean);
   let armor = toLabels(sp.armor);
   let weapons = toLabels(sp.weapons);
   let tools = [...toLabels(sp.tools), ...flatObjects(br.toolProficiencies || []).flatMap((o) => Object.keys(o).filter((k) => o[k] === true)).map(cap)].filter(Boolean);
+  let armorRaw = (sp.armor || []).map((x) => String(x).toLowerCase());
   // Multiclasse: tabela reduzida do PHB (multiclassing.proficienciesGained
   // de cada classe adicional) — bem menor que a proficiência de nível 1.
   for (const m of details.multiclasses || []) {
@@ -1293,13 +1298,18 @@ function renderProficiencies() {
     armor = [...armor, ...toLabels(g.armor)];
     weapons = [...weapons, ...toLabels(g.weapons)];
     tools = [...tools, ...toLabels(g.tools)];
+    armorRaw = [...armorRaw, ...(g.armor || []).map((x) => String(x).toLowerCase())];
   }
-  armor = [...new Set(armor)]; weapons = [...new Set(weapons)]; tools = [...new Set(tools)];
+  armor = [...new Set(armor)]; weapons = [...new Set(weapons)]; tools = [...new Set(tools)]; armorRaw = [...new Set(armorRaw)];
+  return { armor, weapons, tools, armorRaw, saves: character.auto?.classSaves || [] };
+}
+function renderProficiencies() {
+  const { armor, weapons, tools, saves } = computeProficiencySummary();
   $("proficiency-editor").innerHTML = `
     <div class="identity-row"><span>Armaduras</span><strong>${armor.length ? esc(armor.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Armas</span><strong>${weapons.length ? esc(weapons.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Ferramentas</span><strong>${tools.length ? esc(tools.join(", ")) : "—"}</strong></div>
-    <div class="identity-row"><span>Resistências</span><strong>${(character.auto?.classSaves || []).map((a) => ABILITY_NAMES[a]).join(", ") || "—"}</strong></div>
+    <div class="identity-row"><span>Resistências</span><strong>${saves.map((a) => ABILITY_NAMES[a]).join(", ") || "—"}</strong></div>
     <p class="muted">As perícias com proficiência automática aparecem marcadas na aba Ficha e não podem ser desmarcadas.</p>`;
 }
 function renderIdentity() {
@@ -1826,6 +1836,7 @@ function applyLoaded(c) {
       ? c.multiclasses.map((m) => ({ classId: m?.classId || "", subclassId: m?.subclassId || "", level: Math.max(1, Math.min(19, Number(m?.level) || 1)) }))
       : [],
     auto: { ...f.auto, ...(c?.auto || {}) },
+    coins: { ...f.coins, ...(c?.coins || {}) },
     choiceSelections: { ...f.choiceSelections, ...(c?.choiceSelections || {}), abilityChoices: { ...f.choiceSelections.abilityChoices, ...(c?.choiceSelections?.abilityChoices || {}) } },
     manualSkillProficiencies: Array.isArray(c?.manualSkillProficiencies) ? c.manualSkillProficiencies : [],
   };
@@ -1834,16 +1845,212 @@ function applyLoaded(c) {
   $("name").value = character.name;
   $("level").value = character.level;
   $("xp").value = character.xp;
+  $("alignment").value = character.alignment || "";
+  $("languages").value = character.languages || "";
+  $("appearance").value = character.appearance || "";
+  $("backstory").value = character.backstory || "";
+  $("inspiration").checked = !!character.inspiration;
+  for (const k of ["cp", "pp", "pe", "po", "pl"]) $(`coin-${k}`).value = character.coins[k] || 0;
   refreshChoices();
 }
-function openPdfPreview() {
+// ------------------------------------------------------------
+// Ficha oficial em PDF — recriação do layout de duas páginas da ficha
+// oficial da WotC (2024) a partir do personagem atual, pra imprimir/gerar
+// PDF em vez de imprimir cru a interface de trabalho.
+// ------------------------------------------------------------
+function offCheck(on) { return `<i class="off-check${on ? " on" : ""}"></i>`; }
+function offPips(n, total) { return Array.from({ length: total }, (_, i) => `<i class="off-pip${i < n ? " on" : ""}"></i>`).join(""); }
+function hitDiceLabel() {
+  const parts = [`${Math.max(1, Number(character.level) || 1)}d${Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8}`];
+  for (const m of details.multiclasses || []) {
+    if (!m.classEntry) continue;
+    parts.push(`${Math.max(1, Number(m.level) || 1)}d${Number(hitDiceFrom(m.classRec) || 8) || 8}`);
+  }
+  return parts.join(" + ");
+}
+const OFF_SIZE = { T: "Minúsculo", S: "Pequeno", M: "Médio", L: "Grande", H: "Enorme", G: "Imenso" };
+function offSizeLabel() {
+  const rec = details.raceRec || {};
+  const s = Array.isArray(rec.size) ? rec.size[0] : rec.size;
+  return OFF_SIZE[s] || s || "—";
+}
+function offDistance(d) {
+  if (!d) return "";
+  if (d.type === "self") return "Pessoal";
+  if (d.type === "touch") return "Toque";
+  if (d.type === "feet") return `${d.amount} pés`;
+  if (d.type === "miles") return `${d.amount} milhas`;
+  return d.amount != null ? `${d.amount} ${d.type}` : "";
+}
+const OFF_SHAPE = { radius: "raio", sphere: "esfera", cube: "cubo", cone: "cone", line: "linha", hemisphere: "hemisfério" };
+function offSpellRange(sp) {
+  const r = sp?.range;
+  if (!r) return "—";
+  if (r.type === "point") return offDistance(r.distance) || "—";
+  if (OFF_SHAPE[r.type]) return `${offDistance(r.distance)} (${OFF_SHAPE[r.type]})`;
+  if (r.type === "special") return "Especial";
+  return "—";
+}
+function offSpellFlags(sp) {
+  return { c: (sp?.duration || []).some((d) => d?.concentration), r: !!sp?.meta?.ritual, m: !!sp?.components?.m };
+}
+// Uma "caixa" com título — a unidade visual repetida pela ficha oficial
+// (retângulo com cantos arredondados e um rótulo em maiúsculas no topo).
+function offBox(title, bodyHtml, cls = "") {
+  return `<div class="off-box ${cls}"><div class="off-box-title">${esc(title)}</div><div class="off-box-body">${bodyHtml}</div></div>`;
+}
+function offAbilityBox(a) {
+  const eff = effScore(a), m = mod(eff), pb = proficiency(totalLevel());
+  const saveOn = character.saveProficiencies.includes(a);
+  const skills = SKILLS.filter(([, , ab]) => ab === a);
+  const rows = [{ label: "Salvaguarda", on: saveOn, v: m + (saveOn ? pb : 0), strong: true }]
+    .concat(skills.map(([k, label]) => {
+      const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
+      return { label, on: p || ex, v: m + pb * (ex ? 2 : p ? 1 : 0) };
+    }));
+  return `<div class="off-ability">
+    <div class="off-ability-name">${esc(ABILITY_NAMES[a])}</div>
+    <div class="off-ability-top">
+      <div class="off-ability-score"><b>${eff}</b><span>VALOR</span></div>
+      <div class="off-ability-mod"><b>${fmt(m)}</b><span>MOD.</span></div>
+    </div>
+    <div class="off-skill-list">${rows.map((r) => `<div class="off-skill-row${r.strong ? " strong" : ""}">${offCheck(r.on)}<span>${esc(r.label)}</span><b>${fmt(r.v)}</b></div>`).join("")}</div>
+  </div>`;
+}
+function offFeatureLines(feats) {
+  if (!feats || !feats.length) return `<p class="off-muted">—</p>`;
+  return feats.map((f) => {
+    const txt = plain(f.entries).trim();
+    const short = txt.length > 240 ? txt.slice(0, 240).replace(/\s+\S*$/, "") + "…" : txt;
+    return `<p><b>${esc(f.name || "Característica")}.</b> ${esc(short) || ""}</p>`;
+  }).join("");
+}
+async function buildOfficialSheet() {
+  const c = calc(), pb = c.pb;
+  const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
+  const subFeats = refs.subclass ? await findSubclassFeatures(refs.subclass, Number(character.level)).catch(() => []) : [];
+  const mcClassFeats = (await Promise.all((details.multiclasses || []).map((m) => m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])))).flat();
+  const mcSubFeats = (await Promise.all((details.multiclasses || []).map((m) => m.subclassEntry ? findSubclassFeatures(m.subclassEntry, Number(m.level)).catch(() => []) : Promise.resolve([])))).flat();
+  const raceRecFull = refs.race ? await firstRecord(refs.race) : null;
+  const raceTraits = Array.isArray(raceRecFull?.entries) ? raceRecFull.entries.filter((x) => x && x.name).map((x) => ({ name: x.name, entries: x.entries || x })) : [];
+  const feats = chosenFeatEntities().map((e) => ({ name: e.name, entries: featRec(e).entries }));
+  const { weapons, tools, armorRaw } = computeProficiencySummary();
+  const armorOn = (kind) => armorRaw.some((a) => a.includes(kind));
+
+  const attacks = (character.attacks || []).slice();
+  while (attacks.length < 6) attacks.push({ name: "", bonus: "", damage: "", notes: "" });
+
+  const page1 = `<div class="off-page off-page1">
+    <div class="off-header">
+      <div class="off-box off-name">
+        <div class="off-field"><b>${esc(character.name || "—")}</b><span>Nome do personagem</span></div>
+        <div class="off-field-row">
+          <div class="off-field"><b>${refs.background ? esc(titleOf(refs.background)) : "—"}</b><span>Origem</span></div>
+          <div class="off-field"><b>${refs.race ? esc(titleOf(refs.race)) : "—"}</b><span>Espécie</span></div>
+        </div>
+        <div class="off-field-row">
+          <div class="off-field"><b>${refs.class ? esc(titleOf(refs.class)) : "—"}</b><span>Classe</span></div>
+          <div class="off-field"><b>${refs.subclass ? esc(titleOf(refs.subclass)) : "—"}</b><span>Subclasse</span></div>
+        </div>
+      </div>
+      <div class="off-oval off-oval-level"><b>${character.level}</b><span>Nível</span><small>${character.xp || 0} PX</small></div>
+      <div class="off-shield"><span>Classe de Armadura</span><b>${c.ac}</b></div>
+      <div class="off-box off-hp">
+        <div class="off-box-title">Pontos de Vida</div>
+        <div class="off-hp-grid">
+          <div><b>${character.hpCurrent == null ? c.hp : character.hpCurrent}</b><span>Atual</span></div>
+          <div><b>${character.hpTemp || 0}</b><span>Temp.</span></div>
+          <div><b>${c.hp}</b><span>Máx.</span></div>
+        </div>
+      </div>
+      <div class="off-box off-hd"><div class="off-box-title">Dado de Vida</div><div class="off-box-body off-center"><b>${esc(hitDiceLabel())}</b></div></div>
+      <div class="off-box off-death"><div class="off-box-title">Teste de Res. de Morte</div><div class="off-box-body">
+        <div class="off-death-row"><span>Sucessos</span>${offPips(character.deathSaves?.success || 0, 3)}</div>
+        <div class="off-death-row"><span>Falhas</span>${offPips(character.deathSaves?.failure || 0, 3)}</div>
+      </div></div>
+    </div>
+
+    <div class="off-row2">
+      <div class="off-col off-col-a">
+        <div class="off-circle off-pb"><b>${fmt(pb)}</b><span>Bônus de<br>Proficiência</span></div>
+        ${offAbilityBox("str")}${offAbilityBox("dex")}${offAbilityBox("con")}
+        <div class="off-circle off-insp${character.inspiration ? " on" : ""}"><b>${character.inspiration ? "★" : "☆"}</b><span>Inspiração<br>Heróica</span></div>
+      </div>
+      <div class="off-col off-col-b">
+        ${offAbilityBox("int")}${offAbilityBox("wis")}${offAbilityBox("cha")}
+      </div>
+      <div class="off-col off-col-c">
+        <div class="off-ovals-row">
+          <div class="off-oval"><span>Iniciativa</span><b>${fmt(c.init)}</b></div>
+          <div class="off-oval"><span>Velocidade</span><b>${esc(c.speed)}</b></div>
+          <div class="off-oval"><span>Tamanho</span><b>${esc(offSizeLabel())}</b></div>
+          <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
+        </div>
+        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.bonus || "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
+        ${offBox("Características de Classe", offFeatureLines([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]), "off-tall")}
+      </div>
+    </div>
+
+    <div class="off-row3">
+      ${offBox("Características Raciais", offFeatureLines(raceTraits))}
+      ${offBox("Talentos", offFeatureLines(feats))}
+    </div>
+
+    <div class="off-row4">
+      ${offBox("Equipamento, Treino & Proficiências", `
+        <div class="off-training"><b>Treino de armadura</b> <span class="off-inline-check">${offCheck(armorOn("light"))} Leve</span> <span class="off-inline-check">${offCheck(armorOn("medium"))} Média</span> <span class="off-inline-check">${offCheck(armorOn("heavy"))} Pesada</span> <span class="off-inline-check">${offCheck(armorOn("shield"))} Escudos</span></div>
+        <div class="off-training"><b>Armas</b> ${esc(weapons.join(", ") || "—")}</div>
+        <div class="off-training"><b>Ferramentas</b> ${esc(tools.join(", ") || "—")}</div>
+      `)}
+    </div>
+  </div>`;
+
+  // --- Página 2: conjuração + notas de personagem ---
+  const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
+  const primaryCaster = casters.find((cc) => cc.id === spellBookClassId) || casters[0] || null;
+  const msi = multiclassSpellcasting();
+  const slots = msi?.slots || [];
+  let preparedRows = [];
+  if (primaryCaster) {
+    const spellEd = editionOf(primaryCaster.classEntry) === "both" ? character.edition : editionOf(primaryCaster.classEntry);
+    try {
+      const all = await spellsForClass(primaryCaster.classEntry, primaryCaster.subclassEntry, spellEd);
+      preparedRows = all.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`))
+        .sort((x, y) => (x.level ?? 0) - (y.level ?? 0) || String(x.name).localeCompare(String(y.name), "pt-BR"));
+    } catch (err) { console.error(err); }
+  }
+  const inv = character.inventory || [];
+
+  const page2 = `<div class="off-page off-page2">
+    <div class="off-spell-top">
+      <div class="off-box off-spell-ability"><div class="off-box-title">Atributo de Conjuração</div><div class="off-box-body off-center"><b>${c.sa ? esc(ABILITY_NAMES[c.sa]) : "—"}</b></div></div>
+      <div class="off-oval"><span>Modificador<br>de Conjuração</span><b>${c.sa ? fmt(mod(effScore(c.sa))) : "—"}</b></div>
+      <div class="off-oval"><span>CD de Resistência<br>de Magia</span><b>${c.dc ?? "—"}</b></div>
+      <div class="off-oval"><span>Bônus de Ataque<br>de Magia</span><b>${c.atk != null ? fmt(c.atk) : "—"}</b></div>
+    </div>
+    ${offBox("Espaços de Magia", `<div class="off-slots">${Array.from({ length: 9 }, (_, i) => `<div class="off-slot"><span>Nível ${i + 1}</span><b>${slots[i] || 0}</b></div>`).join("")}</div>`)}
+    ${offBox("Truques & Magias Preparadas", `<table class="off-table off-spell-table"><thead><tr><th>Nv.</th><th>Nome</th><th>Tempo</th><th>Alcance</th><th>C/R/M</th><th>Anotações</th></tr></thead><tbody>${
+      preparedRows.length ? preparedRows.map((s) => { const fl = offSpellFlags(s); return `<tr><td>${spellLevel(s) === 0 ? "T" : spellLevel(s)}</td><td>${esc(s.name)}</td><td>${esc(spellTime(s))}</td><td>${esc(offSpellRange(s))}</td><td>${fl.c ? "C " : ""}${fl.r ? "R " : ""}${fl.m ? "M" : ""}</td><td></td></tr>`; }).join("")
+      : `<tr><td colspan="6" class="off-muted">Nenhuma magia marcada como preparada na aba "Magias".</td></tr>`
+    }</tbody></table>`, "off-tall")}
+
+    <div class="off-page2-side">
+      ${offBox("Aparência", `<p>${esc(character.appearance || "")}</p>`, "off-tall")}
+      ${offBox("História & Personalidade", `<p>${esc(character.backstory || "")}</p><div class="off-align"><b>Alinhamento</b> ${esc(character.alignment || "—")}</div>`, "off-tall")}
+      ${offBox("Idiomas", `<p>${esc(character.languages || "—")}</p>`)}
+      ${offBox("Equipamento", inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`, "off-tall")}
+      ${offBox("Moedas", `<div class="off-coins">${["cp", "pp", "pe", "po", "pl"].map((k) => `<div><span>${k.toUpperCase()}</span><b>${character.coins?.[k] || 0}</b></div>`).join("")}</div>`)}
+    </div>
+  </div>`;
+
+  $("official-sheet").innerHTML = page1 + page2;
+}
+async function openPdfPreview() {
   const modal = $("modal"), box = $("modal-content");
-  const clone = document.querySelector(".sheet-shell").cloneNode(true);
-  clone.querySelectorAll(".no-print").forEach((e) => e.remove());
-  clone.querySelectorAll(".tab-page").forEach((e) => { e.classList.add("active"); e.style.display = "block"; });
-  box.innerHTML = `<div class="modal-title"><div><span class="eyebrow">PRÉ-VISUALIZAÇÃO</span><h2>Ficha pronta para PDF</h2><p class="muted">Use “Imprimir / PDF” para gerar o arquivo.</p></div><button type="button" class="preview-print" id="preview-print">Imprimir / PDF</button></div><div class="pdf-preview-host"></div>`;
-  box.querySelector(".pdf-preview-host").appendChild(clone);
+  box.innerHTML = `<div class="modal-title"><div><span class="eyebrow">PRÉ-VISUALIZAÇÃO</span><h2>Ficha pronta para PDF</h2><p class="muted">Layout da ficha oficial da WotC (2024). Use “Imprimir / PDF” para gerar o arquivo.</p></div><button type="button" class="preview-print" id="preview-print">Imprimir / PDF</button></div><div class="pdf-preview-host"><div class="loading">Montando ficha…</div></div>`;
   modal.classList.remove("hidden");
+  await buildOfficialSheet();
+  box.querySelector(".pdf-preview-host").innerHTML = $("official-sheet").innerHTML;
   $("preview-print").onclick = () => window.print();
 }
 // ------------------------------------------------------------
@@ -1968,6 +2175,14 @@ function setup() {
     renderMulticlasses();
   });
   $("xp").addEventListener("input", () => { character.xp = Number($("xp").value) || 0; saveCharacter(character); });
+  $("alignment").addEventListener("change", () => { character.alignment = $("alignment").value; saveCharacter(character); });
+  $("languages").addEventListener("input", () => { character.languages = $("languages").value; saveCharacter(character); });
+  $("appearance").addEventListener("input", () => { character.appearance = $("appearance").value; saveCharacter(character); });
+  $("backstory").addEventListener("input", () => { character.backstory = $("backstory").value; saveCharacter(character); });
+  $("inspiration").addEventListener("change", () => { character.inspiration = $("inspiration").checked ? 1 : 0; saveCharacter(character); });
+  for (const k of ["cp", "pp", "pe", "po", "pl"]) {
+    $(`coin-${k}`).addEventListener("input", () => { character.coins[k] = Math.max(0, Number($(`coin-${k}`).value) || 0); saveCharacter(character); });
+  }
   $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); });
   $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); });
   $("ac-input").addEventListener("input", () => { character.ac = Number($("ac-input").value) || null; character.manualAc = $("ac-input").value !== ""; recalc(); });
@@ -2011,7 +2226,7 @@ function setup() {
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
   $("new-character").addEventListener("click", () => { if (confirm("Começar um novo personagem?")) { clearCharacter(); applyLoaded(fresh()); toast("Novo personagem."); } });
-  $("print-character").addEventListener("click", () => window.print());
+  $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
   $("preview-pdf").addEventListener("click", openPdfPreview);
   $("import-character").addEventListener("change", async (e) => { try { applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
   $("modal-close").addEventListener("click", () => $("modal").classList.add("hidden"));
