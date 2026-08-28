@@ -132,6 +132,22 @@
       <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>
       <section class="paper-card skills-card"><h2>Perícias</h2><div id="skill-list" class="skill-grid"></div></section>
       <section class="paper-card identity-card"><h2>Identidade & Fontes</h2><div id="identity"></div></section>
+      <section class="paper-card details-card full-span"><h2>Detalhes do Personagem</h2>
+        <div class="details-row">
+          <label>Alinhamento<select id="alignment">
+            <option value="">—</option>
+            <option>Leal e Bom</option><option>Neutro e Bom</option><option>Caótico e Bom</option>
+            <option>Leal e Neutro</option><option>Neutro</option><option>Caótico e Neutro</option>
+            <option>Leal e Mau</option><option>Neutro e Mau</option><option>Caótico e Mau</option>
+          </select></label>
+          <label>Idiomas<input id="languages" placeholder="Comum, Élfico…"></label>
+          <label class="inspiration-toggle"><input id="inspiration" type="checkbox"> Inspiração heróica</label>
+        </div>
+        <div class="details-textareas">
+          <label>Aparência<textarea id="appearance" rows="3" placeholder="Altura, peso, olhos, marcas…"></textarea></label>
+          <label>História & Personalidade<textarea id="backstory" rows="3" placeholder="Traços, ideais, vínculos, defeitos, história…"></textarea></label>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -153,7 +169,15 @@
       <button class="active" data-eqcat="inventory">Meu inventário</button><button data-eqcat="armor">Armaduras</button><button data-eqcat="weapons">Armas</button><button data-eqcat="shields">Escudos</button><button data-eqcat="gear">Equipamento</button><button data-eqcat="all">Todos</button>
     </div><div class="search-row"><input id="equipment-search" placeholder="Pesquisar: espada, arco, martelo, cota de malha…"><select id="weapon-filter"><option value="">Todas as armas</option><option value="sword">Espadas</option><option value="bow">Arcos</option><option value="hammer">Martelos</option><option value="axe">Machados</option><option value="mace">Maças</option><option value="dagger">Adagas</option></select></div></section>
     <section id="starting-equipment" class="paper-card no-print hidden"><h2>Equipamento inicial</h2><div id="starting-equipment-body"></div></section>
-    <section id="inventory-panel" class="paper-card"><h2>Meu inventário</h2><div id="inventory-list"></div></section>
+    <section id="inventory-panel" class="paper-card"><h2>Meu inventário</h2>
+      <div class="coins-row">
+        <label>CP<input id="coin-cp" type="number" min="0" value="0"></label>
+        <label>PP<input id="coin-pp" type="number" min="0" value="0"></label>
+        <label>PE<input id="coin-pe" type="number" min="0" value="0"></label>
+        <label>PO<input id="coin-po" type="number" min="0" value="0"></label>
+        <label>PL<input id="coin-pl" type="number" min="0" value="0"></label>
+      </div>
+      <div id="inventory-list"></div></section>
     <section id="equipment-catalog" class="paper-card hidden"><h2>Catálogo</h2><div id="equipment-list" class="catalog-grid"></div></section>
   </section>
 
@@ -184,6 +208,7 @@
 
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-box"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>
 <div id="toast" class="toast"></div>
+<div id="official-sheet" class="official-sheet" aria-hidden="true"></div>
 <script type="module" src="src/app.js"></script>
 </body>
 </html>
