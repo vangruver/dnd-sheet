@@ -169,9 +169,12 @@ export async function ensureCatalog(type, onProgress) {
 
   const file = CATALOG_FILE[type];
   if (file) {
-    const json = await getJson(file);
-    const key = Object.keys(json).find((k) => Array.isArray(json[k]) && k !== "_meta") || type;
-    const arr = resolveCopies(json[key] || []);
+    // tryJson (não getJson): se o CDN oficial estiver fora do ar/bloqueado,
+    // não pode impedir o carregamento do homebrew logo abaixo — mesmo
+    // motivo do tryJson em loadAllClasses/loadRaces.
+    const json = await tryJson(file);
+    const key = json && (Object.keys(json).find((k) => Array.isArray(json[k]) && k !== "_meta") || type);
+    const arr = key ? resolveCopies(json[key] || []) : [];
     for (const rec of arr) {
       const source = rec.source || "";
       register({
