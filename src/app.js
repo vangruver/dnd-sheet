@@ -859,6 +859,25 @@ function featSpecFrom(rec, anyMeansOrigin) {
 }
 const originFeatSpec = (br) => featSpecFrom(br, true);
 const raceFeatSpec = (rr) => featSpecFrom(rr, false);
+// Talentos elegíveis pro nível/edição/conteúdo atuais — usado tanto pelo
+// select do painel de automação quanto pelo gerador de personagem aleatório.
+function eligibleFeats(categories) {
+  const lvl = Number(character.level);
+  return featStubs().filter((e) => {
+    if (/ability score improvement/i.test(e.name)) return false;
+    if (!pickerContentOk(e)) return false;
+    if (!matchesEdition(e, character.edition, true)) return false;
+    const r = featRec(e), cat = String(r.category || "").toUpperCase();
+    if (prereqLevel(r) > lvl) return false;
+    // Homebrew normalmente não marca "category" (O/G/EB/FS...) como o
+    // oficial — sem isso, ficava de fora tanto da lista livre quanto de
+    // qualquer categoria específica exigida (origem/espécie).
+    if (categories) return hb(e) || categories.includes(cat);
+    if (cat === "O") return false;
+    if (cat === "EB" && lvl < 19) return false;
+    return true;
+  }).sort((a, b) => Number(hb(a)) - Number(hb(b)) || a.name.localeCompare(b.name, "pt-BR"));
+}
 function asiSlotCount(classFeatures) {
   return (classFeatures || []).filter((f) => /ability score improvement/i.test(String(f.name || ""))).length;
 }
@@ -968,7 +987,7 @@ async function buildAutomation() {
   character.auto.featSkills = fb.skills;
   if (fb.skills.length) character.skillProficiencies = [...new Set([...character.skillProficiencies, ...fb.skills])];
 
-  renderAutoChoices({
+  const autoChoiceData = {
     classChoices: skillChoicesFrom(classProf),
     backgroundChoices: skillChoicesFrom(br.skillProficiencies || bgProf),
     raceChoices: skillChoicesFrom(rr.skillProficiencies),
@@ -980,7 +999,9 @@ async function buildAutomation() {
     originSpec: originSpec2,
     raceSpec,
     mcSkillChoices,
-  });
+  };
+  renderAutoChoices(autoChoiceData);
+  return autoChoiceData;
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
 function toggleIn(a, v, on) { const i = a.indexOf(v); if (on && i < 0) a.push(v); if (!on && i >= 0) a.splice(i, 1); }
@@ -1063,23 +1084,6 @@ function renderAutoChoices(data) {
   });
 
   // --- Talentos ---
-  const eligibleFeats = (categories) => {
-    const lvl = Number(character.level);
-    return featStubs().filter((e) => {
-      if (/ability score improvement/i.test(e.name)) return false;
-      if (!pickerContentOk(e)) return false;
-      if (!matchesEdition(e, character.edition, true)) return false;
-      const r = featRec(e), cat = String(r.category || "").toUpperCase();
-      if (prereqLevel(r) > lvl) return false;
-      // Homebrew normalmente não marca "category" (O/G/EB/FS...) como o
-      // oficial — sem isso, ficava de fora tanto da lista livre quanto de
-      // qualquer categoria específica exigida (origem/espécie).
-      if (categories) return hb(e) || categories.includes(cat);
-      if (cat === "O") return false;
-      if (cat === "EB" && lvl < 19) return false;
-      return true;
-    }).sort((a, b) => Number(hb(a)) - Number(hb(b)) || a.name.localeCompare(b.name, "pt-BR"));
-  };
   const featSelect = (attr, current, categories) =>
     `<select ${attr}><option value="">— escolher talento —</option>${eligibleFeats(categories).map((e) =>
       `<option value="${esc(e.id)}"${e.id === current ? " selected" : ""}>${esc(e.name)}${e.source ? ` (${esc(e.source)})` : ""}${hb(e) ? " · Homebrew" : ""}</option>`).join("")}</select>`;
@@ -2856,6 +2860,194 @@ function createNewCharacter() {
   saveCharacter(character); // salva já, pra aparecer na lista mesmo sem editar nada ainda
   toast('Novo personagem criado — o anterior continua salvo em "Meus Personagens".');
 }
+// ------------------------------------------------------------
+// Personagem aleatório — sorteia espécie/classe/subclasse/background,
+// atributos (rolados) e nome, resolve sozinho as escolhas automáticas
+// (perícias, aumentos de atributo, talentos, características opcionais)
+// e já aplica o equipamento inicial. Sai um personagem de nível 1 pronto
+// pra jogar — 100% editável depois pelo modo livre normal.
+// ------------------------------------------------------------
+const RANDOM_NAME_SYLLABLES = {
+  first: ["Ar", "Bel", "Cor", "Dra", "El", "Fen", "Gal", "Hal", "Ir", "Jor", "Kael", "Lor", "Mor", "Nyr", "Orin", "Pel", "Quen", "Ral", "Syl", "Thal", "Ul", "Vor", "Wyn", "Xan", "Yor", "Zel"],
+  mid: ["a", "an", "ar", "el", "en", "ia", "in", "on", "or", "wen", "yn"],
+  last: ["dor", "iel", "mir", "nor", "rick", "ric", "sten", "thas", "vane", "wyn", "yra", "zor", "an", "ea", "ion"],
+};
+function randomCharacterName() {
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  let name = pick(RANDOM_NAME_SYLLABLES.first);
+  if (Math.random() < 0.7) name += pick(RANDOM_NAME_SYLLABLES.mid);
+  name += pick(RANDOM_NAME_SYLLABLES.last);
+  return name;
+}
+function randomPick(arr, n) {
+  const pool = (arr || []).slice();
+  const out = [];
+  for (let i = 0; i < n && pool.length; i++) out.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  return out;
+}
+// Preenche sozinho toda escolha pendente do painel de automação (mesmas
+// chaves/formatos que os handlers de `renderAutoChoices` escrevem à mão)
+// a partir dos dados que `buildAutomation()` calculou pro personagem atual.
+function randomizeChoiceSelections(data) {
+  character.choiceSelections.classSkills = data.classChoices.map((ch) => randomPick(ch.from, ch.count));
+  character.choiceSelections.backgroundSkills = data.backgroundChoices.map((ch) => randomPick(ch.from, ch.count));
+  character.choiceSelections.raceSkills = (data.raceChoices || []).map((ch) => randomPick(ch.from, ch.count));
+  character.choiceSelections.multiclassSkills = (data.mcSkillChoices || []).map((ch) => (ch ? randomPick(ch.from, ch.count) : []));
+  character.choiceSelections.abilityChoices = data.abilityChoices.map((ch) => randomPick(ch.from, ch.count));
+
+  if (data.bgAbility?.hasChoice) {
+    const modeIdx = Math.floor(Math.random() * data.bgAbility.modes.length);
+    character.choiceSelections.bgAbilityMode = modeIdx;
+    character.choiceSelections.bgAbility = randomPick(data.bgAbility.from, (data.bgAbility.modes[modeIdx] || []).length);
+  }
+
+  if (data.expertise > 0) {
+    const proficient = SKILLS.filter(([k]) => character.skillProficiencies.includes(k)).map(([k]) => k);
+    character.skillExpertise = randomPick(proficient, data.expertise);
+  }
+
+  character.choiceSelections.optionalFeatures = character.choiceSelections.optionalFeatures || {};
+  (data.optFeatures || []).forEach((prog) => {
+    const types = new Set(prog.featureType);
+    const lvl = Number(character.level);
+    const opts = manifest().filter((x) =>
+      normType(x.type) === "optionalfeature" && !hb(x) &&
+      ((x.__rec || recordsForEntity(x)[0])?.featureType || []).some((t) => types.has(t)) &&
+      matchesEdition(x, character.edition, true) &&
+      prereqLevel(x.__rec || recordsForEntity(x)[0] || {}) <= lvl);
+    character.choiceSelections.optionalFeatures[prog.name] = randomPick(opts.map((x) => x.id), prog.count);
+  });
+
+  if (data.originSpec && !data.originSpec.fixed) {
+    const opts = eligibleFeats(data.originSpec.categories);
+    character.choiceSelections.originFeat = opts.length ? randomPick(opts, 1)[0].id : null;
+  }
+  if (data.raceSpec && !data.raceSpec.fixed) {
+    const opts = eligibleFeats(data.raceSpec.categories);
+    character.choiceSelections.raceFeat = opts.length ? randomPick(opts, 1)[0].id : null;
+  }
+  // Melhoria de atributo/talento (níveis 4/8/12…): por padrão sorteia
+  // +1 em dois atributos distintos — simples e sempre válido, sem
+  // precisar checar pré-requisito de talento pra cada slot.
+  character.choiceSelections.asi = Array.from({ length: data.asiCount || 0 }, () => ({ mode: "ability", abil: randomPick(ABILITIES, 2) }));
+}
+// Atributo(s) principal(is) da classe/subclasse sorteada, pra jogar os
+// valores mais altos nelas (ex.: Sabedoria alta pro Clérigo) em vez de
+// distribuir tudo cego. `primaryAbility` é o campo padrão do 5etools —
+// lista de blocos, cada bloco = alternativas equivalentes (ex.: Guerreiro
+// FOR *ou* DES viram dois blocos de 1 atributo cada; Paladino FOR *e* CAR
+// vira um bloco com os dois). Homebrew raramente traz esse campo — nesse
+// caso cai pro atributo de conjuração e, por fim, pras resistências da
+// classe (bom palpite: normalmente pelo menos uma delas é a principal).
+function classAbilityPriority(classRec, subclassRec) {
+  const out = [];
+  const add = (k) => { const a = abilityKey(k); if (a && !out.includes(a)) out.push(a); };
+  // Cada bloco de `primaryAbility` é um conjunto de alternativas EQUIVALENTES
+  // (ex.: Guerreiro FOR *ou* DES viram dois blocos de 1 atributo cada).
+  // Embaralha a ordem dos blocos — e dos atributos dentro de cada um, pro
+  // caso "FOR e CAR" do Paladino — pra variar qual delas sai priorizada em
+  // cada sorteio, em vez de sempre favorecer a mesma alternativa.
+  const blocks = [];
+  for (const rec of [classRec, subclassRec]) {
+    for (const blk of rec?.primaryAbility || []) {
+      const keys = Object.keys(blk || {}).map(abilityKey).filter(Boolean);
+      if (keys.length) blocks.push(keys);
+    }
+  }
+  randomPick(blocks, blocks.length).forEach((keys) => randomPick(keys, keys.length).forEach(add));
+  if (!out.length) {
+    const spellAbil = spellAbilityFrom(classRec) || spellAbilityFrom(subclassRec);
+    if (spellAbil) add(spellAbil);
+    savesFrom(classRec).forEach(add);
+  }
+  return out;
+}
+// Distribui `values` (6 números — rolados ou um array pré-definido) pelos
+// atributos: os maiores valores vão pra `priority` (atributo principal da
+// classe primeiro, depois Constituição — sempre útil pra PV/concentração)
+// e o resto é sorteado nos atributos restantes.
+function smartAbilityAssignment(values, priority) {
+  const order = priority.filter((a) => ABILITIES.includes(a));
+  if (!order.includes("con")) order.push("con");
+  order.push(...randomPick(ABILITIES.filter((a) => !order.includes(a)), 6));
+  const sorted = values.slice().sort((a, b) => b - a);
+  const assignment = {};
+  order.forEach((a, i) => { assignment[a] = i; });
+  return { values: sorted, assignment };
+}
+// Duas chamadas concorrentes (clique duplo, ou abrir o modal de novo
+// enquanto a anterior ainda está sorteando) mexeriam nas mesmas variáveis
+// de módulo (`character`, `refs`, `details`) ao mesmo tempo e corrompiam o
+// resultado — a segunda chamada não faz nada enquanto a primeira roda.
+let randomizingCharacter = false;
+async function randomizeCharacter(abilityGenMode = "roll") {
+  if (randomizingCharacter) { toast("Já tem um sorteio em andamento — aguarde."); return; }
+  randomizingCharacter = true;
+  try {
+    return await randomizeCharacterImpl(abilityGenMode);
+  } finally {
+    randomizingCharacter = false;
+  }
+}
+async function randomizeCharacterImpl(abilityGenMode) {
+  toast("Sorteando personagem…");
+  await Promise.all(["race", "class", "background"].map((t) => ensureCatalog(t).catch((err) => console.warn("Catálogo indisponível:", err))));
+
+  const edition = character.edition, content = character.content;
+  const contentOk = (x) => content === "all" || (content === "official" && !isNonOfficial(x)) || (content === "homebrew" && isNonOfficial(x));
+  const pool = (type) => manifest().filter((x) => normType(x.type) === normType(type) && matchesEdition(x, edition, true) && contentOk(x));
+  const pickOne = (arr) => (arr.length ? arr[Math.floor(Math.random() * arr.length)] : null);
+
+  const race = pickOne(pool("race"));
+  const klass = pickOne(pool("class"));
+  const background = pickOne(pool("background"));
+  if (!race || !klass || !background) { toast("Banco de dados ainda carregando — tente de novo em instantes."); return; }
+  const subPool = manifest().filter((x) => normType(x.type) === "subclass" && matchesEdition(x, edition, true) && contentOk(x) && String(x.className || "").toLowerCase() === String(klass.name).toLowerCase());
+  const subclass = pickOne(subPool);
+  const [classRec, subclassRec] = await Promise.all([firstRecord(klass), subclass ? firstRecord(subclass) : null]);
+
+  const next = fresh();
+  next.edition = edition; next.content = content;
+  next.name = randomCharacterName();
+  next.level = 1;
+  next.raceId = race.id; next.classId = klass.id; next.subclassId = subclass?.id || ""; next.backgroundId = background.id;
+
+  const isRoll = abilityGenMode === "roll";
+  const rawValues = isRoll ? Array.from({ length: 6 }, () => rollAbilityScore()) : (ABILITY_ARRAYS[abilityGenMode]?.values || ABILITY_ARRAYS.standard.values);
+  const priority = classAbilityPriority(classRec, subclassRec);
+  const { values, assignment } = smartAbilityAssignment(rawValues, priority);
+  next.abilityMode = isRoll ? "roll" : abilityGenMode;
+  next.arrayAssignment = assignment;
+  if (isRoll) next.rolledSet = values;
+  ABILITIES.forEach((a) => { next.scores[a] = values[assignment[a]]; });
+
+  attackRollMessages = {}; hdRollMessages = {};
+  applyLoaded(next);
+  await refreshChoices();
+
+  const data = await buildAutomation();
+  randomizeChoiceSelections(data);
+  applyStartingEquipment();
+  saveCharacter(character);
+  await recalc();
+  toast(`Personagem aleatório: ${titleOf(race)} · ${titleOf(klass)}${subclass ? " (" + titleOf(subclass) + ")" : ""} · ${titleOf(background)}. Dá pra ajustar tudo depois.`);
+}
+function openRandomCharacterModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">ALEATÓRIO</span><h2>Personagem Aleatório</h2><p class="muted">Sorteia espécie, classe, subclasse, background, perícias, talentos e equipamento inicial — os valores mais altos vão pro atributo principal da classe sorteada (ex.: Sabedoria alta pro Clérigo). Só falta escolher como gerar os atributos.</p></div></div>
+    <div class="modal-body">
+      <div class="template-grid">
+        <div class="template-card"><b>🎲 Rolagem (4d6)</b><p>Rola 4d6 e descarta o menor, seis vezes — clássico, com variação de sorte.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="roll">Sortear</button></div></div>
+        <div class="template-card"><b>Array Padrão</b><p>15, 14, 13, 12, 10, 8 — equilibrado, sem excesso nem carência.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="standard">Sortear</button></div></div>
+        <div class="template-card"><b>Array Heroico</b><p>16, 15, 14, 13, 12, 10 — personagem já mais forte de cara.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="heroic">Sortear</button></div></div>
+        <div class="template-card"><b>Array Épico</b><p>18, 16, 14, 12, 10, 8 — bem concentrado no atributo principal.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="epic">Sortear</button></div></div>
+      </div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("modal-content").querySelectorAll("[data-random-abil]").forEach((b) => b.addEventListener("click", () => {
+    $("modal").classList.add("hidden");
+    randomizeCharacter(b.dataset.randomAbil).catch((err) => { console.error(err); toast("Não deu pra sortear um personagem agora."); });
+  }));
+}
 function switchCharacter(id) {
   if (id === getActiveCharacterId()) { $("modal").classList.add("hidden"); return; }
   setActiveCharacterId(id);
@@ -3412,6 +3604,7 @@ function setup() {
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
   $("new-character").addEventListener("click", createNewCharacter);
+  $("random-character")?.addEventListener("click", openRandomCharacterModal);
   $("characters-btn")?.addEventListener("click", openCharactersModal);
   $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
   $("preview-pdf").addEventListener("click", openPdfPreview);
