@@ -111,7 +111,7 @@
         </div>
         <div id="multiclass-list" class="multiclass-list"></div>
       </div>
-      <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span id="db-count">—</span></div>
+      <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span><i class="dot prerelease"></i> Pré-lançamento</span><span id="db-count">—</span></div>
     </div>
   </section>
 
@@ -161,7 +161,15 @@
     </div>
   </section>
 
-  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode"><option value="pointbuy">Point buy (27)</option><option value="free">Valores livres</option></select></label><strong id="pointbuy-remaining-wrap">Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button></div><div id="ability-editor" class="ability-editor"></div><p class="muted" id="ability-editor-hint">Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section>
+  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode">
+      <option value="pointbuy">Point buy (27 pontos)</option>
+      <option value="standard">Array Padrão (15,14,13,12,10,8)</option>
+      <option value="heroic">Array Heroico (16,15,14,13,12,10)</option>
+      <option value="epic">Array Épico (18,16,14,12,10,8)</option>
+      <option value="roll">Rolagem (4d6, descarta o menor)</option>
+      <option value="free">Valores livres</option>
+    </select></label><strong id="pointbuy-remaining-wrap">Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button><span id="ability-mode-extra" class="ability-mode-extra"></span></div><div id="ability-editor" class="ability-editor"></div><p class="muted" id="ability-editor-hint">Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section>
+    <section class="paper-card full-span" id="extra-feats-card"><h2>Talentos Extras</h2><p class="muted">Além dos talentos automáticos (origem do background, melhorias de nível), adicione qualquer talento do catálogo — útil pra regras variantes, talentos concedidos pelo mestre etc.</p><div id="extra-feats-list"></div><button class="add-btn no-print" id="add-extra-feat">+ Adicionar talento</button></section>
     <section class="paper-card full-span" id="buffs-card"><h2>Modificadores Temporários (Buffs/Debuffs)</h2><div id="buffs-list"></div><button class="add-btn no-print" id="add-buff">+ Aplicar modificador</button></section>
   </div></section>
 

@@ -175,6 +175,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
 .dot.official{background:var(--blue)}
 .dot.brew{background:var(--gold)}
+.dot.prerelease{background:#a87ce0}
 .creator.collapsed .choice-grid,.creator.collapsed .db-legend{display:none}
 .creator.collapsed .creator-title{border-bottom:0;margin-bottom:0;padding-bottom:0}
 
@@ -334,6 +335,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .tag{display:inline-block;border:1px solid var(--border-2);border-radius:20px;padding:2px 8px;font-size:8px;font-weight:700;line-height:1.5;letter-spacing:.06em;color:var(--text-dim);white-space:nowrap;text-transform:uppercase}
 .tag.official{border-color:rgba(91,155,213,.55);color:var(--blue)}
 .tag.brew{border-color:rgba(201,162,75,.55);color:var(--gold)}
+.tag.prerelease{border-color:rgba(168,124,224,.6);color:#a87ce0}
 .tag.edition{border-color:var(--red-dim);color:var(--red-hi)}
 
 /* ---------- Atributos & perícias (aba) ---------- */
@@ -354,6 +356,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .ability-stepper button:hover:not(:disabled){border-color:var(--red)}
 .ability-stepper button:disabled{opacity:.35}
 .ability-stepper input{min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);text-align:center;padding:5px;border-radius:var(--radius-xs)}
+.ability-mode-extra{display:inline-flex;align-items:center;gap:10px;font-size:11px;color:var(--text-dim)}
+.ability-mode-extra .array-hint b{color:var(--text)}
+.ability-mode-extra button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 11px;font-size:11px;font-weight:600}
+.ability-mode-extra button:hover{border-color:var(--red)}
+.ability-edit.array-mode{grid-template-columns:1fr 1fr 34px}
+.ability-edit.array-mode select{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 8px;font-size:12px}
 
 /* ---------- Combate ---------- */
 .combat-big{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}

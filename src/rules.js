@@ -73,6 +73,25 @@ export function rollDice(n, faces) {
   const rolls = Array.from({ length: n }, () => rollDie(faces));
   return { rolls, total: rolls.reduce((a, b) => a + b, 0) };
 }
+// Método clássico de rolagem de atributo: 4d6, descarta o menor.
+export function rollAbilityScore() {
+  const rolls = [rollDie(6), rollDie(6), rollDie(6), rollDie(6)].sort((a, b) => b - a);
+  return rolls[0] + rolls[1] + rolls[2];
+}
+
+// ------------------------------------------------------------
+// Arrays de atributo nomeados — alternativas ao point buy: valores fixos
+// que o jogador distribui pelos seis atributos (cada valor usado uma vez).
+// ------------------------------------------------------------
+export const ABILITY_ARRAYS = {
+  standard: { label: "Array Padrão", values: [15, 14, 13, 12, 10, 8] },
+  heroic: { label: "Array Heroico", values: [16, 15, 14, 13, 12, 10] },
+  epic: { label: "Array Épico", values: [18, 16, 14, 12, 10, 8] },
+};
+export const ABILITY_MODE_LABELS = {
+  pointbuy: "Point buy (27)", standard: "Array Padrão (15,14,13,12,10,8)", heroic: "Array Heroico (16,15,14,13,12,10)",
+  epic: "Array Épico (18,16,14,12,10,8)", roll: "Rolagem (4d6, descarta o menor)", free: "Valores livres",
+};
 // "2d6+3" -> { n, faces, bonus }. Aceita também só "1d8" ou "d10".
 export function parseDiceExpr(expr) {
   const m = String(expr || "").match(/(\d*)d(\d+)\s*([+-]\s*\d+)?/i);
@@ -89,7 +108,7 @@ export function parseDiceExpr(expr) {
 // tenha uma coluna com um desses nomes ganha o rastreador automaticamente.
 export const CLASS_RESOURCE_COLUMNS = [
   { key: "rage", re: /^rage/i, label: "Fúria", rest: "long", die: null },
-  { key: "ki", re: /^ki points?/i, label: "Pontos de Ki", rest: "short", die: null },
+  { key: "ki", re: /^(ki|focus) points?/i, label: "Pontos de Ki / Foco", rest: "short", die: null },
   { key: "sorcery", re: /^sorcery points?/i, label: "Pontos de Feitiçaria", rest: "long", die: null },
   { key: "bardic", re: /^bardic inspiration/i, label: "Inspiração de Bardo", rest: "long", die: null },
   { key: "channelDivinity", re: /^channel divinity/i, label: "Canalizar Divindade", rest: "short", die: null },
