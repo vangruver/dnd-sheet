@@ -23,6 +23,7 @@
     <label>Conteúdo<select id="content"><option value="official">Apenas oficial</option><option value="all">Oficial + Homebrew</option><option value="homebrew">Apenas Homebrew</option></select></label>
     <button id="new-character">Novo</button>
     <button id="save-character">Salvar</button>
+    <button id="templates-btn">Modelos</button>
     <button id="export-character">Exportar</button>
     <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
     <button id="refresh-data">Atualizar dados</button>
@@ -39,6 +40,14 @@
     <div class="head-box"><span>Espécie</span><strong id="head-race">—</strong></div>
     <div class="head-box small-box"><span>Nível</span><input id="level" type="number" min="1" max="20" value="1"></div>
     <div class="head-box small-box"><span>XP</span><input id="xp" type="number" min="0" value="0"></div>
+  </section>
+
+  <section class="dashboard no-print" id="dashboard">
+    <div class="dashboard-head">
+      <span>QUICK VIEW · COMBATE</span>
+      <button type="button" id="dashboard-toggle" class="link-btn">Recolher</button>
+    </div>
+    <div class="dashboard-body" id="dashboard-body"></div>
   </section>
 
   <div id="data-update-banner" class="data-update-banner hidden no-print" role="status">
@@ -118,6 +127,7 @@
     <button class="tab" data-tab="spells">Magias</button>
     <button class="tab" data-tab="features">Características</button>
     <button class="tab" data-tab="equipment">Equipamento</button>
+    <button class="tab" data-tab="notes">Notas</button>
     <button class="tab" data-tab="codex">Raças & Classes</button>
     <button class="tab" data-tab="compendium">Compêndio</button>
   </nav>
@@ -128,7 +138,7 @@
       <section class="paper-card defense-card"><h2>Defesa & Movimento</h2><div class="defense-grid">
         <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div>
       </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div></section>
-      <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div class="death"><span>Salvamentos contra a morte</span><div><button data-death="s0">○</button><button data-death="s1">○</button><button data-death="s2">○</button><i></i><button data-death="f0">○</button><button data-death="f1">○</button><button data-death="f2">○</button></div></div></section>
+      <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div id="death-panel"></div></section>
       <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>
       <section class="paper-card skills-card"><h2>Perícias</h2><div id="skill-list" class="skill-grid"></div></section>
       <section class="paper-card identity-card"><h2>Identidade & Fontes</h2><div id="identity"></div></section>
@@ -151,9 +161,14 @@
     </div>
   </section>
 
-  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode"><option value="pointbuy">Point buy (27)</option><option value="free">Valores livres</option></select></label><strong id="pointbuy-remaining-wrap">Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button></div><div id="ability-editor" class="ability-editor"></div><p class="muted" id="ability-editor-hint">Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section></div></section>
+  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode"><option value="pointbuy">Point buy (27)</option><option value="free">Valores livres</option></select></label><strong id="pointbuy-remaining-wrap">Pontos restantes: <b id="pointbuy-remaining">27</b></strong><button type="button" class="no-print" id="reset-pointbuy">Resetar 10/10/10/10/10/10</button></div><div id="ability-editor" class="ability-editor"></div><p class="muted" id="ability-editor-hint">Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.</p></section><section class="paper-card"><h2>Proficiências</h2><div id="proficiency-editor"></div></section>
+    <section class="paper-card full-span" id="buffs-card"><h2>Modificadores Temporários (Buffs/Debuffs)</h2><div id="buffs-list"></div><button class="add-btn no-print" id="add-buff">+ Aplicar modificador</button></section>
+  </div></section>
 
-  <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section></div></section>
+  <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section>
+    <section class="paper-card full-span" id="resources-card"><h2>Recursos de Combate</h2><div id="hit-dice-tracker"></div><div id="class-resources"></div></section>
+    <section class="paper-card full-span" id="conditions-card"><h2>Condições Ativas</h2><div id="conditions-list" class="conditions-list"></div><div class="resource-actions no-print"><button class="add-btn" id="add-condition">+ Aplicar condição</button><button class="add-btn" id="next-round">▶ Avançar rodada</button></div></section>
+  </div></section>
 
   <section class="tab-page" id="tab-spells"><div class="page-title"><h2>Magias</h2><p>A lista completa de magias da classe aparece por nível, filtrada pela edição escolhida. Use as bolinhas para marcar as magias preparadas/conhecidas.</p></div>
     <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias na lista</span><b id="spell-count">0</b></div></section>
@@ -162,7 +177,9 @@
     <div id="spellbook"></div>
   </section>
 
-  <section class="tab-page" id="tab-features"><div class="page-title"><h2>Características</h2><p>Características da classe, subclasse, espécie e background disponíveis até o nível atual.</p></div><div id="feature-list" class="feature-columns"></div></section>
+  <section class="tab-page" id="tab-features"><div class="page-title"><h2>Características</h2><p>Características da classe, subclasse, espécie e background disponíveis até o nível atual.</p></div>
+    <section class="paper-card no-print"><input id="feature-search" placeholder="🔍 Buscar característica…"></section>
+    <div id="feature-list" class="feature-columns"></div></section>
 
   <section class="tab-page" id="tab-equipment"><div class="page-title"><h2>Equipamento & Inventário</h2><p>Catálogo completo de itens do 5etools, separado por tipo. Adicione itens ao inventário e use os filtros.</p></div>
     <section class="paper-card equipment-toolbar"><div class="segmented" id="equipment-cats">
@@ -179,6 +196,12 @@
       </div>
       <div id="inventory-list"></div></section>
     <section id="equipment-catalog" class="paper-card hidden"><h2>Catálogo</h2><div id="equipment-list" class="catalog-grid"></div></section>
+  </section>
+
+  <section class="tab-page" id="tab-notes">
+    <div class="page-title"><h2>Notas de Sessão</h2><p>Anotações rápidas por sessão — salvas junto com o personagem (localStorage e no arquivo exportado).</p></div>
+    <section class="paper-card no-print journal-toolbar"><button class="add-btn" id="add-journal">+ Nova sessão</button><button class="add-btn" id="export-journal">Exportar notas (texto)</button></section>
+    <div id="journal-list" class="journal-list"></div>
   </section>
 
   <section class="tab-page" id="tab-codex">

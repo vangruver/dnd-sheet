@@ -29,3 +29,10 @@ export function saveTheme(v) { try { localStorage.setItem(THEME_KEY, v); } catch
 const CREATION_MODE_KEY = "dnd-ficha-auto-creation-mode";
 export function getSavedCreationMode() { try { return localStorage.getItem(CREATION_MODE_KEY) || "free"; } catch { return "free"; } }
 export function saveCreationMode(v) { try { localStorage.setItem(CREATION_MODE_KEY, v); } catch { /* modo privado */ } }
+
+// Modelos de personagem (templates) — construções reaproveitáveis
+// (classe/subclasse/espécie/background/atributos/escolhas), guardadas à
+// parte do personagem atual, neste navegador.
+const TEMPLATES_KEY = "dnd-ficha-auto-templates-v1";
+export function getTemplates() { try { const v = localStorage.getItem(TEMPLATES_KEY); return v ? JSON.parse(v) : []; } catch { return []; } }
+export function saveTemplates(arr) { try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(arr || [])); } catch { /* modo privado */ } }

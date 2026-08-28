@@ -25,6 +25,27 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   lista de subclasses/subespécies. Quando o registro não tem lore estruturada, mostra os traços
   mecânicos com um aviso.
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
+- **Assistente guiado completo**: espécie → classe → subclasse → nível → background → multiclasse
+  (opcional) → atributos → equipamento inicial → revisão, com "voltar" e passos opcionais puláveis.
+- **Dashboard "Quick View"** fixo no topo da ficha: PV com barra colorida (verde/amarelo/vermelho),
+  CA, iniciativa, proficiência, espaços de magia, dados de vida, recursos de classe e condições
+  ativas de relance — recolhível.
+- **Rastreador de recursos de combate**: dados de vida (com botão "usar" que rola o dado + CON e
+  cura automaticamente), espaços de magia/pacto (clique pra marcar usado), e recursos de classe
+  detectados automaticamente na tabela da classe/subclasse (Fúria, Pontos de Ki, Pontos de
+  Feitiçaria, Inspiração de Bardo, Canalizar Divindade, Dados de Superioridade, Forma Selvagem
+  etc.) — funciona com qualquer classe oficial ou homebrew, sem dado extra.
+- **Condições de combate**: aplicar/remover as 15 condições da 5e com efeito descrito, duração em
+  rodadas e botão "avançar rodada" que expira condições e modificadores temporários automaticamente.
+- **Ataques com cálculo automático**: escolha Força/Destreza/Conjuração/Manual + proficiência +
+  bônus de item, com botões para rolar ataque e dano (crítico/falha crítica destacados).
+- **Testes de resistência contra a morte**: só aparece com PV ≤ 0; botão de rolagem com as regras
+  de 20 natural (recupera 1 PV) e 1 natural (2 falhas), e status "estabilizado"/"morreu".
+- **Modificadores temporários (buffs/debuffs)**: aplique um ajuste a um ou mais atributos com
+  duração em rodadas ou permanente — recalcula modificador, perícias, salvamentos e CD na hora.
+- **Notas de sessão**: anotações datadas por sessão, com editar/apagar e exportação em texto.
+- **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
+  atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
 - **Classes, subclasses e raças/subespécies homebrew** (`TheGiddyLimit/homebrew`) aparecem lado a
   lado com o conteúdo oficial — use o seletor **Conteúdo** (Oficial / Oficial + Homebrew / Apenas

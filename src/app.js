@@ -5,10 +5,13 @@ import {
   descriptionEntries, matchesEdition, isReprinted,
 } from "./database.js";
 import { clearCache } from "./store.js";
-import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots } from "./rules.js";
+import {
+  ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots,
+  rollDie, rollDice, parseDiceExpr, CLASS_RESOURCE_COLUMNS, CONDITIONS,
+} from "./rules.js";
 import {
   saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
-  getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode,
+  getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
 } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
@@ -24,8 +27,12 @@ let codexState = { type: "all", content: "all", query: "", legacy: false };
 const WIZARD_STEPS = [
   { key: "race", type: "race", title: "Espécie", hint: "Escolha a espécie/raça do seu personagem — ela define deslocamento, traços e, em muitos casos, um bônus de atributo." },
   { key: "class", type: "class", title: "Classe", hint: "Escolha a classe — ela define dado de vida, testes de resistência com proficiência e a lista de magias disponível." },
+  { key: "subclass", type: "subclass", title: "Subclasse", hint: "Escolha a subclasse (opcional neste passo, mas normalmente obrigatória a partir de certo nível) — ela concede características próprias e, em várias classes, magias extras.", optional: true },
+  { key: "level", title: "Nível", hint: "Defina o nível do personagem — ele determina pontos de vida, bônus de proficiência, espaços de magia e quais características já foram desbloqueadas." },
   { key: "background", type: "background", title: "Background", hint: "Escolha um background — ele concede perícias, ferramentas e, na edição 2024, um talento de origem." },
+  { key: "multiclass", title: "Multiclasse", hint: "Opcional: adicione outras classes ao personagem. Pule este passo se não for multiclassar.", optional: true },
   { key: "abilities", title: "Atributos", hint: "Distribua seus atributos. Bônus de espécie, background, talentos e melhorias entram automaticamente — clique no ⓘ de cada atributo pra ver de onde vêm." },
+  { key: "equipment", title: "Equipamento", hint: "Confira o equipamento inicial concedido pela classe e pelo background." },
   { key: "review", title: "Revisão", hint: "Revise as escolhas e finalize. Dá pra ajustar tudo depois, a qualquer momento, no modo livre." },
 ];
 let wizardIndex = 0;
@@ -40,6 +47,8 @@ const fresh = () => ({
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   alignment: "", languages: "", appearance: "", backstory: "",
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
+  hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
+  conditions: [], journal: [], buffs: [],
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
   choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
 });
@@ -221,7 +230,7 @@ async function refreshChoices() {
   refs.background = manifest().find((x) => x.id === character.backgroundId) || null;
   resolveMulticlassRefs();
   for (const t of ["race", "class", "subclass", "background"]) await updateChoice(t);
-  renderMulticlasses();
+  renderAllMulticlasses();
   await recalc();
 }
 const pickerContentOk = (x) => character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x));
@@ -345,8 +354,8 @@ function subclassSelectOptions(classEntry, selectedId) {
   return `<option value="">Sem subclasse ainda</option>` + arr.map((x) =>
     `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""}>${esc(titleOf(x))}${hb(x) ? " (Homebrew)" : ""}</option>`).join("");
 }
-function renderMulticlasses() {
-  const box = $("multiclass-list");
+function renderMulticlasses(boxId) {
+  const box = $(boxId || "multiclass-list");
   if (!box) return;
   const rows = character.multiclasses || [];
   if (!rows.length) { box.innerHTML = `<p class="muted">Nenhuma classe adicional. Use "+ Adicionar classe" para multiclassar.</p>`; return; }
@@ -381,6 +390,7 @@ function renderMulticlasses() {
     character.multiclasses[i].level = Math.max(1, Math.min(19, 20 - others, Number(inp.value) || 1));
     saveCharacter(character);
     await recalc();
+    renderAllMulticlasses();
   }));
   box.querySelectorAll("[data-mc-remove]").forEach((b) => b.addEventListener("click", async () => {
     const i = Number(b.dataset.mcRemove);
@@ -389,6 +399,11 @@ function renderMulticlasses() {
     await refreshChoices();
   }));
 }
+// Passo de multiclasse do assistente reaproveita a MESMA renderização do
+// modo livre (dois containers independentes com os mesmos dados) — sem
+// isso, mudar a multiclasse em um dos dois lugares deixava o outro
+// desatualizado até a próxima ação.
+function renderAllMulticlasses() { renderMulticlasses("multiclass-list"); renderMulticlasses("wizard-multiclass-list"); }
 
 // ------------------------------------------------------------
 // Fichas de detalhe de raça / classe / subclasse — lore real do
@@ -1167,6 +1182,10 @@ function abilityBonusBreakdown(a) {
       if (picked === a) parts.push({ label: `Talento: ${e.name}`, value: 1 });
     }
   }
+  // Modificadores temporários (buffs/debuffs) aplicados manualmente
+  for (const buff of character.buffs || []) {
+    if ((buff.abilities || []).includes(a) && buff.value) parts.push({ label: `Buff: ${buff.label || "Modificador"}`, value: buff.value });
+  }
   return parts;
 }
 function abilityBonusTotal(a) { return abilityBonusBreakdown(a).reduce((n, p) => n + p.value, 0); }
@@ -1244,7 +1263,8 @@ async function recalc() {
   $("combat-ac").textContent = c.ac; $("combat-init").textContent = fmt(c.init); $("combat-speed").textContent = c.speed; $("combat-pb").textContent = fmt(c.pb);
   $("ac-input").value = character.ac ?? "";
   $("speed-input").value = character.speed || "30 ft";
-  renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath();
+  renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
+  renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderDashboard();
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") renderFeatures();
   if (active === "spells") renderSpells();
@@ -1252,8 +1272,9 @@ async function recalc() {
 }
 function renderSaves(c) {
   $("save-list").innerHTML = ABILITIES.map((a) => {
-    const ok = character.saveProficiencies.includes(a), v = mod(effScore(a)) + (ok ? c.pb : 0);
-    return `<label class="check-row"><input type="checkbox" data-save="${a}" ${ok ? "checked" : ""}><span>${ABILITY_NAMES[a]}</span><b>${fmt(v)}</b></label>`;
+    const ok = character.saveProficiencies.includes(a), am = mod(effScore(a)), v = am + (ok ? c.pb : 0);
+    const formula = `${ABILITY_NAMES[a]} ${fmt(am)}${ok ? ` + proficiência ${fmt(c.pb)}` : ""} = ${fmt(v)}`;
+    return `<label class="check-row" title="${esc(formula)}"><input type="checkbox" data-save="${a}" ${ok ? "checked" : ""}><span>${ABILITY_NAMES[a]}</span><b>${fmt(v)}</b></label>`;
   }).join("");
   $("save-list").querySelectorAll("[data-save]").forEach((i) => i.addEventListener("change", () => {
     character.manualSaveProficiencies = character.manualSaveProficiencies || [];
@@ -1265,8 +1286,9 @@ function renderSaves(c) {
 function renderSkills(c) {
   $("skill-list").innerHTML = SKILLS.map(([k, n, a]) => {
     const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
-    const v = mod(effScore(a)) + c.pb * (ex ? 2 : p ? 1 : 0);
-    return `<label class="skill-row"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${n}</span><b>${fmt(v)}</b>${ex ? '<small>EXP</small>' : ""}</label>`;
+    const am = mod(effScore(a)), v = am + c.pb * (ex ? 2 : p ? 1 : 0);
+    const formula = `${ABILITY_NAMES[a]} ${fmt(am)}${ex ? ` + especialização (2× prof. ${fmt(c.pb)})` : p ? ` + proficiência ${fmt(c.pb)}` : ""} = ${fmt(v)}`;
+    return `<label class="skill-row" title="${esc(formula)}"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${n}</span><b>${fmt(v)}</b>${ex ? '<small>EXP</small>' : ""}</label>`;
   }).join("");
   $("skill-list").querySelectorAll("[data-skill]").forEach((i) => i.addEventListener("change", () => {
     const k = i.dataset.skill;
@@ -1321,11 +1343,84 @@ function renderIdentity() {
   });
   $("identity").innerHTML = html;
 }
+// ------------------------------------------------------------
+// Ataques — cálculo automático (atributo + proficiência + item)
+// ------------------------------------------------------------
+const ATTACK_ABILITY_LABEL = { str: "Força (corpo a corpo)", dex: "Destreza (à distância/leve)", spell: "Conjuração", manual: "Manual" };
+function parseBonusText(s) { const n = parseInt(String(s ?? "").replace(/[^\d-]/g, ""), 10); return Number.isFinite(n) ? n : 0; }
+function attackAbilityMod(a) {
+  const m = a.abilityMode || "str";
+  if (m === "dex") return mod(effScore("dex"));
+  if (m === "spell") { const sa = character.spellAbility || spellAbilityFrom(classInfo()); return sa ? mod(effScore(sa)) : 0; }
+  if (m === "manual") return null;
+  return mod(effScore("str"));
+}
+function computeAttackBonus(a) {
+  if ((a.abilityMode || "str") === "manual") return parseBonusText(a.bonus);
+  return (attackAbilityMod(a) || 0) + (a.proficient ? proficiency(totalLevel()) : 0) + (Number(a.itemBonus) || 0);
+}
+let attackRollMessages = {};
 function renderAttacks() {
   const arr = character.attacks || [];
-  $("attacks").innerHTML = arr.length ? arr.map((a, i) => `<div class="attack-row"><input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome"><input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus"><input data-a="damage" data-i="${i}" value="${esc(a.damage || "")}" placeholder="Dano"><input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas"><button class="remove-btn no-print" data-remove-attack="${i}">×</button></div>`).join("") : `<div class="empty">Nenhum ataque adicionado.</div>`;
-  $("attacks").querySelectorAll("[data-a]").forEach((i) => i.addEventListener("input", () => { character.attacks[Number(i.dataset.i)][i.dataset.a] = i.value; saveCharacter(character); }));
-  $("attacks").querySelectorAll("[data-remove-attack]").forEach((b) => b.addEventListener("click", () => { character.attacks.splice(Number(b.dataset.removeAttack), 1); renderAttacks(); }));
+  $("attacks").innerHTML = arr.length ? arr.map((a, i) => {
+    const manual = (a.abilityMode || "str") === "manual";
+    const total = computeAttackBonus(a);
+    return `<div class="attack-card" data-attack-idx="${i}">
+      <div class="attack-card-top">
+        <input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome (ex.: Espada Longa)">
+        <input data-a="damage" data-i="${i}" value="${esc(a.damage || "")}" placeholder="Dano (ex.: 1d8 cortante)">
+        <div class="attack-total" title="Bônus de ataque calculado">${fmt(total)}</div>
+        <input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas">
+        <button class="remove-btn no-print" data-remove-attack="${i}" title="Remover ataque">×</button>
+      </div>
+      <div class="attack-card-controls no-print">
+        <select data-a-mode="${i}">${Object.entries(ATTACK_ABILITY_LABEL).map(([k, l]) => `<option value="${k}"${(a.abilityMode || "str") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+        <label><input type="checkbox" data-a-prof="${i}" ${a.proficient ? "checked" : ""}> Proficiente</label>
+        <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item">
+        <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus manual" ${manual ? "" : "disabled"}>
+      </div>
+      <div class="attack-roll-row no-print">
+        <button type="button" data-roll-attack="${i}">🎲 Rolar Ataque</button>
+        <button type="button" data-roll-damage="${i}">🎲 Rolar Dano</button>
+        <span class="attack-roll-result" id="attack-result-${i}">${attackRollMessages[i] || ""}</span>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty">Nenhum ataque adicionado.</div>`;
+  $("attacks").querySelectorAll("[data-a]").forEach((i) => i.addEventListener("input", () => {
+    character.attacks[Number(i.dataset.i)][i.dataset.a] = i.value; saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-a-mode]").forEach((s) => s.addEventListener("change", () => {
+    character.attacks[Number(s.dataset.aMode)].abilityMode = s.value; saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-a-prof]").forEach((c) => c.addEventListener("change", () => {
+    character.attacks[Number(c.dataset.aProf)].proficient = c.checked; saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-a-item]").forEach((n) => n.addEventListener("input", () => {
+    character.attacks[Number(n.dataset.aItem)].itemBonus = Number(n.value) || 0; saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-remove-attack]").forEach((b) => b.addEventListener("click", () => {
+    delete attackRollMessages[Number(b.dataset.removeAttack)];
+    character.attacks.splice(Number(b.dataset.removeAttack), 1); saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", () => {
+    const i = Number(b.dataset.rollAttack), a = character.attacks[i];
+    const roll = rollDie(20), bonus = computeAttackBonus(a), total = roll + bonus;
+    const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
+    const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
+    attackRollMessages[i] = `d20 (<b class="${cls}">${roll}</b>) ${fmt(bonus)} = <b>${total}</b>${note}`;
+    $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
+  }));
+  $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", () => {
+    const i = Number(b.dataset.rollDamage), a = character.attacks[i];
+    const parsed = parseDiceExpr(a.damage || "1d6");
+    if (!parsed) { toast('Escreva o dano como "1d8" ou "2d6+1".'); return; }
+    const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
+    let extra = parsed.bonus || 0;
+    if ((a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
+    const total = diceTotal + extra;
+    attackRollMessages[i] = `${parsed.n}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>`;
+    $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
+  }));
 }
 async function renderFeatures() {
   const box = $("feature-list");
@@ -1373,10 +1468,14 @@ async function renderFeatures() {
 // Magias — recursos de conjuração (espaços, truques, preparadas)
 // ------------------------------------------------------------
 const CASTER_LABEL = { full: "Conjurador completo", "1/2": "Meio-conjurador", half: "Meio-conjurador", artificer: "Conjuração de artífice", "1/3": "Um terço de conjurador", third: "Um terço de conjurador", pact: "Magia de pacto" };
-// Lê uma coluna nomeada da tabela da classe (classTableGroups) — cobre
-// truques/preparadas do 2024 e homebrew, que não trazem fórmula.
-function tableCol(rec, level, labelRe) {
-  for (const g of rec?.classTableGroups || []) {
+// Lê uma coluna nomeada de um conjunto de "table groups" no formato do
+// 5etools (colLabels + rows) — reaproveitado tanto pra tabela da classe
+// (classTableGroups: truques/preparadas do 2024 e homebrew sem fórmula)
+// quanto pra tabela da subclasse (subclassTableGroups: Dados de
+// Superioridade do Combatente Mestre de Batalha etc.) pelo rastreador
+// de recursos de classe.
+function tableColGroups(groups, level, labelRe) {
+  for (const g of groups || []) {
     const idx = (g.colLabels || []).findIndex((l) => labelRe.test(String(l)));
     if (idx < 0) continue;
     const row = (g.rows || [])[Math.min(level, (g.rows || []).length) - 1];
@@ -1387,6 +1486,264 @@ function tableCol(rec, level, labelRe) {
     }
   }
   return null;
+}
+function tableCol(rec, level, labelRe) { return tableColGroups(rec?.classTableGroups, level, labelRe); }
+
+// ------------------------------------------------------------
+// Recursos de classe (Fúria, Pontos de Ki, Feitiçaria, Inspiração de
+// Bardo, Canalizar Divindade, Dados de Superioridade, Forma Selvagem…)
+// — detectados genericamente nas colunas da tabela da classe/subclasse
+// (ver CLASS_RESOURCE_COLUMNS em rules.js), pra funcionar com qualquer
+// classe oficial ou homebrew sem precisar de dados escritos à mão.
+function classResourceSources() {
+  const out = [];
+  if (refs.class) out.push({ key: "primary", label: titleOf(refs.class), cr: details.classRec, sr: details.subclassRec, level: Math.max(1, Number(character.level) || 1) });
+  (details.multiclasses || []).forEach((m, i) => {
+    if (m.classEntry) out.push({ key: `mc${i}`, label: titleOf(m.classEntry), cr: m.classRec, sr: m.subclassRec, level: Math.max(1, Number(m.level) || 1) });
+  });
+  return out;
+}
+function computeClassResources() {
+  const out = [];
+  const seen = new Set();
+  for (const src of classResourceSources()) {
+    for (const def of CLASS_RESOURCE_COLUMNS) {
+      let max = tableColGroups(src.cr?.classTableGroups, src.level, def.re);
+      if (max == null) max = tableColGroups(src.sr?.subclassTableGroups, src.level, def.re);
+      if (max == null || max <= 0) continue;
+      const id = `${src.key}:${def.key}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      out.push({ id, key: def.key, label: def.label, classLabel: src.label, rest: def.rest, max });
+    }
+  }
+  return out;
+}
+function resourceUsed(id) { return Math.max(0, Number(character.resourceUsage?.[id]) || 0); }
+function setResourceUsed(id, n, max) { character.resourceUsage = character.resourceUsage || {}; character.resourceUsage[id] = Math.max(0, Math.min(max, n)); }
+function renderClassResources() {
+  const box = $("class-resources");
+  if (!box) return;
+  const list = computeClassResources();
+  if (!list.length) { box.innerHTML = ""; return; }
+  box.innerHTML = list.map((r) => {
+    const used = Math.min(r.max, resourceUsed(r.id));
+    const avail = r.max - used;
+    const pips = Array.from({ length: r.max }, (_, i) => `<span class="resource-pip${i < used ? " used" : ""}" data-res-pip="${esc(r.id)}:${i}" title="${esc(r.label)} ${i + 1}"></span>`).join("");
+    const restLabel = r.rest === "short" ? "descanso curto ou longo" : "descanso longo";
+    return `<div class="resource-card"><div class="resource-head"><b>${esc(r.label)} — ${esc(r.classLabel)}</b><small>Recupera em ${restLabel}</small></div>
+      <div class="resource-pips">${pips}</div>
+      <div class="resource-actions">
+        <button type="button" data-res-use="${esc(r.id)}" data-res-max="${r.max}">− Usar</button>
+        <span class="resource-count${avail === 0 ? " zero" : ""}">${avail}/${r.max}</span>
+        <button type="button" data-res-restore="${esc(r.id)}">+ Recuperar</button>
+        <button type="button" class="reset-btn" data-res-reset="${esc(r.id)}">🔄 Reset</button>
+      </div></div>`;
+  }).join("");
+  box.querySelectorAll("[data-res-pip]").forEach((p) => p.addEventListener("click", () => {
+    const [id, idx] = p.dataset.resPip.split(":");
+    const r = list.find((x) => x.id === id);
+    const i = Number(idx), used = Math.min(r.max, resourceUsed(id));
+    setResourceUsed(id, i < used ? i : i + 1, r.max);
+    saveCharacter(character); renderClassResources(); renderDashboard();
+  }));
+  box.querySelectorAll("[data-res-use]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.resUse, max = Number(b.dataset.resMax) || 0;
+    setResourceUsed(id, resourceUsed(id) + 1, max);
+    saveCharacter(character); renderClassResources(); renderDashboard();
+  }));
+  box.querySelectorAll("[data-res-restore]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.resRestore, r = list.find((x) => x.id === id);
+    setResourceUsed(id, resourceUsed(id) - 1, r.max);
+    saveCharacter(character); renderClassResources(); renderDashboard();
+  }));
+  box.querySelectorAll("[data-res-reset]").forEach((b) => b.addEventListener("click", () => {
+    setResourceUsed(b.dataset.resReset, 0, 999);
+    saveCharacter(character); renderClassResources(); renderDashboard();
+  }));
+}
+// Fontes de dado de vida (classe primária + cada classe de multiclasse),
+// cada uma com seu próprio tipo de dado e nº de usos = nível da classe.
+function hitDiceSources() {
+  const out = [{ key: "primary", die: Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8, count: Math.max(1, Number(character.level) || 1), label: refs.class ? titleOf(refs.class) : "Classe" }];
+  (details.multiclasses || []).forEach((m, i) => {
+    if (m.classEntry) out.push({ key: `mc${i}`, die: Number(hitDiceFrom(m.classRec) || 8) || 8, count: Math.max(1, Number(m.level) || 1), label: titleOf(m.classEntry) });
+  });
+  return out;
+}
+let hdRollMessages = {};
+function renderHitDiceTracker() {
+  const box = $("hit-dice-tracker");
+  if (!box || !refs.class) { if (box) box.innerHTML = ""; return; }
+  const sources = hitDiceSources();
+  box.innerHTML = sources.map((s) => {
+    const used = Math.min(s.count, Math.max(0, Number(character.hitDiceUsed?.[s.key]) || 0));
+    const avail = s.count - used;
+    const pips = Array.from({ length: s.count }, (_, i) => `<span class="resource-pip${i < used ? " used" : ""}" data-hd-pip="${s.key}:${i}" title="Dado de vida ${i + 1}"></span>`).join("");
+    return `<div class="resource-card"><div class="resource-head"><b>Dados de Vida — ${esc(s.label)} (d${s.die})</b><small>${avail}/${s.count} disponíveis</small></div>
+      <div class="resource-pips">${pips}</div>
+      <div class="resource-actions">
+        <button type="button" data-hd-dec="${s.key}">+ Recuperar</button>
+        <button type="button" data-hd-use="${s.key}" data-hd-die="${s.die}">🎲 Usar dado de vida</button>
+        <button type="button" class="reset-btn" data-hd-reset="${s.key}" data-hd-count="${s.count}">🔄 Descanso longo</button>
+      </div>
+      ${hdRollMessages[s.key] ? `<div class="hit-dice-roll-result">${hdRollMessages[s.key]}</div>` : ""}
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-hd-pip]").forEach((p) => p.addEventListener("click", () => {
+    const [key, idx] = p.dataset.hdPip.split(":");
+    const s = sources.find((x) => x.key === key);
+    const i = Number(idx), used = Math.min(s.count, Math.max(0, Number(character.hitDiceUsed?.[key]) || 0));
+    character.hitDiceUsed = character.hitDiceUsed || {};
+    character.hitDiceUsed[key] = Math.max(0, Math.min(s.count, i < used ? i : i + 1));
+    saveCharacter(character); renderHitDiceTracker(); renderDashboard();
+  }));
+  box.querySelectorAll("[data-hd-dec]").forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.hdDec;
+    character.hitDiceUsed = character.hitDiceUsed || {};
+    character.hitDiceUsed[key] = Math.max(0, (Number(character.hitDiceUsed[key]) || 0) - 1);
+    saveCharacter(character); renderHitDiceTracker(); renderDashboard();
+  }));
+  box.querySelectorAll("[data-hd-reset]").forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.hdReset, count = Number(b.dataset.hdCount) || 1;
+    const used = Math.max(0, Number(character.hitDiceUsed?.[key]) || 0);
+    const recover = Math.max(1, Math.ceil(count / 2));
+    character.hitDiceUsed[key] = Math.max(0, used - recover);
+    saveCharacter(character); renderHitDiceTracker(); renderDashboard();
+    toast(`Descanso longo: recupera até ${recover} dado(s) de vida gastos.`);
+  }));
+  box.querySelectorAll("[data-hd-use]").forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.hdUse, die = Number(b.dataset.hdDie) || 8;
+    const s = sources.find((x) => x.key === key);
+    const used = Math.max(0, Number(character.hitDiceUsed?.[key]) || 0);
+    if (used >= s.count) { toast("Sem dados de vida disponíveis."); return; }
+    const conMod = mod(effScore("con"));
+    const roll = rollDie(die);
+    const healed = Math.max(0, roll + conMod);
+    character.hitDiceUsed = character.hitDiceUsed || {};
+    character.hitDiceUsed[key] = used + 1;
+    const maxHp = calc().hp;
+    character.hpCurrent = Math.min(maxHp, (character.hpCurrent == null ? maxHp : character.hpCurrent) + healed);
+    hdRollMessages[key] = `Rolou d${die}: <b>${roll}</b> + CON ${fmt(conMod)} = <b>${healed} PV recuperados</b> (repouso curto obrigatório).`;
+    saveCharacter(character);
+    recalc();
+  }));
+}
+
+// ------------------------------------------------------------
+// Condições de combate
+// ------------------------------------------------------------
+function renderConditions() {
+  const box = $("conditions-list");
+  if (!box) return;
+  const list = character.conditions || [];
+  if (!list.length) { box.innerHTML = `<div class="condition-empty">Nenhuma condição ativa.</div>`; return; }
+  box.innerHTML = list.map((c) => {
+    const def = CONDITIONS.find((x) => x.key === c.key);
+    const durText = c.rounds == null ? "permanente" : `${c.rounds} rodada(s)`;
+    return `<div class="condition-chip" title="${esc(def?.effect || "")}"><b>${esc(def?.label || c.key)}</b><span class="cond-duration">${esc(durText)}</span><button type="button" data-remove-condition="${esc(c.id)}" title="Remover">×</button></div>`;
+  }).join("");
+  box.querySelectorAll("[data-remove-condition]").forEach((b) => b.addEventListener("click", () => {
+    character.conditions = (character.conditions || []).filter((c) => c.id !== b.dataset.removeCondition);
+    saveCharacter(character); renderConditions(); renderDashboard();
+  }));
+}
+function applyCondition(key) {
+  const rounds = Number($("condition-duration")?.value) || null;
+  character.conditions = character.conditions || [];
+  character.conditions.push({ id: `cond-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, key, rounds: rounds && rounds > 0 ? rounds : null });
+  saveCharacter(character);
+  renderConditions(); renderDashboard();
+  $("modal").classList.add("hidden");
+  toast("Condição aplicada.");
+}
+function openConditionPicker() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">COMBATE</span><h2>Aplicar Condição</h2><p class="muted">Escolha a duração (em rodadas) e clique numa condição pra aplicá-la. Deixe em branco pra uma condição permanente (removida manualmente).</p></div></div>
+    <div class="modal-body">
+      <div class="condition-duration-row"><label>Duração (rodadas)<br><input id="condition-duration" type="number" min="1" placeholder="permanente"></label></div>
+      <div class="condition-picker">${CONDITIONS.map((c) => `<button type="button" class="condition-option" data-pick-condition="${esc(c.key)}"><b>${esc(c.label)}</b><span>${esc(c.effect)}</span></button>`).join("")}</div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("modal-content").querySelectorAll("[data-pick-condition]").forEach((b) => b.addEventListener("click", () => applyCondition(b.dataset.pickCondition)));
+}
+// Avança uma rodada de combate: decrementa a duração das condições e dos
+// buffs temporários que têm duração em rodadas, removendo o que chega a 0.
+function advanceRound() {
+  let expired = 0;
+  character.conditions = (character.conditions || []).filter((c) => {
+    if (c.rounds == null) return true;
+    c.rounds -= 1;
+    if (c.rounds <= 0) { expired++; return false; }
+    return true;
+  });
+  character.buffs = (character.buffs || []).filter((b) => {
+    if (b.duration == null) return true;
+    b.duration -= 1;
+    if (b.duration <= 0) { expired++; return false; }
+    return true;
+  });
+  saveCharacter(character);
+  recalc();
+  toast(expired ? `Rodada avançada. ${expired} efeito(s) expiraram.` : "Rodada avançada.");
+}
+
+// ------------------------------------------------------------
+// Dashboard / Quick View — resumo de combate fixo no topo da ficha
+// ------------------------------------------------------------
+function hpBarClass(cur, max) {
+  if (cur <= 0) return "critical";
+  if (max > 0 && cur / max < 0.5) return "warn";
+  return "ok";
+}
+function renderDashboard() {
+  const box = $("dashboard-body");
+  if (!box || !character) return;
+  const c = calc();
+  const maxHp = c.hp;
+  const curHp = character.hpCurrent == null ? maxHp : Number(character.hpCurrent) || 0;
+  const pct = Math.max(0, Math.min(100, maxHp > 0 ? (curHp / maxHp) * 100 : 0));
+  const msi = multiclassSpellcasting();
+  const slotsHtml = msi?.slots?.some(Boolean)
+    ? `<div class="dash-pip-set"><span>Espaços de magia</span>${msi.slots.map((n, i) => n ? `<div class="dash-pip-row" title="${i + 1}º nível">${Array.from({ length: n }, (_, p) => `<span class="dash-pip${p < Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0) ? " used" : ""}"></span>`).join("")}</div>` : "").join("")}</div>`
+    : "";
+  const hdSources = refs.class ? hitDiceSources() : [];
+  const hdHtml = hdSources.map((s) => {
+    const used = Math.min(s.count, Number(character.hitDiceUsed?.[s.key]) || 0);
+    return `<div class="dash-pip-set"><span>Dados de vida — ${esc(s.label)} (d${s.die})</span><div class="dash-pip-row">${Array.from({ length: s.count }, (_, p) => `<span class="dash-pip${p < used ? " used" : ""}"></span>`).join("")}</div></div>`;
+  }).join("");
+  const resList = computeClassResources();
+  const resHtml = resList.map((r) => {
+    const used = Math.min(r.max, resourceUsed(r.id));
+    return `<div class="dash-pip-set"><span>${esc(r.label)}</span><div class="dash-pip-row">${Array.from({ length: r.max }, (_, p) => `<span class="dash-pip${p < used ? " used" : ""}"></span>`).join("")}</div></div>`;
+  }).join("");
+  const condHtml = (character.conditions || []).length
+    ? (character.conditions || []).map((cd) => { const def = CONDITIONS.find((x) => x.key === cd.key); return `<span class="condition-chip" title="${esc(def?.effect || "")}"><b>${esc(def?.label || cd.key)}</b>${cd.rounds != null ? `<span class="cond-duration">${cd.rounds}r</span>` : ""}</span>`; }).join("")
+    : `<span class="dash-empty">Nenhuma condição ativa.</span>`;
+  const classLabel = refs.class ? `${titleOf(refs.class)}${refs.subclass ? ` (${titleOf(refs.subclass)})` : ""}` : "Sem classe";
+  box.innerHTML = `
+    <div class="dash-top">
+      <div class="dash-name">${esc(character.name || "Personagem sem nome")}<small>${esc(classLabel)} · nível ${totalLevel()} · ${refs.race ? esc(titleOf(refs.race)) : "sem espécie"}</small></div>
+      <div class="dash-stats">
+        <div class="dash-stat"><span>CA</span><b>${c.ac}</b></div>
+        <div class="dash-stat"><span>Iniciativa</span><b>${fmt(c.init)}</b></div>
+        <div class="dash-stat"><span>Prof.</span><b>${fmt(c.pb)}</b></div>
+        <div class="dash-stat"><span>Desloc.</span><b>${esc(c.speed)}</b></div>
+      </div>
+    </div>
+    <div class="dash-hp">
+      <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(curHp, maxHp)}" style="width:${pct}%"></div><div class="dash-hp-label">${curHp} / ${maxHp}${character.hpTemp ? ` (+${character.hpTemp} temp)` : ""}</div></div>
+      <input id="dash-hp-input" type="number" value="${curHp}" title="Editar PV atual">
+    </div>
+    ${(slotsHtml || hdHtml || resHtml) ? `<div class="dash-row">
+      ${hdHtml ? `<div class="dash-group"><div class="dash-group-title">Dados de vida</div><div class="dash-pips">${hdHtml}</div></div>` : ""}
+      ${slotsHtml ? `<div class="dash-group"><div class="dash-group-title">Espaços de magia</div><div class="dash-pips">${slotsHtml}</div></div>` : ""}
+      ${resHtml ? `<div class="dash-group"><div class="dash-group-title">Recursos de classe</div><div class="dash-pips">${resHtml}</div></div>` : ""}
+    </div>` : ""}
+    <div class="dash-row"><div class="dash-group"><div class="dash-group-title">Condições ativas</div><div class="dash-conditions">${condHtml}</div></div></div>`;
+  $("dash-hp-input")?.addEventListener("change", () => {
+    character.hpCurrent = Number($("dash-hp-input").value) || 0;
+    saveCharacter(character); recalc();
+  });
 }
 function slotRowFromTable(rec, level) {
   for (const g of rec?.classTableGroups || []) {
@@ -1488,13 +1845,36 @@ function renderSpellResources(msi) {
     if (p.ability) { pips.push(["CD", spellDc(proficiency(totalLevel()), p.abilityMod)]); pips.push(["Ataque", fmt(spellAttack(proficiency(totalLevel()), p.abilityMod))]); }
     return `<div class="spell-res-class"><b>${esc(p.classLabel)}</b><span>${esc(p.label)}${p.ability ? ` · ${ABILITY_NAMES[p.ability]}` : ""}</span>${pips.length ? `<div class="spell-res-pips">${pips.map(([k, v]) => `<div><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>` : ""}</div>`;
   }).join("");
-  const slotBoxes = (slots || []).map((n, i) => n ? `<div class="slot-box"><span>${i + 1}º nível</span><b>${n}</b></div>` : "").join("");
-  const pactBoxes = pactCasters.map((p) => p.pact ? `<div class="slot-box pact"><span>${esc(p.classLabel)} · Pacto ${p.pact.level}º</span><b>${p.pact.count}</b></div>` : "").join("");
+  const slotPips = (n, i) => { const used = Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0); return Array.from({ length: n }, (_, p) => `<span class="resource-pip${p < used ? " used" : ""}" data-slot-pip="${i}:${p}"></span>`).join(""); };
+  const slotBoxes = (slots || []).map((n, i) => n ? `<div class="slot-box"><span>${i + 1}º nível</span><b>${n - Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0)}/${n}</b><div class="resource-pips">${slotPips(n, i)}</div></div>` : "").join("");
+  const pactPips = (n) => { const used = Math.min(n, Number(character.pactSlotsUsed) || 0); return Array.from({ length: n }, (_, p) => `<span class="resource-pip${p < used ? " used" : ""}" data-pact-pip="${p}"></span>`).join(""); };
+  const pactBoxes = pactCasters.map((p) => p.pact ? `<div class="slot-box pact"><span>${esc(p.classLabel)} · Pacto ${p.pact.level}º</span><b>${p.pact.count - Math.min(p.pact.count, Number(character.pactSlotsUsed) || 0)}/${p.pact.count}</b><div class="resource-pips">${pactPips(p.pact.count)}</div></div>` : "").join("");
   box.innerHTML = `<section class="paper-card spell-resources">
     <div class="spell-res-head"><h3>Recursos de conjuração</h3>${multi && nonPact.length ? `<span>Multiclasse · nível de conjurador combinado ${casterLevel}</span>` : ""}</div>
     ${classCards}
-    ${slotBoxes || pactBoxes ? `<div class="slot-grid">${slotBoxes}${pactBoxes}</div>` : `<p class="muted">Sem espaços de magia neste nível.</p>`}
+    ${slotBoxes || pactBoxes ? `<div class="slot-grid">${slotBoxes}${pactBoxes}</div><div class="resource-actions no-print"><span class="muted">Clique nos quadrados pra marcar espaços usados.</span><button type="button" class="reset-btn" id="reset-spell-slots">🔄 Reset (descanso longo)</button></div>` : `<p class="muted">Sem espaços de magia neste nível.</p>`}
   </section>`;
+  box.querySelectorAll("[data-slot-pip]").forEach((p) => p.addEventListener("click", () => {
+    const [lvl, idx] = p.dataset.slotPip.split(":").map(Number);
+    const n = slots[lvl] || 0;
+    character.spellSlotsUsed = character.spellSlotsUsed || Array(9).fill(0);
+    const used = Math.min(n, Number(character.spellSlotsUsed[lvl]) || 0);
+    character.spellSlotsUsed[lvl] = Math.max(0, Math.min(n, idx < used ? idx : idx + 1));
+    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+  }));
+  box.querySelectorAll("[data-pact-pip]").forEach((p) => p.addEventListener("click", () => {
+    const idx = Number(p.dataset.pactPip);
+    const n = pactCasters[0]?.pact?.count || 0;
+    const used = Math.min(n, Number(character.pactSlotsUsed) || 0);
+    character.pactSlotsUsed = Math.max(0, Math.min(n, idx < used ? idx : idx + 1));
+    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+  }));
+  $("reset-spell-slots")?.addEventListener("click", () => {
+    character.spellSlotsUsed = Array(9).fill(0);
+    character.pactSlotsUsed = 0;
+    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+    toast("Espaços de magia restaurados.");
+  });
 }
 
 // ------------------------------------------------------------
@@ -1674,27 +2054,29 @@ function equipEntryLabel(e) {
   const q = e.qty && e.qty > 1 ? `${e.qty}× ` : "";
   return q + e.name + (e.cp ? ` (+${(e.cp / 100).toLocaleString("pt-BR")} po)` : "");
 }
-function renderStartingEquipment() {
-  const panel = $("starting-equipment"), body = $("starting-equipment-body");
+function renderStartingEquipment(panelId, bodyId, btnId) {
+  panelId = panelId || "starting-equipment"; bodyId = bodyId || "starting-equipment-body"; btnId = btnId || "apply-starting-equip";
+  const panel = $(panelId), body = $(bodyId);
   if (!panel || !body) return;
   const groups = startingEquipGroups();
-  if (!groups.length) { panel.classList.add("hidden"); return; }
+  if (!groups.length) { panel.classList.add("hidden"); body.innerHTML = `<p class="muted">Escolha uma classe e um background para ver o equipamento inicial.</p>`; return; }
+  panel.classList.remove("hidden");
   const store = character.choiceSelections.startingEquip || {};
   body.innerHTML = groups.map((g) => {
     const key = `${g.src}:${g.idx}`;
     const chosen = store[key] || (g.options[0] && g.options[0].letter);
     const fixedHtml = g.fixed.length ? `<div class="eq-fixed">${g.fixed.map((e) => `<span>${esc(equipEntryLabel(e))}</span>`).join("")}</div>` : "";
-    const optsHtml = g.options.length ? `<div class="eq-options">${g.options.map((o) => `<label class="eq-option${o.letter === chosen ? " on" : ""}"><input type="radio" name="eq-${esc(key)}" data-eq-choice="${esc(key)}" value="${esc(o.letter)}" ${o.letter === chosen ? "checked" : ""}><b>${esc(o.letter)}</b><span>${o.entries.map((e) => esc(equipEntryLabel(e))).join(", ") || "—"}</span></label>`).join("")}</div>` : "";
+    const optsHtml = g.options.length ? `<div class="eq-options">${g.options.map((o) => `<label class="eq-option${o.letter === chosen ? " on" : ""}"><input type="radio" name="eq-${esc(bodyId)}-${esc(key)}" data-eq-choice="${esc(key)}" value="${esc(o.letter)}" ${o.letter === chosen ? "checked" : ""}><b>${esc(o.letter)}</b><span>${o.entries.map((e) => esc(equipEntryLabel(e))).join(", ") || "—"}</span></label>`).join("")}</div>` : "";
     return `<div class="eq-group"><div class="eq-group-head">${esc(g.label)}${g.options.length ? " — escolha uma opção" : ""}</div>${fixedHtml}${optsHtml}</div>`;
-  }).join("") + `<div class="eq-actions"><button type="button" id="apply-starting-equip" class="add-btn">Adicionar ao inventário</button>${character.equipApplied ? '<span class="muted">Já adicionado uma vez.</span>' : ""}</div>`;
+  }).join("") + `<div class="eq-actions"><button type="button" id="${esc(btnId)}" class="add-btn">Adicionar ao inventário</button>${character.equipApplied ? '<span class="muted">Já adicionado uma vez.</span>' : ""}</div>`;
   body.querySelectorAll("[data-eq-choice]").forEach((r) => r.addEventListener("change", () => {
     character.choiceSelections.startingEquip = character.choiceSelections.startingEquip || {};
     character.choiceSelections.startingEquip[r.dataset.eqChoice] = r.value;
-    saveCharacter(character); renderStartingEquipment();
+    saveCharacter(character); renderStartingEquipment(panelId, bodyId, btnId);
   }));
-  $("apply-starting-equip")?.addEventListener("click", applyStartingEquipment);
+  $(btnId)?.addEventListener("click", () => applyStartingEquipment(panelId, bodyId, btnId));
 }
-function applyStartingEquipment() {
+function applyStartingEquipment(panelId, bodyId, btnId) {
   const groups = startingEquipGroups();
   const store = character.choiceSelections.startingEquip || {};
   let cp = 0, added = 0;
@@ -1725,17 +2107,47 @@ function applyStartingEquipment() {
   if (cp > 0) character.inventory.push({ name: `Moedas iniciais: ${(cp / 100).toLocaleString("pt-BR")} po`, qty: 1, meta: "" });
   character.equipApplied = true;
   saveCharacter(character);
-  renderInventory(); renderStartingEquipment();
+  renderInventory(); renderStartingEquipment(panelId, bodyId, btnId);
   toast(`${added} item(ns)${cp ? ` + ${(cp / 100).toLocaleString("pt-BR")} po` : ""} no inventário.`);
 }
 
-function renderDeath() {
+// Só aparece quando os PV atuais chegam a 0 — regra 5e de "morrendo".
+// Nat 20 = recupera 1 PV e volta à consciência; nat 1 = conta como 2
+// falhas; 3 sucessos = estabilizado; 3 falhas = morto.
+function renderDeath(c) {
+  const box = $("death-panel");
+  if (!box) return;
+  const maxHp = c ? c.hp : calc().hp;
+  const curHp = character.hpCurrent == null ? maxHp : Number(character.hpCurrent) || 0;
+  if (curHp > 0) { box.className = ""; box.innerHTML = ""; return; }
   const d = character.deathSaves || { success: 0, failure: 0 };
-  document.querySelectorAll("[data-death]").forEach((b) => {
+  const stable = d.success >= 3, dead = d.failure >= 3;
+  box.className = "death death-critical";
+  const pipRow = (label, key, n) => `<div class="death-row"><span>${label}</span>${Array.from({ length: 3 }, (_, i) => `<button type="button" class="death-pip${i < n ? " on" : ""}" data-death="${key}${i}">${i < n ? "●" : "○"}</button>`).join("")}</div>`;
+  box.innerHTML = `<div class="death-title">⚠️ Testes de Resistência contra a Morte</div>
+    ${pipRow("Sucessos", "s", d.success)}
+    ${pipRow("Falhas", "f", d.failure)}
+    ${stable ? `<div class="death-status stable">ESTABILIZADO</div>` : dead ? `<div class="death-status dead">MORREU</div>` : ""}
+    <div class="death-actions">
+      ${!stable && !dead ? `<button type="button" id="death-roll">🎲 Rolar teste de morte</button>` : ""}
+      ${stable ? `<button type="button" id="death-reset">🔄 Reset (estabilizado)</button>` : ""}
+    </div>`;
+  box.querySelectorAll("[data-death]").forEach((b) => b.addEventListener("click", () => {
     const k = b.dataset.death[0] === "s" ? "success" : "failure", i = Number(b.dataset.death[1]);
-    b.textContent = i < d[k] ? "●" : "○";
-    b.classList.toggle("on", i < d[k]);
-    b.onclick = () => { d[k] = i < d[k] ? i : i + 1; if (d[k] > 3) d[k] = 0; character.deathSaves = d; saveCharacter(character); renderDeath(); };
+    d[k] = i < d[k] ? i : i + 1;
+    character.deathSaves = d; saveCharacter(character); recalc();
+  }));
+  $("death-roll")?.addEventListener("click", () => {
+    const roll = rollDie(20);
+    if (roll === 20) { d.success = 0; d.failure = 0; character.hpCurrent = 1; toast("Rolou 20 natural! Recupera 1 PV e volta à consciência."); }
+    else if (roll === 1) { d.failure = Math.min(3, d.failure + 2); toast("Rolou 1 natural — conta como 2 falhas."); }
+    else if (roll >= 10) { d.success = Math.min(3, d.success + 1); toast(`Rolou ${roll} — sucesso (CD 10).`); }
+    else { d.failure = Math.min(3, d.failure + 1); toast(`Rolou ${roll} — falha (CD 10).`); }
+    character.deathSaves = d; saveCharacter(character); recalc();
+  });
+  $("death-reset")?.addEventListener("click", () => {
+    character.deathSaves = { success: 0, failure: 0 };
+    saveCharacter(character); recalc();
   });
 }
 
@@ -1821,6 +2233,163 @@ async function renderCompendium() {
 }
 
 // ------------------------------------------------------------
+// Notas de sessão / journal
+// ------------------------------------------------------------
+function todayIso() { return new Date().toISOString().slice(0, 10); }
+function renderJournal() {
+  const box = $("journal-list");
+  if (!box) return;
+  const list = [...(character.journal || [])].sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")) || String(b.id).localeCompare(String(a.id)));
+  if (!list.length) { box.innerHTML = `<div class="journal-empty">Nenhuma nota ainda. Clique em "+ Nova sessão" pra começar.</div>`; return; }
+  box.innerHTML = list.map((j) => `<article class="journal-entry" data-journal-id="${esc(j.id)}">
+    <div class="journal-entry-head"><b>${esc(j.title || "Sessão")}</b><span>${esc(j.date || "")}</span></div>
+    <div class="journal-entry-body">${esc(j.text || "")}</div>
+    <div class="journal-entry-actions no-print"><button type="button" data-edit-journal="${esc(j.id)}">📝 Editar</button><button type="button" data-delete-journal="${esc(j.id)}">🗑️ Deletar</button></div>
+  </article>`).join("");
+  box.querySelectorAll("[data-edit-journal]").forEach((b) => b.addEventListener("click", () => openJournalModal(b.dataset.editJournal)));
+  box.querySelectorAll("[data-delete-journal]").forEach((b) => b.addEventListener("click", () => {
+    if (!confirm("Apagar esta nota de sessão?")) return;
+    character.journal = (character.journal || []).filter((j) => j.id !== b.dataset.deleteJournal);
+    saveCharacter(character); renderJournal();
+  }));
+}
+function openJournalModal(id) {
+  const existing = id ? (character.journal || []).find((j) => j.id === id) : null;
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">NOTAS DE SESSÃO</span><h2>${existing ? "Editar nota" : "Nova nota de sessão"}</h2></div></div>
+    <div class="modal-body journal-edit">
+      <input id="journal-title" value="${esc(existing?.title || "")}" placeholder="Título (ex.: Sessão 5)">
+      <input id="journal-date" type="date" value="${esc(existing?.date || todayIso())}">
+      <textarea id="journal-text" placeholder="O que aconteceu nesta sessão…">${esc(existing?.text || "")}</textarea>
+      <div class="modal-actions"><button type="button" id="journal-cancel">Cancelar</button><button type="button" class="primary" id="journal-save">Salvar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("journal-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("journal-save").addEventListener("click", () => {
+    const title = $("journal-title").value.trim(), date = $("journal-date").value, text = $("journal-text").value;
+    if (existing) { existing.title = title; existing.date = date; existing.text = text; }
+    else { character.journal = character.journal || []; character.journal.push({ id: `j-${Date.now()}`, title, date, text }); }
+    saveCharacter(character); $("modal").classList.add("hidden"); renderJournal();
+    toast("Nota salva.");
+  });
+}
+function exportJournalText() {
+  const list = [...(character.journal || [])].sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+  if (!list.length) { toast("Nenhuma nota pra exportar."); return; }
+  const text = list.map((j) => `${j.title || "Sessão"} (${j.date || ""})\n${"-".repeat(30)}\n${j.text || ""}\n`).join("\n");
+  const blob = new Blob([text], { type: "text/plain" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = `${(character.name || "personagem").replace(/[^a-z0-9-_]+/gi, "_")}_notas.txt`; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+
+// ------------------------------------------------------------
+// Modificadores temporários (buffs/debuffs) em massa
+// ------------------------------------------------------------
+function renderBuffs() {
+  const box = $("buffs-list");
+  if (!box) return;
+  const list = character.buffs || [];
+  if (!list.length) { box.innerHTML = `<div class="buffs-empty">Nenhum modificador ativo.</div>`; return; }
+  box.innerHTML = list.map((b) => `<div class="buff-row" data-buff-id="${esc(b.id)}">
+    <div><b>${esc(b.label || "Modificador")}</b><small>${(b.abilities || []).map((a) => ABILITY_NAMES[a]).join(", ") || "—"}</small></div>
+    <div class="buff-value ${b.value >= 0 ? "pos" : "neg"}">${fmt(b.value)}</div>
+    <div class="buff-duration">${b.duration == null ? "permanente" : `${b.duration} rodada(s)`}</div>
+    <button type="button" class="remove-btn no-print" data-remove-buff="${esc(b.id)}" title="Remover">×</button>
+  </div>`).join("");
+  box.querySelectorAll("[data-remove-buff]").forEach((btn) => btn.addEventListener("click", () => {
+    character.buffs = (character.buffs || []).filter((b) => b.id !== btn.dataset.removeBuff);
+    saveCharacter(character); recalc();
+  }));
+}
+function openBuffModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">FERRAMENTA</span><h2>Aplicar Modificador</h2><p class="muted">Útil pra buffs/debuffs temporários (poção, magia, exaustão…). Afeta os atributos escolhidos, e tudo que depende deles (modificador, perícias, salvamentos, CD) recalcula automaticamente.</p></div></div>
+    <div class="modal-body">
+      <label class="buff-field">Nome do efeito<input id="buff-label" type="text" placeholder="Ex.: Poção de Força do Gigante"></label>
+      <label class="buff-field">Atributos afetados
+        <div class="buff-abilities">${ABILITIES.map((a) => `<label><input type="checkbox" data-buff-ability="${a}"> ${ABILITY_NAMES[a]}</label>`).join("")}</div>
+      </label>
+      <label class="buff-field">Valor (use negativo pra debuff)<input id="buff-value" type="number" value="2"></label>
+      <label class="buff-field">Duração em rodadas (vazio = permanente, até remover manualmente)<input id="buff-duration" type="number" min="1" placeholder="permanente"></label>
+      <div class="modal-actions"><button type="button" id="buff-cancel">Cancelar</button><button type="button" class="primary" id="buff-apply">Aplicar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("buff-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("buff-apply").addEventListener("click", () => {
+    const abilities = [...$("modal-content").querySelectorAll("[data-buff-ability]:checked")].map((c) => c.dataset.buffAbility);
+    const value = Number($("buff-value").value) || 0;
+    if (!abilities.length || !value) { toast("Escolha ao menos um atributo e um valor diferente de zero."); return; }
+    const duration = Number($("buff-duration").value) || null;
+    character.buffs = character.buffs || [];
+    character.buffs.push({ id: `buff-${Date.now()}`, label: $("buff-label").value.trim() || "Modificador", abilities, value, duration: duration && duration > 0 ? duration : null });
+    saveCharacter(character);
+    $("modal").classList.add("hidden");
+    recalc();
+    toast("Modificador aplicado.");
+  });
+}
+
+// ------------------------------------------------------------
+// Templates de personagem — construções salvas pra reaproveitar
+// ------------------------------------------------------------
+function templateSnapshot() {
+  return {
+    edition: character.edition, content: character.content, abilityMode: character.abilityMode,
+    classId: character.classId, subclassId: character.subclassId, raceId: character.raceId, backgroundId: character.backgroundId,
+    multiclasses: character.multiclasses, scores: character.scores,
+    choiceSelections: character.choiceSelections, manualSkillProficiencies: character.manualSkillProficiencies,
+    skillExpertise: character.skillExpertise, level: character.level,
+  };
+}
+function templateSummary(t) {
+  const cls = manifest().find((x) => x.id === t.classId);
+  const race = manifest().find((x) => x.id === t.raceId);
+  return `${race ? titleOf(race) : "—"} · ${cls ? titleOf(cls) : "—"} · nível ${t.level || 1}`;
+}
+function openTemplatesModal() {
+  const list = getTemplates();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">MODELOS</span><h2>Meus Modelos</h2><p class="muted">Salve a construção atual (classe, subclasse, espécie, background, atributos e escolhas) como modelo reaproveitável — não inclui nome, PV atual nem inventário específico.</p></div></div>
+    <div class="modal-body">
+      <div class="template-grid" id="template-grid">${list.length ? list.map((t) => `<div class="template-card" data-template-id="${esc(t.id)}"><b>${esc(t.name)}</b><p>${esc(templateSummary(t))}</p><div class="template-card-actions"><button type="button" class="primary" data-use-template="${esc(t.id)}">Usar</button><button type="button" data-delete-template="${esc(t.id)}">Deletar</button></div></div>`).join("") : `<div class="template-empty">Nenhum modelo salvo ainda.</div>`}</div>
+      <div class="template-save-row"><input id="template-name" placeholder="Nome do novo modelo (ex.: Guerreiro Básico)"><button type="button" class="primary" id="template-save">💾 Salvar como modelo</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("template-save").addEventListener("click", () => {
+    const name = $("template-name").value.trim();
+    if (!name) { toast("Dê um nome ao modelo."); return; }
+    if (!refs.class && !refs.race) { toast("Escolha ao menos uma classe ou espécie antes de salvar."); return; }
+    const arr = getTemplates();
+    arr.push({ id: `tpl-${Date.now()}`, name, ...templateSnapshot() });
+    saveTemplates(arr);
+    toast(`Modelo "${name}" salvo.`);
+    openTemplatesModal();
+  });
+  $("modal-content").querySelectorAll("[data-use-template]").forEach((b) => b.addEventListener("click", async () => {
+    const t = getTemplates().find((x) => x.id === b.dataset.useTemplate);
+    if (!t) return;
+    const f = fresh();
+    character = {
+      ...character, ...f,
+      name: character.name, hpCurrent: null, hpTemp: 0, inventory: [], attacks: character.attacks, preparedSpells: [],
+      edition: t.edition, content: t.content, abilityMode: t.abilityMode,
+      classId: t.classId, subclassId: t.subclassId, raceId: t.raceId, backgroundId: t.backgroundId,
+      multiclasses: t.multiclasses || [], scores: { ...f.scores, ...(t.scores || {}) },
+      choiceSelections: t.choiceSelections || f.choiceSelections, manualSkillProficiencies: t.manualSkillProficiencies || [],
+      skillExpertise: t.skillExpertise || [], level: t.level || 1,
+    };
+    $("edition").value = character.edition; $("content").value = character.content; $("level").value = character.level;
+    saveCharacter(character);
+    $("modal").classList.add("hidden");
+    await refreshChoices();
+    toast(`Modelo "${t.name}" aplicado.`);
+  }));
+  $("modal-content").querySelectorAll("[data-delete-template]").forEach((b) => b.addEventListener("click", () => {
+    if (!confirm("Apagar este modelo?")) return;
+    saveTemplates(getTemplates().filter((x) => x.id !== b.dataset.deleteTemplate));
+    openTemplatesModal();
+  }));
+}
+
+// ------------------------------------------------------------
 // Ciclo de vida
 // ------------------------------------------------------------
 function applyLoaded(c) {
@@ -1831,7 +2400,10 @@ function applyLoaded(c) {
     deathSaves: { ...f.deathSaves, ...(c?.deathSaves || {}) },
     inventory: Array.isArray(c?.inventory) ? c.inventory : [],
     preparedSpells: Array.isArray(c?.preparedSpells) ? c.preparedSpells : [],
-    attacks: Array.isArray(c?.attacks) ? c.attacks : [],
+    // Ataques salvos antes do cálculo automático (só bônus/dano em texto
+    // livre) continuam mostrando o texto digitado — viram modo "manual"
+    // em vez de recalcular do zero e perder o que a pessoa já tinha escrito.
+    attacks: Array.isArray(c?.attacks) ? c.attacks.map((a) => ({ abilityMode: a?.bonus && !a?.abilityMode ? "manual" : "str", proficient: false, itemBonus: 0, ...a })) : [],
     multiclasses: Array.isArray(c?.multiclasses)
       ? c.multiclasses.map((m) => ({ classId: m?.classId || "", subclassId: m?.subclassId || "", level: Math.max(1, Math.min(19, Number(m?.level) || 1)) }))
       : [],
@@ -1839,6 +2411,13 @@ function applyLoaded(c) {
     coins: { ...f.coins, ...(c?.coins || {}) },
     choiceSelections: { ...f.choiceSelections, ...(c?.choiceSelections || {}), abilityChoices: { ...f.choiceSelections.abilityChoices, ...(c?.choiceSelections?.abilityChoices || {}) } },
     manualSkillProficiencies: Array.isArray(c?.manualSkillProficiencies) ? c.manualSkillProficiencies : [],
+    hitDiceUsed: { ...(c?.hitDiceUsed || {}) },
+    resourceUsage: { ...(c?.resourceUsage || {}) },
+    spellSlotsUsed: Array.isArray(c?.spellSlotsUsed) ? Array.from({ length: 9 }, (_, i) => Number(c.spellSlotsUsed[i]) || 0) : Array(9).fill(0),
+    pactSlotsUsed: Number(c?.pactSlotsUsed) || 0,
+    conditions: Array.isArray(c?.conditions) ? c.conditions : [],
+    journal: Array.isArray(c?.journal) ? c.journal : [],
+    buffs: Array.isArray(c?.buffs) ? c.buffs : [],
   };
   $("edition").value = character.edition;
   $("content").value = character.content;
@@ -1986,7 +2565,7 @@ async function buildOfficialSheet() {
           <div class="off-oval"><span>Tamanho</span><b>${esc(offSizeLabel())}</b></div>
           <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
         </div>
-        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.bonus || "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
+        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
         ${offBox("Características de Classe", offFeatureLines([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]), "off-tall")}
       </div>
     </div>
@@ -2074,6 +2653,10 @@ function renderWizardSteps() {
 async function renderWizardPickStep(step) {
   const body = $("wizard-body");
   if (!body) return;
+  if (step.type === "subclass" && !refs.class) {
+    body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p><div class="wizard-current">Escolha uma classe no passo anterior antes de escolher a subclasse. Você pode pular este passo e escolher depois, no modo livre.</div>`;
+    return;
+  }
   const current = refs[step.type];
   body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
     <div class="wizard-current${current ? " picked" : ""}">${current ? `Selecionado: <strong>${esc(titleOf(current))}</strong> ${sourceTag(current)}` : "Nada selecionado ainda."}</div>
@@ -2090,6 +2673,53 @@ async function renderWizardPickStep(step) {
   };
   $("wizard-search")?.addEventListener("input", render);
   render();
+}
+function renderWizardLevelStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  const lvl = Math.max(1, Number(character.level) || 1);
+  const pb = proficiency(lvl);
+  const hd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
+  const spellInfo = refs.class ? spellcastingInfoFor(details.classRec, details.subclassRec, lvl) : null;
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
+    <div class="wizard-level-box">
+      <input id="wizard-level-input" type="number" min="1" max="20" value="${lvl}">
+      <div class="wizard-level-summary">
+        <div>Pontos de vida: <b>d${hd}${lvl > 1 ? ` + ${lvl - 1}× média` : ""} + modificador de Constituição por nível</b></div>
+        <div>Bônus de proficiência: <b>${fmt(pb)}</b></div>
+        ${spellInfo ? `<div>Conjuração: <b>${esc(spellInfo.label)}${spellInfo.slots ? ` · espaços até ${spellInfo.slots.filter(Boolean).length}º nível` : spellInfo.pact ? ` · ${spellInfo.pact.count} espaços de Pacto (${spellInfo.pact.level}º nível)` : ""}</b></div>` : ""}
+      </div>
+    </div>
+    <p class="muted" style="margin-top:10px">As características desbloqueadas até este nível aparecem na aba "Características" depois de concluir o assistente.</p>`;
+  $("wizard-level-input").addEventListener("input", () => {
+    character.level = Math.max(1, Math.min(20, Number($("wizard-level-input").value) || 1));
+    $("level").value = character.level;
+    saveCharacter(character); recalc();
+    renderWizardLevelStep(step);
+  });
+}
+function renderWizardMulticlassStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
+    <div class="multiclass-head"><div><span>Classes adicionais</span><small>Cada classe extra tem seu próprio nível e subclasse.</small></div>
+    <button class="add-btn" type="button" id="wizard-add-multiclass">+ Adicionar classe</button></div>
+    <div id="wizard-multiclass-list" class="multiclass-list"></div>`;
+  renderAllMulticlasses();
+  $("wizard-add-multiclass").addEventListener("click", async () => {
+    if (totalLevel() >= 20) { toast("O personagem já está no nível 20."); return; }
+    character.multiclasses = character.multiclasses || [];
+    character.multiclasses.push({ classId: "", subclassId: "", level: 1 });
+    saveCharacter(character);
+    resolveMulticlassRefs();
+    renderAllMulticlasses();
+  });
+}
+function renderWizardEquipmentStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p><div id="wizard-starting-equipment"><div id="wizard-starting-equipment-body"></div></div>`;
+  renderStartingEquipment("wizard-starting-equipment", "wizard-starting-equipment-body", "wizard-apply-starting-equip");
 }
 function renderWizardAbilitiesStep(step) {
   const body = $("wizard-body");
@@ -2108,13 +2738,17 @@ function renderWizardAbilitiesStep(step) {
 function renderWizardReviewStep(step) {
   const body = $("wizard-body");
   if (!body) return;
-  const rows = [["Espécie", refs.race], ["Classe", refs.class], ["Background", refs.background]];
+  const rows = [["Espécie", refs.race], ["Classe", refs.class], ["Subclasse", refs.subclass], ["Background", refs.background]];
+  const mcLine = (refs.multiclasses || []).filter((m) => m.classEntry).map((m) => `${titleOf(m.classEntry)} (nível ${m.level})`).join(", ");
+  const c = calc();
   body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
-    <div class="wizard-review-grid">${rows.map(([label, e]) => `<div class="identity-row"><span>${esc(label)}</span><strong>${e ? esc(titleOf(e)) : "—"}</strong>${e ? sourceTag(e) : ""}</div>`).join("")}</div>
+    <div class="wizard-review-grid">${rows.map(([label, e]) => `<div class="identity-row"><span>${esc(label)}</span><strong>${e ? esc(titleOf(e)) : "—"}</strong>${e ? sourceTag(e) : ""}</div>`).join("")}
+    ${mcLine ? `<div class="identity-row"><span>Multiclasse</span><strong>${esc(mcLine)}</strong></div>` : ""}</div>
     <div class="two-input" style="margin-top:14px">
       <label>Nome do personagem<input id="wizard-name" value="${esc(character.name || "")}" placeholder="Nome do personagem"></label>
       <label>Nível<input id="wizard-level" type="number" min="1" max="20" value="${Number(character.level) || 1}"></label>
-    </div>`;
+    </div>
+    <div class="combat-big" style="margin-top:14px"><div><span>PV</span><b>${c.hp}</b></div><div><span>CA</span><b>${c.ac}</b></div><div><span>Prof.</span><b>${fmt(c.pb)}</b></div><div><span>Iniciativa</span><b>${fmt(c.init)}</b></div></div>`;
   $("wizard-name").addEventListener("input", () => { character.name = $("wizard-name").value; $("name").value = character.name; saveCharacter(character); });
   $("wizard-level").addEventListener("input", () => {
     character.level = Math.max(1, Math.min(20, Number($("wizard-level").value) || 1));
@@ -2126,9 +2760,16 @@ async function renderWizardStep() {
   const step = WIZARD_STEPS[wizardIndex];
   if ($("wizard-progress")) $("wizard-progress").textContent = `Passo ${wizardIndex + 1} de ${WIZARD_STEPS.length}`;
   if ($("wizard-back")) $("wizard-back").disabled = wizardIndex === 0;
-  if ($("wizard-next")) $("wizard-next").textContent = wizardIndex === WIZARD_STEPS.length - 1 ? "Concluir →" : "Próximo →";
+  if ($("wizard-next")) {
+    const isLast = wizardIndex === WIZARD_STEPS.length - 1;
+    const skippable = step.optional && (step.type ? !refs[step.type] : step.key === "multiclass" && !(character.multiclasses || []).length);
+    $("wizard-next").textContent = isLast ? "Concluir →" : skippable ? "Pular →" : "Próximo →";
+  }
   if (step.type) await renderWizardPickStep(step);
+  else if (step.key === "level") renderWizardLevelStep(step);
+  else if (step.key === "multiclass") renderWizardMulticlassStep(step);
   else if (step.key === "abilities") renderWizardAbilitiesStep(step);
+  else if (step.key === "equipment") renderWizardEquipmentStep(step);
   else if (step.key === "review") renderWizardReviewStep(step);
 }
 function finishWizard() {
@@ -2183,8 +2824,8 @@ function setup() {
   for (const k of ["cp", "pp", "pe", "po", "pl"]) {
     $(`coin-${k}`).addEventListener("input", () => { character.coins[k] = Math.max(0, Number($(`coin-${k}`).value) || 0); saveCharacter(character); });
   }
-  $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); });
-  $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); });
+  $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); renderDeath(calc()); renderDashboard(); });
+  $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); renderDashboard(); });
   $("ac-input").addEventListener("input", () => { character.ac = Number($("ac-input").value) || null; character.manualAc = $("ac-input").value !== ""; recalc(); });
   $("speed-input").addEventListener("input", () => { character.speed = $("speed-input").value || "30 ft"; character.manualSpeed = true; recalc(); });
   document.querySelectorAll(".change-choice").forEach((b) => b.addEventListener("click", () => openPicker(b.dataset.pick)));
@@ -2197,6 +2838,7 @@ function setup() {
     if (b.dataset.tab === "equipment") await equipmentTab();
     if (b.dataset.tab === "spells") await renderSpells();
     if (b.dataset.tab === "features") await renderFeatures();
+    if (b.dataset.tab === "notes") renderJournal();
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
   }));
@@ -2222,13 +2864,32 @@ function setup() {
     $("creator").classList.toggle("collapsed");
     $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";
   });
-  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", notes: "" }); renderAttacks(); });
+  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0 }); saveCharacter(character); renderAttacks(); });
+  $("add-condition")?.addEventListener("click", openConditionPicker);
+  $("next-round")?.addEventListener("click", advanceRound);
+  $("add-buff")?.addEventListener("click", openBuffModal);
+  $("add-journal")?.addEventListener("click", () => openJournalModal(null));
+  $("export-journal")?.addEventListener("click", exportJournalText);
+  $("templates-btn")?.addEventListener("click", openTemplatesModal);
+  $("feature-search")?.addEventListener("input", () => {
+    const q = $("feature-search").value.trim().toLowerCase();
+    document.querySelectorAll("#feature-list .feature").forEach((el) => {
+      el.classList.toggle("hidden", !!q && !el.textContent.toLowerCase().includes(q));
+    });
+    document.querySelectorAll("#feature-list .feature-group").forEach((g) => {
+      g.classList.toggle("hidden", !!q && ![...g.querySelectorAll(".feature")].some((f) => !f.classList.contains("hidden")));
+    });
+  });
+  $("dashboard-toggle")?.addEventListener("click", () => {
+    $("dashboard").classList.toggle("collapsed");
+    $("dashboard-toggle").textContent = $("dashboard").classList.contains("collapsed") ? "Expandir" : "Recolher";
+  });
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
-  $("new-character").addEventListener("click", () => { if (confirm("Começar um novo personagem?")) { clearCharacter(); applyLoaded(fresh()); toast("Novo personagem."); } });
+  $("new-character").addEventListener("click", () => { if (confirm("Começar um novo personagem?")) { clearCharacter(); attackRollMessages = {}; hdRollMessages = {}; applyLoaded(fresh()); toast("Novo personagem."); } });
   $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
   $("preview-pdf").addEventListener("click", openPdfPreview);
-  $("import-character").addEventListener("change", async (e) => { try { applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
+  $("import-character").addEventListener("change", async (e) => { try { attackRollMessages = {}; hdRollMessages = {}; applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
   $("modal-close").addEventListener("click", () => $("modal").classList.add("hidden"));
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) $("modal").classList.add("hidden"); });
   const refresh = $("refresh-data");
