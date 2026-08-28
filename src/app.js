@@ -18,9 +18,9 @@ const fresh = () => ({
   classId: "", subclassId: "", raceId: "", backgroundId: "",
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
-  hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 },
+  hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {} }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -988,6 +988,7 @@ async function recalc() {
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") renderFeatures();
   if (active === "spells") renderSpells();
+  if (active === "equipment" && eqCat === "inventory") renderStartingEquipment();
 }
 function renderSaves(c) {
   $("save-list").innerHTML = ABILITIES.map((a) => {
@@ -1262,8 +1263,113 @@ function addInventory(id) {
 async function equipmentTab() {
   $("inventory-panel").classList.toggle("hidden", eqCat !== "inventory");
   $("equipment-catalog").classList.toggle("hidden", eqCat === "inventory");
+  $("starting-equipment").classList.toggle("hidden", eqCat !== "inventory" || !startingEquipGroups().length);
   if (eqCat !== "inventory") await renderEquipmentCatalog();
-  else await renderInventory();
+  else { renderStartingEquipment(); await renderInventory(); }
+}
+
+// ------------------------------------------------------------
+// Equipamento inicial (classe + background) -> inventário
+// ------------------------------------------------------------
+const EQTYPE_LABEL = {
+  weaponMartial: "uma arma marcial", weaponSimple: "uma arma simples",
+  weaponMartialMelee: "uma arma marcial corpo a corpo", weaponMartialRanged: "uma arma marcial à distância",
+  weaponSimpleMelee: "uma arma simples corpo a corpo", weaponSimpleRanged: "uma arma simples à distância",
+  armorLight: "uma armadura leve", armorMedium: "uma armadura média", armorHeavy: "uma armadura pesada",
+  setGaming: "um conjunto de jogos", instrumentMusical: "um instrumento musical", toolArtisan: "ferramentas de artesão",
+};
+function parseEquipEntry(x) {
+  if (typeof x === "string") { const [n, s] = x.split("|"); return { kind: "item", name: n.trim(), ref: n.trim(), src: (s || "").trim().toLowerCase(), qty: 1 }; }
+  if (!x || typeof x !== "object") return null;
+  if (typeof x.value === "number") return { kind: "gold", cp: x.value };
+  if (x.equipmentType) return { kind: "placeholder", name: EQTYPE_LABEL[x.equipmentType] || String(x.equipmentType), qty: x.quantity || 1 };
+  if (x.item) {
+    const [n, s] = String(x.item).split("|");
+    const e = { kind: "item", name: (x.displayName || n).trim(), ref: n.trim(), src: (s || "").trim().toLowerCase(), qty: x.quantity || 1 };
+    if (typeof x.containsValue === "number") e.cp = x.containsValue;
+    return e;
+  }
+  if (x.special) return { kind: "special", name: String(x.special), qty: x.quantity || 1 };
+  return null;
+}
+const normEquipList = (arr) => (Array.isArray(arr) ? arr : []).map(parseEquipEntry).filter(Boolean);
+function equipGroupsFrom(se) {
+  const groups = [];
+  const handle = (g) => {
+    if (Array.isArray(g)) { if (g.length) groups.push({ options: [], fixed: normEquipList(g) }); return; }
+    if (!g || typeof g !== "object") return;
+    const opts = Object.keys(g).filter((k) => /^[a-cA-C]$/.test(k)).map((L) => ({ letter: L.toUpperCase(), entries: normEquipList(g[L]) }));
+    const fixed = normEquipList(g._ || []);
+    if (opts.length || fixed.length) groups.push({ options: opts, fixed });
+  };
+  if (Array.isArray(se)) se.forEach(handle);
+  else if (se && Array.isArray(se.defaultData)) se.defaultData.forEach(handle);
+  return groups;
+}
+function startingEquipGroups() {
+  const out = [];
+  if (details.classRec?.startingEquipment) equipGroupsFrom(details.classRec.startingEquipment).forEach((g, i) => out.push({ ...g, src: "class", label: titleOf(refs.class), idx: i }));
+  if (details.backgroundRec?.startingEquipment) equipGroupsFrom(details.backgroundRec.startingEquipment).forEach((g, i) => out.push({ ...g, src: "background", label: titleOf(refs.background), idx: i }));
+  return out;
+}
+function equipEntryLabel(e) {
+  if (e.kind === "gold") return `${(e.cp / 100).toLocaleString("pt-BR")} po`;
+  const q = e.qty && e.qty > 1 ? `${e.qty}× ` : "";
+  return q + e.name + (e.cp ? ` (+${(e.cp / 100).toLocaleString("pt-BR")} po)` : "");
+}
+function renderStartingEquipment() {
+  const panel = $("starting-equipment"), body = $("starting-equipment-body");
+  if (!panel || !body) return;
+  const groups = startingEquipGroups();
+  if (!groups.length) { panel.classList.add("hidden"); return; }
+  const store = character.choiceSelections.startingEquip || {};
+  body.innerHTML = groups.map((g) => {
+    const key = `${g.src}:${g.idx}`;
+    const chosen = store[key] || (g.options[0] && g.options[0].letter);
+    const fixedHtml = g.fixed.length ? `<div class="eq-fixed">${g.fixed.map((e) => `<span>${esc(equipEntryLabel(e))}</span>`).join("")}</div>` : "";
+    const optsHtml = g.options.length ? `<div class="eq-options">${g.options.map((o) => `<label class="eq-option${o.letter === chosen ? " on" : ""}"><input type="radio" name="eq-${esc(key)}" data-eq-choice="${esc(key)}" value="${esc(o.letter)}" ${o.letter === chosen ? "checked" : ""}><b>${esc(o.letter)}</b><span>${o.entries.map((e) => esc(equipEntryLabel(e))).join(", ") || "—"}</span></label>`).join("")}</div>` : "";
+    return `<div class="eq-group"><div class="eq-group-head">${esc(g.label)}${g.options.length ? " — escolha uma opção" : ""}</div>${fixedHtml}${optsHtml}</div>`;
+  }).join("") + `<div class="eq-actions"><button type="button" id="apply-starting-equip" class="add-btn">Adicionar ao inventário</button>${character.equipApplied ? '<span class="muted">Já adicionado uma vez.</span>' : ""}</div>`;
+  body.querySelectorAll("[data-eq-choice]").forEach((r) => r.addEventListener("change", () => {
+    character.choiceSelections.startingEquip = character.choiceSelections.startingEquip || {};
+    character.choiceSelections.startingEquip[r.dataset.eqChoice] = r.value;
+    saveCharacter(character); renderStartingEquipment();
+  }));
+  $("apply-starting-equip")?.addEventListener("click", applyStartingEquipment);
+}
+function applyStartingEquipment() {
+  const groups = startingEquipGroups();
+  const store = character.choiceSelections.startingEquip || {};
+  let cp = 0, added = 0;
+  const push = (e) => {
+    if (e.kind === "gold") { cp += e.cp; return; }
+    if (e.cp) cp += e.cp;
+    if (e.kind === "item") {
+      const key = (e.ref || e.name).toLowerCase();
+      const hit = manifest().find((x) => normType(x.type) === "item" && x.name.toLowerCase() === key && (!e.src || String(x.source || "").toLowerCase() === e.src))
+        || manifest().find((x) => normType(x.type) === "item" && x.name.toLowerCase() === key);
+      if (hit) {
+        const f = character.inventory.find((x) => x.id === hit.id);
+        if (f) f.qty = (f.qty || 1) + (e.qty || 1);
+        else character.inventory.push({ id: hit.id, name: titleOf(hit), qty: e.qty || 1, meta: labelMeta(hit) });
+        added++; return;
+      }
+    }
+    character.inventory.push({ name: e.name, qty: e.qty || 1, meta: e.kind === "placeholder" ? "à escolha" : "" });
+    added++;
+  };
+  groups.forEach((g) => {
+    g.fixed.forEach(push);
+    if (g.options.length) {
+      const letter = store[`${g.src}:${g.idx}`] || g.options[0].letter;
+      (g.options.find((o) => o.letter === letter) || g.options[0]).entries.forEach(push);
+    }
+  });
+  if (cp > 0) character.inventory.push({ name: `Moedas iniciais: ${(cp / 100).toLocaleString("pt-BR")} po`, qty: 1, meta: "" });
+  character.equipApplied = true;
+  saveCharacter(character);
+  renderInventory(); renderStartingEquipment();
+  toast(`${added} item(ns)${cp ? ` + ${(cp / 100).toLocaleString("pt-BR")} po` : ""} no inventário.`);
 }
 
 function renderDeath() {
