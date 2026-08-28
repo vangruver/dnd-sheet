@@ -630,6 +630,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   .details-textareas{grid-template-columns:1fr}
   .modal{padding:0}
   .modal-box{padding:18px;width:100%;max-height:100vh;height:100%;border-radius:0}
+  .pdf-preview-host{padding:10px;align-items:flex-start;overflow-x:auto}
   .modal-title h2{font-size:22px}
   .creator-title{flex-direction:column;align-items:flex-start;gap:10px}
   .creator-title>div{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%}
@@ -655,8 +656,15 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .preview-print{border:1px solid var(--red);background:linear-gradient(160deg,var(--red),var(--red-dim));color:#fff;border-radius:var(--radius-xs);padding:8px 12px;font-size:11px;font-weight:600}
 
 .official-sheet{display:none}
+/* Largura sempre fixa (tamanho A4 real), inclusive na pré-visualização em
+   tela: é uma página pra imprimir, não um layout que deveria "responsivar".
+   Encolher a página pra caber numa tela de celular (por %/vw) espremia as
+   caixas de conteúdo fixo (círculos de atributo, ovais) abaixo do tamanho
+   mínimo delas e ficava tudo sobreposto/cortado — pior que rolar de lado.
+   `flex-shrink:0` garante que o preview (dentro de `.pdf-preview-host`,
+   um flex) role em vez de espremer a página. */
 .off-page{
-  width:210mm;min-height:296mm;padding:8mm;box-sizing:border-box;
+  width:210mm;min-height:296mm;padding:8mm;box-sizing:border-box;flex-shrink:0;
   background:#fdfbf5;color:#1a1a1a;border:1px solid #999;border-radius:6px;
   font-family:var(--font);
 }
@@ -687,7 +695,13 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .off-hp-grid span{font-size:6.5px;text-transform:uppercase;color:#777}
 .off-death-row{display:flex;justify-content:space-between;align-items:center;font-size:7.5px;text-transform:uppercase;color:#666;margin:3px 0}
 
-.off-row2{display:grid;grid-template-columns:98px 158px 1fr;gap:6px;align-items:start;margin-bottom:7px}
+/* Colunas em fr (não px fixo): numa tela estreita como um celular a
+   ficha some, é impressa/exportada num container bem mais estreito que
+   os 210mm da página — com largura fixa em px as duas primeiras colunas
+   (círculos/caixas de atributo) comiam quase tudo e espremiam a 3ª
+   coluna (tabela de ataques etc.), ficando com tudo desalinhado. */
+.off-row2{display:grid;grid-template-columns:.62fr 1fr 3fr;gap:6px;align-items:start;margin-bottom:7px;min-width:0}
+.off-row2>.off-col{min-width:0}
 .off-col{display:flex;flex-direction:column;gap:6px}
 .off-circle{border:1.4px solid #3a3a3a;border-radius:50%;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#fff}
 .off-circle b{font:800 18px var(--font-head)}
