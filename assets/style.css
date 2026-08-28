@@ -336,6 +336,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .tag.official{border-color:rgba(91,155,213,.55);color:var(--blue)}
 .tag.brew{border-color:rgba(201,162,75,.55);color:var(--gold)}
 .tag.prerelease{border-color:rgba(168,124,224,.6);color:#a87ce0}
+.tag.external{border-color:rgba(84,185,129,.55);color:var(--green)}
 .tag.edition{border-color:var(--red-dim);color:var(--red-hi)}
 
 /* ---------- Atributos & perícias (aba) ---------- */

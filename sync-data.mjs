@@ -254,6 +254,9 @@ function extractObjectsFromJson(
         prerelease:
           sourceInfo.type === "prerelease",
 
+        external:
+          sourceInfo.type === "external",
+
         edition:
           sourceInfo.edition,
 
@@ -509,6 +512,45 @@ function isBrewLike(sourceInfo) {
   return sourceInfo.type === "homebrew" || sourceInfo.type === "prerelease";
 }
 
+// ============================================================
+// CONTEÚDO EXTERNO (adicionado manualmente, fora do GitHub)
+// ------------------------------------------------------------
+// data/raw/external/ guarda conversões que não vêm de nenhum dos 4
+// repositórios acima (ex.: um PDF de homebrew convertido pra JSON sob
+// pedido do usuário). Como main() apaga TODO o diretório data/ antes de
+// reconstruí-lo a partir dos clones git, esta pasta precisa ser copiada
+// pra fora (snapshotExternalContent) ANTES da limpeza e devolvida ao
+// lugar (restoreExternalContent) depois — senão sumiria a cada
+// sincronização, já que não existe em nenhum repositório remoto.
+// Mesma estrutura de pastas do homebrew/prerelease (uma por TYPE +
+// "collection/"), processada pela mesma processHomebrewRepository.
+// ============================================================
+
+const EXTERNAL_KEY = "external";
+const EXTERNAL_DIR_REL = path.join("raw", EXTERNAL_KEY);
+
+async function snapshotExternalContent() {
+  const directory = path.join(OUT, EXTERNAL_DIR_REL);
+  const files = await walkDirectory(directory);
+  const snapshot = [];
+
+  for (const file of files) {
+    const relative = path.relative(OUT, file);
+    const content = await fs.readFile(file, "utf8");
+    snapshot.push({ relative, content });
+  }
+
+  return snapshot;
+}
+
+async function restoreExternalContent(snapshot) {
+  for (const { relative, content } of snapshot) {
+    const destination = path.join(OUT, relative);
+    await makeDirectory(path.dirname(destination));
+    await fs.writeFile(destination, content, "utf8");
+  }
+}
+
 async function copyJsonFiles(
   repository,
   sourceInfo
@@ -599,6 +641,12 @@ async function main() {
   console.log(
     "Limpando sincronização anterior..."
   );
+
+  // Precisa vir ANTES de apagar OUT (abaixo) — é a única cópia do
+  // conteúdo externo que existe, já que ele não mora em nenhum repositório
+  // git (ver comentário em snapshotExternalContent).
+  const externalSnapshot =
+    await snapshotExternalContent();
 
   await removeDirectory(
     WORK
@@ -717,6 +765,49 @@ async function main() {
   }
 
   // ----------------------------------------------------------
+  // Restaurar conteúdo externo
+  // ----------------------------------------------------------
+  //
+  // Devolve o snapshot capturado no início pro lugar (data/raw/external/)
+  // e processa do mesmo jeito que homebrew/prerelease — sem "copiar" de
+  // um clone git, já que os arquivos já estão no destino final.
+  // ----------------------------------------------------------
+
+  console.log("");
+  console.log(
+    "Restaurando conteúdo externo (data/raw/external)..."
+  );
+
+  await restoreExternalContent(
+    externalSnapshot
+  );
+
+  const externalSourceInfo = {
+    key: EXTERNAL_KEY,
+    url: null,
+    type: "external",
+    edition: "both",
+  };
+
+  const externalEntities =
+    await processHomebrewRepository(
+      path.join(OUT, EXTERNAL_DIR_REL),
+      externalSourceInfo
+    );
+
+  allEntities.push(
+    ...externalEntities
+  );
+
+  repositoryInfo.push({
+    key: externalSourceInfo.key,
+    url: externalSourceInfo.url,
+    type: externalSourceInfo.type,
+    edition: externalSourceInfo.edition,
+    commit: null,
+  });
+
+  // ----------------------------------------------------------
   // Remover duplicatas
   // ----------------------------------------------------------
 
@@ -805,6 +896,11 @@ async function main() {
       homebrew:
         entities.filter(
           x => x.homebrew
+        ).length,
+
+      external:
+        entities.filter(
+          x => x.external
         ).length,
     },
 
@@ -916,6 +1012,12 @@ async function main() {
     // Conteúdo de pré-lançamento (Unearthed Arcana etc., ex.: o Psion
     // novo) — mesmo formato do homebrew, repositório separado.
     prerelease: buildBrewIndex("prerelease"),
+
+    // Conteúdo externo (data/raw/external/, ver snapshotExternalContent
+    // acima) — mesmo formato do homebrew; a ficha trata como homebrew pra
+    // efeito de filtro/visibilidade, mas com etiqueta própria ("Externo")
+    // pra deixar claro que não vem do TheGiddyLimit/homebrew.
+    external: buildBrewIndex("external"),
   };
 
   const versionFile =
@@ -961,8 +1063,12 @@ Oficial: ${manifest.totals.official}
 
 Homebrew: ${manifest.totals.homebrew}
 
-Não edite manualmente os arquivos deste diretório.
-Eles serão substituídos na próxima sincronização.
+Externo: ${manifest.totals.external}
+
+Não edite manualmente os arquivos deste diretório — EXCETO raw/external/,
+que é preservado a cada sincronização (ver snapshotExternalContent em
+sync-data.mjs). Qualquer outro arquivo será substituído na próxima
+sincronização.
 `;
 
   await fs.writeFile(
@@ -1001,6 +1107,10 @@ Eles serão substituídos na próxima sincronização.
 
   console.log(
     `Homebrew: ${manifest.totals.homebrew}`
+  );
+
+  console.log(
+    `Externo: ${manifest.totals.external}`
   );
 
   console.log("");
