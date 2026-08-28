@@ -477,19 +477,15 @@ async function detailModalHtml(e) {
     if (!hasLore && !traits.length) extra += `<p class="muted">Sem texto no banco para esta raça.</p>`;
   } else if (t === "class") {
     facts = factsHtml(classQuickFacts(r));
-    if (!hasLore) {
-      const feats = await findClassFeatures(e, 20).catch(() => []);
-      if (feats.length) extra += `<h3 class="codex-divider">Características da classe</h3>${featuresListHtml(feats)}`;
-      else extra += `<p class="muted">Sem texto narrativo no banco para esta classe.</p>`;
-    }
+    const feats = await findClassFeatures(e, 20).catch(() => []);
+    if (feats.length) extra += `<h3 class="codex-divider">O que cada nível dá</h3>${featuresListHtml(feats)}`;
+    else if (!hasLore) extra += `<p class="muted">Sem texto narrativo no banco para esta classe.</p>`;
     const subs = subclassesOf(e);
     if (subs.length) extra += `<h3 class="codex-divider">Subclasses (${subs.length})</h3><div class="codex-chip-row">${subs.map((s) => `<button class="codex-chip" data-codex-id="${esc(s.id)}">${esc(titleOf(s))} ${sourceTag(s)}</button>`).join("")}</div>`;
   } else if (t === "subclass") {
-    if (!hasLore) {
-      const feats = await findSubclassFeatures(e, 20).catch(() => []);
-      if (feats.length) extra += `<h3 class="codex-divider">Características da subclasse</h3>${featuresListHtml(feats)}`;
-      else extra += `<p class="muted">Sem texto no banco para esta subclasse.</p>`;
-    }
+    const feats = await findSubclassFeatures(e, 20).catch(() => []);
+    if (feats.length) extra += `<h3 class="codex-divider">O que cada nível dá</h3>${featuresListHtml(feats)}`;
+    else if (!hasLore) extra += `<p class="muted">Sem texto no banco para esta subclasse.</p>`;
   }
   return `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div>${facts}<div class="modal-body">${body}${extra}</div>`;
 }
