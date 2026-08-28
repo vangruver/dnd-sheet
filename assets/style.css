@@ -499,6 +499,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .lore-feature-head span{font-size:9px;color:var(--text-mut);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .lore-feature p:first-of-type{margin-top:2px}
 
+/* ---------- Assistente de subir de nível ---------- */
+.levelup-summary{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.levelup-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--border-2);color:var(--text-dim);border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600}
+.levelup-chip.action{background:var(--red-soft);border-color:var(--red-dim);color:var(--text);cursor:pointer}
+.levelup-chip.action:hover{border-color:var(--red)}
+
 .picker-controls{margin:16px 0;display:grid;grid-template-columns:1fr auto;gap:10px}
 .picker-controls input{border:1px solid var(--border-2);background:var(--inset);color:var(--text);padding:10px 12px;border-radius:var(--radius-xs)}
 .filter-pills{display:flex;gap:5px;flex-wrap:wrap}
