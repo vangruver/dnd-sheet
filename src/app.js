@@ -49,6 +49,7 @@ const fresh = () => ({
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
   conditions: [], journal: [], buffs: [], extraFeats: [],
+  turnActions: { action: false, bonus: false, reaction: false }, concentration: null,
   rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
   choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
@@ -1326,22 +1327,77 @@ function inferHP() {
   }
   return Math.max(1, hp);
 }
+// ------------------------------------------------------------
+// Armadura equipada — lê o item real do inventário (tipo LA/MA/HA/S do
+// 5etools) pra CA parar de depender só do Unarmored Defense ou do
+// campo manual. "equipped" é um booleano no próprio item do inventário.
+// ------------------------------------------------------------
+function invItemRecord(x) {
+  if (!x?.id) return null;
+  const e = manifest().find((m) => m.id === x.id);
+  return e ? (recordsForEntity(e)[0] || null) : null;
+}
+function armorTypeOf(r) {
+  if (!r) return null;
+  // Alguns registros trazem o tipo como "HA|XPHB" (sigla + fonte).
+  const type = String(r.type || "").split("|")[0];
+  if (type === "S" || /^shield$/i.test(String(r.name || "").trim())) return "shield";
+  if (r.armor && type === "LA") return "light";
+  if (r.armor && type === "MA") return "medium";
+  if (r.armor && type === "HA") return "heavy";
+  return null;
+}
+function equippedArmorInfo() {
+  let bodyArmor = null, shield = null;
+  for (const x of character.inventory || []) {
+    if (!x.equipped) continue;
+    const r = invItemRecord(x), at = armorTypeOf(r);
+    if (!at) continue;
+    if (at === "shield") { if (!shield) shield = { name: x.name, ac: Number(r.ac) || 2 }; }
+    else if (!bodyArmor) bodyArmor = { name: x.name, type: at, ac: Number(r.ac) || 10, strength: r.strength ? Number(String(r.strength).replace(/\D/g, "")) || null : null, stealth: !!r.stealth };
+  }
+  return { bodyArmor, shield };
+}
 function calc() {
   const lvl = totalLevel(), pb = proficiency(lvl);
-  const init = mod(effScore("dex"));
+  const dexMod = mod(effScore("dex"));
+  const init = dexMod;
   const passive = 10 + mod(effScore("wis")) + (character.skillProficiencies.includes("perception") ? pb : 0) + (character.skillExpertise.includes("perception") ? pb : 0);
   const hp = inferHP();
   const ud = character.auto?.unarmoredDefense;
-  const acAuto = 10 + mod(effScore("dex")) + (ud ? mod(effScore(ud)) : 0);
+  const equippedArmor = equippedArmorInfo();
+  let acAuto;
+  if (equippedArmor.bodyArmor) {
+    const dexPart = equippedArmor.bodyArmor.type === "light" ? dexMod : equippedArmor.bodyArmor.type === "medium" ? Math.min(2, dexMod) : 0;
+    acAuto = equippedArmor.bodyArmor.ac + dexPart;
+  } else {
+    acAuto = 10 + dexMod + (ud ? mod(effScore(ud)) : 0);
+  }
+  if (equippedArmor.shield) acAuto += equippedArmor.shield.ac;
   const ac = Number(character.ac) || acAuto;
   const speed = character.speed || character.auto?.speed || "30 ft";
   const sa = character.spellAbility || spellAbilityFrom(classInfo());
   const dc = sa ? spellDc(pb, mod(effScore(sa))) : null;
   const atk = sa ? spellAttack(pb, mod(effScore(sa))) : null;
-  return { lvl, pb, init, passive, hp, ac, acAuto, ud, speed, sa, dc, atk };
+  return { lvl, pb, init, passive, hp, ac, acAuto, ud, equippedArmor, speed, sa, dc, atk };
+}
+function acAutoTitle(c) {
+  if (character.ac) return "";
+  const eq = c.equippedArmor || {};
+  const shieldPart = eq.shield ? ` + ${eq.shield.name} ${fmt(eq.shield.ac)}` : "";
+  if (eq.bodyArmor) {
+    const dexMod = mod(effScore("dex"));
+    const dexPart = eq.bodyArmor.type === "light" ? dexMod : eq.bodyArmor.type === "medium" ? Math.min(2, dexMod) : 0;
+    const dexLabel = eq.bodyArmor.type === "heavy" ? "" : ` + DES ${fmt(dexPart)}${eq.bodyArmor.type === "medium" ? " (máx. +2)" : ""}`;
+    return `${eq.bodyArmor.name}: ${eq.bodyArmor.ac}${dexLabel}${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  }
+  if (c.ud) return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense)${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  if (eq.shield) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  return "";
 }
 async function recalc() {
   if (!character) return;
+  if ((character.inventory || []).some((x) => x.equipped)) { try { await ensureCatalog("item"); } catch (err) { console.warn("Catálogo de itens indisponível:", err); } }
   resolveMulticlassRefs();
   details.classRec = await firstRecord(refs.class);
   details.raceRec = await firstRecord(refs.race);
@@ -1360,7 +1416,7 @@ async function recalc() {
   $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
   const c = calc();
   renderAbilities();
-  const acTitle = !character.ac && c.ud ? `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense) = ${c.ac}. Defina uma CA manual pra sobrescrever (ex.: usando armadura ou escudo).` : "";
+  const acTitle = acAutoTitle(c);
   $("v-ac").textContent = c.ac; $("v-ac").title = acTitle; $("v-init").textContent = fmt(c.init); $("v-speed").textContent = c.speed; $("v-pb").textContent = fmt(c.pb);
   $("v-passive").textContent = c.passive; $("v-spell-dc").textContent = c.dc ?? "—"; $("v-spell-atk").textContent = c.atk != null ? fmt(c.atk) : "—";
   $("v-hp-max").textContent = c.hp;
@@ -1368,7 +1424,7 @@ async function recalc() {
   $("hp-temp").value = character.hpTemp || 0;
   $("combat-ac").textContent = c.ac; $("combat-ac").title = acTitle; $("combat-init").textContent = fmt(c.init); $("combat-speed").textContent = c.speed; $("combat-pb").textContent = fmt(c.pb);
   $("ac-input").value = character.ac ?? "";
-  $("ac-input").placeholder = c.ud ? `Auto: ${c.acAuto} (Unarmored Defense)` : `Auto: ${c.acAuto}`;
+  $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense)` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
   renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
@@ -1789,9 +1845,106 @@ function advanceRound() {
     if (b.duration <= 0) { expired++; return false; }
     return true;
   });
+  character.turnActions = { action: false, bonus: false, reaction: false };
   saveCharacter(character);
   recalc();
-  toast(expired ? `Rodada avançada. ${expired} efeito(s) expiraram.` : "Rodada avançada.");
+  toast(expired ? `Rodada avançada. ${expired} efeito(s) expiraram. Ação/Bônus/Reação liberados.` : "Rodada avançada. Ação/Bônus/Reação liberados.");
+}
+
+// ------------------------------------------------------------
+// Descanso curto/longo — restaura de uma vez os recursos que a regra
+// de cada um permite, em vez de precisar zerar dado de vida, espaços
+// de magia e recursos de classe um por um.
+// ------------------------------------------------------------
+function shortRest() {
+  const resources = computeClassResources();
+  resources.filter((r) => r.rest === "short").forEach((r) => setResourceUsed(r.id, 0, r.max));
+  const pactActive = multiclassSpellcasting()?.perClass.some((p) => p.progression === "pact");
+  if (pactActive) character.pactSlotsUsed = 0;
+  saveCharacter(character);
+  recalc();
+  toast("Descanso curto: recursos de descanso curto (e espaços de Pacto, se houver) restaurados. Gaste dados de vida manualmente se quiser curar.");
+}
+function longRest() {
+  const resources = computeClassResources();
+  resources.forEach((r) => setResourceUsed(r.id, 0, r.max));
+  character.spellSlotsUsed = Array(9).fill(0);
+  character.pactSlotsUsed = 0;
+  character.hitDiceUsed = character.hitDiceUsed || {};
+  hitDiceSources().forEach((s) => {
+    const used = Math.max(0, Number(character.hitDiceUsed[s.key]) || 0);
+    const recover = Math.max(1, Math.ceil(s.count / 2));
+    character.hitDiceUsed[s.key] = Math.max(0, used - recover);
+  });
+  character.hpCurrent = calc().hp;
+  character.deathSaves = { success: 0, failure: 0 };
+  hdRollMessages = {};
+  saveCharacter(character);
+  recalc();
+  toast("Descanso longo: PV cheios, metade dos dados de vida, espaços de magia/pacto e recursos de classe restaurados.");
+}
+
+// ------------------------------------------------------------
+// Rastreador de Ação / Ação Bônus / Reação — mesma lógica visual das
+// condições, zerado automaticamente por "avançar rodada".
+// ------------------------------------------------------------
+const TURN_ACTION_DEFS = [["action", "Ação"], ["bonus", "Ação Bônus"], ["reaction", "Reação"]];
+function renderTurnActions() {
+  character.turnActions = character.turnActions || { action: false, bonus: false, reaction: false };
+  const ta = character.turnActions;
+  document.querySelectorAll("[data-turn-actions-slot]").forEach((box) => {
+    box.innerHTML = TURN_ACTION_DEFS.map(([k, label]) => `<button type="button" class="turn-action-chip${ta[k] ? " used" : ""}" data-turn-action="${k}">
+      <b>${label}</b><small>${ta[k] ? "Gasta" : "Disponível"}</small></button>`).join("");
+    box.querySelectorAll("[data-turn-action]").forEach((b) => b.addEventListener("click", () => {
+      const k = b.dataset.turnAction;
+      character.turnActions[k] = !character.turnActions[k];
+      saveCharacter(character); renderTurnActions();
+    }));
+  });
+}
+
+// ------------------------------------------------------------
+// Concentração — badge com lembrete visual (fácil de esquecer em
+// combate). Guarda só o nome da magia; não impõe regra nenhuma, é
+// um lembrete.
+// ------------------------------------------------------------
+function renderConcentration() {
+  document.querySelectorAll("[data-concentration-slot]").forEach((box) => {
+    const c = character.concentration;
+    box.classList.toggle("active", !!c);
+    box.innerHTML = c
+      ? `<span class="concentration-label">🎯 Concentrando em <b>${esc(c.name)}</b></span><button type="button" data-clear-concentration title="Parar de concentrar">Parar</button>`
+      : `<button type="button" class="concentration-set-btn" data-open-concentration>🎯 Marcar concentração</button>`;
+    box.querySelectorAll("[data-open-concentration]").forEach((b) => b.addEventListener("click", openConcentrationPicker));
+    box.querySelectorAll("[data-clear-concentration]").forEach((b) => b.addEventListener("click", () => {
+      character.concentration = null; saveCharacter(character); renderConcentration(); toast("Concentração encerrada.");
+    }));
+  });
+}
+function setConcentration(name) {
+  name = String(name || "").trim();
+  if (!name) return;
+  character.concentration = { name };
+  saveCharacter(character);
+  renderConcentration();
+  $("modal").classList.add("hidden");
+  toast(`Concentrando em ${name}.`);
+}
+function openConcentrationPicker() {
+  const prepared = [...new Set((character.preparedSpells || []).map((k) => k.split("|")[0]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">COMBATE</span><h2>Concentração</h2><p class="muted">Sofrer dano exige um teste de Constituição (CD 10 ou metade do dano, o que for maior) pra manter a concentração — este badge é só um lembrete visual de qual magia está ativa.</p></div></div>
+    <div class="modal-body">
+      ${character.concentration ? `<button type="button" class="add-btn" data-clear-concentration style="margin-bottom:12px">Parar concentração atual (${esc(character.concentration.name)})</button>` : ""}
+      ${prepared.length ? `<div class="condition-picker">${prepared.map((n) => `<button type="button" class="condition-option" data-set-concentration="${esc(n)}"><b>${esc(n)}</b></button>`).join("")}</div>` : `<p class="muted">Nenhuma magia preparada/conhecida marcada ainda — digite o nome manualmente abaixo.</p>`}
+      <div class="condition-duration-row"><label>Ou digite o nome da magia<br><input id="concentration-custom" placeholder="Nome da magia"></label><button type="button" class="add-btn" id="concentration-custom-btn">Marcar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("modal-content").querySelectorAll("[data-set-concentration]").forEach((b) => b.addEventListener("click", () => setConcentration(b.dataset.setConcentration)));
+  $("modal-content").querySelectorAll("[data-clear-concentration]").forEach((b) => b.addEventListener("click", () => {
+    character.concentration = null; saveCharacter(character); renderConcentration(); $("modal").classList.add("hidden"); toast("Concentração encerrada.");
+  }));
+  $("concentration-custom-btn")?.addEventListener("click", () => setConcentration($("concentration-custom").value));
+  $("concentration-custom")?.addEventListener("keydown", (e) => { if (e.key === "Enter") setConcentration(e.target.value); });
 }
 
 // ------------------------------------------------------------
@@ -1837,6 +1990,10 @@ function renderDashboard() {
         <div class="dash-stat"><span>Desloc.</span><b>${esc(c.speed)}</b></div>
       </div>
     </div>
+    <div class="dash-row">
+      <div class="turn-actions" data-turn-actions-slot></div>
+      <div class="concentration-badge" data-concentration-slot></div>
+    </div>
     <div class="dash-hp">
       <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(curHp, maxHp)}" style="width:${pct}%"></div><div class="dash-hp-label">${curHp} / ${maxHp}${character.hpTemp ? ` (+${character.hpTemp} temp)` : ""}</div></div>
       <input id="dash-hp-input" type="number" value="${curHp}" title="Editar PV atual">
@@ -1851,6 +2008,7 @@ function renderDashboard() {
     character.hpCurrent = Number($("dash-hp-input").value) || 0;
     saveCharacter(character); recalc();
   });
+  renderTurnActions(); renderConcentration();
 }
 function slotRowFromTable(rec, level) {
   for (const g of rec?.classTableGroups || []) {
@@ -2075,9 +2233,37 @@ function weaponFamily(name) {
 }
 async function renderInventory() {
   const arr = character.inventory || [];
-  $("inventory-list").innerHTML = arr.length ? arr.map((x, i) => `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div><input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`).join("") : `<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
+  if (arr.some((x) => x.id)) { try { await ensureCatalog("item"); } catch (err) { console.warn("Catálogo de itens indisponível:", err); } }
+  $("inventory-list").innerHTML = arr.length ? arr.map((x, i) => {
+    const at = armorTypeOf(invItemRecord(x));
+    const equipBtn = at ? `<button type="button" class="equip-btn${x.equipped ? " on" : ""}" data-equip-inv="${i}" title="${at === "shield" ? "Escudo" : `Armadura ${{ light: "leve", medium: "média", heavy: "pesada" }[at]}`}">${x.equipped ? "✓ Equipada" : "Equipar"}</button>` : "";
+    return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
+  }).join("") : `<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
   $("inventory-list").querySelectorAll("[data-qty]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.qty)].qty = Number(i.value) || 0; saveCharacter(character); }));
-  $("inventory-list").querySelectorAll("[data-remove-inv]").forEach((b) => b.addEventListener("click", () => { character.inventory.splice(Number(b.dataset.removeInv), 1); renderInventory(); }));
+  $("inventory-list").querySelectorAll("[data-remove-inv]").forEach((b) => b.addEventListener("click", () => { character.inventory.splice(Number(b.dataset.removeInv), 1); saveCharacter(character); renderInventory(); recalc(); }));
+  $("inventory-list").querySelectorAll("[data-equip-inv]").forEach((b) => b.addEventListener("click", () => toggleEquip(Number(b.dataset.equipInv))));
+}
+// Equipar uma armadura de corpo/escudo desequipa automaticamente outro
+// item do mesmo grupo (só dá pra vestir uma armadura e usar um escudo
+// por vez) — sem isso a CA somaria peças incompatíveis.
+function toggleEquip(idx) {
+  const item = character.inventory?.[idx];
+  const at = armorTypeOf(invItemRecord(item));
+  if (!item || !at) return;
+  const turningOn = !item.equipped;
+  if (turningOn) {
+    const group = at === "shield" ? "shield" : "body";
+    character.inventory.forEach((x, i) => {
+      if (i === idx || !x.equipped) return;
+      const xat = armorTypeOf(invItemRecord(x));
+      if ((xat === "shield" ? "shield" : xat ? "body" : null) === group) x.equipped = false;
+    });
+  }
+  item.equipped = turningOn;
+  saveCharacter(character);
+  renderInventory();
+  recalc();
+  toast(turningOn ? `${item.name} equipada.` : `${item.name} desequipada.`);
 }
 async function renderEquipmentCatalog() {
   const box = $("equipment-list"), q = $("equipment-search").value.trim().toLowerCase(), wf = $("weapon-filter").value;
@@ -2582,6 +2768,8 @@ function applyLoaded(c) {
     extraFeats: Array.isArray(c?.extraFeats) ? c.extraFeats : [],
     rolledSet: Array.isArray(c?.rolledSet) ? c.rolledSet : null,
     arrayAssignment: { ...(c?.arrayAssignment || {}) },
+    turnActions: { ...f.turnActions, ...(c?.turnActions || {}) },
+    concentration: c?.concentration && c.concentration.name ? { name: String(c.concentration.name) } : null,
   };
   $("edition").value = character.edition;
   $("content").value = character.content;
@@ -3039,6 +3227,8 @@ function setup() {
   $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0 }); saveCharacter(character); renderAttacks(); });
   $("add-condition")?.addEventListener("click", openConditionPicker);
   $("next-round")?.addEventListener("click", advanceRound);
+  $("short-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso curto? Restaura os recursos que recuperam em descanso curto (e espaços de Pacto, se houver).")) shortRest(); });
+  $("long-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso longo? Restaura PV, metade dos dados de vida, espaços de magia/pacto e todos os recursos de classe.")) longRest(); });
   $("add-buff")?.addEventListener("click", openBuffModal);
   $("add-extra-feat")?.addEventListener("click", openExtraFeatPicker);
   $("add-journal")?.addEventListener("click", () => openJournalModal(null));

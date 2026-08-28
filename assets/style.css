@@ -452,10 +452,13 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .eq-option b{font:800 13px var(--font-head);color:var(--red-hi)}
 .eq-option input{accent-color:var(--red)}
 .eq-actions{display:flex;align-items:center;gap:10px;margin-top:6px}
-.inventory-row{display:grid;grid-template-columns:1fr 72px 30px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.inventory-row{display:grid;grid-template-columns:1fr auto 72px 30px;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
 .inventory-row strong{display:block;font-size:12px}
 .inventory-row small{font-size:9px;color:var(--text-mut)}
 .inventory-row input{width:100%;border:1px solid var(--border-2);background:var(--inset);color:var(--text);padding:6px;border-radius:var(--radius-xs)}
+.equip-btn{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text-mut);border-radius:var(--radius-xs);padding:6px 10px;font-size:10px;font-weight:600;white-space:nowrap}
+.equip-btn:hover{border-color:var(--green)}
+.equip-btn.on{border-color:var(--green);color:var(--green);background:rgba(84,185,129,.12)}
 .catalog-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .catalog-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;color:var(--text)}
 .catalog-card p,.pick-desc{font-size:10px;color:var(--text-dim);line-height:1.5}
@@ -677,6 +680,37 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .condition-option span{font-size:10px;color:var(--text-mut);line-height:1.4}
 .condition-duration-row{display:flex;align-items:center;gap:10px;margin-top:8px}
 .condition-duration-row input{width:80px;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:7px 9px}
+
+/* ============================================================
+   Descanso curto/longo
+   ============================================================ */
+.rest-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.rest-btn{font-size:13px;padding:10px 18px;border-radius:var(--radius-sm)}
+.rest-btn.short{border-color:var(--blue);color:var(--blue)}
+.rest-btn.short:hover{background:color-mix(in srgb,var(--blue) 14%,transparent)}
+.rest-btn.long{border-color:var(--gold);color:var(--gold)}
+.rest-btn.long:hover{background:color-mix(in srgb,var(--gold) 14%,transparent)}
+
+/* ============================================================
+   Turno atual — Ação / Ação Bônus / Reação
+   ============================================================ */
+.turn-actions{display:flex;gap:8px;flex-wrap:wrap}
+.turn-action-chip{display:flex;flex-direction:column;align-items:flex-start;gap:2px;background:var(--surface-3);border:1.5px solid var(--green);color:var(--text);border-radius:var(--radius-xs);padding:7px 12px;cursor:pointer;min-width:90px}
+.turn-action-chip b{font-size:12px}
+.turn-action-chip small{font-size:9px;color:var(--green);text-transform:uppercase;letter-spacing:.04em}
+.turn-action-chip.used{border-color:var(--border-2);opacity:.55}
+.turn-action-chip.used small{color:var(--text-mut)}
+
+/* ============================================================
+   Concentração
+   ============================================================ */
+.concentration-badge{display:flex;align-items:center;gap:8px;margin:8px 0}
+.concentration-badge.active{background:var(--red-soft);border:1px solid var(--red-dim);border-radius:20px;padding:7px 8px 7px 14px}
+.concentration-label{font-size:12px;font-weight:600;color:var(--text)}
+.concentration-label b{color:var(--red-hi)}
+.concentration-badge.active button{border:0;background:transparent;color:var(--red-hi);font-size:11px;font-weight:700;padding:4px 8px;cursor:pointer}
+.concentration-set-btn{border:1px dashed var(--border-2);background:transparent;color:var(--text-mut);border-radius:20px;padding:7px 14px;font-size:11px;cursor:pointer}
+.concentration-set-btn:hover{border-color:var(--red);color:var(--text)}
 
 /* ============================================================
    Ataques — cálculo automático

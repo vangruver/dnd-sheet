@@ -174,12 +174,15 @@
   </div></section>
 
   <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section>
+    <section class="paper-card full-span" id="rest-card"><h2>Descanso</h2><p class="muted">Restaura de uma vez os recursos que a regra de cada descanso permite — sem precisar zerar dado de vida, espaços de magia e recursos de classe um por um.</p><div class="rest-actions no-print"><button type="button" class="add-btn rest-btn short" id="short-rest-btn">🌙 Descanso Curto</button><button type="button" class="add-btn rest-btn long" id="long-rest-btn">🛌 Descanso Longo</button></div></section>
     <section class="paper-card full-span" id="resources-card"><h2>Recursos de Combate</h2><div id="hit-dice-tracker"></div><div id="class-resources"></div></section>
+    <section class="paper-card full-span" id="turn-card"><h2>Turno Atual</h2><p class="muted">O que já foi gasto nesta rodada — zera sozinho em "Avançar rodada".</p><div class="turn-actions" data-turn-actions-slot></div><div class="concentration-badge" data-concentration-slot></div></section>
     <section class="paper-card full-span" id="conditions-card"><h2>Condições Ativas</h2><div id="conditions-list" class="conditions-list"></div><div class="resource-actions no-print"><button class="add-btn" id="add-condition">+ Aplicar condição</button><button class="add-btn" id="next-round">▶ Avançar rodada</button></div></section>
   </div></section>
 
   <section class="tab-page" id="tab-spells"><div class="page-title"><h2>Magias</h2><p>A lista completa de magias da classe aparece por nível, filtrada pela edição escolhida. Use as bolinhas para marcar as magias preparadas/conhecidas.</p></div>
     <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias na lista</span><b id="spell-count">0</b></div></section>
+    <div class="concentration-badge no-print" data-concentration-slot></div>
     <div id="spell-resources"></div>
     <div id="spellbook-tabs" class="segmented no-print"></div>
     <div id="spellbook"></div>
