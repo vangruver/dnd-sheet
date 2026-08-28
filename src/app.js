@@ -2769,6 +2769,58 @@ function openTemplatesModal() {
 }
 
 // ------------------------------------------------------------
+// Assistente de "Subir de Nível" — em vez de só recalcular tudo em
+// silêncio quando o nível muda, mostra um resumo do que apareceu de
+// novo nesse nível específico (características de classe/subclasse,
+// ASI disponível, mudança nos espaços de magia), com atalho pras
+// abas onde dá pra terminar a escolha. Só a classe primária por
+// enquanto (o campo "Nível" do topo da ficha).
+// ------------------------------------------------------------
+async function openLevelUpModal(oldLevel, newLevel) {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">SUBIU DE NÍVEL</span><h2>Nível ${oldLevel} → ${newLevel}</h2><p class="muted">Carregando o que há de novo…</p></div></div>`;
+  $("modal").classList.remove("hidden");
+
+  const newFeats = [];
+  if (refs.class) {
+    const feats = await findClassFeatures(refs.class, newLevel).catch(() => []);
+    feats.filter((f) => f.level > oldLevel).forEach((f) => newFeats.push({ ...f, from: titleOf(refs.class) }));
+  }
+  if (refs.subclass) {
+    const feats = await findSubclassFeatures(refs.subclass, newLevel).catch(() => []);
+    feats.filter((f) => f.level > oldLevel).forEach((f) => newFeats.push({ ...f, from: titleOf(refs.subclass) }));
+  }
+  newFeats.sort((a, b) => a.level - b.level);
+
+  const gotAsi = newFeats.some((f) => /ability score improvement/i.test(f.name || ""));
+  const infoNew = spellcastingInfoFor(details.classRec, details.subclassRec, newLevel);
+  const infoOld = spellcastingInfoFor(details.classRec, details.subclassRec, oldLevel);
+  const slotsChanged = !!infoNew && (
+    (infoNew.slots || []).some((n, i) => (n || 0) > (infoOld?.slots?.[i] || 0)) ||
+    (infoNew.pact && (!infoOld?.pact || infoNew.pact.count > infoOld.pact.count || infoNew.pact.level > infoOld.pact.level)) ||
+    (infoNew.cantrips || 0) > (infoOld?.cantrips || 0)
+  );
+
+  const featsHtml = newFeats.length
+    ? `<div class="lore-features">${newFeats.map((f) => `<article class="lore-feature"><div class="lore-feature-head"><b>${esc(f.name)}</b><span>Nível ${esc(f.level)} · ${esc(f.from)}</span></div>${f.entries ? richText(f.entries) : "<p class='muted'>Sem texto no banco para esta característica.</p>"}</article>`).join("")}</div>`
+    : `<p class="muted">${refs.class ? "Nenhuma característica nova de classe/subclasse encontrada no banco pra este intervalo." : "Escolha uma classe pra ver as características ganhas em cada nível."}</p>`;
+
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">SUBIU DE NÍVEL</span><h2>Nível ${oldLevel} → ${newLevel}</h2><p class="muted">Resumo do que mudou — dá pra ajustar tudo depois, a qualquer momento, no modo livre.</p></div></div>
+    <div class="modal-body">
+      <div class="levelup-summary">
+        <span class="levelup-chip">+${newLevel - oldLevel} dado(s) de vida</span>
+        ${gotAsi ? `<button type="button" class="levelup-chip action" data-levelup-goto="abilities">⬆ Melhoria de atributo/talento disponível</button>` : ""}
+        ${slotsChanged ? `<button type="button" class="levelup-chip action" data-levelup-goto="spells">✨ Espaços de magia mudaram</button>` : ""}
+      </div>
+      <h3 class="codex-divider">Novas características</h3>
+      ${featsHtml}
+    </div>`;
+  $("modal-content").querySelectorAll("[data-levelup-goto]").forEach((b) => b.addEventListener("click", () => {
+    $("modal").classList.add("hidden");
+    document.querySelector(`.tab[data-tab="${b.dataset.levelupGoto}"]`)?.click();
+  }));
+}
+
+// ------------------------------------------------------------
 // Múltiplos personagens salvos — cada um vira um slot próprio no
 // localStorage (ver storage.js); esta modal lista, alterna, duplica,
 // renomeia e apaga os personagens salvos neste navegador.
@@ -3261,10 +3313,13 @@ function setup() {
   });
   $("content").addEventListener("change", () => { character.content = $("content").value; saveCharacter(character); refreshChoices(); });
   $("name").addEventListener("input", () => { character.name = $("name").value; saveCharacter(character); });
-  $("level").addEventListener("input", () => {
+  $("level").addEventListener("input", async () => {
     const extra = (character.multiclasses || []).reduce((n, m) => n + (Number(m.level) || 0), 0);
+    const oldLevel = Math.max(1, Number(character.level) || 1);
     character.level = Math.max(1, Math.min(20 - extra, Number($("level").value) || 1));
-    saveCharacter(character); recalc();
+    saveCharacter(character);
+    await recalc();
+    if (character.level > oldLevel) openLevelUpModal(oldLevel, character.level);
   });
   $("add-multiclass")?.addEventListener("click", async () => {
     if (totalLevel() >= 20) { toast("O personagem já está no nível 20."); return; }

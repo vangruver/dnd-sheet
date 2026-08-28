@@ -28,6 +28,10 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
 - **Assistente guiado completo**: espécie → classe → subclasse → nível → background → multiclasse
   (opcional) → atributos → equipamento inicial → revisão, com "voltar" e passos opcionais puláveis.
+- **Assistente de "Subir de Nível"**: ao aumentar o nível da classe primária, um resumo mostra o que
+  apareceu de novo naquele nível específico — características de classe/subclasse, se abriu uma
+  melhoria de atributo/talento (ASI) e se os espaços de magia mudaram — com atalho pras abas
+  relevantes.
 - **Dashboard "Quick View"** fixo no topo da ficha: PV com barra colorida (verde/amarelo/vermelho),
   CA, iniciativa, proficiência, espaços de magia, dados de vida, recursos de classe e condições
   ativas de relance — recolhível.
