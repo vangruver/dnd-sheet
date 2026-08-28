@@ -1,7 +1,7 @@
 import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
-  manifestEntries, isHomebrew as hb, isPrerelease as pre, normType, editionOf, currentVersionInfo,
+  manifestEntries, isHomebrew as hb, isPrerelease as pre, isExternal as ext, normType, editionOf, currentVersionInfo,
   descriptionEntries, matchesEdition, isReprinted,
 } from "./database.js";
 import { clearCache } from "./store.js";
@@ -60,9 +60,12 @@ const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add(
 const manifest = () => manifestEntries();
 const list = (t, q = "") => filterEntities(t, character.edition, character.content, q);
 const editionLabel = (x) => (editionOf(x) === "both" ? "2014/2024" : editionOf(x));
-const contentLabel = (x) => hb(x) ? "Homebrew" : pre(x) ? "Pré-lançamento" : "Oficial";
+// Externo (ver isExternal em database.js) é tratado como homebrew:true na
+// camada de dados — pra visibilidade/filtro ele é homebrew — mas ganha
+// etiqueta própria aqui ("Externo"), daí o check vir antes de hb(x).
+const contentLabel = (x) => ext(x) ? "Externo" : hb(x) ? "Homebrew" : pre(x) ? "Pré-lançamento" : "Oficial";
 const labelMeta = (x) => `${contentLabel(x)} · ${editionLabel(x)}${x?.source ? " · " + x.source : ""}`;
-const sourceTag = (x) => `<span class="tag ${hb(x) ? "brew" : pre(x) ? "prerelease" : "official"}">${contentLabel(x).toUpperCase()}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
+const sourceTag = (x) => `<span class="tag ${ext(x) ? "external" : hb(x) ? "brew" : pre(x) ? "prerelease" : "official"}">${contentLabel(x).toUpperCase()}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
 const titleOf = (x) => String(x?.name || "Sem nome");
 const typeLabel = (t) => ({ class: "Classe", subclass: "Subclasse", race: "Espécie/Raça", background: "Background", spell: "Magia", item: "Item", feat: "Talento", optionalfeature: "Opção", classFeature: "Característica", subclassFeature: "Característica" }[normType(t)] || t);
 

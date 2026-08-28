@@ -29,12 +29,20 @@
       "type": "prerelease",
       "edition": "both",
       "commit": "76c6b9fb6675322c3f0562d3127f3538d22fb1c8"
+    },
+    {
+      "key": "external",
+      "url": null,
+      "type": "external",
+      "edition": "both",
+      "commit": null
     }
   ],
   "totals": {
-    "entities": 71323,
-    "official": 11121,
-    "homebrew": 60202
+    "entities": 71328,
+    "official": 11153,
+    "homebrew": 60175,
+    "external": 32
   },
   "homebrew": {
     "classFiles": [
@@ -62,7 +70,6 @@
       "raw/homebrew/class/Casteliad; Shadow Assassin.json",
       "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v2.5).json",
       "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v4.0).json",
-      "raw/homebrew/class/D&D Wiki; Brawler.json",
       "raw/homebrew/class/D&D Wiki; Swashbuckler.json",
       "raw/homebrew/class/D&D Wiki; Warpriest.json",
       "raw/homebrew/class/D'Artagnan; Summoner.json",
@@ -666,7 +673,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 627,
+    "classFileCount": 626,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -1767,7 +1774,6 @@
         "raw/homebrew/class/CJ Leung; The Channeler.json",
         "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v2.5).json",
         "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v4.0).json",
-        "raw/homebrew/class/D&D Wiki; Brawler.json",
         "raw/homebrew/class/D&D Wiki; Swashbuckler.json",
         "raw/homebrew/class/D'Artagnan; Summoner.json",
         "raw/homebrew/class/DM_Havuhk; The Witch.json",
@@ -2429,6 +2435,32 @@
         "raw/prerelease/variantrule/Unearthed Arcana - Mass Combat.json",
         "raw/prerelease/variantrule/Unearthed Arcana - Three-Pillar Experience.json",
         "raw/prerelease/variantrule/Unearthed Arcana - Variant Rules.json"
+      ]
+    }
+  },
+  "external": {
+    "classFiles": [
+      "raw/external/class/D&D Wiki; Brawler.json",
+      "raw/external/subclass/KibblesTasty; Way of the Demon.json"
+    ],
+    "classFileCount": 2,
+    "raceFiles": [
+      "raw/external/race/ESKape_Key; Lefou.json"
+    ],
+    "raceFileCount": 1,
+    "filesByType": {
+      "item": [
+        "raw/external/race/ESKape_Key; Lefou.json"
+      ],
+      "spell": [],
+      "feat": [],
+      "background": [],
+      "optionalfeature": [
+        "raw/external/class/D&D Wiki; Brawler.json"
+      ],
+      "reward": [],
+      "variantrule": [
+        "raw/external/race/ESKape_Key; Lefou.json"
       ]
     }
   }

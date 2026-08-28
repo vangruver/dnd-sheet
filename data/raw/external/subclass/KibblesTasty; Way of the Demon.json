@@ -1,0 +1,122 @@
+{
+	"_meta": {
+		"sources": [
+			{
+				"json": "KTPP",
+				"abbreviation": "KTPP",
+				"full": "Kibbles' Playtest Packet",
+				"authors": ["KibblesTasty"],
+				"convertedBy": ["Claude", "ESKape_Key"],
+				"url": "https://www.gmbinder.com/share/-O_8txfQw10U-knAT2zP",
+				"version": "1.0.0"
+			}
+		],
+		"dateAdded": 1756108800,
+		"dateLastModified": 1756108800
+	},
+
+	"subclass": [
+		{
+			"name": "Way of the Demon",
+			"shortName": "Way of the Demon",
+			"source": "KTPP",
+			"page": 23,
+			"className": "Monk",
+			"classSource": "XPHB",
+			"subclassFeatures": [
+				"Demonic Techniques|Monk|XPHB|Way of the Demon|KTPP|3",
+				"Abyssal Passage|Monk|XPHB|Way of the Demon|KTPP|6",
+				"Asura Unleashed|Monk|XPHB|Way of the Demon|KTPP|11",
+				"Ultimate Rage|Monk|XPHB|Way of the Demon|KTPP|17"
+			],
+			"entries": [
+				"{@i Way of the Demon v1.0, by KibblesTasty. Originally published in Kibbles' Playtest Packet (gmbinder.com).}",
+				"Way of the Demon Monks are those that channel demonic power to unleash special techniques. These techniques are often vicious and brutal, relying on raw power. Using them may corrupt a Monk's Ki to something dark and impure, causing other Monks to shun them.",
+				"Many on this path have fallen to it out of a pursuit of power, a dark history, or a demonic nature, but even if their powers may seem evil, not all who wield it are evil themselves. Sometimes a righteous Monk will have acquired these powers from a strange path, such as sealing something demonic within themselves to protect the world from it, or being an inheritor of techniques they seek to use for good.",
+				"The corruption of the Ki sometimes leaves physical mutations or markings on practitioners, leaving various demonic marks. You can optionally roll on the Demonic Marks table below when you select this tradition.",
+				{
+					"type": "table",
+					"caption": "Demonic Marks",
+					"colLabels": ["d6", "Mark"],
+					"colStyles": ["col-2 text-center", "col-10"],
+					"rows": [
+						["1", "Your eyes gleam red."],
+						["2", "You grow small demonic horns."],
+						["3", "Your skin gains a red hue."],
+						["4", "You gain glowing markings on your body."],
+						["5", "Your body is warped, more closely resembling a demonic creature."],
+						["6", "Your hair becomes stiff and bristling."]
+					]
+				}
+			]
+		}
+	],
+
+	"subclassFeature": [
+		{
+			"name": "Demonic Techniques",
+			"source": "KTPP",
+			"page": 23,
+			"className": "Monk",
+			"classSource": "XPHB",
+			"subclassShortName": "Way of the Demon",
+			"subclassSource": "KTPP",
+			"level": 3,
+			"entries": [
+				"When you select this Way, you gain the ability to unleash your demonic arts into powerful techniques. As an action, you can perform any of the following techniques:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Demon Burst.} You unleash a wave of demonic energy. Each creature within 5 feet of you must make a Dexterity saving throw or take Necrotic damage equal to your Martial Arts die + your Wisdom modifier.",
+						"{@b Demon Punch.} You make an unarmed strike. On a hit, the damage is converted to Necrotic damage, and the target is knocked 5 feet away from you for each die of damage dealt by this attack.",
+						"{@b Demon Flare.} You unleash a flare of demonic fire at a creature within 30 feet, making a ranged weapon attack. On a hit, the target takes Fire damage equal to your unarmed strike."
+					]
+				},
+				"{@b Empowered Techniques.} When you use a Demonic Technique, you can empower it by spending 1 ki point, increasing the damage dealt by one roll of your Martial Arts die.",
+				"{@b Quick or Charged Techniques.} When you reach 5th level and gain the Extra Attack feature, you can either use any Demonic Technique you know as an attack as part of the Attack action, or as an action, charging it. When it is charged, you can add two rolls of your Martial Arts die to the damage dealt (potentially three rolls if it is charged and empowered with a ki point).",
+				"{@b Charged & Empowered.} When a technique is both Charged and Empowered, it deals half damage even if the target succeeds on its saving throw against it, or the attack roll misses."
+			]
+		},
+		{
+			"name": "Abyssal Passage",
+			"source": "KTPP",
+			"page": 23,
+			"className": "Monk",
+			"classSource": "XPHB",
+			"subclassShortName": "Way of the Demon",
+			"subclassSource": "KTPP",
+			"level": 6,
+			"entries": [
+				"When you use your Step of the Wind feature, you can take on the form of a demonic shadow, gaining resistance to all damage and a Fly Speed equal to half your Speed. While in this form, you can pass through other creatures without expending extra movement, and when you do so for the first time on a turn, they must succeed on a Dexterity saving throw or take Necrotic damage equal to your Martial Arts die. This form ends at the end of your turn, or when you make an attack."
+			]
+		},
+		{
+			"name": "Asura Unleashed",
+			"source": "KTPP",
+			"page": 23,
+			"className": "Monk",
+			"classSource": "XPHB",
+			"subclassShortName": "Way of the Demon",
+			"subclassSource": "KTPP",
+			"level": 11,
+			"entries": [
+				"When you roll Initiative, or as a bonus action at any time, you can expend 2 ki points to manifest your inner demonic power, growing four additional demonic limbs sprouting from your shoulders for 1 minute. These arms can be used to make unarmed strikes or to grapple creatures. While you have these arms manifested, your Flurry of Blows doesn't cost a ki point, and you can use it even if you didn't take the Attack action on your turn."
+			]
+		},
+		{
+			"name": "Ultimate Rage",
+			"source": "KTPP",
+			"page": 23,
+			"className": "Monk",
+			"classSource": "XPHB",
+			"subclassShortName": "Way of the Demon",
+			"subclassSource": "KTPP",
+			"level": 17,
+			"entries": [
+				"As an action, you project a demonic shadow toward a creature within 20 feet and make a single unarmed strike through it.",
+				"On a hit, you can choose to expend 4 ki points to teleport to a space within 5 feet of the target and fully unleash your demonic rage on it, making three unarmed strikes with advantage. If all three attacks hit, the target is knocked Prone and becomes Dazed.",
+				"{@b Demonic Reversal.} If you are Bloodied when you use this ability, you make two additional unarmed strikes."
+			]
+		}
+	]
+}
