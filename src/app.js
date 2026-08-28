@@ -2931,7 +2931,65 @@ function randomizeChoiceSelections(data) {
   // precisar checar pré-requisito de talento pra cada slot.
   character.choiceSelections.asi = Array.from({ length: data.asiCount || 0 }, () => ({ mode: "ability", abil: randomPick(ABILITIES, 2) }));
 }
-async function randomizeCharacter() {
+// Atributo(s) principal(is) da classe/subclasse sorteada, pra jogar os
+// valores mais altos nelas (ex.: Sabedoria alta pro Clérigo) em vez de
+// distribuir tudo cego. `primaryAbility` é o campo padrão do 5etools —
+// lista de blocos, cada bloco = alternativas equivalentes (ex.: Guerreiro
+// FOR *ou* DES viram dois blocos de 1 atributo cada; Paladino FOR *e* CAR
+// vira um bloco com os dois). Homebrew raramente traz esse campo — nesse
+// caso cai pro atributo de conjuração e, por fim, pras resistências da
+// classe (bom palpite: normalmente pelo menos uma delas é a principal).
+function classAbilityPriority(classRec, subclassRec) {
+  const out = [];
+  const add = (k) => { const a = abilityKey(k); if (a && !out.includes(a)) out.push(a); };
+  // Cada bloco de `primaryAbility` é um conjunto de alternativas EQUIVALENTES
+  // (ex.: Guerreiro FOR *ou* DES viram dois blocos de 1 atributo cada).
+  // Embaralha a ordem dos blocos — e dos atributos dentro de cada um, pro
+  // caso "FOR e CAR" do Paladino — pra variar qual delas sai priorizada em
+  // cada sorteio, em vez de sempre favorecer a mesma alternativa.
+  const blocks = [];
+  for (const rec of [classRec, subclassRec]) {
+    for (const blk of rec?.primaryAbility || []) {
+      const keys = Object.keys(blk || {}).map(abilityKey).filter(Boolean);
+      if (keys.length) blocks.push(keys);
+    }
+  }
+  randomPick(blocks, blocks.length).forEach((keys) => randomPick(keys, keys.length).forEach(add));
+  if (!out.length) {
+    const spellAbil = spellAbilityFrom(classRec) || spellAbilityFrom(subclassRec);
+    if (spellAbil) add(spellAbil);
+    savesFrom(classRec).forEach(add);
+  }
+  return out;
+}
+// Distribui `values` (6 números — rolados ou um array pré-definido) pelos
+// atributos: os maiores valores vão pra `priority` (atributo principal da
+// classe primeiro, depois Constituição — sempre útil pra PV/concentração)
+// e o resto é sorteado nos atributos restantes.
+function smartAbilityAssignment(values, priority) {
+  const order = priority.filter((a) => ABILITIES.includes(a));
+  if (!order.includes("con")) order.push("con");
+  order.push(...randomPick(ABILITIES.filter((a) => !order.includes(a)), 6));
+  const sorted = values.slice().sort((a, b) => b - a);
+  const assignment = {};
+  order.forEach((a, i) => { assignment[a] = i; });
+  return { values: sorted, assignment };
+}
+// Duas chamadas concorrentes (clique duplo, ou abrir o modal de novo
+// enquanto a anterior ainda está sorteando) mexeriam nas mesmas variáveis
+// de módulo (`character`, `refs`, `details`) ao mesmo tempo e corrompiam o
+// resultado — a segunda chamada não faz nada enquanto a primeira roda.
+let randomizingCharacter = false;
+async function randomizeCharacter(abilityGenMode = "roll") {
+  if (randomizingCharacter) { toast("Já tem um sorteio em andamento — aguarde."); return; }
+  randomizingCharacter = true;
+  try {
+    return await randomizeCharacterImpl(abilityGenMode);
+  } finally {
+    randomizingCharacter = false;
+  }
+}
+async function randomizeCharacterImpl(abilityGenMode) {
   toast("Sorteando personagem…");
   await Promise.all(["race", "class", "background"].map((t) => ensureCatalog(t).catch((err) => console.warn("Catálogo indisponível:", err))));
 
@@ -2946,6 +3004,7 @@ async function randomizeCharacter() {
   if (!race || !klass || !background) { toast("Banco de dados ainda carregando — tente de novo em instantes."); return; }
   const subPool = manifest().filter((x) => normType(x.type) === "subclass" && matchesEdition(x, edition, true) && contentOk(x) && String(x.className || "").toLowerCase() === String(klass.name).toLowerCase());
   const subclass = pickOne(subPool);
+  const [classRec, subclassRec] = await Promise.all([firstRecord(klass), subclass ? firstRecord(subclass) : null]);
 
   const next = fresh();
   next.edition = edition; next.content = content;
@@ -2953,10 +3012,14 @@ async function randomizeCharacter() {
   next.level = 1;
   next.raceId = race.id; next.classId = klass.id; next.subclassId = subclass?.id || ""; next.backgroundId = background.id;
 
-  const rolls = Array.from({ length: 6 }, () => rollAbilityScore());
-  const shuffledAbilities = randomPick(ABILITIES, 6);
-  next.abilityMode = "roll"; next.rolledSet = rolls; next.arrayAssignment = {};
-  shuffledAbilities.forEach((a, i) => { next.arrayAssignment[a] = i; next.scores[a] = rolls[i]; });
+  const isRoll = abilityGenMode === "roll";
+  const rawValues = isRoll ? Array.from({ length: 6 }, () => rollAbilityScore()) : (ABILITY_ARRAYS[abilityGenMode]?.values || ABILITY_ARRAYS.standard.values);
+  const priority = classAbilityPriority(classRec, subclassRec);
+  const { values, assignment } = smartAbilityAssignment(rawValues, priority);
+  next.abilityMode = isRoll ? "roll" : abilityGenMode;
+  next.arrayAssignment = assignment;
+  if (isRoll) next.rolledSet = values;
+  ABILITIES.forEach((a) => { next.scores[a] = values[assignment[a]]; });
 
   attackRollMessages = {}; hdRollMessages = {};
   applyLoaded(next);
@@ -2968,6 +3031,22 @@ async function randomizeCharacter() {
   saveCharacter(character);
   await recalc();
   toast(`Personagem aleatório: ${titleOf(race)} · ${titleOf(klass)}${subclass ? " (" + titleOf(subclass) + ")" : ""} · ${titleOf(background)}. Dá pra ajustar tudo depois.`);
+}
+function openRandomCharacterModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">ALEATÓRIO</span><h2>Personagem Aleatório</h2><p class="muted">Sorteia espécie, classe, subclasse, background, perícias, talentos e equipamento inicial — os valores mais altos vão pro atributo principal da classe sorteada (ex.: Sabedoria alta pro Clérigo). Só falta escolher como gerar os atributos.</p></div></div>
+    <div class="modal-body">
+      <div class="template-grid">
+        <div class="template-card"><b>🎲 Rolagem (4d6)</b><p>Rola 4d6 e descarta o menor, seis vezes — clássico, com variação de sorte.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="roll">Sortear</button></div></div>
+        <div class="template-card"><b>Array Padrão</b><p>15, 14, 13, 12, 10, 8 — equilibrado, sem excesso nem carência.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="standard">Sortear</button></div></div>
+        <div class="template-card"><b>Array Heroico</b><p>16, 15, 14, 13, 12, 10 — personagem já mais forte de cara.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="heroic">Sortear</button></div></div>
+        <div class="template-card"><b>Array Épico</b><p>18, 16, 14, 12, 10, 8 — bem concentrado no atributo principal.</p><div class="template-card-actions"><button type="button" class="primary" data-random-abil="epic">Sortear</button></div></div>
+      </div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("modal-content").querySelectorAll("[data-random-abil]").forEach((b) => b.addEventListener("click", () => {
+    $("modal").classList.add("hidden");
+    randomizeCharacter(b.dataset.randomAbil).catch((err) => { console.error(err); toast("Não deu pra sortear um personagem agora."); });
+  }));
 }
 function switchCharacter(id) {
   if (id === getActiveCharacterId()) { $("modal").classList.add("hidden"); return; }
@@ -3525,7 +3604,7 @@ function setup() {
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
   $("new-character").addEventListener("click", createNewCharacter);
-  $("random-character")?.addEventListener("click", () => randomizeCharacter().catch((err) => { console.error(err); toast("Não deu pra sortear um personagem agora."); }));
+  $("random-character")?.addEventListener("click", openRandomCharacterModal);
   $("characters-btn")?.addEventListener("click", openCharactersModal);
   $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
   $("preview-pdf").addEventListener("click", openPdfPreview);
