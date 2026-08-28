@@ -520,6 +520,32 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 }
 .toast.show{opacity:1;transform:none}
 
+/* ---------- Rolador de dados genérico ---------- */
+#dice-roller-fab{
+  position:fixed;bottom:24px;left:24px;z-index:150;width:52px;height:52px;border-radius:50%;
+  border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);font-size:24px;
+  box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center
+}
+#dice-roller-fab:hover{border-color:var(--red);transform:translateY(-1px)}
+.dice-roller-panel{
+  position:fixed;bottom:86px;left:24px;z-index:150;width:290px;max-width:calc(100vw - 32px);
+  background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  padding:14px;box-shadow:var(--shadow)
+}
+.dice-roller-panel.hidden{display:none}
+.dice-roller-head{display:flex;justify-content:space-between;align-items:center;font:700 12px var(--font-head);color:var(--text);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px}
+.dice-roller-head button{border:0;background:transparent;color:var(--text-mut);font-size:16px;line-height:1;cursor:pointer}
+.dice-quick-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.dice-quick-row button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:600}
+.dice-quick-row button:hover{border-color:var(--red)}
+.dice-expr-row{display:flex;gap:8px;margin-bottom:10px}
+.dice-expr-row input{flex:1;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:12px}
+.dice-history{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.dice-history-row{display:flex;align-items:center;gap:8px;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px 9px;font-size:11px}
+.dice-history-expr{font-weight:700;color:var(--text);min-width:44px}
+.dice-history-rolls{color:var(--text-mut);flex:1}
+.dice-history-total{font:800 15px var(--font-head);color:var(--red-hi)}
+
 /* ---------- Banner de atualização de dados ---------- */
 .data-update-banner{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;

@@ -1948,6 +1948,37 @@ function openConcentrationPicker() {
 }
 
 // ------------------------------------------------------------
+// Rolador de dados genérico — expressão tipo "2d6+3" sempre à mão
+// (botão flutuante), útil além dos rolamentos de ataque/dano/morte.
+// Histórico é só da sessão atual (não é salvo com o personagem).
+// ------------------------------------------------------------
+let diceHistory = [];
+function rollExpression(expr) {
+  const parsed = parseDiceExpr(expr);
+  if (!parsed || !parsed.faces) { toast("Expressão inválida. Use algo como 2d6+3, 1d20 ou d8."); return null; }
+  const { n, faces, bonus } = parsed;
+  const { rolls, total } = rollDice(n, faces);
+  const result = total + bonus;
+  diceHistory.unshift({ n, faces, bonus, rolls, result });
+  diceHistory = diceHistory.slice(0, 12);
+  renderDiceHistory();
+  return result;
+}
+function renderDiceHistory() {
+  const box = $("dice-history");
+  if (!box) return;
+  box.innerHTML = diceHistory.length ? diceHistory.map((h) => `<div class="dice-history-row"><span class="dice-history-expr">${h.n}d${h.faces}${h.bonus ? fmt(h.bonus) : ""}</span><span class="dice-history-rolls">[${h.rolls.join(", ")}]</span><b class="dice-history-total">${h.result}</b></div>`).join("")
+    : `<div class="empty">Nenhuma rolagem ainda.</div>`;
+}
+function toggleDiceRoller(force) {
+  const panel = $("dice-roller-panel");
+  if (!panel) return;
+  const show = force != null ? force : panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !show);
+  if (show) { renderDiceHistory(); $("dice-expr-input")?.focus(); }
+}
+
+// ------------------------------------------------------------
 // Dashboard / Quick View — resumo de combate fixo no topo da ficha
 // ------------------------------------------------------------
 function hpBarClass(cur, max) {
@@ -3229,6 +3260,14 @@ function setup() {
   $("next-round")?.addEventListener("click", advanceRound);
   $("short-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso curto? Restaura os recursos que recuperam em descanso curto (e espaços de Pacto, se houver).")) shortRest(); });
   $("long-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso longo? Restaura PV, metade dos dados de vida, espaços de magia/pacto e todos os recursos de classe.")) longRest(); });
+  $("dice-roller-fab")?.addEventListener("click", () => toggleDiceRoller());
+  $("dice-roller-close")?.addEventListener("click", () => toggleDiceRoller(false));
+  $("dice-roll-btn")?.addEventListener("click", () => rollExpression($("dice-expr-input").value.trim() || "1d20"));
+  $("dice-expr-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") rollExpression(e.target.value.trim() || "1d20"); });
+  document.querySelectorAll("[data-dice-quick]").forEach((b) => b.addEventListener("click", () => {
+    $("dice-expr-input").value = `1d${b.dataset.diceQuick}`;
+    rollExpression($("dice-expr-input").value);
+  }));
   $("add-buff")?.addEventListener("click", openBuffModal);
   $("add-extra-feat")?.addEventListener("click", openExtraFeatPicker);
   $("add-journal")?.addEventListener("click", () => openJournalModal(null));
