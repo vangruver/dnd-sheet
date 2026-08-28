@@ -29,6 +29,16 @@ const SOURCES = [
     type: "homebrew",
     edition: "both",
   },
+  {
+    // Conteúdo de pré-lançamento (Unearthed Arcana e outros playtests) —
+    // repositório irmão do homebrew, mesma estrutura de pastas. Fica
+    // separado do homebrew (entity.prerelease em vez de entity.homebrew)
+    // pra podermos rotular diferente na ficha ("Pré-lançamento").
+    key: "prerelease",
+    url: "https://github.com/TheGiddyLimit/unearthed-arcana.git",
+    type: "prerelease",
+    edition: "both",
+  },
 ];
 
 // ============================================================
@@ -48,6 +58,14 @@ const TYPES = [
   "reward",
   "variantrule",
 ];
+
+// Pastas do homebrew/prerelease que valem a pena vasculhar. Além de uma
+// pasta por TYPE (class/, spell/...), esses repositórios têm uma pasta
+// "collection/" com sourcebooks completos num único JSON (várias classes,
+// magias, talentos etc. juntos — é onde ficam coisas como "Ryoko's Guide
+// to the Yokai Realms" e "Vampire the Masquerade: Bound by Blood", que
+// não tinham pasta própria e por isso nunca eram lidas).
+const BREW_WALK_FOLDERS = [...TYPES, "collection"];
 
 // ============================================================
 // FUNÇÕES AUXILIARES
@@ -189,6 +207,18 @@ function extractObjectsFromJson(
       array = json[`${type}s`];
     }
 
+    // "item" também aparece como "baseitem" (itens mundanos, sem magia) —
+    // mesmo formato do catálogo oficial. Sem isso, um arquivo que só
+    // tivesse "baseitem" (sem "item") não era detectado como tendo
+    // conteúdo do tipo item.
+    if (
+      !array &&
+      type === "item" &&
+      Array.isArray(json.baseitem)
+    ) {
+      array = json.baseitem;
+    }
+
     if (!array) {
       continue;
     }
@@ -220,6 +250,9 @@ function extractObjectsFromJson(
 
         homebrew:
           sourceInfo.type === "homebrew",
+
+        prerelease:
+          sourceInfo.type === "prerelease",
 
         edition:
           sourceInfo.edition,
@@ -372,26 +405,14 @@ async function processOfficialRepository(
 }
 
 // ============================================================
-// PROCESSAR HOMEBREW
+// PROCESSAR HOMEBREW / PRERELEASE
 // ============================================================
 //
-// O Homebrew não usa:
-//
-// data/spell/...
-//
-// como o repositório principal.
-//
-// Ele possui:
-//
-// spell/
-// subclass/
-// race/
-// background/
-// etc.
-//
-// diretamente na raiz.
-//
-// Por isso ele é tratado separadamente.
+// Nenhum dos dois usa "data/spell/..." como o repositório oficial —
+// ambos têm as pastas (spell/, subclass/, race/, background/... e
+// "collection/", com sourcebooks completos num único JSON) direto na
+// raiz. Por isso são tratados separadamente do repositório oficial,
+// mas com a MESMA função (mesma estrutura nos dois repositórios).
 // ============================================================
 
 async function processHomebrewRepository(
@@ -399,8 +420,9 @@ async function processHomebrewRepository(
   sourceInfo
 ) {
   const entities = [];
+  const label = sourceInfo.type === "prerelease" ? "Prerelease" : "Homebrew";
 
-  for (const type of TYPES) {
+  for (const type of BREW_WALK_FOLDERS) {
     const directory =
       path.join(
         repository,
@@ -426,7 +448,7 @@ async function processHomebrewRepository(
 
     console.log("");
     console.log(
-      `Homebrew / ${type}: ${files.length} arquivos`
+      `${label} / ${type}: ${files.length} arquivos`
     );
 
     for (const file of files) {
@@ -447,7 +469,7 @@ async function processHomebrewRepository(
         path
           .join(
             "raw",
-            "homebrew",
+            sourceInfo.key,
             relative
           )
           .replaceAll(
@@ -470,7 +492,7 @@ async function processHomebrewRepository(
         extracted.length > 0
       ) {
         console.log(
-          `Homebrew: ${relative} → ${extracted.length} entidades`
+          `${label}: ${relative} → ${extracted.length} entidades`
         );
       }
     }
@@ -483,12 +505,16 @@ async function processHomebrewRepository(
 // COPIAR ARQUIVO JSON PARA O NOSSO DATA/
 // ============================================================
 
+function isBrewLike(sourceInfo) {
+  return sourceInfo.type === "homebrew" || sourceInfo.type === "prerelease";
+}
+
 async function copyJsonFiles(
   repository,
   sourceInfo
 ) {
   const sourceRoot =
-    sourceInfo.type === "homebrew"
+    isBrewLike(sourceInfo)
       ? repository
       : path.join(
           repository,
@@ -507,11 +533,12 @@ async function copyJsonFiles(
         file
       );
 
-    // Para Homebrew, só copiamos
-    // os tipos que interessam.
+    // Para Homebrew/Prerelease, só copiamos as pastas que interessam
+    // (uma por tipo + "collection/", ver BREW_WALK_FOLDERS) — os dois
+    // repositórios também têm pastas de aventura/monstro/etc. que esta
+    // ficha não usa.
     if (
-      sourceInfo.type ===
-      "homebrew"
+      isBrewLike(sourceInfo)
     ) {
       const firstPart =
         relative.split(
@@ -519,7 +546,7 @@ async function copyJsonFiles(
         )[0];
 
       if (
-        !TYPES.includes(
+        !BREW_WALK_FOLDERS.includes(
           firstPart
         )
       ) {
@@ -655,8 +682,7 @@ async function main() {
     let entities = [];
 
     if (
-      source.type ===
-      "homebrew"
+      isBrewLike(source)
     ) {
       entities =
         await processHomebrewRepository(
@@ -816,58 +842,59 @@ async function main() {
   // version.json cobre só isso, então fica pequeno (dezenas de KB).
   // ----------------------------------------------------------
 
-  const homebrewClassFiles =
-    Array.from(
-      new Set(
-        entities
-          .filter(
-            e =>
-              e.homebrew &&
-              (e.type === "class" ||
-                e.type === "subclass")
-          )
-          .map(e => e.file)
-      )
-    ).sort();
-
-  // Mesma lógica das classes, mas para raça/subespécie homebrew —
-  // usado pela ficha para mostrar as descrições de raças homebrew
-  // lado a lado com as oficiais (ver src/database.js -> loadRaces).
-  const homebrewRaceFiles =
-    Array.from(
-      new Set(
-        entities
-          .filter(
-            e =>
-              e.homebrew &&
-              (e.type === "race" ||
-                e.type === "subrace")
-          )
-          .map(e => e.file)
-      )
-    ).sort();
-
-  // Demais tipos homebrew (item, magia, talento, background, opção…),
-  // agrupados por tipo de conteúdo que o arquivo contém — a ficha baixa
-  // esses arquivos sob demanda (ver src/database.js).
-  const homebrewFilesByType = {};
-
-  for (
-    const t
-    of ["item", "spell", "feat", "background", "optionalfeature", "reward", "variantrule"]
-  ) {
-    homebrewFilesByType[t] =
+  // Monta o mesmo formato de índice (classFiles/raceFiles/filesByType)
+  // pra homebrew e pra prerelease — flagKey é "homebrew" ou "prerelease",
+  // o campo booleano que extractObjectsFromJson marcou em cada entidade.
+  function buildBrewIndex(flagKey) {
+    const classFiles =
       Array.from(
         new Set(
           entities
-            .filter(e => e.homebrew && e.type === t)
+            .filter(
+              e =>
+                e[flagKey] &&
+                (e.type === "class" ||
+                  e.type === "subclass")
+            )
             .map(e => e.file)
         )
       ).sort();
+
+    const raceFiles =
+      Array.from(
+        new Set(
+          entities
+            .filter(
+              e =>
+                e[flagKey] &&
+                (e.type === "race" ||
+                  e.type === "subrace")
+            )
+            .map(e => e.file)
+        )
+      ).sort();
+
+    const filesByType = {};
+
+    for (
+      const t
+      of ["item", "spell", "feat", "background", "optionalfeature", "reward", "variantrule"]
+    ) {
+      filesByType[t] =
+        Array.from(
+          new Set(
+            entities
+              .filter(e => e[flagKey] && e.type === t)
+              .map(e => e.file)
+          )
+        ).sort();
+    }
+
+    return { classFiles, classFileCount: classFiles.length, raceFiles, raceFileCount: raceFiles.length, filesByType };
   }
 
   const version = {
-    schema: 2,
+    schema: 3,
 
     generatedAt:
       manifest.generatedAt,
@@ -878,22 +905,17 @@ async function main() {
     totals:
       manifest.totals,
 
-    homebrew: {
-      classFiles:
-        homebrewClassFiles,
+    // Mesma lógica das classes, mas para raça/subespécie homebrew —
+    // usado pela ficha para mostrar as descrições de raças homebrew
+    // lado a lado com as oficiais (ver src/database.js -> loadRaces).
+    // "collection/" (sourcebooks completos, ex.: Ryoko's Guide to the
+    // Yokai Realms, Vampire the Masquerade: Bound by Blood) entra nos
+    // mesmos índices — ver BREW_WALK_FOLDERS.
+    homebrew: buildBrewIndex("homebrew"),
 
-      classFileCount:
-        homebrewClassFiles.length,
-
-      raceFiles:
-        homebrewRaceFiles,
-
-      raceFileCount:
-        homebrewRaceFiles.length,
-
-      filesByType:
-        homebrewFilesByType,
-    },
+    // Conteúdo de pré-lançamento (Unearthed Arcana etc., ex.: o Psion
+    // novo) — mesmo formato do homebrew, repositório separado.
+    prerelease: buildBrewIndex("prerelease"),
   };
 
   const versionFile =

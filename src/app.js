@@ -1,13 +1,13 @@
 import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
-  manifestEntries, isHomebrew as hb, normType, editionOf, currentVersionInfo,
+  manifestEntries, isHomebrew as hb, isPrerelease as pre, normType, editionOf, currentVersionInfo,
   descriptionEntries, matchesEdition, isReprinted,
 } from "./database.js";
 import { clearCache } from "./store.js";
 import {
   ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots,
-  rollDie, rollDice, parseDiceExpr, CLASS_RESOURCE_COLUMNS, CONDITIONS,
+  rollDie, rollDice, parseDiceExpr, rollAbilityScore, ABILITY_ARRAYS, ABILITY_MODE_LABELS, CLASS_RESOURCE_COLUMNS, CONDITIONS,
 } from "./rules.js";
 import {
   saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
@@ -48,7 +48,8 @@ const fresh = () => ({
   alignment: "", languages: "", appearance: "", backstory: "",
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
-  conditions: [], journal: [], buffs: [],
+  conditions: [], journal: [], buffs: [], extraFeats: [],
+  rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
   choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
 });
@@ -57,8 +58,9 @@ const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add(
 const manifest = () => manifestEntries();
 const list = (t, q = "") => filterEntities(t, character.edition, character.content, q);
 const editionLabel = (x) => (editionOf(x) === "both" ? "2014/2024" : editionOf(x));
-const labelMeta = (x) => `${hb(x) ? "Homebrew" : "Oficial"} · ${editionLabel(x)}${x?.source ? " · " + x.source : ""}`;
-const sourceTag = (x) => `<span class="tag ${hb(x) ? "brew" : "official"}">${hb(x) ? "HOMEBREW" : "OFICIAL"}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
+const contentLabel = (x) => hb(x) ? "Homebrew" : pre(x) ? "Pré-lançamento" : "Oficial";
+const labelMeta = (x) => `${contentLabel(x)} · ${editionLabel(x)}${x?.source ? " · " + x.source : ""}`;
+const sourceTag = (x) => `<span class="tag ${hb(x) ? "brew" : pre(x) ? "prerelease" : "official"}">${contentLabel(x).toUpperCase()}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
 const titleOf = (x) => String(x?.name || "Sem nome");
 const typeLabel = (t) => ({ class: "Classe", subclass: "Subclasse", race: "Espécie/Raça", background: "Background", spell: "Magia", item: "Item", feat: "Talento", optionalfeature: "Opção", classFeature: "Característica", subclassFeature: "Característica" }[normType(t)] || t);
 
@@ -233,7 +235,12 @@ async function refreshChoices() {
   renderAllMulticlasses();
   await recalc();
 }
-const pickerContentOk = (x) => character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x));
+// Pré-lançamento (Unearthed Arcana etc.) conta como "não oficial" pro
+// seletor Oficial/Homebrew — não é fã-feito, mas também não é conteúdo
+// publicado, então some junto com o homebrew quando "Apenas oficial"
+// está selecionado, e aparece com "Oficial + Homebrew" ou "Apenas Homebrew".
+const isNonOfficial = (x) => hb(x) || pre(x);
+const pickerContentOk = (x) => character.content === "all" || (character.content === "official" && !isNonOfficial(x)) || (character.content === "homebrew" && isNonOfficial(x));
 function filteredPicker(type, q) {
   const ql = String(q || "").toLowerCase();
   if (type === "subclass") {
@@ -419,7 +426,7 @@ function subclassesOf(e) {
   return manifest().filter((x) =>
     normType(x.type) === "subclass" && classMatches(x, e) &&
     matchesEdition(x, character.edition, codexState.legacy) &&
-    (codexState.content === "all" || (codexState.content === "official" && !hb(x)) || (codexState.content === "homebrew" && hb(x))))
+    (codexState.content === "all" || (codexState.content === "official" && !isNonOfficial(x)) || (codexState.content === "homebrew" && isNonOfficial(x))))
     .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
 }
 function raceQuickFacts(rec) {
@@ -516,13 +523,34 @@ function pointBuyTotal() { return ABILITIES.reduce((n, a) => n + pointCost(chara
 // lógica: a aba "Atributos & Perícias" (ns="") e o passo de atributos do
 // assistente guiado (ns="wiz-"). Se os elementos daquele ns não existem no
 // DOM no momento (ex.: passo do assistente fechado), não faz nada.
+// Métodos de geração de atributos:
+//  - pointbuy: 27 pontos, custo 8–15 (regra padrão)
+//  - standard / heroic / epic: array fixo (ABILITY_ARRAYS) — cada valor
+//    usado em exatamente um atributo, atribuído por dropdown
+//  - roll: rola 6 valores (4d6, descarta o menor) no próprio site e
+//    distribui do mesmo jeito que um array fixo
+//  - free: valor livre digitado (1–30)
+const ABILITY_MODE_HINTS = {
+  pointbuy: "Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.",
+  free: "Digite qualquer valor de 1 a 30. Ajustes de espécie/background continuam entrando automaticamente.",
+  roll: "Clique em \"Rolar atributos\" pra gerar 6 valores (4d6, descarta o menor) e distribua cada um num atributo abaixo.",
+  standard: "Distribua os valores do array padrão pelos seis atributos — cada valor só pode ser usado uma vez.",
+  heroic: "Distribua os valores do array heroico pelos seis atributos — cada valor só pode ser usado uma vez.",
+  epic: "Distribua os valores do array épico pelos seis atributos — cada valor só pode ser usado uma vez.",
+};
+function arraySourceFor(mode) { return ABILITY_ARRAYS[mode]?.values || null; }
 function paintAbilityEditor(ns) {
   const el = (id) => document.getElementById(ns + id);
   const grid = el("ability-grid"), editor = el("ability-editor");
   if (!grid && !editor) return;
-  const free = character.abilityMode === "free";
+  const mode = character.abilityMode || "pointbuy";
+  const free = mode === "free";
+  const pointbuy = mode === "pointbuy";
+  const preset = arraySourceFor(mode);
+  const isRoll = mode === "roll";
+  const isSlotted = !!preset || isRoll; // array fixo ou rolado: atribuição por slot
   const lo = free ? 1 : 8, hi = free ? 30 : 15;
-  // Mostra o valor EFETIVO (base do point buy + aumentos de espécie/background/talentos).
+  // Mostra o valor EFETIVO (base do point buy/array/rolagem + aumentos de espécie/background/talentos).
   if (grid) {
     grid.innerHTML = ABILITIES.map((a) => {
       const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
@@ -534,12 +562,53 @@ function paintAbilityEditor(ns) {
   const spent = pointBuyTotal(), remaining = 27 - spent;
   const remEl = el("pointbuy-remaining");
   if (remEl) { remEl.textContent = remaining; remEl.classList.toggle("over", remaining < 0); }
-  if (el("ability-mode")) el("ability-mode").value = free ? "free" : "pointbuy";
-  el("pointbuy-remaining-wrap")?.classList.toggle("hidden", free);
-  el("reset-pointbuy")?.classList.toggle("hidden", free);
-  if (el("ability-editor-hint")) el("ability-editor-hint").textContent = free
-    ? "Digite qualquer valor de 1 a 30 (rolagem, array padrão, homebrew). Ajustes de espécie/background continuam entrando automaticamente."
-    : "Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.";
+  if (el("ability-mode")) el("ability-mode").value = mode;
+  el("pointbuy-remaining-wrap")?.classList.toggle("hidden", !pointbuy);
+  el("reset-pointbuy")?.classList.toggle("hidden", !pointbuy);
+  if (el("ability-editor-hint")) el("ability-editor-hint").textContent = ABILITY_MODE_HINTS[mode] || ABILITY_MODE_HINTS.pointbuy;
+
+  const extraBox = el("ability-mode-extra");
+  if (extraBox) {
+    if (preset) {
+      extraBox.innerHTML = `<span class="array-hint">Valores: <b>${preset.join(", ")}</b></span>`;
+    } else if (isRoll) {
+      const rolled = character.rolledSet;
+      extraBox.innerHTML = `<span class="array-hint">${rolled ? `Rolado: <b>${rolled.join(", ")}</b>` : "Ainda não rolado."}</span><button type="button" class="no-print" id="${ns}roll-abilities">🎲 ${rolled ? "Rolar de novo" : "Rolar atributos"}</button>`;
+      el("roll-abilities")?.addEventListener("click", () => {
+        character.rolledSet = Array.from({ length: 6 }, () => rollAbilityScore());
+        character.arrayAssignment = {};
+        ABILITIES.forEach((a) => (character.scores[a] = 10));
+        saveCharacter(character); recalc();
+        toast(`Rolado: ${character.rolledSet.join(", ")}`);
+      });
+    } else {
+      extraBox.innerHTML = "";
+    }
+  }
+
+  if (isSlotted) {
+    const source = preset || character.rolledSet || [];
+    character.arrayAssignment = character.arrayAssignment || {};
+    if (!source.length) {
+      editor.innerHTML = `<p class="muted">Clique em "Rolar atributos" acima pra gerar valores e distribuí-los.</p>`;
+      return;
+    }
+    const usedIdx = new Set(ABILITIES.map((a) => character.arrayAssignment[a]).filter((v) => v != null));
+    editor.innerHTML = ABILITIES.map((a) => {
+      const curIdx = character.arrayAssignment[a] != null ? character.arrayAssignment[a] : "";
+      const opts = source.map((v, i) => (usedIdx.has(i) && i !== curIdx) ? "" : `<option value="${i}" ${i === curIdx ? "selected" : ""}>${v}</option>`).join("");
+      return `<div class="ability-edit array-mode"><span>${ABILITY_NAMES[a]}</span><select data-array-assign="${a}"><option value="">—</option>${opts}</select><b>${fmt(mod(Number(character.scores[a]) || 10))}</b></div>`;
+    }).join("");
+    editor.querySelectorAll("[data-array-assign]").forEach((s) => s.addEventListener("change", () => {
+      const a = s.dataset.arrayAssign;
+      const idx = s.value === "" ? null : Number(s.value);
+      character.arrayAssignment[a] = idx;
+      character.scores[a] = idx != null ? source[idx] : 10;
+      saveCharacter(character); recalc();
+    }));
+    return;
+  }
+
   editor.innerHTML = ABILITIES.map((a) => {
     const v = Number(character.scores[a]) || 10;
     return `<div class="ability-edit"><span>${ABILITY_NAMES[a]}</span><div class="ability-stepper"><button type="button" data-ability-dec="${a}" ${v <= lo ? "disabled" : ""}>−</button><input data-ability="${a}" type="number" min="1" max="30" value="${v}"><button type="button" data-ability-inc="${a}" ${v >= hi ? "disabled" : ""}>+</button></div><b>${fmt(mod(v))}</b><small>${free ? "" : `Custo ${pointCost(v)}`}</small></div>`;
@@ -552,7 +621,7 @@ function paintAbilityEditor(ns) {
     const a = b.dataset.abilityInc || b.dataset.abilityDec, v = Number(character.scores[a]) || 10;
     const next = v + (b.dataset.abilityInc ? 1 : -1);
     if (next < lo || next > hi) return;
-    if (!free) {
+    if (pointbuy) {
       const delta = pointCost(next) - pointCost(v);
       if (delta > 27 - pointBuyTotal()) { toast("Você não tem pontos suficientes."); return; }
     }
@@ -561,7 +630,14 @@ function paintAbilityEditor(ns) {
   const reset = el("reset-pointbuy");
   if (reset) reset.onclick = () => { ABILITIES.forEach((a) => (character.scores[a] = 10)); saveCharacter(character); recalc(); };
   const modeSel = el("ability-mode");
-  if (modeSel) modeSel.onchange = () => { character.abilityMode = modeSel.value === "free" ? "free" : "pointbuy"; saveCharacter(character); recalc(); };
+  if (modeSel) modeSel.onchange = () => {
+    character.abilityMode = modeSel.value in ABILITY_MODE_LABELS ? modeSel.value : "pointbuy";
+    if (arraySourceFor(character.abilityMode) || character.abilityMode === "roll") {
+      character.arrayAssignment = {};
+      ABILITIES.forEach((a) => (character.scores[a] = 10));
+    }
+    saveCharacter(character); recalc();
+  };
 }
 function renderAbilities() { paintAbilityEditor(""); paintAbilityEditor("wiz-"); }
 
@@ -661,6 +737,21 @@ function hitDiceFrom(r) {
 }
 function spellAbilityFrom(r) {
   for (const v of [r?.spellcastingAbility, r?.spellcasting?.ability]) { const k = abilityKey(v); if (k) return k; }
+  return null;
+}
+// Detecta "Unarmored Defense" (Bárbaro: CON, Monge: SAB, e variantes
+// homebrew com outro atributo) numa lista de características de classe,
+// lendo o próprio texto da característica em vez de fixar por nome de
+// classe — funciona pra qualquer classe oficial ou homebrew que conceda
+// o traço com esse nome.
+function detectUnarmoredDefense(feats) {
+  const f = (feats || []).find((x) => /^unarmored defense$/i.test(String(x.name || "").trim()));
+  if (!f) return null;
+  const text = plain(f.entries).toLowerCase();
+  if (/constitution modifier/.test(text)) return "con";
+  if (/wisdom modifier/.test(text)) return "wis";
+  if (/intelligence modifier/.test(text)) return "int";
+  if (/charisma modifier/.test(text)) return "cha";
   return null;
 }
 
@@ -777,6 +868,9 @@ function chosenFeatEntities() {
   for (const slot of character.choiceSelections?.asi || []) {
     if (slot && slot.mode === "feat" && slot.feat) { const e = manifest().find((x) => x.id === slot.feat); if (e) out.push(e); }
   }
+  for (const id of character.extraFeats || []) {
+    const e = manifest().find((x) => x.id === id); if (e) out.push(e);
+  }
   return out;
 }
 // Bônus de atributo e perícias vindos dos talentos escolhidos.
@@ -839,6 +933,11 @@ async function buildAutomation() {
   const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
   const mcClassFeats = await Promise.all((details.multiclasses || []).map((m) =>
     m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])));
+
+  // Unarmored Defense (Bárbaro/Monge e variantes homebrew): usado como CA
+  // padrão quando não há CA manual definida (ver calc()). Considera a
+  // classe primária e as de multiclasse.
+  character.auto.unarmoredDefense = detectUnarmoredDefense(classFeats) || mcClassFeats.map(detectUnarmoredDefense).find(Boolean) || null;
 
   // Especialização: nº de perícias vem das características "Expertise" da
   // classe até o nível atual (Ladino 1/6, Bardo 3/10 = 2 cada).
@@ -965,19 +1064,23 @@ function renderAutoChoices(data) {
   const eligibleFeats = (categories) => {
     const lvl = Number(character.level);
     return featStubs().filter((e) => {
-      if (hb(e) || /ability score improvement/i.test(e.name)) return false;
+      if (/ability score improvement/i.test(e.name)) return false;
+      if (!pickerContentOk(e)) return false;
       if (!matchesEdition(e, character.edition, true)) return false;
       const r = featRec(e), cat = String(r.category || "").toUpperCase();
       if (prereqLevel(r) > lvl) return false;
-      if (categories) return categories.includes(cat);
+      // Homebrew normalmente não marca "category" (O/G/EB/FS...) como o
+      // oficial — sem isso, ficava de fora tanto da lista livre quanto de
+      // qualquer categoria específica exigida (origem/espécie).
+      if (categories) return hb(e) || categories.includes(cat);
       if (cat === "O") return false;
       if (cat === "EB" && lvl < 19) return false;
       return true;
-    }).sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
+    }).sort((a, b) => Number(hb(a)) - Number(hb(b)) || a.name.localeCompare(b.name, "pt-BR"));
   };
   const featSelect = (attr, current, categories) =>
     `<select ${attr}><option value="">— escolher talento —</option>${eligibleFeats(categories).map((e) =>
-      `<option value="${esc(e.id)}"${e.id === current ? " selected" : ""}>${esc(e.name)}${e.source ? ` (${esc(e.source)})` : ""}</option>`).join("")}</select>`;
+      `<option value="${esc(e.id)}"${e.id === current ? " selected" : ""}>${esc(e.name)}${e.source ? ` (${esc(e.source)})` : ""}${hb(e) ? " · Homebrew" : ""}</option>`).join("")}</select>`;
   const featAbilPicker = (featId) => {
     const e = featId && manifest().find((x) => x.id === featId);
     const spec = e && featAbilityChoose(featRec(e));
@@ -1228,12 +1331,14 @@ function calc() {
   const init = mod(effScore("dex"));
   const passive = 10 + mod(effScore("wis")) + (character.skillProficiencies.includes("perception") ? pb : 0) + (character.skillExpertise.includes("perception") ? pb : 0);
   const hp = inferHP();
-  const ac = Number(character.ac) || 10 + mod(effScore("dex"));
+  const ud = character.auto?.unarmoredDefense;
+  const acAuto = 10 + mod(effScore("dex")) + (ud ? mod(effScore(ud)) : 0);
+  const ac = Number(character.ac) || acAuto;
   const speed = character.speed || character.auto?.speed || "30 ft";
   const sa = character.spellAbility || spellAbilityFrom(classInfo());
   const dc = sa ? spellDc(pb, mod(effScore(sa))) : null;
   const atk = sa ? spellAttack(pb, mod(effScore(sa))) : null;
-  return { lvl, pb, init, passive, hp, ac, speed, sa, dc, atk };
+  return { lvl, pb, init, passive, hp, ac, acAuto, ud, speed, sa, dc, atk };
 }
 async function recalc() {
   if (!character) return;
@@ -1255,16 +1360,18 @@ async function recalc() {
   $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
   const c = calc();
   renderAbilities();
-  $("v-ac").textContent = c.ac; $("v-init").textContent = fmt(c.init); $("v-speed").textContent = c.speed; $("v-pb").textContent = fmt(c.pb);
+  const acTitle = !character.ac && c.ud ? `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense) = ${c.ac}. Defina uma CA manual pra sobrescrever (ex.: usando armadura ou escudo).` : "";
+  $("v-ac").textContent = c.ac; $("v-ac").title = acTitle; $("v-init").textContent = fmt(c.init); $("v-speed").textContent = c.speed; $("v-pb").textContent = fmt(c.pb);
   $("v-passive").textContent = c.passive; $("v-spell-dc").textContent = c.dc ?? "—"; $("v-spell-atk").textContent = c.atk != null ? fmt(c.atk) : "—";
   $("v-hp-max").textContent = c.hp;
   $("hp-current").value = character.hpCurrent == null ? c.hp : character.hpCurrent;
   $("hp-temp").value = character.hpTemp || 0;
-  $("combat-ac").textContent = c.ac; $("combat-init").textContent = fmt(c.init); $("combat-speed").textContent = c.speed; $("combat-pb").textContent = fmt(c.pb);
+  $("combat-ac").textContent = c.ac; $("combat-ac").title = acTitle; $("combat-init").textContent = fmt(c.init); $("combat-speed").textContent = c.speed; $("combat-pb").textContent = fmt(c.pb);
   $("ac-input").value = character.ac ?? "";
+  $("ac-input").placeholder = c.ud ? `Auto: ${c.acAuto} (Unarmored Defense)` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
-  renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderDashboard();
+  renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") renderFeatures();
   if (active === "spells") renderSpells();
@@ -2189,8 +2296,8 @@ async function renderCodex() {
     const t = normType(e.type);
     if (t !== "race" && t !== "class") return false;
     if (codexState.type !== "all" && t !== codexState.type) return false;
-    if (codexState.content === "official" && hb(e)) return false;
-    if (codexState.content === "homebrew" && !hb(e)) return false;
+    if (codexState.content === "official" && isNonOfficial(e)) return false;
+    if (codexState.content === "homebrew" && !isNonOfficial(e)) return false;
     // Respeita a edição escolhida (2014/2024) e o "filtro de reprint"
     // do 5etools: sem isso, Mago PHB e Mago XPHB apareciam juntos.
     if (!matchesEdition(e, ed, codexState.legacy)) return false;
@@ -2329,6 +2436,60 @@ function openBuffModal() {
 }
 
 // ------------------------------------------------------------
+// Talentos extras — escolha manual, além dos slots automáticos
+// (origem do background, melhorias de nível 4/8/12/16/19...).
+// ------------------------------------------------------------
+function renderExtraFeats() {
+  const box = $("extra-feats-list");
+  if (!box) return;
+  const list = character.extraFeats || [];
+  if (!list.length) { box.innerHTML = `<p class="muted">Nenhum talento extra adicionado.</p>`; return; }
+  box.innerHTML = list.map((id) => {
+    const e = manifest().find((x) => x.id === id);
+    if (!e) return "";
+    const r = featRec(e);
+    const spec = featAbilityChoose(r);
+    const abilPicker = spec && spec.from.length
+      ? `<select data-extra-feat-ability="${esc(id)}"><option value="">bônus de atributo —</option>${spec.from.map((k) => `<option value="${k}"${(character.choiceSelections?.featAbility?.[id] || "") === k ? " selected" : ""}>${ABILITY_NAMES[k]}</option>`).join("")}</select>`
+      : "";
+    return `<div class="identity-row"><span>Talento</span><strong>${esc(titleOf(e))}${hb(e) ? " · Homebrew" : ""}</strong>${abilPicker}<button type="button" class="remove-btn no-print" data-remove-extra-feat="${esc(id)}" title="Remover">×</button></div>`;
+  }).join("");
+  box.querySelectorAll("[data-remove-extra-feat]").forEach((b) => b.addEventListener("click", () => {
+    character.extraFeats = (character.extraFeats || []).filter((id) => id !== b.dataset.removeExtraFeat);
+    saveCharacter(character); renderExtraFeats(); recalc();
+  }));
+  box.querySelectorAll("[data-extra-feat-ability]").forEach((s) => s.addEventListener("change", () => {
+    character.choiceSelections.featAbility = character.choiceSelections.featAbility || {};
+    character.choiceSelections.featAbility[s.dataset.extraFeatAbility] = s.value || "";
+    saveCharacter(character); recalc();
+  }));
+}
+async function openExtraFeatPicker() {
+  const modal = $("modal"), content = $("modal-content");
+  content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">TALENTOS</span><h2>Adicionar Talento</h2><p class="muted">Escolha qualquer talento do catálogo (oficial ou homebrew, conforme o seletor "Conteúdo" no topo).</p></div></div><div class="loading">Carregando catálogo…</div>`;
+  modal.classList.remove("hidden");
+  try { await ensureCatalog("feat"); } catch (err) { console.error(err); }
+  content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">TALENTOS</span><h2>Adicionar Talento</h2><p class="muted">Escolha qualquer talento do catálogo (oficial ou homebrew, conforme o seletor "Conteúdo" no topo).</p></div></div>
+    <div class="picker-controls"><input id="picker-search" placeholder="Pesquisar talento…"></div>
+    <div id="picker-results" class="picker-grid"></div>`;
+  const render = () => {
+    const q = $("picker-search").value.trim();
+    const arr = filteredPicker("feat", q).filter((e) => !/ability score improvement/i.test(e.name));
+    paintPickResults($("picker-results"), arr.slice(0, 200), (e) => {
+      character.extraFeats = character.extraFeats || [];
+      if (character.extraFeats.includes(e.id)) { toast("Esse talento já foi adicionado."); return; }
+      character.extraFeats.push(e.id);
+      saveCharacter(character);
+      $("modal").classList.add("hidden");
+      renderExtraFeats(); recalc();
+      toast(`${titleOf(e)} adicionado.`);
+    });
+  };
+  $("picker-search").addEventListener("input", render);
+  render();
+}
+
+// ------------------------------------------------------------
 // Templates de personagem — construções salvas pra reaproveitar
 // ------------------------------------------------------------
 function templateSnapshot() {
@@ -2418,6 +2579,9 @@ function applyLoaded(c) {
     conditions: Array.isArray(c?.conditions) ? c.conditions : [],
     journal: Array.isArray(c?.journal) ? c.journal : [],
     buffs: Array.isArray(c?.buffs) ? c.buffs : [],
+    extraFeats: Array.isArray(c?.extraFeats) ? c.extraFeats : [],
+    rolledSet: Array.isArray(c?.rolledSet) ? c.rolledSet : null,
+    arrayAssignment: { ...(c?.arrayAssignment || {}) },
   };
   $("edition").value = character.edition;
   $("content").value = character.content;
@@ -2727,9 +2891,17 @@ function renderWizardAbilitiesStep(step) {
   body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p>
     <div id="wiz-ability-grid" class="ability-grid"></div>
     <div class="pointbuy-bar" id="wiz-pointbuy-bar">
-      <label class="ability-mode-label">Modo<select id="wiz-ability-mode"><option value="pointbuy">Point buy (27)</option><option value="free">Valores livres</option></select></label>
+      <label class="ability-mode-label">Modo<select id="wiz-ability-mode">
+        <option value="pointbuy">Point buy (27 pontos)</option>
+        <option value="standard">Array Padrão (15,14,13,12,10,8)</option>
+        <option value="heroic">Array Heroico (16,15,14,13,12,10)</option>
+        <option value="epic">Array Épico (18,16,14,12,10,8)</option>
+        <option value="roll">Rolagem (4d6, descarta o menor)</option>
+        <option value="free">Valores livres</option>
+      </select></label>
       <strong id="wiz-pointbuy-remaining-wrap">Pontos restantes: <b id="wiz-pointbuy-remaining">27</b></strong>
       <button type="button" class="no-print" id="wiz-reset-pointbuy">Resetar 10/10/10/10/10/10</button>
+      <span id="wiz-ability-mode-extra" class="ability-mode-extra"></span>
     </div>
     <div id="wiz-ability-editor" class="ability-editor"></div>
     <p class="muted" id="wiz-ability-editor-hint"></p>`;
@@ -2868,6 +3040,7 @@ function setup() {
   $("add-condition")?.addEventListener("click", openConditionPicker);
   $("next-round")?.addEventListener("click", advanceRound);
   $("add-buff")?.addEventListener("click", openBuffModal);
+  $("add-extra-feat")?.addEventListener("click", openExtraFeatPicker);
   $("add-journal")?.addEventListener("click", () => openJournalModal(null));
   $("export-journal")?.addEventListener("click", exportJournalText);
   $("templates-btn")?.addEventListener("click", openTemplatesModal);

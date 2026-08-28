@@ -55,6 +55,13 @@ function register(stub) {
 export function isHomebrew(x) {
   return !!(x && (x.homebrew || x._isBrew || x.brew));
 }
+// Conteúdo de pré-lançamento (Unearthed Arcana e outros playtests) — não
+// é homebrew (não é fã-feito) nem oficial publicado, mas trata-se do
+// mesmo jeito que homebrew pra fins de filtro de conteúdo (ver
+// pickerContentOk em app.js) e ganha uma etiqueta própria na ficha.
+export function isPrerelease(x) {
+  return !!(x && x.prerelease);
+}
 export function editionOf(x) {
   // stub já traz string "2014"/"2024"/"both" (homebrew não amarrado a
   // uma edição específica); registro cru é derivado via heurística.
@@ -149,12 +156,14 @@ export async function ensureCatalog(type, onProgress) {
   if (type === "class") { await loadAllClasses(onProgress); loaded.add("class"); return; }
   if (type === "spell") {
     await loadSpellCatalog(onProgress);
-    await loadHomebrewCatalog("spell", onProgress).catch((e) => console.warn("Magias homebrew indisponíveis:", e));
+    await loadBrewCatalog("homebrew", "spell", onProgress).catch((e) => console.warn("Magias homebrew indisponíveis:", e));
+    await loadBrewCatalog("prerelease", "spell", onProgress).catch((e) => console.warn("Magias de pré-lançamento indisponíveis:", e));
     loaded.add("spell"); return;
   }
   if (type === "item") {
     await loadItemCatalog(onProgress);
-    await loadHomebrewCatalog("item", onProgress).catch((e) => console.warn("Itens homebrew indisponíveis:", e));
+    await loadBrewCatalog("homebrew", "item", onProgress).catch((e) => console.warn("Itens homebrew indisponíveis:", e));
+    await loadBrewCatalog("prerelease", "item", onProgress).catch((e) => console.warn("Itens de pré-lançamento indisponíveis:", e));
     loaded.add("item"); return;
   }
 
@@ -174,19 +183,24 @@ export async function ensureCatalog(type, onProgress) {
       });
     }
   }
-  await loadHomebrewCatalog(type, onProgress).catch((e) => console.warn(`Homebrew (${type}) indisponível:`, e));
+  await loadBrewCatalog("homebrew", type, onProgress).catch((e) => console.warn(`Homebrew (${type}) indisponível:`, e));
+  await loadBrewCatalog("prerelease", type, onProgress).catch((e) => console.warn(`Pré-lançamento (${type}) indisponível:`, e));
   loaded.add(type);
 }
 
-// Baixa os arquivos homebrew (deste repositório) que contêm o tipo
-// pedido — lista vinda de data/version.json (homebrew.filesByType).
-async function homebrewFilesFor(type) {
+// Baixa os arquivos homebrew/prerelease (deste repositório) que contêm o
+// tipo pedido — lista vinda de data/version.json (homebrew.filesByType
+// ou prerelease.filesByType, mesmo formato pros dois).
+async function brewFilesFor(kind, type) {
   const v = await loadVersionInfo();
-  const byType = v?.homebrew?.filesByType || {};
+  const byType = v?.[kind]?.filesByType || {};
   return Array.isArray(byType[type]) ? byType[type] : [];
 }
-async function loadHomebrewCatalog(type, onProgress) {
-  const files = await homebrewFilesFor(type);
+// kind: "homebrew" | "prerelease" — mesmo formato de arquivo, só muda de
+// onde a lista de arquivos vem e como a entidade resultante é marcada
+// (isHomebrew/isPrerelease em app.js leem esses dois campos).
+async function loadBrewCatalog(kind, type, onProgress) {
+  const files = await brewFilesFor(kind, type);
   if (!files.length) return;
   const keys = type === "item" ? ["item", "baseitem"] : [type];
   let done = 0;
@@ -200,7 +214,7 @@ async function loadHomebrewCatalog(type, onProgress) {
         const stub = {
           id: edId([type, rec.source || "", rec.name]),
           type, name: rec.name, source: rec.source || "",
-          edition: "both", homebrew: true, __rec: rec,
+          edition: "both", homebrew: kind === "homebrew", prerelease: kind === "prerelease", __rec: rec,
         };
         if (type === "spell") stub.level = rec.level ?? 0;
         register(stub);
@@ -217,13 +231,14 @@ async function loadAllClasses(onProgress) {
   // Não deixamos uma falha ao buscar o índice oficial (rede fora do
   // ar, mirror bloqueado etc.) impedir o carregamento do homebrew —
   // por isso tryJson aqui em vez de getJson.
-  const [index, homebrewFiles] = await Promise.all([
+  const [index, homebrewFiles, prereleaseFiles] = await Promise.all([
     tryJson("class/index.json").then((v) => v || {}), // { wizard: "class-wizard.json", ... }
-    homebrewClassFiles(),
+    brewClassFiles("homebrew"),
+    brewClassFiles("prerelease"),
   ]);
   const officialFiles = Object.values(index);
 
-  const total = officialFiles.length + homebrewFiles.length;
+  const total = officialFiles.length + homebrewFiles.length + prereleaseFiles.length;
   let done = 0;
   const tick = () => { done++; onProgress && onProgress(done, total); };
 
@@ -232,12 +247,17 @@ async function loadAllClasses(onProgress) {
     ...officialFiles.map(async (fname) => {
       const file = await tryJson(`class/${fname}`);
       tick();
-      if (file) registerClassFile(file, false);
+      if (file) registerClassFile(file, false, false);
     }),
     ...homebrewFiles.map(async (fname) => {
       const file = await tryLocalJson(fname);
       tick();
-      if (file) registerClassFile(file, true);
+      if (file) registerClassFile(file, true, false);
+    }),
+    ...prereleaseFiles.map(async (fname) => {
+      const file = await tryLocalJson(fname);
+      tick();
+      if (file) registerClassFile(file, false, true);
     }),
   ]);
 }
@@ -270,11 +290,11 @@ async function loadOfficialClassFluff() {
 // reaproveitamos loadAllClasses. version.json precisa listar os
 // arquivos de raça homebrew (`homebrew.raceFiles`, gerado pelo
 // sync-data.mjs) para sabermos quais baixar.
-async function homebrewRaceFiles() {
+async function brewRaceFiles(kind) {
   const v = await loadVersionInfo();
-  return Array.isArray(v?.homebrew?.raceFiles) ? v.homebrew.raceFiles : [];
+  return Array.isArray(v?.[kind]?.raceFiles) ? v[kind].raceFiles : [];
 }
-function registerRaceRecords(arr, isHomebrew) {
+function registerRaceRecords(arr, isHomebrew, isPrerelease) {
   for (const rec of arr || []) {
     if (!rec || !rec.name) continue;
     const source = rec.source || "";
@@ -283,31 +303,41 @@ function registerRaceRecords(arr, isHomebrew) {
     register({
       id: edId(["race", source, rec.name, rec.raceName || ""]),
       type: "race", name: rec.name, source,
-      edition: isHomebrew ? "both" : editionOfRec(rec),
-      homebrew: isHomebrew,
+      edition: (isHomebrew || isPrerelease) ? "both" : editionOfRec(rec),
+      homebrew: isHomebrew, prerelease: !!isPrerelease,
       subraceOf,
       __rec: rec,
     });
   }
 }
 async function loadRaces(onProgress) {
-  const [officialJson, raceFluffJson, homebrewFiles] = await Promise.all([
+  const [officialJson, raceFluffJson, homebrewFiles, prereleaseFiles] = await Promise.all([
     tryJson("races.json").then((v) => v || {}),
     tryJson("fluff-races.json").then((v) => v || {}),
-    homebrewRaceFiles(),
+    brewRaceFiles("homebrew"),
+    brewRaceFiles("prerelease"),
   ]);
   registerFluff("race", resolveCopies(raceFluffJson.raceFluff || []));
-  registerRaceRecords(resolveCopies([...(officialJson.race || []), ...(officialJson.subrace || [])]), false);
+  registerRaceRecords(resolveCopies([...(officialJson.race || []), ...(officialJson.subrace || [])]), false, false);
 
   let done = 0;
-  const total = homebrewFiles.length;
-  await Promise.all(homebrewFiles.map(async (fname) => {
-    const file = await tryLocalJson(fname);
-    done++; onProgress && onProgress(done, total);
-    if (!file) return;
-    if (Array.isArray(file.raceFluff)) registerFluff("race", resolveCopies(file.raceFluff));
-    registerRaceRecords(resolveCopies([...(file.race || []), ...(file.subrace || [])]), true);
-  }));
+  const total = homebrewFiles.length + prereleaseFiles.length;
+  await Promise.all([
+    ...homebrewFiles.map(async (fname) => {
+      const file = await tryLocalJson(fname);
+      done++; onProgress && onProgress(done, total);
+      if (!file) return;
+      if (Array.isArray(file.raceFluff)) registerFluff("race", resolveCopies(file.raceFluff));
+      registerRaceRecords(resolveCopies([...(file.race || []), ...(file.subrace || [])]), true, false);
+    }),
+    ...prereleaseFiles.map(async (fname) => {
+      const file = await tryLocalJson(fname);
+      done++; onProgress && onProgress(done, total);
+      if (!file) return;
+      if (Array.isArray(file.raceFluff)) registerFluff("race", resolveCopies(file.raceFluff));
+      registerRaceRecords(resolveCopies([...(file.race || []), ...(file.subrace || [])]), false, true);
+    }),
+  ]);
 }
 
 // data/version.json é buscado uma única vez por sessão e reaproveitado
@@ -324,9 +354,9 @@ function loadVersionInfo() {
   return versionInfoPromise;
 }
 export async function currentVersionInfo() { return loadVersionInfo(); }
-async function homebrewClassFiles() {
+async function brewClassFiles(kind) {
   const v = await loadVersionInfo();
-  return Array.isArray(v?.homebrew?.classFiles) ? v.homebrew.classFiles : [];
+  return Array.isArray(v?.[kind]?.classFiles) ? v[kind].classFiles : [];
 }
 
 // Vários arquivos do 5etools trazem a classe/subclasse DUAS vezes: a
@@ -345,9 +375,9 @@ function dedupeRicher(arr, keyFn) {
   return [...m.values()];
 }
 
-function registerClassFile(file, isHomebrew = false) {
-  // Homebrew traz classFluff/subclassFluff dentro do próprio arquivo
-  // de classe — nenhum download extra necessário (ver README).
+function registerClassFile(file, isHomebrew = false, isPrerelease = false) {
+  // Homebrew/prerelease trazem classFluff/subclassFluff dentro do
+  // próprio arquivo de classe — nenhum download extra necessário.
   if (Array.isArray(file.classFluff)) registerFluff("class", resolveCopies(file.classFluff));
   if (Array.isArray(file.subclassFluff)) registerFluff("subclass", resolveCopies(file.subclassFluff));
   file = {
@@ -355,13 +385,14 @@ function registerClassFile(file, isHomebrew = false) {
     class: dedupeRicher(file.class, (c) => `${String(c.name).toLowerCase()}|${String(c.source).toLowerCase()}`),
     subclass: dedupeRicher(file.subclass, (s) => `${String(s.name).toLowerCase()}|${String(s.source).toLowerCase()}|${String(s.className).toLowerCase()}`),
   };
+  const nonOfficial = isHomebrew || isPrerelease;
   for (const cls of file.class || []) {
     const csrc = cls.source || "";
     classFiles.set(`${String(cls.name).toLowerCase()}|${String(csrc).toLowerCase()}`, { cls, file });
     register({
       id: edId(["class", csrc, cls.name]),
       type: "class", name: cls.name, source: csrc,
-      edition: isHomebrew ? "both" : editionOfRec(cls), homebrew: isHomebrew,
+      edition: nonOfficial ? "both" : editionOfRec(cls), homebrew: isHomebrew, prerelease: isPrerelease,
       __rec: cls, __file: file,
     });
   }
@@ -376,8 +407,8 @@ function registerClassFile(file, isHomebrew = false) {
       className: sub.className || "",
       classSource: csrc,
       shortName: sub.shortName || sub.name,
-      edition: isHomebrew ? "both" : editionOfRec(sub.edition ? sub : { source: ssrc }),
-      homebrew: isHomebrew,
+      edition: nonOfficial ? "both" : editionOfRec(sub.edition ? sub : { source: ssrc }),
+      homebrew: isHomebrew, prerelease: isPrerelease,
       __rec: sub, __file: file,
     });
   }
@@ -574,9 +605,9 @@ export function filterEntities(type, edition, content = "all", query = "") {
       // Homebrew é marcado como edition "both" (não sabemos se é
       // 2014 ou 2024) — deixamos passar em qualquer edição escolhida.
       if (edition && editionOf(x) !== "both" && editionOf(x) !== String(edition)) return false;
-      const hb = isHomebrew(x);
-      if (content === "official" && hb) return false;
-      if (content === "homebrew" && !hb) return false;
+      const nonOfficial = isHomebrew(x) || isPrerelease(x);
+      if (content === "official" && nonOfficial) return false;
+      if (content === "homebrew" && !nonOfficial) return false;
       if (q && !String(x.name || "").toLowerCase().includes(q) && !String(x.source || "").toLowerCase().includes(q)) return false;
       return true;
     })
