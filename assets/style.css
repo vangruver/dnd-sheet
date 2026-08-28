@@ -821,6 +821,17 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .template-save-row{display:flex;gap:8px;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
 .template-save-row input{flex:1}
 
+/* ---------- Meus Personagens ---------- */
+.char-list{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.char-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px}
+.char-row.active{border-color:var(--red);background:var(--red-soft)}
+.char-row-info strong{display:block;font:700 13px var(--font-head);color:var(--text)}
+.char-row-info small{font-size:10px;color:var(--text-mut)}
+.char-row-actions{display:flex;gap:6px;flex-shrink:0}
+.char-row-actions button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 10px;font-size:10px;font-weight:600}
+.char-row-actions button:hover{border-color:var(--red)}
+.char-row-actions button.remove-btn{color:var(--red-hi);font-size:14px;padding:6px 9px}
+
 /* ============================================================
    Passo de nível do assistente
    ============================================================ */

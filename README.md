@@ -24,6 +24,7 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   Oficial/Homebrew, fatos rápidos (dado de vida, atributo primário, deslocamento, tamanho...) e a
   lista de subclasses/subespécies. Quando o registro não tem lore estruturada, mostra os traços
   mecânicos com um aviso.
+- **Múltiplos personagens salvos**: botão **"Meus Personagens"** lista todas as fichas salvas neste navegador — cria, alterna, duplica e apaga cada uma independente, sem perder o progresso das outras.
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
 - **Assistente guiado completo**: espécie → classe → subclasse → nível → background → multiclasse
   (opcional) → atributos → equipamento inicial → revisão, com "voltar" e passos opcionais puláveis.
@@ -105,7 +106,7 @@ resistências do Guerreiro, listas de magia não vazias em 2014 e 2024).
 | `src/database.js` | catálogos, características, lista de magias, consultas |
 | `src/rules.js` | atributos, perícias, fórmulas 5e |
 | `src/app.js` | interface, automação da ficha, abas, aviso de banco atualizado |
-| `src/storage.js` | personagem em `localStorage`, importar/exportar, versão de dados já vista |
+| `src/storage.js` | personagens em `localStorage` (múltiplos slots + ativo), importar/exportar, versão de dados já vista |
 | `sync-data.mjs` | baixa 5etools (2014/2024) + homebrew e gera `data/raw/` + `data/manifest.json` + `data/version.json` |
 | `data/version.json` | gerado pelo `sync-data.mjs`; lista os arquivos de classe/subclasse e de raça/subespécie homebrew, além da data da última sincronização |
 
