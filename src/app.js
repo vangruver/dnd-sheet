@@ -9,13 +9,14 @@ import { ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abi
 import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
-let character, refs = { class: null, subclass: null, race: null, background: null }, details = {};
-let pickerType = null, eqCat = "inventory", pickerLegacy = true;
+let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
+let pickerType = null, eqCat = "inventory", pickerLegacy = true, spellBookClassId = null;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
 
 const fresh = () => ({
   schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official", abilityMode: "pointbuy",
   classId: "", subclassId: "", raceId: "", backgroundId: "",
+  multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
@@ -131,6 +132,52 @@ function classMatches(x, c) {
 }
 
 // ------------------------------------------------------------
+// Multiclasse — classe primária (classId/subclassId/level) + classes
+// adicionais em character.multiclasses ([{classId, subclassId, level}]).
+// Nível total = soma de todas; proficiência/PV usam o total, enquanto
+// características/magias de cada classe usam o nível PRÓPRIO dela.
+// ------------------------------------------------------------
+function totalLevel() {
+  const extra = (character.multiclasses || []).reduce((n, m) => n + (Number(m.level) || 0), 0);
+  return Math.max(1, Number(character.level) || 1) + extra;
+}
+function usedMulticlassIds(excludeIndex) {
+  const set = new Set();
+  if (character.classId) set.add(character.classId);
+  (character.multiclasses || []).forEach((m, i) => { if (i !== excludeIndex && m.classId) set.add(m.classId); });
+  return set;
+}
+function resolveMulticlassRefs() {
+  refs.multiclasses = (character.multiclasses || []).map((m) => ({
+    classEntry: manifest().find((x) => x.id === m.classId) || null,
+    subclassEntry: manifest().find((x) => x.id === m.subclassId) || null,
+    level: Math.max(1, Math.min(19, Number(m.level) || 1)),
+  }));
+}
+function multiclassRequirement(rec) {
+  const req = rec?.multiclassing?.requirements;
+  if (!req) return null;
+  const seg = (o) => Object.entries(o || {}).filter(([k]) => abilityKey(k)).map(([k, v]) => [abilityKey(k), Number(v)]);
+  const ands = seg(req);
+  const orGroups = (req.or || []).map(seg);
+  return { ands, orGroups };
+}
+function meetsMulticlassRequirement(rec) {
+  const req = multiclassRequirement(rec);
+  if (!req) return true;
+  const andOk = req.ands.every(([a, v]) => effScore(a) >= v);
+  const orOk = req.orGroups.every((g) => !g.length || g.some(([a, v]) => effScore(a) >= v));
+  return andOk && orOk;
+}
+function multiclassRequirementText(rec) {
+  const req = multiclassRequirement(rec);
+  if (!req) return "";
+  const parts = req.ands.map(([a, v]) => `${ABILITY_NAMES[a]} ${v}`);
+  req.orGroups.forEach((g) => { if (g.length) parts.push(g.map(([a, v]) => `${ABILITY_NAMES[a]} ${v}`).join(" ou ")); });
+  return parts.join(" e ");
+}
+
+// ------------------------------------------------------------
 // Painel de construção
 // ------------------------------------------------------------
 async function updateChoice(type) {
@@ -152,10 +199,9 @@ async function refreshChoices() {
   refs.class = manifest().find((x) => x.id === character.classId) || null;
   refs.subclass = manifest().find((x) => x.id === character.subclassId) || null;
   refs.background = manifest().find((x) => x.id === character.backgroundId) || null;
+  resolveMulticlassRefs();
   for (const t of ["race", "class", "subclass", "background"]) await updateChoice(t);
-  $("head-class").textContent = refs.class ? `${titleOf(refs.class)}${refs.subclass ? " · " + titleOf(refs.subclass) : ""}` : "—";
-  $("head-background").textContent = refs.background ? titleOf(refs.background) : "—";
-  $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
+  renderMulticlasses();
   await recalc();
 }
 const pickerContentOk = (x) => character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x));
@@ -234,7 +280,87 @@ async function selectRef(e) {
   saveCharacter(character);
   toast(`${titleOf(e)} selecionado.`);
 }
-function openInfo(type) { const e = refs[type]; if (!e) { toast("Nada selecionado."); return; } openEntityModal(e); }
+function openInfo(type) {
+  if (type === "multiclass") {
+    $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">REGRA</span><h2>Multiclasse</h2></div></div><div class="modal-body">
+      <p>Além da classe primária (nível informado no topo da ficha), você pode adicionar outras classes, cada uma com seu próprio nível e subclasse. O nível total do personagem é a soma de todos — é ele que define a proficiência e os pontos de vida.</p>
+      <p>Cada classe concede suas próprias características e magias no nível em que você a tem. Proficiências e perícias de multiclasse seguem a tabela reduzida do PHB (não repetem as escolhas da classe inicial) e aparecem no painel de automação quando aplicável.</p>
+      <p class="muted">Um aviso amarelo aparece na linha da classe quando seus atributos não atingem o mínimo recomendado para multiclassar (o jogo não te impede de continuar mesmo assim).</p>
+    </div>`;
+    $("modal").classList.remove("hidden");
+    return;
+  }
+  const e = refs[type]; if (!e) { toast("Nada selecionado."); return; } openEntityModal(e);
+}
+
+// ------------------------------------------------------------
+// Linhas de multiclasse — selects nativos (classe/subclasse/nível)
+// no painel de construção, independentes do modal de escolha usado
+// pela classe primária.
+// ------------------------------------------------------------
+function classSelectOptions(selectedId, excludeIndex) {
+  const used = usedMulticlassIds(excludeIndex);
+  const arr = manifest().filter((x) =>
+    normType(x.type) === "class" && matchesEdition(x, character.edition, true) && pickerContentOk(x) &&
+    (x.id === selectedId || !used.has(x.id)))
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
+  return `<option value="">Selecionar classe…</option>` + arr.map((x) =>
+    `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""}>${esc(titleOf(x))}${hb(x) ? " (Homebrew)" : ""}</option>`).join("");
+}
+function subclassSelectOptions(classEntry, selectedId) {
+  if (!classEntry) return `<option value="">Escolha a classe primeiro</option>`;
+  const cn = String(classEntry.name).toLowerCase();
+  const arr = manifest().filter((x) =>
+    normType(x.type) === "subclass" && matchesEdition(x, character.edition, true) &&
+    String(x.className || "").toLowerCase() === cn && pickerContentOk(x))
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
+  return `<option value="">Sem subclasse ainda</option>` + arr.map((x) =>
+    `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""}>${esc(titleOf(x))}${hb(x) ? " (Homebrew)" : ""}</option>`).join("");
+}
+function renderMulticlasses() {
+  const box = $("multiclass-list");
+  if (!box) return;
+  const rows = character.multiclasses || [];
+  if (!rows.length) { box.innerHTML = `<p class="muted">Nenhuma classe adicional. Use "+ Adicionar classe" para multiclassar.</p>`; return; }
+  box.innerHTML = rows.map((m, i) => {
+    const classEntry = manifest().find((x) => x.id === m.classId) || null;
+    const rec = classEntry ? recordsForEntity(classEntry)[0] : null;
+    const warn = classEntry && !meetsMulticlassRequirement(rec) ? `<div class="multiclass-warn">Requer ${esc(multiclassRequirementText(rec))} para multiclassar.</div>` : "";
+    return `<div class="multiclass-row" data-mc-row="${i}">
+      <select data-mc-class="${i}" aria-label="Classe adicional">${classSelectOptions(m.classId, i)}</select>
+      <select data-mc-subclass="${i}" aria-label="Subclasse adicional" ${classEntry ? "" : "disabled"}>${subclassSelectOptions(classEntry, m.subclassId)}</select>
+      <input type="number" min="1" max="19" value="${Number(m.level) || 1}" data-mc-level="${i}" aria-label="Nível">
+      <button type="button" class="remove-btn no-print" data-mc-remove="${i}" title="Remover classe">×</button>
+      ${warn}
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-mc-class]").forEach((s) => s.addEventListener("change", async () => {
+    const i = Number(s.dataset.mcClass);
+    character.multiclasses[i].classId = s.value;
+    character.multiclasses[i].subclassId = "";
+    saveCharacter(character);
+    await refreshChoices();
+  }));
+  box.querySelectorAll("[data-mc-subclass]").forEach((s) => s.addEventListener("change", async () => {
+    const i = Number(s.dataset.mcSubclass);
+    character.multiclasses[i].subclassId = s.value;
+    saveCharacter(character);
+    await refreshChoices();
+  }));
+  box.querySelectorAll("[data-mc-level]").forEach((inp) => inp.addEventListener("change", async () => {
+    const i = Number(inp.dataset.mcLevel);
+    const others = (Number(character.level) || 1) + rows.reduce((n, m, j) => n + (j === i ? 0 : Number(m.level) || 0), 0);
+    character.multiclasses[i].level = Math.max(1, Math.min(19, 20 - others, Number(inp.value) || 1));
+    saveCharacter(character);
+    await recalc();
+  }));
+  box.querySelectorAll("[data-mc-remove]").forEach((b) => b.addEventListener("click", async () => {
+    const i = Number(b.dataset.mcRemove);
+    character.multiclasses.splice(i, 1);
+    saveCharacter(character);
+    await refreshChoices();
+  }));
+}
 
 // ------------------------------------------------------------
 // Fichas de detalhe de raça / classe / subclasse — lore real do
@@ -635,17 +761,27 @@ async function buildAutomation() {
   character.auto.hitDice = hitDiceFrom(cr);
   character.auto.spellcastingAbility = spellAbilityFrom(cr);
   const fixedSkills = [...new Set([...classFixedSkills, ...bgFixedSkills, ...raceFixedSkills])];
+  // Perícias de multiclasse: tabela reduzida do PHB — cada classe
+  // adicional pode conceder no máximo 1 escolha de perícia (armas e
+  // armaduras entram só como texto, ver renderProficiencies).
+  const mcSkillChoices = (details.multiclasses || []).map((m) => {
+    const gained = m.classRec?.multiclassing?.proficienciesGained;
+    return gained ? (skillChoicesFrom(gained.skills || gained)[0] || null) : null;
+  });
   character.skillProficiencies = [...new Set([
     ...(character.manualSkillProficiencies || []), ...fixedSkills,
     ...Object.values(character.choiceSelections?.classSkills || {}).flat(),
     ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat(),
     ...Object.values(character.choiceSelections?.raceSkills || {}).flat(),
+    ...Object.values(character.choiceSelections?.multiclassSkills || {}).flat(),
   ])];
   character.saveProficiencies = [...new Set([...classSaves, ...(character.manualSaveProficiencies || [])])];
   if (character.auto.speed && !character.manualSpeed) character.speed = character.auto.speed;
   if (character.auto.spellcastingAbility && !character.manualSpellAbility) character.spellAbility = character.auto.spellcastingAbility;
 
   const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
+  const mcClassFeats = await Promise.all((details.multiclasses || []).map((m) =>
+    m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])));
 
   // Especialização: nº de perícias vem das características "Expertise" da
   // classe até o nível atual (Ladino 1/6, Bardo 3/10 = 2 cada).
@@ -657,8 +793,10 @@ async function buildAutomation() {
   if (optFeatures.length) { try { await ensureCatalog("optionalfeature"); } catch (e) { console.warn("Catálogo de opções indisponível:", e); } }
 
   // Talentos: feat de origem do background (2024), talento de espécie
-  // (Linhagem Personalizada / Humano Variante) + slots de melhoria.
-  const asiCount = asiSlotCount(classFeats);
+  // (Linhagem Personalizada / Humano Variante) + slots de melhoria. Cada
+  // classe (primária + multiclasse) concede seus próprios slots de ASI
+  // nos níveis 4/8/12/16/19 — próprios de cada classe, não do total.
+  const asiCount = asiSlotCount(classFeats) + mcClassFeats.reduce((n, f) => n + asiSlotCount(f), 0);
   const wantsFeats = asiCount || originFeatSpec(br) || raceFeatSpec(rr);
   if (wantsFeats) { try { await ensureCatalog("feat"); } catch (e) { console.warn("Catálogo de talentos indisponível:", e); } }
   const originSpec2 = wantsFeats ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
@@ -683,6 +821,7 @@ async function buildAutomation() {
     asiCount,
     originSpec: originSpec2,
     raceSpec,
+    mcSkillChoices,
   });
 }
 function choiceStore(type) { return character.choiceSelections?.[type] || []; }
@@ -704,6 +843,17 @@ function renderAutoChoices(data) {
   addSkillSection(`Perícias da classe — ${titleOf(refs.class)}`, data.classChoices, "classSkills");
   addSkillSection(`Perícias do background — ${titleOf(refs.background)}`, data.backgroundChoices, "backgroundSkills");
   addSkillSection(`Perícias da espécie — ${titleOf(refs.race)}`, data.raceChoices || [], "raceSkills");
+  (data.mcSkillChoices || []).forEach((ch, idx) => {
+    if (!ch) return;
+    const mc = details.multiclasses?.[idx];
+    if (!mc?.classEntry) return;
+    const selected = character.choiceSelections.multiclassSkills?.[idx] || [];
+    const remaining = Math.max(0, ch.count - selected.length);
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Perícia de multiclasse — ${esc(titleOf(mc.classEntry))}</strong><span>Escolha ${ch.count}</span></div><p>${remaining ? `Faltam ${remaining} escolha(s).` : "Completo."}</p><div class="choice-options">${ch.from.map((k) => {
+      const on = selected.includes(k);
+      return `<label class="choice-option"><input type="checkbox" data-mc-skill-choice="${idx}" data-choice-value="${esc(k)}" ${on ? "checked" : ""} ${!on && selected.length >= ch.count ? "disabled" : ""}><span>${esc(SKILLS.find((x) => x[0] === k)?.[1] || k)}</span></label>`;
+    }).join("")}</div></div>`);
+  });
   data.abilityChoices.forEach((ch, idx) => {
     const selected = character.choiceSelections.abilityChoices?.[idx] || [];
     sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumentos de atributo — ${esc(titleOf(refs.race))}</strong><span>Escolha ${ch.count}</span></div><div class="choice-options">${ch.from.map((k) => `<label class="choice-option"><input type="checkbox" data-ability-choice="${idx}" value="${k}" ${selected.includes(k) ? "checked" : ""} ${!selected.includes(k) && selected.length >= ch.count ? "disabled" : ""}><span>${ABILITY_NAMES[k]}</span></label>`).join("")}</div></div>`);
@@ -823,6 +973,16 @@ function renderAutoChoices(data) {
       ...Object.values(character.choiceSelections.backgroundSkills || {}).flat(),
       ...Object.values(character.choiceSelections.raceSkills || {}).flat(),
     ])];
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-mc-skill-choice]").forEach((i) => i.addEventListener("change", () => {
+    const idx = Number(i.dataset.mcSkillChoice), v = i.dataset.choiceValue;
+    character.choiceSelections.multiclassSkills = character.choiceSelections.multiclassSkills || {};
+    const current = character.choiceSelections.multiclassSkills[idx] || [];
+    toggleIn(current, v, i.checked);
+    const limit = (data.mcSkillChoices || [])[idx]?.count ?? current.length;
+    if (current.length > limit) { current.pop(); i.checked = false; toast(`Você pode escolher apenas ${limit}.`); }
+    character.choiceSelections.multiclassSkills[idx] = current;
     saveCharacter(character); recalc();
   }));
   box.querySelectorAll("[data-ability-choice]").forEach((i) => i.addEventListener("change", () => {
@@ -947,16 +1107,23 @@ function abilityBonusTotal(a) {
   return b;
 }
 function effScore(a) { return (Number(character.scores[a]) || 10) + abilityBonusTotal(a); }
+// PV médios: 1º nível da classe primária sempre no máximo do dado de
+// vida; todos os outros níveis (restante da primária + TODAS as
+// classes de multiclasse) usam a média do respectivo dado + CON.
 function inferHP() {
-  const c = classInfo();
-  const hd = Number(character.auto?.hitDice || hitDiceFrom(c) || 8) || 8;
   const conMod = mod(effScore("con"));
-  const first = hd + conMod;
-  const perLevel = hpAverage(hd) + conMod;
-  return Math.max(1, first + Math.max(0, Number(character.level) - 1) * perLevel);
+  const primaryHd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
+  const primaryLevel = Math.max(1, Number(character.level) || 1);
+  let hp = primaryHd + conMod;
+  for (let i = 1; i < primaryLevel; i++) hp += hpAverage(primaryHd) + conMod;
+  for (const m of details.multiclasses || []) {
+    const hd = Number(hitDiceFrom(m.classRec) || 8) || 8;
+    for (let i = 0; i < Math.max(0, Number(m.level) || 0); i++) hp += hpAverage(hd) + conMod;
+  }
+  return Math.max(1, hp);
 }
 function calc() {
-  const lvl = Number(character.level) || 1, pb = proficiency(lvl);
+  const lvl = totalLevel(), pb = proficiency(lvl);
   const init = mod(effScore("dex"));
   const passive = 10 + mod(effScore("wis")) + (character.skillProficiencies.includes("perception") ? pb : 0) + (character.skillExpertise.includes("perception") ? pb : 0);
   const hp = inferHP();
@@ -969,11 +1136,22 @@ function calc() {
 }
 async function recalc() {
   if (!character) return;
+  resolveMulticlassRefs();
   details.classRec = await firstRecord(refs.class);
   details.raceRec = await firstRecord(refs.race);
   details.subclassRec = await firstRecord(refs.subclass);
   details.backgroundRec = await firstRecord(refs.background);
+  details.multiclasses = await Promise.all((refs.multiclasses || []).map(async (m) => ({
+    classEntry: m.classEntry, subclassEntry: m.subclassEntry, level: m.level,
+    classRec: m.classEntry ? await firstRecord(m.classEntry) : {},
+    subclassRec: m.subclassEntry ? await firstRecord(m.subclassEntry) : {},
+  })));
   await buildAutomation();
+  const mcLabels = (refs.multiclasses || []).map((m) => m.classEntry ? `${titleOf(m.classEntry)}${m.subclassEntry ? " · " + titleOf(m.subclassEntry) : ""} ${m.level}` : null).filter(Boolean);
+  const primaryLabel = refs.class ? `${titleOf(refs.class)}${refs.subclass ? " · " + titleOf(refs.subclass) : ""}${mcLabels.length ? " " + character.level : ""}` : null;
+  $("head-class").textContent = [primaryLabel, ...mcLabels].filter(Boolean).join(" / ") || "—";
+  $("head-background").textContent = refs.background ? titleOf(refs.background) : "—";
+  $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
   const c = calc();
   renderAbilities();
   $("v-ac").textContent = c.ac; $("v-init").textContent = fmt(c.init); $("v-speed").textContent = c.speed; $("v-pb").textContent = fmt(c.pb);
@@ -1024,9 +1202,19 @@ function profLabel(x) {
 function renderProficiencies() {
   const cr = details.classRec || {}, br = details.backgroundRec || {}, sp = cr.startingProficiencies || {};
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
-  const armor = (sp.armor || []).map(profLabel).map(cap).filter(Boolean);
-  const weapons = (sp.weapons || []).map(profLabel).map(cap).filter(Boolean);
-  const tools = [...(sp.tools || []).map(profLabel), ...flatObjects(br.toolProficiencies || []).flatMap((o) => Object.keys(o).filter((k) => o[k] === true))].map(cap).filter(Boolean);
+  const toLabels = (arr) => (arr || []).map(profLabel).map(cap).filter(Boolean);
+  let armor = toLabels(sp.armor);
+  let weapons = toLabels(sp.weapons);
+  let tools = [...toLabels(sp.tools), ...flatObjects(br.toolProficiencies || []).flatMap((o) => Object.keys(o).filter((k) => o[k] === true)).map(cap)].filter(Boolean);
+  // Multiclasse: tabela reduzida do PHB (multiclassing.proficienciesGained
+  // de cada classe adicional) — bem menor que a proficiência de nível 1.
+  for (const m of details.multiclasses || []) {
+    const g = m.classRec?.multiclassing?.proficienciesGained || {};
+    armor = [...armor, ...toLabels(g.armor)];
+    weapons = [...weapons, ...toLabels(g.weapons)];
+    tools = [...tools, ...toLabels(g.tools)];
+  }
+  armor = [...new Set(armor)]; weapons = [...new Set(weapons)]; tools = [...new Set(tools)];
   $("proficiency-editor").innerHTML = `
     <div class="identity-row"><span>Armaduras</span><strong>${armor.length ? esc(armor.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Armas</span><strong>${weapons.length ? esc(weapons.join(", ")) : "—"}</strong></div>
@@ -1036,7 +1224,12 @@ function renderProficiencies() {
 }
 function renderIdentity() {
   const rows = [["Espécie", refs.race], ["Classe", refs.class], ["Subclasse", refs.subclass], ["Background", refs.background]];
-  $("identity").innerHTML = rows.map(([k, e]) => `<div class="identity-row"><span>${k}</span><strong>${e ? esc(titleOf(e)) : "—"}</strong>${e ? sourceTag(e) : ""}</div>`).join("");
+  let html = rows.map(([k, e]) => `<div class="identity-row"><span>${k}</span><strong>${e ? esc(titleOf(e)) : "—"}</strong>${e ? sourceTag(e) : ""}</div>`).join("");
+  (refs.multiclasses || []).forEach((m) => {
+    if (!m.classEntry) return;
+    html += `<div class="identity-row"><span>Multiclasse</span><strong>${esc(titleOf(m.classEntry))}${m.subclassEntry ? " · " + esc(titleOf(m.subclassEntry)) : ""} (nível ${m.level})</strong>${sourceTag(m.classEntry)}</div>`;
+  });
+  $("identity").innerHTML = html;
 }
 function renderAttacks() {
   const arr = character.attacks || [];
@@ -1048,8 +1241,13 @@ async function renderFeatures() {
   const box = $("feature-list");
   box.innerHTML = `<div class="empty">Carregando características…</div>`;
   const groups = [];
-  if (refs.class) groups.push(["CLASSE", await findClassFeatures(refs.class, Number(character.level))]);
-  if (refs.subclass) groups.push(["SUBCLASSE", await findSubclassFeatures(refs.subclass, Number(character.level))]);
+  const mcLabel = (name) => (details.multiclasses || []).some((m) => m.classEntry) ? ` — ${esc(name)}` : "";
+  if (refs.class) groups.push([`CLASSE${mcLabel(titleOf(refs.class))}`, await findClassFeatures(refs.class, Number(character.level))]);
+  if (refs.subclass) groups.push([`SUBCLASSE${mcLabel(titleOf(refs.subclass))}`, await findSubclassFeatures(refs.subclass, Number(character.level))]);
+  for (const m of details.multiclasses || []) {
+    if (m.classEntry) groups.push([`CLASSE — ${esc(titleOf(m.classEntry))} (nível ${m.level})`, await findClassFeatures(m.classEntry, Number(m.level))]);
+    if (m.subclassEntry) groups.push([`SUBCLASSE — ${esc(titleOf(m.subclassEntry))}`, await findSubclassFeatures(m.subclassEntry, Number(m.level))]);
+  }
   if (refs.race) {
     const r = await firstRecord(refs.race);
     const f = Array.isArray(r?.entries) ? r.entries.filter((x) => x && x.name) : [];
@@ -1115,17 +1313,17 @@ function preparedFromFormula(formula, level, abilMod) {
   else if (/\/\s*3/.test(f)) base = Math.floor(level / 3);
   return Math.max(1, base + (abilMod || 0));
 }
-function spellcastingInfo(level) {
-  const cr = details.classRec || {}, sr = details.subclassRec || {};
+function spellcastingInfoFor(cr, sr, level) {
+  cr = cr || {}; sr = sr || {};
   const src = (cr.casterProgression || cr.spellcastingAbility) ? cr
     : (sr.casterProgression || sr.spellcasting || sr.spellcastingAbility) ? sr : null;
   if (!src) return null;
-  const prog = src.casterProgression || (src === sr ? "1/3" : "full");
+  const prog = String(src.casterProgression || (src === sr ? "1/3" : "full")).toLowerCase();
   const abilKey = abilityKey(src.spellcastingAbility) || spellAbilityFrom(cr) || spellAbilityFrom(sr);
   const abilMod = abilKey ? mod(effScore(abilKey)) : 0;
 
   let slots = null, pact = null;
-  if (String(prog).toLowerCase() === "pact") pact = pactSlots(level);
+  if (prog === "pact") pact = pactSlots(level);
   else slots = slotRowFromTable(src, level) || casterSlots(prog, level);
 
   let cantrips = Array.isArray(src.cantripProgression) ? src.cantripProgression[Math.min(level, src.cantripProgression.length) - 1] : null;
@@ -1144,25 +1342,68 @@ function spellcastingInfo(level) {
     else { const tk = tableCol(src, level, /spells known/i); if (tk != null) known = tk; }
   }
   return {
-    ability: abilKey, abilityMod: abilMod,
-    label: CASTER_LABEL[String(prog).toLowerCase()] || "Conjurador",
+    ability: abilKey, abilityMod: abilMod, progression: prog,
+    label: CASTER_LABEL[prog] || "Conjurador",
     slots, pact, cantrips: cantrips ?? null, known: known ?? null, prepared: prepared ?? null,
   };
 }
-function renderSpellResources(si) {
+// Classes conjuradoras do personagem (primária + multiclasse), cada
+// uma com seu próprio nível — usado tanto para a lista de magias
+// quanto para os espaços combinados de multiclasse.
+function spellcastingClasses() {
+  const out = [];
+  if (refs.class) out.push({ id: refs.class.id, classEntry: refs.class, subclassEntry: refs.subclass, cr: details.classRec, sr: details.subclassRec, level: Math.max(1, Number(character.level) || 1) });
+  for (const m of details.multiclasses || []) {
+    if (m.classEntry) out.push({ id: m.classEntry.id, classEntry: m.classEntry, subclassEntry: m.subclassEntry, cr: m.classRec, sr: m.subclassRec, level: Math.max(1, Number(m.level) || 1) });
+  }
+  return out;
+}
+// Espaços de magia combinados de multiclasse (PHB): soma o nível
+// completo de conjuradores completos + metade (arredondado pra baixo)
+// de meio-conjuradores + um terço de terço-conjuradores, e usa a
+// tabela padrão de conjurador completo com esse total. Magia de Pacto
+// (Bruxo) nunca entra nessa soma — ela é sempre um pool à parte.
+function multiclassSpellcasting() {
+  const classes = spellcastingClasses();
+  const perClass = [];
+  let casterLevel = 0;
+  for (const c of classes) {
+    const info = spellcastingInfoFor(c.cr, c.sr, c.level);
+    if (!info) continue;
+    perClass.push({ ...info, classLabel: titleOf(c.classEntry) });
+    if (info.progression === "pact") continue;
+    if (info.progression === "full") casterLevel += c.level;
+    else if (info.progression === "1/2" || info.progression === "half") casterLevel += Math.floor(c.level / 2);
+    else if (info.progression === "artificer") casterLevel += Math.ceil(c.level / 2);
+    else if (info.progression === "1/3" || info.progression === "third") casterLevel += Math.floor(c.level / 3);
+  }
+  if (!perClass.length) return null;
+  const multi = classes.length > 1;
+  const nonPact = perClass.filter((p) => p.progression !== "pact");
+  const slots = multi ? casterSlots("full", casterLevel) : (nonPact[0]?.slots || null);
+  return { perClass, casterLevel, slots, multi };
+}
+function renderSpellResources(msi) {
   const box = $("spell-resources");
   if (!box) return;
-  if (!si) { box.innerHTML = ""; return; }
-  const pips = [];
-  if (si.cantrips != null) pips.push(["Truques", si.cantrips]);
-  if (si.prepared != null) pips.push(["Magias preparadas", si.prepared]);
-  if (si.known != null) pips.push(["Magias conhecidas", si.known]);
-  const slotBoxes = (si.slots || []).map((n, i) => n ? `<div class="slot-box"><span>${i + 1}º nível</span><b>${n}</b></div>` : "").join("");
-  const pactBox = si.pact ? `<div class="slot-box pact"><span>Pacto · ${si.pact.level}º nível</span><b>${si.pact.count}</b></div>` : "";
+  if (!msi) { box.innerHTML = ""; return; }
+  const { perClass, slots, multi, casterLevel } = msi;
+  const nonPact = perClass.filter((p) => p.progression !== "pact");
+  const pactCasters = perClass.filter((p) => p.progression === "pact");
+  const classCards = perClass.map((p) => {
+    const pips = [];
+    if (p.cantrips != null) pips.push(["Truques", p.cantrips]);
+    if (p.prepared != null) pips.push(["Preparadas", p.prepared]);
+    if (p.known != null) pips.push(["Conhecidas", p.known]);
+    if (p.ability) { pips.push(["CD", spellDc(proficiency(totalLevel()), p.abilityMod)]); pips.push(["Ataque", fmt(spellAttack(proficiency(totalLevel()), p.abilityMod))]); }
+    return `<div class="spell-res-class"><b>${esc(p.classLabel)}</b><span>${esc(p.label)}${p.ability ? ` · ${ABILITY_NAMES[p.ability]}` : ""}</span>${pips.length ? `<div class="spell-res-pips">${pips.map(([k, v]) => `<div><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>` : ""}</div>`;
+  }).join("");
+  const slotBoxes = (slots || []).map((n, i) => n ? `<div class="slot-box"><span>${i + 1}º nível</span><b>${n}</b></div>` : "").join("");
+  const pactBoxes = pactCasters.map((p) => p.pact ? `<div class="slot-box pact"><span>${esc(p.classLabel)} · Pacto ${p.pact.level}º</span><b>${p.pact.count}</b></div>` : "").join("");
   box.innerHTML = `<section class="paper-card spell-resources">
-    <div class="spell-res-head"><h3>Recursos de conjuração</h3><span>${esc(si.label)}${si.ability ? ` · ${ABILITY_NAMES[si.ability]}` : ""}</span></div>
-    ${pips.length ? `<div class="spell-res-pips">${pips.map(([k, v]) => `<div><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>` : ""}
-    ${slotBoxes || pactBox ? `<div class="slot-grid">${slotBoxes}${pactBox}</div>` : `<p class="muted">Sem espaços de magia neste nível.</p>`}
+    <div class="spell-res-head"><h3>Recursos de conjuração</h3>${multi && nonPact.length ? `<span>Multiclasse · nível de conjurador combinado ${casterLevel}</span>` : ""}</div>
+    ${classCards}
+    ${slotBoxes || pactBoxes ? `<div class="slot-grid">${slotBoxes}${pactBoxes}</div>` : `<p class="muted">Sem espaços de magia neste nível.</p>`}
   </section>`;
 }
 
@@ -1180,14 +1421,27 @@ async function renderSpells() {
   $("spell-ability").textContent = ab ? ABILITY_NAMES[ab] : "—";
   $("spell-dc-big").textContent = c.dc ?? "—";
   $("spell-atk-big").textContent = c.atk != null ? fmt(c.atk) : "—";
-  renderSpellResources(spellcastingInfo(c.lvl));
-  if (!refs.class) { $("spell-count").textContent = "0"; box.innerHTML = `<div class="paper-card empty">Escolha uma classe para carregar a lista de magias.</div>`; return; }
-  box.innerHTML = `<div class="paper-card loading">Carregando lista de magias de ${esc(titleOf(refs.class))}…</div>`;
+  renderSpellResources(multiclassSpellcasting());
+  const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
+  const tabsBox = $("spellbook-tabs");
+  if (!casters.length) {
+    $("spell-count").textContent = "0";
+    if (tabsBox) tabsBox.innerHTML = "";
+    box.innerHTML = `<div class="paper-card empty">Escolha uma classe conjuradora para carregar a lista de magias.</div>`;
+    return;
+  }
+  if (!spellBookClassId || !casters.some((cc) => cc.id === spellBookClassId)) spellBookClassId = casters[0].id;
+  if (tabsBox) {
+    tabsBox.innerHTML = casters.length > 1 ? casters.map((cc) => `<button class="${cc.id === spellBookClassId ? "active" : ""}" data-spellbook-class="${esc(cc.id)}">${esc(titleOf(cc.classEntry))}</button>`).join("") : "";
+    tabsBox.querySelectorAll("[data-spellbook-class]").forEach((b) => b.addEventListener("click", () => { spellBookClassId = b.dataset.spellbookClass; renderSpells(); }));
+  }
+  const active = casters.find((cc) => cc.id === spellBookClassId);
+  box.innerHTML = `<div class="paper-card loading">Carregando lista de magias de ${esc(titleOf(active.classEntry))}…</div>`;
   let spells = [];
   // Usa a edição da própria classe escolhida (permite classe 2014 numa
   // sessão 2024 via o "incluir legado" do seletor).
-  const spellEd = editionOf(refs.class) === "both" ? character.edition : editionOf(refs.class);
-  try { spells = await spellsForClass(refs.class, refs.subclass, spellEd); }
+  const spellEd = editionOf(active.classEntry) === "both" ? character.edition : editionOf(active.classEntry);
+  try { spells = await spellsForClass(active.classEntry, active.subclassEntry, spellEd); }
   catch (err) { console.error(err); box.innerHTML = `<div class="paper-card empty">Não foi possível carregar as magias.</div>`; return; }
   $("spell-count").textContent = spells.length;
   const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
@@ -1475,6 +1729,9 @@ function applyLoaded(c) {
     inventory: Array.isArray(c?.inventory) ? c.inventory : [],
     preparedSpells: Array.isArray(c?.preparedSpells) ? c.preparedSpells : [],
     attacks: Array.isArray(c?.attacks) ? c.attacks : [],
+    multiclasses: Array.isArray(c?.multiclasses)
+      ? c.multiclasses.map((m) => ({ classId: m?.classId || "", subclassId: m?.subclassId || "", level: Math.max(1, Math.min(19, Number(m?.level) || 1)) }))
+      : [],
     auto: { ...f.auto, ...(c?.auto || {}) },
     choiceSelections: { ...f.choiceSelections, ...(c?.choiceSelections || {}), abilityChoices: { ...f.choiceSelections.abilityChoices, ...(c?.choiceSelections?.abilityChoices || {}) } },
     manualSkillProficiencies: Array.isArray(c?.manualSkillProficiencies) ? c.manualSkillProficiencies : [],
@@ -1500,7 +1757,8 @@ function setup() {
   $("edition").addEventListener("change", () => {
     character.edition = $("edition").value;
     character.classId = character.subclassId = character.raceId = character.backgroundId = "";
-    refs = { class: null, subclass: null, race: null, background: null };
+    character.multiclasses = [];
+    refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] };
     refreshChoices(); saveCharacter(character);
     const active = document.querySelector(".tab.active")?.dataset.tab;
     if (active === "codex") renderCodex();
@@ -1508,7 +1766,19 @@ function setup() {
   });
   $("content").addEventListener("change", () => { character.content = $("content").value; saveCharacter(character); refreshChoices(); });
   $("name").addEventListener("input", () => { character.name = $("name").value; saveCharacter(character); });
-  $("level").addEventListener("input", () => { character.level = Math.max(1, Math.min(20, Number($("level").value) || 1)); saveCharacter(character); recalc(); });
+  $("level").addEventListener("input", () => {
+    const extra = (character.multiclasses || []).reduce((n, m) => n + (Number(m.level) || 0), 0);
+    character.level = Math.max(1, Math.min(20 - extra, Number($("level").value) || 1));
+    saveCharacter(character); recalc();
+  });
+  $("add-multiclass")?.addEventListener("click", async () => {
+    if (totalLevel() >= 20) { toast("O personagem já está no nível 20."); return; }
+    character.multiclasses = character.multiclasses || [];
+    character.multiclasses.push({ classId: "", subclassId: "", level: 1 });
+    saveCharacter(character);
+    resolveMulticlassRefs();
+    renderMulticlasses();
+  });
   $("xp").addEventListener("input", () => { character.xp = Number($("xp").value) || 0; saveCharacter(character); });
   $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); });
   $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); });
