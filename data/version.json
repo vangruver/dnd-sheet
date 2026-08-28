@@ -32,9 +32,9 @@
     }
   ],
   "totals": {
-    "entities": 71296,
+    "entities": 71323,
     "official": 11121,
-    "homebrew": 60175
+    "homebrew": 60202
   },
   "homebrew": {
     "classFiles": [
@@ -62,6 +62,7 @@
       "raw/homebrew/class/Casteliad; Shadow Assassin.json",
       "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v2.5).json",
       "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v4.0).json",
+      "raw/homebrew/class/D&D Wiki; Brawler.json",
       "raw/homebrew/class/D&D Wiki; Swashbuckler.json",
       "raw/homebrew/class/D&D Wiki; Warpriest.json",
       "raw/homebrew/class/D'Artagnan; Summoner.json",
@@ -665,7 +666,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 626,
+    "classFileCount": 627,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -1766,6 +1767,7 @@
         "raw/homebrew/class/CJ Leung; The Channeler.json",
         "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v2.5).json",
         "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v4.0).json",
+        "raw/homebrew/class/D&D Wiki; Brawler.json",
         "raw/homebrew/class/D&D Wiki; Swashbuckler.json",
         "raw/homebrew/class/D'Artagnan; Summoner.json",
         "raw/homebrew/class/DM_Havuhk; The Witch.json",
