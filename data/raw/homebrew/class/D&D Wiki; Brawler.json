@@ -1,0 +1,2018 @@
+{
+	"$schema": "https://raw.githubusercontent.com/TheGiddyLimit/5etools-utils/master/schema/brew-fast/homebrew.json",
+	"_meta": {
+		"sources": [
+			{
+				"json": "BrawlerDW",
+				"abbreviation": "D&D Wiki",
+				"full": "D&D Wiki - Brawler (5e Class)",
+				"url": "https://www.dandwiki.com/wiki/Brawler_(5e_Class)",
+				"version": "unknown",
+				"authors": [
+					"Various Contributors"
+				],
+				"convertedBy": [
+					"Claude"
+				]
+			}
+		],
+		"edition": "classic",
+		"dateAdded": 1772400000,
+		"dateLastModified": 1772400000
+	},
+	"class": [
+		{
+			"name": "Brawler",
+			"source": "BrawlerDW",
+			"primaryAbility": [
+				{
+					"str": true
+				}
+			],
+			"hd": {
+				"number": 1,
+				"faces": 10
+			},
+			"proficiency": [
+				"str",
+				"con"
+			],
+			"startingProficiencies": {
+				"skills": [
+					{
+						"choose": {
+							"from": [
+								"animal handling",
+								"athletics",
+								"insight",
+								"intimidation",
+								"perception",
+								"survival"
+							],
+							"count": 2
+						}
+					}
+				],
+				"weapons": [
+					"simple"
+				],
+				"armor": [
+					"light"
+				],
+				"armorProficiencies": [
+					{
+						"light": true
+					}
+				]
+			},
+			"startingEquipment": {
+				"additionalFromBackground": true,
+				"entries": [
+					"{@i Choose A or B:} (A) a {@item greatclub|phb} or (B) any simple weapon",
+					"(A) an {@item explorer's pack|phb}, (B) a {@item dungeoneer's pack|phb}, or (C) an {@item entertainer's pack|phb}",
+					"(NOTE: the source page's equipment list also lists \"studded leather, a club, two daggers and a l...\" as an item, but the sentence is cut off on the original wiki page and could not be completed reliably — verify against the live page before using it.)",
+					"If you are using starting wealth, you have {@dice 3d4 × 5|3d4 × 5|Starting Gold} gp in funds."
+				]
+			},
+			"multiclassing": {
+				"requirements": {
+					"str": 13,
+					"con": 13
+				},
+				"proficienciesGained": {
+					"weapons": [
+						"simple"
+					],
+					"armor": [
+						"light"
+					],
+					"armorProficiencies": [
+						{
+							"light": true
+						}
+					]
+				}
+			},
+			"optionalfeatureProgression": [
+				{
+					"name": "Brutalities",
+					"featureType": [
+						"OBR"
+					],
+					"progression": {
+						"2": 2,
+						"3": 2,
+						"4": 2,
+						"5": 3,
+						"6": 3,
+						"7": 4,
+						"8": 4,
+						"9": 5,
+						"10": 5,
+						"11": 5,
+						"12": 6,
+						"13": 6,
+						"14": 6,
+						"15": 7,
+						"16": 7,
+						"17": 7,
+						"18": 8,
+						"19": 8,
+						"20": 8
+					}
+				}
+			],
+			"classTableGroups": [
+				{
+					"colLabels": [
+						"Savagery Die",
+						"Brutalities Known"
+					],
+					"rows": [
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 4
+									}
+								],
+								"rollable": true
+							},
+							"—"
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 4
+									}
+								],
+								"rollable": true
+							},
+							2
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 4
+									}
+								],
+								"rollable": true
+							},
+							2
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 4
+									}
+								],
+								"rollable": true
+							},
+							2
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 6
+									}
+								],
+								"rollable": true
+							},
+							3
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 6
+									}
+								],
+								"rollable": true
+							},
+							3
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 6
+									}
+								],
+								"rollable": true
+							},
+							4
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 6
+									}
+								],
+								"rollable": true
+							},
+							4
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 8
+									}
+								],
+								"rollable": true
+							},
+							5
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 8
+									}
+								],
+								"rollable": true
+							},
+							5
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 8
+									}
+								],
+								"rollable": true
+							},
+							5
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 8
+									}
+								],
+								"rollable": true
+							},
+							6
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 10
+									}
+								],
+								"rollable": true
+							},
+							6
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 10
+									}
+								],
+								"rollable": true
+							},
+							6
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 10
+									}
+								],
+								"rollable": true
+							},
+							7
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 10
+									}
+								],
+								"rollable": true
+							},
+							7
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 12
+									}
+								],
+								"rollable": true
+							},
+							7
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 12
+									}
+								],
+								"rollable": true
+							},
+							8
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 12
+									}
+								],
+								"rollable": true
+							},
+							8
+						],
+						[
+							{
+								"type": "dice",
+								"toRoll": [
+									{
+										"number": 1,
+										"faces": 12
+									}
+								],
+								"rollable": true
+							},
+							8
+						]
+					]
+				}
+			],
+			"classFeatures": [
+				"Hard Knocks|Brawler||1",
+				"Savagery|Brawler||1",
+				{
+					"classFeature": "Brawler Archetype|Brawler||1",
+					"gainSubclassFeature": true
+				},
+				"Brutalities|Brawler||2",
+				{
+					"classFeature": "Archetype Feature|Brawler||3",
+					"gainSubclassFeature": true
+				},
+				"Ability Score Improvement|Brawler||4",
+				"Savage Strike|Brawler||5",
+				"Relentless Savagery|Brawler||5",
+				"Unflagging Endurance|Brawler||6",
+				"Powerful Athlete|Brawler||7",
+				"Ability Score Improvement|Brawler||8",
+				{
+					"classFeature": "Archetype Feature|Brawler||9",
+					"gainSubclassFeature": true
+				},
+				"Indomitable Body|Brawler||10",
+				"Brawler's Stand|Brawler||11",
+				"Ability Score Improvement|Brawler||12",
+				{
+					"classFeature": "Archetype Feature|Brawler||13",
+					"gainSubclassFeature": true
+				},
+				"Ability Score Improvement|Brawler||14",
+				"Unstoppable Might|Brawler||15",
+				"Ability Score Improvement|Brawler||16",
+				"Survivor|Brawler||17",
+				"Destructive Force|Brawler||18",
+				"Ability Score Improvement|Brawler||19",
+				{
+					"classFeature": "Archetype Feature|Brawler||20",
+					"gainSubclassFeature": true
+				},
+				"Unstoppable Might Improvement|Brawler||20"
+			],
+			"subclassTitle": "Brawler Archetype",
+			"hasFluff": true
+		}
+	],
+	"classFluff": [
+		{
+			"name": "Brawler",
+			"source": "BrawlerDW",
+			"entries": [
+				{
+					"type": "section",
+					"name": "Scrappy Fighters",
+					"entries": [
+						"Masters of unrestricted combat, brawlers revel in fighting dirty and decimating their opponents by fighting with every advantage they have. Many brawlers rely on heavy unarmed strikes and forcing the enemy into an unfair battle. However, it is not uncommon for them to use any weapon at their disposal to get the job done."
+					]
+				},
+				{
+					"type": "section",
+					"name": "Creating a Brawler",
+					"entries": [
+						"How did you learn to fight the way you do? Were you trained by holy men high up on a mountain? Did you learn from fending off your alcoholic father's drunken rages? Did you grow up in the slums and are more self-taught?",
+						{
+							"type": "entries",
+							"name": "Quick Build",
+							"entries": [
+								"You can make a brawler quickly by following these suggestions. First, Strength should be your highest ability score, followed by Constitution. Second, choose the Gladiator background."
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"subclass": [
+		{
+			"name": "Underground Fighter",
+			"shortName": "Underground Fighter",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Unarmored Defense|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|1",
+				"Bonus Proficiencies|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|1",
+				"Bloody Elbows|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|3",
+				"Trained Punches|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|3",
+				"Combo Sequence|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|9",
+				"Footwork|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|9",
+				"Set Up|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|13",
+				"Devastating Combo|Brawler|BrawlerDW|Underground Fighter|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Tavern Brawler",
+			"shortName": "Tavern Brawler",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Brewery Expertise|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|1",
+				"Weapons of Opportunity|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|1",
+				"Drunkard Fighter|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|3",
+				"Stronger Liver|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|9",
+				"For Medicinal Purposes|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|13",
+				"Powerful Drinker|Brawler|BrawlerDW|Tavern Brawler|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Bodyguard",
+			"shortName": "Bodyguard",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Bonus Proficiencies|Brawler|BrawlerDW|Bodyguard|BrawlerDW|1",
+				"Quick Healing|Brawler|BrawlerDW|Bodyguard|BrawlerDW|3",
+				"Meatshield|Brawler|BrawlerDW|Bodyguard|BrawlerDW|3",
+				"Enduring|Brawler|BrawlerDW|Bodyguard|BrawlerDW|9",
+				"Defender's Dash|Brawler|BrawlerDW|Bodyguard|BrawlerDW|9",
+				"Fast Recovery|Brawler|BrawlerDW|Bodyguard|BrawlerDW|13",
+				"Unkillable|Brawler|BrawlerDW|Bodyguard|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Thug",
+			"shortName": "Thug",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Bonus Proficiencies|Brawler|BrawlerDW|Thug|BrawlerDW|1",
+				"Sneak Attack|Brawler|BrawlerDW|Thug|BrawlerDW|3",
+				"Blade Specialist|Brawler|BrawlerDW|Thug|BrawlerDW|3",
+				"Cunning Action|Brawler|BrawlerDW|Thug|BrawlerDW|9",
+				"Evasion|Brawler|BrawlerDW|Thug|BrawlerDW|9",
+				"Brutal Critical|Brawler|BrawlerDW|Thug|BrawlerDW|13",
+				"Death Strike|Brawler|BrawlerDW|Thug|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Bully",
+			"shortName": "Bully",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Bonus Proficiencies|Brawler|BrawlerDW|Bully|BrawlerDW|1",
+				"Trouble Stopping|Brawler|BrawlerDW|Bully|BrawlerDW|3",
+				"Demoralization|Brawler|BrawlerDW|Bully|BrawlerDW|3",
+				"Smell Fear|Brawler|BrawlerDW|Bully|BrawlerDW|9",
+				"Traumatizing Strike|Brawler|BrawlerDW|Bully|BrawlerDW|9",
+				"Cruelty|Brawler|BrawlerDW|Bully|BrawlerDW|13",
+				"Dreadful|Brawler|BrawlerDW|Bully|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Cult Member",
+			"shortName": "Cult Member",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Arcane Dabbler|Brawler|BrawlerDW|Cult Member|BrawlerDW|1",
+				"Pact Magic|Brawler|BrawlerDW|Cult Member|BrawlerDW|3",
+				"Eldritch Knowledge|Brawler|BrawlerDW|Cult Member|BrawlerDW|3",
+				"Sacrifice|Brawler|BrawlerDW|Cult Member|BrawlerDW|3",
+				"Macabre Resilience|Brawler|BrawlerDW|Cult Member|BrawlerDW|9",
+				"Occult Destruction|Brawler|BrawlerDW|Cult Member|BrawlerDW|9",
+				"Foreboding Curse|Brawler|BrawlerDW|Cult Member|BrawlerDW|13",
+				"Mystical Arcanum|Brawler|BrawlerDW|Cult Member|BrawlerDW|20"
+			]
+		},
+		{
+			"name": "Zealot",
+			"shortName": "Zealot",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassFeatures": [
+				"Sacred Rites|Brawler|BrawlerDW|Zealot|BrawlerDW|1",
+				"Divine Blessing|Brawler|BrawlerDW|Zealot|BrawlerDW|3",
+				"Blind Faith|Brawler|BrawlerDW|Zealot|BrawlerDW|9",
+				"Infused Strikes|Brawler|BrawlerDW|Zealot|BrawlerDW|9",
+				"Divine Renewal|Brawler|BrawlerDW|Zealot|BrawlerDW|13",
+				"Godly Connection|Brawler|BrawlerDW|Zealot|BrawlerDW|13",
+				"Grace|Brawler|BrawlerDW|Zealot|BrawlerDW|20"
+			]
+		}
+	],
+	"subclassFluff": [
+		{
+			"name": "Underground Fighter",
+			"shortName": "Underground Fighter",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Painting the grounds of fighting pits and hidden arenas with their blood, underground fighters make their living beating opponents into submission, winning and losing arranged fights and fighting for coin and survival on a daily basis."
+			]
+		},
+		{
+			"name": "Tavern Brawler",
+			"shortName": "Tavern Brawler",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Causing problems in the bohemian nights, tavern brawlers believe that the fun only ends when someone is bleeding on the ground. Using tables, chairs, glass bottles, and anything else they can find, they drink and fight until sunrise."
+			]
+		},
+		{
+			"name": "Bodyguard",
+			"shortName": "Bodyguard",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Bodyguards use their size and strength to protect others. Interposing themselves between their contractors and danger, they show little regard for their own safety, and are relentless in the protection of others."
+			]
+		},
+		{
+			"name": "Thug",
+			"shortName": "Thug",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Not only rogues are made from criminal guilds. There is a necessity for brutal grunts to extort, enforce guild law, and protect high-ranking members. These are the thugs, using brute strength and less than refined tactics to secure their place among the criminal ranks. Some can even ascend to the top of a guild through sheer brutality."
+			]
+		},
+		{
+			"name": "Bully",
+			"shortName": "Bully",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"There is more use for Strength than only size. Strength can be used to submit and intimidate, and bullies are masters of this art. Some use their size to enforce peace, like city guards or bouncers. Others do it just to achieve their own selfish ends, manipulating and humiliating others for their own joy."
+			]
+		},
+		{
+			"name": "Cult Member",
+			"shortName": "Cult Member",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Mindless devotees of dark forces, cult members lend their strength to empower and aid the goals of some sinister force. Using their strength to kidnap victims for ritual sacrifices, or to protect profane sites and hideouts, these brawlers are blessed with sinister powers."
+			]
+		},
+		{
+			"name": "Zealot",
+			"shortName": "Zealot",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"entries": [
+				"Fanatical members of a religion, zealots devote their strength to the service of faith, serving as the muscle in the cause of their chosen divinity."
+			]
+		}
+	],
+	"classFeature": [
+		{
+			"name": "Hard Knocks",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you exchange grace and technique for brute force when attacking your foes. Whenever you make a weapon attack using Strength and wield a weapon in two hands, you can choose to roll a d12 instead of the damage die for your chosen weapon, if you are proficient with it.",
+				"If you are not wielding anything in both hands, you can also use your Hard Knocks damage die for unarmed strikes.",
+				"Starting at 6th level, your Hard Knocks damage ignores resistance and immunity to nonmagical bludgeoning, piercing, and slashing damage."
+			]
+		},
+		{
+			"name": "Savagery",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Also at 1st level, you can unleash the full potential of your might when needed. Whenever you make a Strength, Dexterity, or Constitution check or saving throw, you can add a d4 (your Savagery die) to the result of the check, potentially changing the outcome.",
+				"Alternatively, you can add this die to the result of any attack or damage roll you make using Strength.",
+				"You can use this feature a number of times equal to your Strength modifier (minimum once), and regain all uses when you finish a long rest.",
+				"The size of your Savagery die increases as you gain levels in this class, as shown in the Savagery Die column of the Brawler table: {@dice 1d6} at 5th level, {@dice 1d8} at 9th level, {@dice 1d10} at 13th level, and {@dice 1d12} at 17th level."
+			]
+		},
+		{
+			"name": "Brawler Archetype",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"At 1st level, you choose an archetype that you strive to emulate in the practice of your brawling: {@i Underground Fighter}, {@i Tavern Brawler}, {@i Bodyguard}, {@i Thug}, {@i Bully}, {@i Cult Member}, or {@i Zealot}, all detailed at the end of the class description. Your archetype grants you features at 1st level and again at 3rd, 9th, 13th, and 20th level."
+			]
+		},
+		{
+			"name": "Brutalities",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 2,
+			"entries": [
+				"At 2nd level, you learn how to apply your strength and endurance in new ways. You learn two brutalities of your choice from the brutalities list, gaining the benefits of both.",
+				"You learn additional brutalities of your choice as you gain levels in this class, as shown in the Brutalities Known column of the Brawler table. Whenever you gain a level in this class, you can also replace one brutality you know with a different one from the list.",
+				"Some brutalities require you to have a specific Brawler archetype before you can learn them, as noted in their descriptions."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 4,
+			"entries": [
+				"When you reach 4th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 8,
+			"entries": [
+				"When you reach 8th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 12,
+			"entries": [
+				"When you reach 12th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 14,
+			"entries": [
+				"When you reach 14th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 16,
+			"entries": [
+				"When you reach 16th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Ability Score Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 19,
+			"entries": [
+				"When you reach 19th level, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. As normal, you can't increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Archetype Feature",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, you gain a feature granted by your Brawler Archetype."
+			]
+		},
+		{
+			"name": "Archetype Feature",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"At 9th level, you gain a feature granted by your Brawler Archetype."
+			]
+		},
+		{
+			"name": "Archetype Feature",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"At 13th level, you gain a feature granted by your Brawler Archetype."
+			]
+		},
+		{
+			"name": "Archetype Feature",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, you gain a feature granted by your Brawler Archetype."
+			]
+		},
+		{
+			"name": "Savage Strike",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 5,
+			"entries": [
+				"Starting at 5th level, your attacks become even more destructive. When you take the Attack action and attack using your Hard Knocks feature, you can make a Savage Strike. When you do so, roll a Hard Knocks attack, and on a hit, deal additional damage equal to the damage dice of Hard Knocks plus double your Strength modifier, and add your proficiency bonus to the damage."
+			]
+		},
+		{
+			"name": "Relentless Savagery",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 5,
+			"entries": [
+				"Starting at 5th level, you regain your expended Savagery dice when you finish a short or a long rest, instead of only a long rest."
+			]
+		},
+		{
+			"name": "Unflagging Endurance",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 6,
+			"entries": [
+				"Starting at 6th level, you have advantage on Constitution saving throws to avoid the effects of exhaustion.",
+				"In addition, once per day during a short rest, you can remove one level of exhaustion you have suffered."
+			]
+		},
+		{
+			"name": "Powerful Athlete",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 7,
+			"entries": [
+				"Starting at 7th level, you add twice your proficiency bonus to your Strength (Athletics) checks.",
+				"In addition, you count as one size larger for the purposes of determining your carrying capacity, and for shoving and grappling."
+			]
+		},
+		{
+			"name": "Indomitable Body",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 10,
+			"entries": [
+				"At 10th level, whenever you fail a Strength, Dexterity, or Constitution saving throw, you can reroll that save. You must use the new roll.",
+				"Once you use this feature, you can't use it again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Brawler's Stand",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 11,
+			"entries": [
+				"At 11th level, you can't be knocked prone against your will.",
+				"In addition, when you are reduced to 0 hit points, you can spend one Savagery die to instead be reduced to 1 hit point. If you do, you also gain temporary hit points equal to the number rolled plus your Constitution modifier."
+			]
+		},
+		{
+			"name": "Unstoppable Might",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 15,
+			"entries": [
+				"Starting at 15th level, your Strength score increases by 2, to a maximum of 22."
+			]
+		},
+		{
+			"name": "Survivor",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 17,
+			"entries": [
+				"At 17th level, you attain the pinnacle of resilience in battle. At the start of each of your turns, you regain hit points equal to 5 + your Constitution modifier if you have no more than half of your hit points left. You don't gain this benefit if you have 0 hit points."
+			]
+		},
+		{
+			"name": "Destructive Force",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 18,
+			"entries": [
+				"At 18th level, when you make an ability check, attack roll, or saving throw using Strength, Dexterity, or Constitution, you can choose to treat the d20 roll as a 20.",
+				"Once you use this feature, you can't do so again until you finish a long rest."
+			]
+		},
+		{
+			"name": "Unstoppable Might Improvement",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, your Strength score increases by a further 2, to a new maximum of 24."
+			]
+		}
+	],
+	"subclassFeature": [
+		{
+			"name": "Unarmored Defense",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, while you are not wearing armor or a shield, your AC equals 10 + your Strength modifier + your Constitution modifier."
+			]
+		},
+		{
+			"name": "Bonus Proficiencies",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"As an underground fighter, you learn how to fake a loss or work a crowd. At 1st level, you gain proficiency in the Performance skill. In addition, you have advantage on Charisma (Performance) checks made to pretend to lose a fight, to feign unconsciousness, or to fake an attack."
+			]
+		},
+		{
+			"name": "Bloody Elbows",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, when you make an unarmed strike, you can use your bonus action to attack with your elbows or knees. Make a melee weapon attack, and on a hit, you deal bludgeoning damage equal to 2 + your Strength modifier."
+			]
+		},
+		{
+			"name": "Trained Punches",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Also at 3rd level, you learn how to land your attacks with precision. Whenever you add your Savagery die to the result of an attack roll made with an unarmed strike and you hit, you can also add the result of that Savagery die to the damage."
+			]
+		},
+		{
+			"name": "Combo Sequence",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Starting at 9th level, whenever you hit a creature with a Savage Strike and Bloody Elbows on the same turn, you can make an unarmed strike using your reaction, dealing your Hard Knocks damage on a hit.",
+				"In addition, instead of dealing the additional damage of a Savage Strike, you can start a combo: you make additional unarmed strikes equal to your proficiency bonus. You don't add your ability modifier to the damage of these strikes."
+			]
+		},
+		{
+			"name": "Footwork",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Also at 9th level, you begin to learn the intricacies of footwork. You can use your bonus action to take the Dodge, Disengage, or Dash action.",
+				"You can use this feature a number of times equal to your Constitution modifier (minimum once), and regain all uses when you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Set Up",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"At 13th level, you can use a strike to set up the next one. When you hit with an attack made as part of your Attack action, you can grant yourself advantage on the attack you make as part of your Combo Sequence as a reaction."
+			]
+		},
+		{
+			"name": "Devastating Combo",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Underground Fighter",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, you can choose to make a number of additional attacks on your turn equal to your Constitution modifier. Each attack deals your Hard Knocks damage on a hit.",
+				"You can't use this feature again until you finish a long rest."
+			]
+		},
+		{
+			"name": "Brewery Expertise",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency with brewer's supplies, and add twice your proficiency bonus to checks you make with them.",
+				"In addition, you're used to keeping up with the bard through the night, granting you proficiency of your choice in either Performance or one musical instrument."
+			]
+		},
+		{
+			"name": "Weapons of Opportunity",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"At 1st level, you're used to fighting with knives, chairs, and broken bottles. You add your proficiency bonus to attacks made with improvised weapons. In addition, you roll your Hard Knocks damage die for improvised weapons, and the first time you attack with an improvised weapon in a fight, you make that attack roll with advantage."
+			]
+		},
+		{
+			"name": "Drunkard Fighter",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, the more you drink, the stronger you get. As a bonus action, you can drink a dose of an alcoholic beverage. If you do so, you gain a number of temporary hit points equal to your proficiency bonus × your Savagery die.",
+				"In addition, you gain one of the following benefits of your choice, which lasts until your next short rest or until you drink again (replacing the previous benefit):",
+				{
+					"type": "list",
+					"items": [
+						"{@b Pain Tolerance.} You gain resistance to bludgeoning damage.",
+						"{@b Brutal Strikes.} You deal additional damage equal to your Savagery die with your Strength-based attacks."
+					]
+				},
+				"You can't benefit from more than one of these at the same time. You can drink a number of doses equal to 1 + your Constitution modifier, after which you can't do so again until you finish a short or long rest. If you drink another dose after reaching this maximum, you are poisoned until you finish a short or long rest; a second dose beyond the maximum knocks you unconscious for 8 hours."
+			]
+		},
+		{
+			"name": "Stronger Liver",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Starting at 9th level, you gain an additional benefit depending on the effect chosen with Drunkard Fighter:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Pain Tolerance.} You gain advantage on Constitution saving throws.",
+						"{@b Brutal Strikes.} Whenever you hit a creature with a Savage Strike, you can use a bonus action to shove that creature."
+					]
+				}
+			]
+		},
+		{
+			"name": "For Medicinal Purposes",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, whenever you drink a dose of alcohol using your Drunkard Fighter feature, you regain hit points equal to your level in this class."
+			]
+		},
+		{
+			"name": "Powerful Drinker",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Tavern Brawler",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"Starting at 20th level, whenever you drink a dose, you gain both benefits of Drunkard Fighter at once, gain twice the normal amount of temporary hit points, and regain twice the normal amount of hit points from For Medicinal Purposes."
+			]
+		},
+		{
+			"name": "Bonus Proficiencies",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency in the Perception skill, and your proficiency bonus is doubled for checks you make with it.",
+				"In addition, you gain proficiency in Intimidation, if you don't already have it."
+			]
+		},
+		{
+			"name": "Quick Healing",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Starting at 3rd level, you can spend a Hit Die as a bonus action to regain hit points equal to the number rolled plus your Constitution modifier plus your proficiency bonus.",
+				"In addition, you can spend a Savagery die as an action to regain one Hit Die."
+			]
+		},
+		{
+			"name": "Meatshield",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, you gain a number of defense points equal to your Brawler level. Whenever a creature within 5 feet of you is hit by an attack, you can spend a defense point as a reaction to reduce the damage it takes by your Savagery die + your proficiency bonus + your Constitution modifier. You can swap places with the defended creature as part of the same reaction."
+			]
+		},
+		{
+			"name": "Enduring",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"At 9th level, whenever you are reduced to 0 hit points, you can choose to drop to 1 hit point instead. You can use this feature once, regaining the ability to do so after a long rest, unless you spend 1 defense point to use it again."
+			]
+		},
+		{
+			"name": "Defender's Dash",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Starting at 9th level, whenever a creature within 30 feet of you takes damage, you can move to a space within 5 feet of it and swap places with it, or push it 10 feet, knocking it prone.",
+				"If the damage is from an attack, or from an effect that targets an area and you can remove the creature from that area, you take the damage instead and the creature takes none. If the effect is an area of effect and the creature remains in the area, it takes only half damage. Either way, you gain resistance to the triggering damage type, including against the damage you suffer, until the start of your next turn.",
+				"You can't use this feature again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Fast Recovery",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, you regain two uses of your Defender's Dash (instead of one) whenever you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Unkillable",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bodyguard",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, whenever you are reduced to 0 hit points, you can choose to regain all your hit points instead. If the triggering damage would have reduced you below 0 hit points, the amount you regain is reduced by that excess.",
+				"You can use this feature a number of times equal to your Constitution modifier (minimum once), but once used, you can't use it again for 1 minute. You regain all uses when you finish a long rest."
+			]
+		},
+		{
+			"name": "Bonus Proficiencies",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency in Stealth, Sleight of Hand, and thieves' tools.",
+				"In addition, you can speak Thieves' Cant (see the rogue feature of the same name)."
+			]
+		},
+		{
+			"name": "Sneak Attack",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Beginning at 3rd level, you know how to strike subtly and exploit a foe's distraction. Once per turn, you can deal an extra 1d6 damage to one creature you hit with an attack, if you have advantage on the attack roll. The attack must use a finesse or a ranged weapon.",
+				"You don't need advantage on the attack roll if another enemy of the target is within 5 feet of it, that enemy isn't incapacitated, and you don't have disadvantage on the attack roll.",
+				"This extra damage increases as you gain levels in this class: 2d6 at 7th level, 3d6 at 13th level, and 4d6 at 19th level."
+			]
+		},
+		{
+			"name": "Blade Specialist",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Starting at 3rd level, whenever you wield a light or finesse weapon in one hand and nothing in the other, you can use your Hard Knocks damage die with that weapon."
+			]
+		},
+		{
+			"name": "Cunning Action",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Starting at 9th level, you can take the Dash, Dodge, or Hide action as a bonus action."
+			]
+		},
+		{
+			"name": "Evasion",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Also at 9th level, you can nimbly dodge out of the way of certain area effects, such as a red dragon's fiery breath or an ice storm spell. When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed, and only half damage if you fail."
+			]
+		},
+		{
+			"name": "Brutal Critical",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Beginning at 13th level, you score a critical hit with your Savage Strikes on a roll of 19 or 20."
+			]
+		},
+		{
+			"name": "Death Strike",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Thug",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"Starting at 20th level, you become a master of instant death. When you attack and hit a creature that is surprised, it must make a Constitution saving throw (DC 8 + your Dexterity modifier + your proficiency bonus). On a failed save, double the damage of your attack against that creature."
+			]
+		},
+		{
+			"name": "Bonus Proficiencies",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency in Intimidation, and you add your Strength modifier as a bonus to your Intimidation checks.",
+				"In addition, you learn the {@spell vicious mockery} cantrip. Strength is your spellcasting ability for this spell, and you can add your Strength modifier (instead of your spellcasting ability modifier) as a bonus to its damage roll.",
+				"At 5th level, you can forgo two dice of your additional Savage Strike damage to cast {@spell vicious mockery} instead."
+			]
+		},
+		{
+			"name": "Trouble Stopping",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Starting at 3rd level, you make enemies think twice before they start a fight. When you roll initiative, you can use your reaction to intimidate nearby creatures. All creatures that can see you within 30 feet must succeed on a Wisdom saving throw (DC 8 + your proficiency bonus + your Strength modifier) or become frightened until the end of your next turn.",
+				"Once you use this feature, you can't use it again until you finish a long rest."
+			]
+		},
+		{
+			"name": "Demoralization",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Also at 3rd level, when you take the Attack action on your turn, you can replace one attack with an attempt to demoralize a humanoid you can see within 30 feet of you that can see and hear you. Make a Charisma (Intimidation) check contested by the target's Wisdom (Insight) check. If you succeed, the target is frightened until the end of your next turn. If you fail, the target can't be frightened by you in this way again for 1 hour.",
+				"At 5th level, you can forgo two dice of your additional Savage Strike damage to attempt to demoralize the target instead."
+			]
+		},
+		{
+			"name": "Smell Fear",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Starting at 9th level, you can sense frightened creatures within 60 feet of you. Those creatures gain no benefit from being invisible or unseen as far as you're concerned."
+			]
+		},
+		{
+			"name": "Traumatizing Strike",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Also at 9th level, whenever you score a critical hit with a Savage Strike, you deal an additional 1d6 psychic damage and the target is frightened until the end of your next turn.",
+				"At 13th level, you can forgo two dice of your additional Savage Strike damage to make a Traumatizing Strike without needing a critical hit."
+			]
+		},
+		{
+			"name": "Cruelty",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, once on each of your turns when you attack a frightened creature, you have advantage on the attack roll. In addition, a frightened creature has disadvantage on saving throws to resist your {@spell vicious mockery}."
+			]
+		},
+		{
+			"name": "Dreadful",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Bully",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, no creature can have advantage on saving throws against the frightened condition you impose, and you ignore immunity to that condition.",
+				"In addition, you constantly exude an aura of fear. Any creature of your choice that enters an area within 60 feet of you for the first time on a turn, or ends its turn there, and can see you, must succeed on a saving throw against your Trouble Stopping DC or be frightened for 1 minute. The creature can repeat the save at the end of each of its turns, ending the effect on a success; on a success, it's immune to this effect for the next minute."
+			]
+		},
+		{
+			"name": "Arcane Dabbler",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency with the Arcana skill, and your proficiency bonus is doubled for checks you make with it.",
+				"In addition, you learn to speak, read, and write Abyssal, Infernal, and Deep Speech."
+			]
+		},
+		{
+			"name": "Pact Magic",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"By the time you reach 3rd level and choose this archetype, your arcane research and the magic bestowed on you by your patron have given you facility with spells.",
+				{
+					"type": "entries",
+					"name": "Cantrips",
+					"entries": [
+						"You know two cantrips of your choice from the {@filter warlock spell list|spells|level=0|class=warlock}. You learn additional warlock cantrips of your choice at higher levels, as shown in the Cantrips Known column of the Cultist table."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spell Slots",
+					"entries": [
+						"The Cultist table shows how many spell slots you have. The table also shows the level of those slots; all of your spell slots are the same level. To cast one of your Cultist spells of 1st level or higher, you must expend a spell slot. You regain all expended spell slots when you finish a short or long rest.",
+						"For example, when you are 8th level, you have two 2nd-level spell slots. To cast the 1st-level spell {@spell burning hands}, you must spend one of those slots, and you cast it as a 2nd-level spell."
+					]
+				},
+				{
+					"type": "table",
+					"caption": "Cultist",
+					"colLabels": [
+						"Brawler Level",
+						"Cantrips Known",
+						"Spells Known",
+						"Spell Slots",
+						"Slot Level"
+					],
+					"colStyles": [
+						"col-2 text-center",
+						"col-2 text-center",
+						"col-2 text-center",
+						"col-2 text-center",
+						"col-2 text-center"
+					],
+					"rows": [
+						[
+							3,
+							2,
+							2,
+							1,
+							"1st"
+						],
+						[
+							4,
+							2,
+							3,
+							2,
+							"1st"
+						],
+						[
+							5,
+							2,
+							3,
+							2,
+							"1st"
+						],
+						[
+							6,
+							2,
+							3,
+							2,
+							"1st"
+						],
+						[
+							7,
+							2,
+							4,
+							2,
+							"2nd"
+						],
+						[
+							8,
+							2,
+							5,
+							2,
+							"2nd"
+						],
+						[
+							9,
+							2,
+							5,
+							2,
+							"2nd"
+						],
+						[
+							10,
+							3,
+							5,
+							2,
+							"2nd"
+						],
+						[
+							11,
+							3,
+							6,
+							2,
+							"2nd"
+						],
+						[
+							12,
+							3,
+							6,
+							2,
+							"2nd"
+						],
+						[
+							13,
+							3,
+							7,
+							2,
+							"3rd"
+						],
+						[
+							14,
+							3,
+							7,
+							2,
+							"3rd"
+						],
+						[
+							15,
+							3,
+							7,
+							2,
+							"3rd"
+						],
+						[
+							16,
+							3,
+							8,
+							2,
+							"3rd"
+						],
+						[
+							17,
+							3,
+							8,
+							2,
+							"3rd"
+						],
+						[
+							18,
+							3,
+							8,
+							2,
+							"3rd"
+						],
+						[
+							19,
+							3,
+							9,
+							2,
+							"4th"
+						],
+						[
+							20,
+							3,
+							9,
+							2,
+							"4th"
+						]
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spells Known of 1st Level and Higher",
+					"entries": [
+						"When you gain this feature at 3rd level, you know two 1st-level spells of your choice from the {@filter warlock spell list|spells|class=warlock}.",
+						"The Spells Known column of the Cultist table shows when you learn more warlock spells of 1st level or higher. A spell you choose must be of a level no higher than what's shown in the table's Slot Level column for your level.",
+						"Additionally, when you gain a level in this class, you can replace one Cultist spell you know with another spell from the warlock spell list, which must also be of a level for which you have spell slots."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spellcasting Ability",
+					"entries": [
+						"Charisma is your spellcasting ability for your Cultist spells, so you use your Charisma whenever a spell refers to your spellcasting ability, and when setting the saving throw DC and attack modifier for a Cultist spell you cast.",
+						"Spell save DC = 8 + your proficiency bonus + your Charisma modifier",
+						"Spell attack modifier = your proficiency bonus + your Charisma modifier"
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spellcasting Focus",
+					"entries": [
+						"You can use an arcane focus as a spellcasting focus for your Cultist spells."
+					]
+				}
+			]
+		},
+		{
+			"name": "Eldritch Knowledge",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"Starting at 3rd level, whenever you learn a Brutality, you can instead choose an Eldritch Invocation from the warlock class that lacks a prerequisite."
+			]
+		},
+		{
+			"name": "Sacrifice",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, when you finish a long rest, you can offer a sacrifice to a dark entity in exchange for power. The entity can be an eldritch entity, a demon prince, or a devil lord. The sacrifice can be any living creature you reduce to 0 hit points.",
+				"If you do so, you gain the associated benefit until you start your next long rest:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Eldritch Entity.} You can use your bonus action and spend a spell slot to summon an eldritch tentacle from a portal opened within 30 feet. You summon a tentacle for each level of the slot spent and can move any number of them up to 30 feet before each attack as part of the same bonus action. You make a spell attack for each tentacle, and on a hit, deal psychic damage equal to your Hard Knocks die + your Charisma modifier. Each tentacle has AC 10, 1 hit point, +0 to saves, and 5 feet of reach.",
+						"{@b Demon Prince.} When you reduce a creature to 0 hit points, you can spend a spell slot to offer its soul to the demon prince in exchange for vitality. You regain 1d12 hit points, plus another 1d12 per level of the slot spent.",
+						"{@b Devil Lord.} You can ask permission to pass through hell, arriving elsewhere on the material plane. You can use a bonus action and spend a spell slot to teleport 10 feet per level of the slot spent. The first attack you make after teleporting this way deals an extra 1d6 fire damage per level of the slot spent."
+					]
+				}
+			]
+		},
+		{
+			"name": "Macabre Resilience",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"At 9th level, the entity you offer sacrifice to grants you protection: resistance to psychic damage from the Eldritch Entity, necrotic damage from the Demon Prince, or fire damage from the Devil Lord, matching your current Sacrifice."
+			]
+		},
+		{
+			"name": "Occult Destruction",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Also at 9th level, whenever you cast a spell of 1st level or higher from your Cultist spell list, you can make one melee weapon attack. If you use your Savage Strike, you can replace its damage type with the damage type granted by your Macabre Resilience."
+			]
+		},
+		{
+			"name": "Foreboding Curse",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, you can use your bonus action to choose a creature within 30 feet and an ability score. That creature has disadvantage on the next saving throw it makes using that score. The curse ends after the creature makes that save, or after 1 minute, whichever comes first.",
+				"This curse requires your concentration, as if you were concentrating on a spell. Once you place a curse this way, you can't do so again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Mystical Arcanum",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Cult Member",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, you gain a higher power from the entity you serve. Depending on your current Sacrifice, you can cast one spell without expending a spell slot:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Eldritch Entity.} {@spell contact other plane}",
+						"{@b Demon Prince.} {@spell immolation}",
+						"{@b Devil Lord.} {@spell infernal calling}"
+					]
+				},
+				"Once you cast a spell this way, you can't do so again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Sacred Rites",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you gain proficiency in Religion, and your proficiency bonus is doubled for checks you make with it.",
+				"In addition, you learn the {@spell ceremony} spell, which you can cast only as a ritual."
+			]
+		},
+		{
+			"name": "Divine Blessing",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 3,
+			"entries": [
+				"At 3rd level, your faith has rewarded you with the ability to channel divine power. You gain a pool of blessing points equal to your level in this class. Once spent, a point isn't regained until you finish a long rest.",
+				"You can spend these points on one of the following divine blessings:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Divine Smite.} You can destroy your opponents with divine power. When you gain this feature, choose necrotic or radiant damage. You can spend a number of blessing points up to your proficiency bonus to deal an extra 1d8 damage of the chosen type per point spent, added to a hit you just scored.",
+						"{@b Divine Touch.} When you gain this feature, choose heal or harm. As a bonus action, you can spend a number of blessing points up to your proficiency bonus to either deal 5 necrotic damage or restore 5 hit points, per point spent.",
+						"{@b Divine Ward.} You can spend 1 blessing point as a reaction to increase your AC, or the AC of a creature within 60 feet, by an amount equal to your Savagery die against one incoming attack. The increase lasts until the start of the protected creature's next turn."
+					]
+				}
+			]
+		},
+		{
+			"name": "Blind Faith",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"At 9th level, you can't be frightened or charmed. In addition, you add your Strength modifier to all your Wisdom saving throws."
+			]
+		},
+		{
+			"name": "Infused Strikes",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 9,
+			"entries": [
+				"Also at 9th level, choose necrotic or radiant damage. Your Savage Strikes deal additional damage of the chosen type equal to your Wisdom modifier."
+			]
+		},
+		{
+			"name": "Divine Renewal",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"At 13th level, you can meditate for 1 minute to regain a number of blessing points equal to your Strength modifier. Once you do so, you can't do so again until you finish a long rest."
+			]
+		},
+		{
+			"name": "Godly Connection",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 13,
+			"entries": [
+				"Also at 13th level, you can choose a spell of 3rd level or lower from the cleric spell list and spend a number of blessing points equal to that spell's level to cast it without expending components. You can't do so again until you finish a long rest."
+			]
+		},
+		{
+			"name": "Grace",
+			"source": "BrawlerDW",
+			"className": "Brawler",
+			"classSource": "BrawlerDW",
+			"subclassShortName": "Zealot",
+			"subclassSource": "BrawlerDW",
+			"level": 20,
+			"entries": [
+				"At 20th level, you can choose one spell of 5th level or lower from the cleric spell list. You can cast that spell once without expending components, regaining the use of this feature when you finish a long rest."
+			]
+		}
+	],
+	"optionalfeature": [
+		{
+			"name": "Chain-Master",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You learn the {@spell find familiar} spell, which you can cast only as a ritual. You don't expend material components when summoning your familiar this way."
+			],
+			"prerequisite": [
+				{
+					"other": "Cult Member archetype"
+				}
+			]
+		},
+		{
+			"name": "Devastating Strike",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You roll one additional damage die when you score a critical hit. Your additional Savage Strike damage dice are multiplied by 3 on a critical hit, instead of 2."
+			],
+			"prerequisite": [
+				{
+					"other": "Zealot archetype"
+				}
+			]
+		},
+		{
+			"name": "Divine Acolyte",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You learn two cantrips from the cleric spell list. Wisdom is your spellcasting ability for these cantrips."
+			]
+		},
+		{
+			"name": "Dragon's Breath",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"While under the effect of a Drunkard Fighter dose, you can spend one Savagery die to unleash a breath of fire in a 15-foot cone using your bonus action. Each creature in the area must succeed on a Dexterity saving throw (DC 8 + your proficiency bonus + your Constitution modifier) or take damage equal to the Savagery die × your proficiency bonus.",
+				"Doing so ends the effect of your drink."
+			],
+			"prerequisite": [
+				{
+					"other": "Tavern Brawler archetype"
+				}
+			]
+		},
+		{
+			"name": "Enduring",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You gain 1 additional hit point for each Brawler level you have, and 1 additional hit point for each level you gain in this class from now on. You also add your proficiency bonus to death saving throws, and if this raises the result to 20, you gain the benefit of rolling a 20 on the save.",
+				"Moreover, when you roll a Hit Die to recover hit points during a short rest, you roll a d12 instead of a d10."
+			],
+			"prerequisite": [
+				{
+					"other": "Bodyguard archetype"
+				}
+			]
+		},
+		{
+			"name": "Exceptional Health",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You have resistance to poison damage and advantage on saving throws against the poisoned condition. You are immune to diseases."
+			]
+		},
+		{
+			"name": "Exploit Weakness",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"When a creature within 5 feet of you takes an opportunity attack from an ally, you can also make an opportunity attack against that same creature."
+			],
+			"prerequisite": [
+				{
+					"other": "Thug archetype"
+				}
+			]
+		},
+		{
+			"name": "Handyman",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You can add half your proficiency bonus to any check involving artisan's tools you aren't proficient with."
+			]
+		},
+		{
+			"name": "Holy Shield",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You can cast {@spell shield of faith} on yourself at will, without expending a spell slot."
+			],
+			"prerequisite": [
+				{
+					"other": "Zealot archetype"
+				}
+			]
+		},
+		{
+			"name": "Instinctive",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You add your proficiency bonus to your initiative rolls, and to your AC when you are attacked while surprised or by an unseen attacker."
+			]
+		},
+		{
+			"name": "Internal Alchemy",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"Whenever you use your Drunkard Fighter feature, you can replace its normal effects with the effect of a common potion. At 5th level, you can spend two uses of the feature to instead replicate the effects of an uncommon potion. At 11th level, you can spend three uses to replicate a rare potion. At 17th level, you can spend four uses to replicate a very rare potion."
+			],
+			"prerequisite": [
+				{
+					"other": "Tavern Brawler archetype"
+				}
+			]
+		},
+		{
+			"name": "Liquid Courage",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"When you drink a dose with your Drunkard Fighter feature, you can choose to also gain the effect of the {@spell heroism} spell, cast with a spell slot of a level equal to half your proficiency bonus (rounded up). This effect doesn't require concentration.",
+				"You can use this feature twice, regaining all uses when you finish a short or long rest."
+			],
+			"prerequisite": [
+				{
+					"other": "Tavern Brawler archetype"
+				}
+			]
+		},
+		{
+			"name": "Martial Techniques",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You learn two martial maneuvers available to the Battle Master archetype of the fighter class. You can fuel these maneuvers by spending a Savagery die instead of a superiority die."
+			],
+			"prerequisite": [
+				{
+					"other": "Underground Fighter archetype"
+				}
+			]
+		},
+		{
+			"name": "Peacemaker",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"Whenever a creature is frightened within 30 feet of you, you can use your action to cast {@spell calm emotions} at will, without expending a spell slot."
+			],
+			"prerequisite": [
+				{
+					"other": "Bully archetype"
+				}
+			]
+		},
+		{
+			"name": "Professional Criminal",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You double your proficiency bonus for checks made with Stealth, Sleight of Hand, and thieves' tools. In addition, starting at 9th level, you can make checks with any of these proficiencies as a bonus action."
+			],
+			"prerequisite": [
+				{
+					"other": "Thug archetype"
+				}
+			]
+		},
+		{
+			"name": "Remarkable Athlete",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You can add half your proficiency bonus (rounded up) to any Strength, Dexterity, or Constitution check you make that doesn't already use your proficiency bonus.",
+				"In addition, when you make a running long jump, the distance you can cover increases by a number of feet equal to your Strength modifier."
+			]
+		},
+		{
+			"name": "Stilled Body",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You can use your action to end the blinded, deafened, stunned, paralyzed, or poisoned condition affecting you. You gain temporary hit points equal to your Brawler level when you do so."
+			],
+			"prerequisite": [
+				{
+					"other": "Bodyguard archetype"
+				}
+			]
+		},
+		{
+			"name": "Traveler",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You gain a swimming speed and a climbing speed equal to your walking speed. In addition, you have advantage on Constitution saving throws to avoid the effects of exhaustion."
+			]
+		},
+		{
+			"name": "Wrestler",
+			"source": "BrawlerDW",
+			"featureType": [
+				"OBR"
+			],
+			"entries": [
+				"You can take the Grapple and Shove actions as a bonus action. In addition, when a creature ends its turn grappled by you, it takes damage equal to your Hard Knocks damage die."
+			]
+		}
+	]
+}
