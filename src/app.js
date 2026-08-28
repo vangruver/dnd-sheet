@@ -10,11 +10,11 @@ import { saveCharacter, loadCharacter, clearCharacter, downloadCharacter, readCh
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null }, details = {};
-let pickerType = null, eqCat = "inventory";
+let pickerType = null, eqCat = "inventory", pickerLegacy = true;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
 
 const fresh = () => ({
-  schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official",
+  schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official", abilityMode: "pointbuy",
   classId: "", subclassId: "", raceId: "", backgroundId: "",
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
@@ -158,18 +158,27 @@ async function refreshChoices() {
   $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
   await recalc();
 }
+const pickerContentOk = (x) => character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x));
 function filteredPicker(type, q) {
+  const ql = String(q || "").toLowerCase();
   if (type === "subclass") {
     if (!refs.class) return [];
     const cn = String(refs.class.name).toLowerCase();
     return manifest().filter((x) =>
       normType(x.type) === "subclass" &&
-      (editionOf(x) === "both" || editionOf(x) === String(character.edition)) &&
+      matchesEdition(x, character.edition, pickerLegacy) &&
       String(x.className || "").toLowerCase() === cn &&
-      (character.content === "all" || (character.content === "official" && !hb(x)) || (character.content === "homebrew" && hb(x))) &&
-      (!q || titleOf(x).toLowerCase().includes(q.toLowerCase())));
+      pickerContentOk(x) &&
+      (!q || titleOf(x).toLowerCase().includes(ql)))
+      .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
   }
-  return list(type, q);
+  const t = normType(type);
+  return manifest().filter((x) =>
+    normType(x.type) === t &&
+    matchesEdition(x, character.edition, pickerLegacy) &&
+    pickerContentOk(x) &&
+    (!q || `${titleOf(x)} ${x.source || ""}`.toLowerCase().includes(ql)))
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
 }
 async function openPicker(type) {
   pickerType = type;
@@ -178,8 +187,12 @@ async function openPicker(type) {
   content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">ESCOLHER</span><h2>${typeLabel(type)}</h2></div></div><div class="loading">Carregando catálogo…</div>`;
   modal.classList.remove("hidden");
   try { await ensureCatalog(type); } catch (err) { console.error(err); }
+  const legacyToggle = character.edition === "2024"
+    ? `<label class="codex-legacy"><input type="checkbox" id="picker-legacy" ${pickerLegacy ? "checked" : ""}> Incluir conteúdo de 2014 (legado)</label>`
+    : "";
   content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">ESCOLHER</span><h2>${typeLabel(type)}</h2></div></div>
   <div class="picker-controls"><input id="picker-search" placeholder="Pesquisar ${typeLabel(type).toLowerCase()}…"><div class="filter-pills"><button class="active" data-pfilter="all">Todos</button><button data-pfilter="official">Oficial</button><button data-pfilter="homebrew">Homebrew</button></div></div>
+  ${legacyToggle}
   <div id="picker-results" class="picker-grid"></div>`;
   const render = () => {
     const q = $("picker-search").value.trim();
@@ -187,9 +200,10 @@ async function openPicker(type) {
     const pf = content.querySelector(".filter-pills .active")?.dataset.pfilter || "all";
     if (pf === "official") arr = arr.filter((x) => !hb(x));
     if (pf === "homebrew") arr = arr.filter((x) => hb(x));
-    renderPicker(arr.slice(0, 200));
+    renderPicker(arr.slice(0, 300));
   };
   $("picker-search").addEventListener("input", render);
+  $("picker-legacy")?.addEventListener("change", (e) => { pickerLegacy = e.target.checked; render(); });
   content.querySelectorAll("[data-pfilter]").forEach((b) => b.addEventListener("click", () => {
     content.querySelectorAll("[data-pfilter]").forEach((x) => x.classList.remove("active"));
     b.classList.add("active"); render();
@@ -328,6 +342,8 @@ function pointCost(score) {
 }
 function pointBuyTotal() { return ABILITIES.reduce((n, a) => n + pointCost(character.scores[a]), 0); }
 function renderAbilities() {
+  const free = character.abilityMode === "free";
+  const lo = free ? 1 : 8, hi = free ? 30 : 15;
   // Mostra o valor EFETIVO (base do point buy + aumentos de espécie/background).
   $("ability-grid").innerHTML = ABILITIES.map((a) => {
     const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
@@ -336,9 +352,15 @@ function renderAbilities() {
   const spent = pointBuyTotal(), remaining = 27 - spent;
   $("pointbuy-remaining").textContent = remaining;
   $("pointbuy-remaining").classList.toggle("over", remaining < 0);
+  if ($("ability-mode")) $("ability-mode").value = free ? "free" : "pointbuy";
+  $("pointbuy-remaining-wrap")?.classList.toggle("hidden", free);
+  $("reset-pointbuy")?.classList.toggle("hidden", free);
+  if ($("ability-editor-hint")) $("ability-editor-hint").textContent = free
+    ? "Digite qualquer valor de 1 a 30 (rolagem, array padrão, homebrew). Ajustes de espécie/background continuam entrando automaticamente."
+    : "Use +/− para distribuir pontos (custo padrão 8–15). Ajustes de espécie/background entram automaticamente quando o banco os estrutura.";
   $("ability-editor").innerHTML = ABILITIES.map((a) => {
     const v = Number(character.scores[a]) || 10;
-    return `<div class="ability-edit"><span>${ABILITY_NAMES[a]}</span><div class="ability-stepper"><button type="button" data-ability-dec="${a}" ${v <= 8 ? "disabled" : ""}>−</button><input data-ability="${a}" type="number" min="1" max="30" value="${v}"><button type="button" data-ability-inc="${a}" ${v >= 15 ? "disabled" : ""}>+</button></div><b>${fmt(mod(v))}</b><small>Custo ${pointCost(v)}</small></div>`;
+    return `<div class="ability-edit"><span>${ABILITY_NAMES[a]}</span><div class="ability-stepper"><button type="button" data-ability-dec="${a}" ${v <= lo ? "disabled" : ""}>−</button><input data-ability="${a}" type="number" min="1" max="30" value="${v}"><button type="button" data-ability-inc="${a}" ${v >= hi ? "disabled" : ""}>+</button></div><b>${fmt(mod(v))}</b><small>${free ? "" : `Custo ${pointCost(v)}`}</small></div>`;
   }).join("");
   $("ability-editor").querySelectorAll("[data-ability]").forEach((i) => i.addEventListener("change", () => {
     character.scores[i.dataset.ability] = Math.max(1, Math.min(30, Number(i.value) || 10));
@@ -347,13 +369,17 @@ function renderAbilities() {
   $("ability-editor").querySelectorAll("[data-ability-inc],[data-ability-dec]").forEach((b) => b.addEventListener("click", () => {
     const a = b.dataset.abilityInc || b.dataset.abilityDec, v = Number(character.scores[a]) || 10;
     const next = v + (b.dataset.abilityInc ? 1 : -1);
-    if (next < 8 || next > 15) return;
-    const delta = pointCost(next) - pointCost(v);
-    if (delta > 27 - pointBuyTotal()) { toast("Você não tem pontos suficientes."); return; }
+    if (next < lo || next > hi) return;
+    if (!free) {
+      const delta = pointCost(next) - pointCost(v);
+      if (delta > 27 - pointBuyTotal()) { toast("Você não tem pontos suficientes."); return; }
+    }
     character.scores[a] = next; recalc(); saveCharacter(character);
   }));
   const reset = $("reset-pointbuy");
   if (reset) reset.onclick = () => { ABILITIES.forEach((a) => (character.scores[a] = 10)); saveCharacter(character); recalc(); };
+  const modeSel = $("ability-mode");
+  if (modeSel) modeSel.onchange = () => { character.abilityMode = modeSel.value === "free" ? "free" : "pointbuy"; saveCharacter(character); recalc(); };
 }
 
 // ------------------------------------------------------------
@@ -1157,7 +1183,10 @@ async function renderSpells() {
   if (!refs.class) { $("spell-count").textContent = "0"; box.innerHTML = `<div class="paper-card empty">Escolha uma classe para carregar a lista de magias.</div>`; return; }
   box.innerHTML = `<div class="paper-card loading">Carregando lista de magias de ${esc(titleOf(refs.class))}…</div>`;
   let spells = [];
-  try { spells = await spellsForClass(refs.class, refs.subclass, character.edition); }
+  // Usa a edição da própria classe escolhida (permite classe 2014 numa
+  // sessão 2024 via o "incluir legado" do seletor).
+  const spellEd = editionOf(refs.class) === "both" ? character.edition : editionOf(refs.class);
+  try { spells = await spellsForClass(refs.class, refs.subclass, spellEd); }
   catch (err) { console.error(err); box.innerHTML = `<div class="paper-card empty">Não foi possível carregar as magias.</div>`; return; }
   $("spell-count").textContent = spells.length;
   const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
@@ -1209,7 +1238,11 @@ async function renderEquipmentCatalog() {
   const box = $("equipment-list"), q = $("equipment-search").value.trim().toLowerCase(), wf = $("weapon-filter").value;
   box.innerHTML = `<div class="empty">Carregando catálogo de itens…</div>`;
   await ensureCatalog("item");
-  let arr = list("item", "").map((e) => ({ e, r: e.__rec || {}, kind: itemKind(e.__rec), family: weaponFamily(e.name) }));
+  // Catálogo de referência: mostra oficial + homebrew independentemente do
+  // seletor "Conteúdo" (que controla o construtor de personagem).
+  let arr = manifest()
+    .filter((e) => normType(e.type) === "item" && matchesEdition(e, character.edition, true))
+    .map((e) => ({ e, r: e.__rec || {}, kind: itemKind(e.__rec), family: weaponFamily(e.name) }));
   if (eqCat !== "all" && eqCat !== "inventory") arr = arr.filter((x) => x.kind === eqCat);
   if (wf) arr = arr.filter((x) => x.family === wf);
   if (q) arr = arr.filter((x) => `${titleOf(x.e)} ${x.e.source || ""}`.toLowerCase().includes(q));

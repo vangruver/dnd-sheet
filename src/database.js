@@ -147,25 +147,66 @@ export async function ensureCatalog(type, onProgress) {
 
   if (type === "race") { await loadRaces(onProgress); loaded.add("race"); return; }
   if (type === "class") { await loadAllClasses(onProgress); loaded.add("class"); return; }
-  if (type === "spell") { await loadSpellCatalog(onProgress); loaded.add("spell"); return; }
-  if (type === "item") { await loadItemCatalog(onProgress); loaded.add("item"); return; }
+  if (type === "spell") {
+    await loadSpellCatalog(onProgress);
+    await loadHomebrewCatalog("spell", onProgress).catch((e) => console.warn("Magias homebrew indisponíveis:", e));
+    loaded.add("spell"); return;
+  }
+  if (type === "item") {
+    await loadItemCatalog(onProgress);
+    await loadHomebrewCatalog("item", onProgress).catch((e) => console.warn("Itens homebrew indisponíveis:", e));
+    loaded.add("item"); return;
+  }
 
   const file = CATALOG_FILE[type];
-  if (!file) return;
-  const json = await getJson(file);
-  const key = Object.keys(json).find((k) => Array.isArray(json[k]) && k !== "_meta") || type;
-  const arr = resolveCopies(json[key] || []);
-  for (const rec of arr) {
-    const source = rec.source || "";
-    register({
-      id: edId([type, source, rec.name]),
-      type, name: rec.name, source,
-      edition: editionOfRec(rec),
-      homebrew: false,
-      __rec: rec,
-    });
+  if (file) {
+    const json = await getJson(file);
+    const key = Object.keys(json).find((k) => Array.isArray(json[k]) && k !== "_meta") || type;
+    const arr = resolveCopies(json[key] || []);
+    for (const rec of arr) {
+      const source = rec.source || "";
+      register({
+        id: edId([type, source, rec.name]),
+        type, name: rec.name, source,
+        edition: editionOfRec(rec),
+        homebrew: false,
+        __rec: rec,
+      });
+    }
   }
+  await loadHomebrewCatalog(type, onProgress).catch((e) => console.warn(`Homebrew (${type}) indisponível:`, e));
   loaded.add(type);
+}
+
+// Baixa os arquivos homebrew (deste repositório) que contêm o tipo
+// pedido — lista vinda de data/version.json (homebrew.filesByType).
+async function homebrewFilesFor(type) {
+  const v = await loadVersionInfo();
+  const byType = v?.homebrew?.filesByType || {};
+  return Array.isArray(byType[type]) ? byType[type] : [];
+}
+async function loadHomebrewCatalog(type, onProgress) {
+  const files = await homebrewFilesFor(type);
+  if (!files.length) return;
+  const keys = type === "item" ? ["item", "baseitem"] : [type];
+  let done = 0;
+  await Promise.all(files.map(async (fname) => {
+    const file = await tryLocalJson(fname);
+    done++; onProgress && onProgress(done, files.length);
+    if (!file) return;
+    for (const k of keys) {
+      for (const rec of resolveCopies(file[k] || [])) {
+        if (!rec || !rec.name) continue;
+        const stub = {
+          id: edId([type, rec.source || "", rec.name]),
+          type, name: rec.name, source: rec.source || "",
+          edition: "both", homebrew: true, __rec: rec,
+        };
+        if (type === "spell") stub.level = rec.level ?? 0;
+        register(stub);
+      }
+    }
+  }));
 }
 
 async function loadAllClasses(onProgress) {

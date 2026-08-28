@@ -847,8 +847,27 @@ async function main() {
       )
     ).sort();
 
+  // Demais tipos homebrew (item, magia, talento, background, opção…),
+  // agrupados por tipo de conteúdo que o arquivo contém — a ficha baixa
+  // esses arquivos sob demanda (ver src/database.js).
+  const homebrewFilesByType = {};
+
+  for (
+    const t
+    of ["item", "spell", "feat", "background", "optionalfeature", "reward", "variantrule"]
+  ) {
+    homebrewFilesByType[t] =
+      Array.from(
+        new Set(
+          entities
+            .filter(e => e.homebrew && e.type === t)
+            .map(e => e.file)
+        )
+      ).sort();
+  }
+
   const version = {
-    schema: 1,
+    schema: 2,
 
     generatedAt:
       manifest.generatedAt,
@@ -871,6 +890,9 @@ async function main() {
 
       raceFileCount:
         homebrewRaceFiles.length,
+
+      filesByType:
+        homebrewFilesByType,
     },
   };
 
