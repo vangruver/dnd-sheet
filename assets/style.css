@@ -923,7 +923,15 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   font-family:var(--font);
 }
 .pdf-preview-host .off-page{box-shadow:0 10px 34px rgba(0,0,0,.45)}
-.off-box{border:1.4px solid #3a3a3a;border-radius:10px;padding:7px 9px;background:#fff}
+/* min-width:0 nos itens de grid/flex da ficha: sem isso, um item de grid
+   não encolhe abaixo do tamanho "natural" do conteúdo (min-content) — numa
+   página impressa/exportada num container mais estreito que os 210mm
+   (é o que alguns navegadores mobile fazem ao gerar o PDF: usam a largura
+   da tela em vez da largura real do papel), isso forçava a trilha do grid
+   a crescer além do container e o excesso ficava cortado fora da página.
+   Com min-width:0 o conteúdo pode encolher/truncar em vez de estourar. */
+.off-header>*,.off-row2>*,.off-ovals-row>*,.off-row3>*,.off-spell-top>*,.off-page2-side>*,.off-col>*{min-width:0}
+.off-box{border:1.4px solid #3a3a3a;border-radius:10px;padding:7px 9px;background:#fff;min-width:0}
 .off-box-title{font:700 8.5px var(--font-head);text-transform:uppercase;letter-spacing:.05em;color:#3a3a3a;margin-bottom:5px}
 .off-box-body p{margin:3px 0;font-size:9.5px;line-height:1.42;color:#222}
 .off-muted{color:#888;font-size:9px}
@@ -936,7 +944,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .off-field span{font-size:6.5px;text-transform:uppercase;color:#777;letter-spacing:.05em}
 .off-field-row{display:flex;gap:10px}
 .off-field-row .off-field{flex:1;min-width:0}
-.off-oval{border:1.4px solid #3a3a3a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;gap:1px;background:#fff}
+.off-oval{border:1.4px solid #3a3a3a;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4px;gap:1px;background:#fff;min-width:0}
 .off-oval-level{aspect-ratio:1/1}
 .off-oval b{font:800 19px var(--font-head)}
 .off-oval span{font-size:6.5px;text-transform:uppercase;color:#666}
@@ -947,7 +955,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .off-hp .off-hp-grid{display:flex;justify-content:space-around;text-align:center;gap:3px}
 .off-hp-grid b{display:block;font:800 15px var(--font-head)}
 .off-hp-grid span{font-size:6.5px;text-transform:uppercase;color:#777}
-.off-death-row{display:flex;justify-content:space-between;align-items:center;font-size:7.5px;text-transform:uppercase;color:#666;margin:3px 0}
+.off-death-row{display:flex;justify-content:space-between;align-items:center;font-size:7.5px;text-transform:uppercase;color:#666;margin:3px 0;min-width:0}
+.off-death-row>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
 /* Colunas em fr (não px fixo): numa tela estreita como um celular a
    ficha some, é impressa/exportada num container bem mais estreito que
