@@ -19,3 +19,13 @@ export async function readCharacterFile(file) { return JSON.parse(await file.tex
 const VERSION_KEY = "dnd-ficha-auto-data-version-seen";
 export function getSeenDataVersion() { try { return localStorage.getItem(VERSION_KEY); } catch { return null; } }
 export function setSeenDataVersion(v) { try { if (v) localStorage.setItem(VERSION_KEY, v); } catch { /* modo privado */ } }
+
+// Preferências de interface (tema claro/escuro e modo de criação guiado/livre)
+// — não fazem parte do personagem, ficam soltas no navegador.
+const THEME_KEY = "dnd-ficha-auto-theme";
+export function getSavedTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
+export function saveTheme(v) { try { localStorage.setItem(THEME_KEY, v); } catch { /* modo privado */ } }
+
+const CREATION_MODE_KEY = "dnd-ficha-auto-creation-mode";
+export function getSavedCreationMode() { try { return localStorage.getItem(CREATION_MODE_KEY) || "free"; } catch { return "free"; } }
+export function saveCreationMode(v) { try { localStorage.setItem(CREATION_MODE_KEY, v); } catch { /* modo privado */ } }

@@ -445,21 +445,24 @@ export async function spellsForClass(classStub, subclassStub, edition) {
   const classSrcWanted = edition === "2024" ? "XPHB" : "PHB";
   const subName = subclassStub ? String(subclassStub.shortName || subclassStub.name) : null;
 
-  const wanted = []; // { name, bookSource }
+  // Cada magia é marcada como vinda da lista da CLASSE, concedida pela
+  // SUBCLASSE (magias de domínio/círculo/patrono etc.), ou as duas — pra
+  // deixar explícito na ficha de onde ela veio, em vez de uma lista única
+  // sem distinção entre o que é da classe e o que é específico da subclasse.
+  const wanted = []; // { name, bookSource, viaClass, viaSubclass }
   for (const [bookSource, spells] of Object.entries(spellSources)) {
     for (const [spellName, info] of Object.entries(spells)) {
       const refs = [].concat(info.class || [], info.classVariant || [], info.subclass || []);
-      const hit = refs.some((r) => {
-        if (!r) return false;
+      let viaClass = false, viaSubclass = false;
+      for (const r of refs) {
+        if (!r) continue;
         const n = String(r.name || r.className || "");
         const s = String(r.source || r.classSource || "");
-        if (n.toLowerCase() === className.toLowerCase()) {
-          return !s || s === classSrcWanted || (edition === "2014" && s === "PHB") || (edition === "2024" && s === "XPHB");
-        }
-        if (subName && String(r.subclass?.name || r.subclassShortName || "").toLowerCase() === subName.toLowerCase()) return true;
-        return false;
-      });
-      if (hit) wanted.push({ name: spellName, bookSource });
+        if (n.toLowerCase() === className.toLowerCase() &&
+            (!s || s === classSrcWanted || (edition === "2014" && s === "PHB") || (edition === "2024" && s === "XPHB"))) viaClass = true;
+        if (subName && String(r.subclass?.name || r.subclassShortName || "").toLowerCase() === subName.toLowerCase()) viaSubclass = true;
+      }
+      if (viaClass || viaSubclass) wanted.push({ name: spellName, bookSource, viaClass, viaSubclass });
     }
   }
 
@@ -469,22 +472,65 @@ export async function spellsForClass(classStub, subclassStub, edition) {
     if (!bySource.has(w.bookSource)) bySource.set(w.bookSource, await loadSpellFile(w.bookSource));
   }
 
-  const out = [];
-  const seen = new Set();
+  const found = new Map(); // "nome|fonte" -> { rec, viaClass, viaSubclass }
   for (const w of wanted) {
     const arr = bySource.get(w.bookSource) || [];
     const rec = arr.find((s) => String(s.name).toLowerCase() === w.name.toLowerCase());
     if (!rec) continue;
-    if (!editionMatches(rec, edition) && rec.source !== w.bookSource) { /* mantém */ }
     const key = `${rec.name}|${rec.source}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const cur = found.get(key) || { rec, viaClass: false, viaSubclass: false };
+    cur.viaClass = cur.viaClass || w.viaClass;
+    cur.viaSubclass = cur.viaSubclass || w.viaSubclass;
+    found.set(key, cur);
+  }
+
+  // Magias concedidas pela própria subclasse (domínio do Clérigo, patrono
+  // do Bruxo, tradição arcana do Mago, círculo do Druida…) NÃO aparecem em
+  // spells/sources.json — elas ficam no campo `additionalSpells` do
+  // registro da subclasse (prepared/known/expanded/innate, cada um com um
+  // formato de chaves diferente). Em vez de tratar cada formato à mão,
+  // percorre a árvore inteira e trata toda string-folha como uma
+  // referência de magia ("nome" ou "nome|fonte").
+  if (subclassStub) {
+    const subRec = recordsForEntity(subclassStub)[0] || subclassStub.__rec || null;
+    const refs = [];
+    const walk = (node) => {
+      if (node == null) return;
+      if (Array.isArray(node)) { node.forEach((x) => (typeof x === "string" ? refs.push(x) : walk(x))); return; }
+      if (typeof node === "object") Object.values(node).forEach(walk);
+    };
+    walk(subRec?.additionalSpells);
+    const seenRef = new Set();
+    for (const raw of refs) {
+      let [name, src] = String(raw).split("|");
+      name = name.replace(/#.*$/, "").trim();
+      src = src ? src.toUpperCase() : null;
+      const refKey = `${name.toLowerCase()}|${src || ""}`;
+      if (!name || seenRef.has(refKey)) continue;
+      seenRef.add(refKey);
+      const candidates = [...new Set([src, classSrcWanted, subRec?.source].filter(Boolean))];
+      let rec = null;
+      for (const book of candidates) {
+        if (!bySource.has(book)) bySource.set(book, await loadSpellFile(book).catch(() => []));
+        rec = (bySource.get(book) || []).find((s) => String(s.name).toLowerCase() === name.toLowerCase());
+        if (rec) break;
+      }
+      if (!rec) continue;
+      const key = `${rec.name}|${rec.source}`;
+      const cur = found.get(key) || { rec, viaClass: false, viaSubclass: false };
+      cur.viaSubclass = true;
+      found.set(key, cur);
+    }
+  }
+
+  const out = [];
+  for (const { rec, viaClass, viaSubclass } of found.values()) {
     register({
       id: edId(["spell", rec.source, rec.name]),
       type: "spell", name: rec.name, source: rec.source || "",
       level: rec.level ?? 0, edition: editionOfRec(rec), homebrew: false, __rec: rec,
     });
-    out.push(rec);
+    out.push({ ...rec, _fromClass: viaClass, _fromSubclass: viaSubclass });
   }
   out.sort((a, b) => (a.level ?? 0) - (b.level ?? 0) || String(a.name).localeCompare(String(b.name), "pt-BR"));
   return out;
