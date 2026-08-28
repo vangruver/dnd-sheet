@@ -1,0 +1,605 @@
+{
+	"_meta": {
+		"sources": [
+			{
+				"json": "Lefou",
+				"abbreviation": "Lefou",
+				"full": "Rain's Forgotten Notes from Numberless Realms",
+				"authors": [
+					"ESKape_Key"
+				],
+				"convertedBy": [
+					"Claude",
+					"ESKape_Key"
+				],
+				"version": "1.0.0"
+			},
+			{
+				"json": "Lefou14",
+				"abbreviation": "Lefou14",
+				"full": "Rain's Forgotten Notes from Numberless Realms (2014 Rules)",
+				"authors": [
+					"ESKape_Key"
+				],
+				"convertedBy": [
+					"Claude",
+					"ESKape_Key"
+				],
+				"version": "1.0.0"
+			}
+		],
+		"dateAdded": 1756108800,
+		"dateLastModified": 1756108800
+	},
+	"race": [
+		{
+			"name": "Lefou",
+			"source": "Lefou",
+			"page": 1,
+			"size": [
+				"S",
+				"M"
+			],
+			"speed": 30,
+			"darkvision": 60,
+			"resist": [
+				"acid"
+			],
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"traitTags": [
+				"Darkvision",
+				"Resistance",
+				"NaturalArmor"
+			],
+			"creatureTypeTags": [
+				"humanoid",
+				"aberration"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"You are Small or Medium. You choose the size when you select this race. If you are Small, your Speed is 20 feet. If you are Medium, your Speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Aberrant Nature",
+					"entries": [
+						"You count as a Humanoid and an Aberration for any effect related to creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You have Darkvision with a range of 60 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Unsettling Presence",
+					"entries": [
+						"You have disadvantage on checks made using the Influence action, except when you use that action to intimidate a creature. You have proficiency in the Intimidation skill."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Acid Resistance",
+					"entries": [
+						"You have resistance to Acid damage."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Deformations",
+					"entries": [
+						"You start with one Deformation of your choice from the list below. You may acquire additional Deformations at any point, provided you obey the maximum quantity prerequisite defined by the {@variantrule Deformations|Lefou} optional rules, without needing to be directly exposed to Tormenta, as it is already innately present within you.",
+						{
+							"type": "list",
+							"style": "list-hang-notitle",
+							"items": [
+								{
+									"type": "item",
+									"name": "Four Arms (1st level only).",
+									"entries": [
+										"You grow two additional arms. This Deformation can only be selected at 1st level.",
+										"Your extra arms let you hold and wield any combination of items your four arms can manage — up to four one-handed weapons or hand-held items at once, or a two-handed weapon in each pair of arms — giving you more options for Two-Weapon Fighting. Having more arms doesn't grant you extra attacks or extra actions, nor does it let you bypass the normal rules for two-weapon fighting: you still only attack and use actions or bonus actions as normal, and the bonus action attack of Two-Weapon Fighting must still be triggered by a Light weapon.",
+										"If you have the {@feat Dual Wielder|XPHB} feat, your four arms let you wield two two-handed weapons, or weapons with the versatile property, at once — one pair of arms per weapon. You can trigger your Two-Weapon Fighting bonus action attack using one of these weapons, instead of the Light weapon it would normally require. However, wielding two two-handed or versatile weapons this way — or attacking with one of them as a bonus action — is unwieldy: any bonus action attack made with a two-handed weapon or a weapon using the versatile property is made with disadvantage.",
+										"Clothes and armors made for you cost 25% more."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Two Heads (1st level only).",
+									"entries": [
+										"You grow a second head, with a personality of its own. This Deformation can only be selected at 1st level.",
+										"Whenever you fail an Intelligence or Wisdom check (excluding saving throws), you can reroll it using the result of your second head.",
+										"Whenever you make a Wisdom or Intelligence saving throw, you roll it twice, once for each head, as though they were separate creatures making the save. If both heads succeed, you succeed on the save with no further effect. If both heads fail, you fail the save and suffer its normal effects. If only one head succeeds and failing the save would have caused you to suffer any {@variantrule Condition|XPHB|Condition}, you don't suffer it. However, if that condition would have been {@condition Charmed|XPHB}, {@condition Frightened|XPHB}, {@condition Incapacitated|XPHB}, {@condition Paralyzed|XPHB}, {@condition Poisoned|XPHB}, {@condition Stunned|XPHB}, or {@condition Unconscious|XPHB}, you instead have disadvantage on attack rolls and on Strength and Dexterity checks until the end of your next turn, or until your other head also succeeds or the triggering effect ends, whichever comes later — as only one head is not used to piloting the body on its own. If failing the save would normally have caused you to take damage, you still take half that damage if only one of the heads succeeds on the save. This doesn't stack with an effect that already deals half damage on a success — in that case, you simply take that normal half damage instead."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Acid Resistance.",
+									"entries": [
+										"You have resistance to Acid damage."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Red Ichor.",
+									"entries": [
+										"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Extended Limbs.",
+									"entries": [
+										"Your reach for melee attacks and object interactions increases by 5 feet."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insane Anatomy.",
+									"entries": [
+										"You have a chance to resist the extra damage of a critical hit against you (rerolling it as a normal hit instead). This chance is 25%. At 5th level, the chance increases to 50%; at 11th level, to 75%; and at 17th level, to 100%."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Claws/Teeth/Horns.",
+									"entries": [
+										"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Acid Blood.",
+									"entries": [
+										"Whenever you take damage, each creature within 5 feet of you takes 1d4 Acid damage, once per round. As a bonus action, you can deal 1d4 damage to yourself to create a vial of {@item Diluted Red Matter|Lefou} (provisionally, a vial of {@item Acid|XPHB})."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Carapace.",
+									"entries": [
+										"You gain a +1 bonus to Armor Class."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insectoid Eyes.",
+									"entries": [
+										"You have bulbous, multiple, or compound eyes. You have proficiency in the Perception skill. You can't be flanked (see DMG'14 {@variantrule Flanking|DMG}), and you can't be surprised."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Membranous Hands.",
+									"entries": [
+										"You gain a Swim Speed equal to your Speed."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Rigid Fingers.",
+									"entries": [
+										"You gain a Climb Speed equal to your Speed."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Flexible Joints.",
+									"entries": [
+										"You have proficiency in the Acrobatics skill. You count as one size smaller when determining the space you can squeeze through."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Antennae.",
+									"entries": [
+										"You have Tremorsense with a range of 10 feet."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Aberrant Mind.",
+									"entries": [
+										"You have advantage on saving throws against being {@condition Charmed|XPHB}. Additionally, whenever you must make a Wisdom or Intelligence saving throw to resist a spell (or similar abilities, such as innate spellcasting), its caster takes 1d6 psychic damage if your save succeeds. In addition, whenever you establish a telepathic bond with a creature (such as with the {@spell Message|XPHB} cantrip), that creature must make a Wisdom saving throw with a DC equal to 10 + the number of Deformations your character possesses, taking 1d6 psychic damage on a failed save."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insectoid Wings (requires 6th level).",
+									"entries": [
+										"You can cast the {@spell Fly|XPHB} spell a number of times equal to your proficiency bonus, regaining all expended uses when you finish a long rest."
+									]
+								}
+							]
+						}
+					]
+				}
+			],
+			"hasFluffImages": false
+		},
+		{
+			"name": "Lefou",
+			"source": "Lefou14",
+			"page": 1,
+			"size": [
+				"S",
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"choose": {
+						"from": [
+							"str",
+							"dex",
+							"con",
+							"int",
+							"wis"
+						],
+						"count": 2
+					}
+				}
+			],
+			"darkvision": 60,
+			"resist": [
+				"acid"
+			],
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"traitTags": [
+				"Darkvision",
+				"Resistance",
+				"NaturalArmor"
+			],
+			"creatureTypeTags": [
+				"humanoid",
+				"aberration"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your ability scores increase by 1 in two different ability scores of your choice, other than Charisma."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"You are Small or Medium. You choose the size when you select this race. If you are Small, your Speed is 20 feet. If you are Medium, your Speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Aberrant Nature",
+					"entries": [
+						"You count as a Humanoid and an Aberration for any effect related to creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You have Darkvision with a range of 60 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Unsettling Presence",
+					"entries": [
+						"You have disadvantage on checks made using the Influence action, except when you use that action to intimidate a creature. You have proficiency in the Intimidation skill."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Acid Resistance",
+					"entries": [
+						"You have resistance to Acid damage."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Deformations",
+					"entries": [
+						"You start with one Deformation of your choice from the list below. You may acquire additional Deformations at any point, provided you obey the maximum quantity prerequisite defined by the {@variantrule Deformations|Lefou} optional rules, without needing to be directly exposed to Tormenta, as it is already innately present within you.",
+						{
+							"type": "list",
+							"style": "list-hang-notitle",
+							"items": [
+								{
+									"type": "item",
+									"name": "Four Arms (1st level only).",
+									"entries": [
+										"You grow two additional arms. This Deformation can only be selected at 1st level.",
+										"Your extra arms let you hold and wield any combination of items your four arms can manage — up to four one-handed weapons or hand-held items at once, or a two-handed weapon in each pair of arms — giving you more options for Two-Weapon Fighting. Having more arms doesn't grant you extra attacks or extra actions, nor does it let you bypass the normal rules for two-weapon fighting: you still only attack and use actions or bonus actions as normal, and the bonus action attack of Two-Weapon Fighting must still be triggered by a Light weapon.",
+										"If you have the {@feat Dual Wielder|XPHB} feat, your four arms let you wield two two-handed weapons, or weapons with the versatile property, at once — one pair of arms per weapon. You can trigger your Two-Weapon Fighting bonus action attack using one of these weapons, instead of the Light weapon it would normally require. However, wielding two two-handed or versatile weapons this way — or attacking with one of them as a bonus action — is unwieldy: any bonus action attack made with a two-handed weapon or a weapon using the versatile property is made with disadvantage.",
+										"Clothes and armors made for you cost 25% more."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Two Heads (1st level only).",
+									"entries": [
+										"You grow a second head, with a personality of its own. This Deformation can only be selected at 1st level.",
+										"Whenever you fail an Intelligence or Wisdom check (excluding saving throws), you can reroll it using the result of your second head.",
+										"Whenever you make a Wisdom or Intelligence saving throw, you roll it twice, once for each head, as though they were separate creatures making the save. If both heads succeed, you succeed on the save with no further effect. If both heads fail, you fail the save and suffer its normal effects. If only one head succeeds and failing the save would have caused you to suffer any {@variantrule Condition|XPHB|Condition}, you don't suffer it. However, if that condition would have been {@condition Charmed|XPHB}, {@condition Frightened|XPHB}, {@condition Incapacitated|XPHB}, {@condition Paralyzed|XPHB}, {@condition Poisoned|XPHB}, {@condition Stunned|XPHB}, or {@condition Unconscious|XPHB}, you instead have disadvantage on attack rolls and on Strength and Dexterity checks until the end of your next turn, or until your other head also succeeds or the triggering effect ends, whichever comes later — as only one head is not used to piloting the body on its own. If failing the save would normally have caused you to take damage, you still take half that damage if only one of the heads succeeds on the save. This doesn't stack with an effect that already deals half damage on a success — in that case, you simply take that normal half damage instead."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Acid Resistance.",
+									"entries": [
+										"You have resistance to Acid damage."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Red Ichor.",
+									"entries": [
+										"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Extended Limbs.",
+									"entries": [
+										"Your reach for melee attacks and object interactions increases by 5 feet."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insane Anatomy.",
+									"entries": [
+										"You have a chance to resist the extra damage of a critical hit against you (rerolling it as a normal hit instead). This chance is 25%. At 5th level, the chance increases to 50%; at 11th level, to 75%; and at 17th level, to 100%."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Claws/Teeth/Horns.",
+									"entries": [
+										"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Acid Blood.",
+									"entries": [
+										"Whenever you take damage, each creature within 5 feet of you takes 1d4 Acid damage, once per round. As a bonus action, you can deal 1d4 damage to yourself to create a vial of {@item Diluted Red Matter|Lefou} (provisionally, a vial of {@item Acid|XPHB})."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Carapace.",
+									"entries": [
+										"You gain a +1 bonus to Armor Class."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insectoid Eyes.",
+									"entries": [
+										"You have bulbous, multiple, or compound eyes. You have proficiency in the Perception skill. You can't be flanked (see DMG'14 {@variantrule Flanking|DMG}), and you can't be surprised."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Membranous Hands.",
+									"entries": [
+										"You gain a Swim Speed equal to your Speed."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Rigid Fingers.",
+									"entries": [
+										"You gain a Climb Speed equal to your Speed."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Flexible Joints.",
+									"entries": [
+										"You have proficiency in the Acrobatics skill. You count as one size smaller when determining the space you can squeeze through."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Antennae.",
+									"entries": [
+										"You have Tremorsense with a range of 10 feet."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Aberrant Mind.",
+									"entries": [
+										"You have advantage on saving throws against being Charmed. Additionally, whenever you must make a Wisdom or Intelligence saving throw to resist a spell (or similar abilities, such as innate spellcasting), its caster takes 1d6 psychic damage if your save succeeds. In addition, whenever you establish a telepathic bond with a creature (such as with the {@spell Message|XPHB} cantrip), that creature must make a Wisdom saving throw with a DC equal to 10 + the number of Deformations your character possesses, taking 1d6 psychic damage on a failed save."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Insectoid Wings (requires 6th level).",
+									"entries": [
+										"You can cast the {@spell Fly|XPHB} spell a number of times equal to your proficiency bonus, regaining all expended uses when you finish a long rest."
+									]
+								}
+							]
+						}
+					]
+				}
+			],
+			"hasFluffImages": false,
+			"reprintedAs": [
+				"Lefou|Lefou"
+			]
+		}
+	],
+	"variantrule": [
+		{
+			"name": "Deformations",
+			"source": "Lefou",
+			"page": 1,
+			"ruleType": "O",
+			"entries": [
+				"Any creature that is exposed to the Tormenta may willingly (or not) receive a Deformation (see the list below), in exchange for a permanent −1 penalty to its Charisma score, as giving in to the storm slowly takes away one's sense of self. The total number of Deformations a creature can have is equal to its Proficiency Bonus (not counting the one it receives for free if it is a {@race Lefou|Lefou}).",
+				"Deformations, once acquired, can only be removed through the {@spell Greater Restoration} or {@spell Wish} spells.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Four Arms (1st level only).",
+							"entries": [
+								"You grow two additional arms. This Deformation can only be selected at 1st level.",
+								"Your extra arms let you hold and wield any combination of items your four arms can manage — up to four one-handed weapons or hand-held items at once, or a two-handed weapon in each pair of arms — giving you more options for Two-Weapon Fighting. Having more arms doesn't grant you extra attacks or extra actions, nor does it let you bypass the normal rules for two-weapon fighting: you still only attack and use actions or bonus actions as normal, and the bonus action attack of Two-Weapon Fighting must still be triggered by a Light weapon.",
+								"If you have the {@feat Dual Wielder|XPHB} feat, your four arms let you wield two two-handed weapons, or weapons with the versatile property, at once — one pair of arms per weapon. You can trigger your Two-Weapon Fighting bonus action attack using one of these weapons, instead of the Light weapon it would normally require. However, wielding two two-handed or versatile weapons this way — or attacking with one of them as a bonus action — is unwieldy: any bonus action attack made with a two-handed weapon or a weapon using the versatile property is made with disadvantage.",
+								"Clothes and armors made for you cost 25% more."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Two Heads (1st level only).",
+							"entries": [
+								"You grow a second head, with a personality of its own. This Deformation can only be selected at 1st level.",
+								"Whenever you fail an Intelligence or Wisdom check (excluding saving throws), you can reroll it using the result of your second head.",
+								"Whenever you make a Wisdom or Intelligence saving throw, you roll it twice, once for each head, as though they were separate creatures making the save. If both heads succeed, you succeed on the save with no further effect. If both heads fail, you fail the save and suffer its normal effects. If only one head succeeds and failing the save would have caused you to suffer any {@variantrule Condition|XPHB|Condition}, you don't suffer it. However, if that condition would have been {@condition Charmed|XPHB}, {@condition Frightened|XPHB}, {@condition Incapacitated|XPHB}, {@condition Paralyzed|XPHB}, {@condition Poisoned|XPHB}, {@condition Stunned|XPHB}, or {@condition Unconscious|XPHB}, you instead have disadvantage on attack rolls and on Strength and Dexterity checks until the end of your next turn, or until your other head also succeeds or the triggering effect ends, whichever comes later — as only one head is not used to piloting the body on its own. If failing the save would normally have caused you to take damage, you still take half that damage if only one of the heads succeeds on the save. This doesn't stack with an effect that already deals half damage on a success — in that case, you simply take that normal half damage instead."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Acid Resistance.",
+							"entries": [
+								"You have resistance to Acid damage."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Red Ichor.",
+							"entries": [
+								"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Extended Limbs.",
+							"entries": [
+								"Your reach for melee attacks and object interactions increases by 5 feet."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Insane Anatomy.",
+							"entries": [
+								"You have a chance to resist the extra damage of a critical hit against you (rerolling it as a normal hit instead). This chance is 25%. At 5th level, the chance increases to 50%; at 11th level, to 75%; and at 17th level, to 100%."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Claws/Teeth/Horns.",
+							"entries": [
+								"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Acid Blood.",
+							"entries": [
+								"Whenever you take damage, each creature within 5 feet of you takes 1d4 Acid damage, once per round. As a bonus action, you can deal 1d4 damage to yourself to create a vial of {@item Diluted Red Matter|Lefou} (provisionally, a vial of {@item Acid|XPHB})."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Carapace.",
+							"entries": [
+								"You gain a +1 bonus to Armor Class."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Insectoid Eyes.",
+							"entries": [
+								"You have bulbous, multiple, or compound eyes. You have proficiency in the Perception skill. You can't be flanked (see DMG'14 {@variantrule Flanking|DMG}), and you can't be surprised."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Membranous Hands.",
+							"entries": [
+								"You gain a Swim Speed equal to your Speed."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Rigid Fingers.",
+							"entries": [
+								"You gain a Climb Speed equal to your Speed."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Flexible Joints.",
+							"entries": [
+								"You have proficiency in the Acrobatics skill. You count as one size smaller when determining the space you can squeeze through."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Antennae.",
+							"entries": [
+								"You have Tremorsense with a range of 10 feet."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Aberrant Mind.",
+							"entries": [
+								"You have advantage on saving throws against being Charmed. Additionally, whenever you must make a Wisdom or Intelligence saving throw to resist a spell (or similar abilities, such as innate spellcasting), its caster takes 1d6 psychic damage if your save succeeds. In addition, whenever you establish a telepathic bond with a creature (such as with the {@spell Message|XPHB} cantrip), that creature must make a Wisdom saving throw with a DC equal to 10 + the number of Deformations your character possesses, taking 1d6 psychic damage on a failed save."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Insectoid Wings (requires 6th level).",
+							"entries": [
+								"You can cast the {@spell Fly|XPHB} spell a number of times equal to your proficiency bonus, regaining all expended uses when you finish a long rest."
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"item": [
+		{
+			"name": "Diluted Red Matter",
+			"source": "Lefou",
+			"page": 1,
+			"type": "OTH",
+			"rarity": "none",
+			"weight": 0.1,
+			"value": 0,
+			"poison": true,
+			"poisonTypes": [
+				"ingested"
+			],
+			"entries": [
+				"{@i Placeholder entry. Full rules for this poison — created by a Lefou with the Acid Blood deformation — are still in development.}"
+			]
+		}
+	]
+}
