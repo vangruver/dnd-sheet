@@ -768,6 +768,39 @@ function parseSubFeatureRef(ref) {
   const p = String(ref).split("|");
   return { name: p[0], className: p[1], classSource: p[2] || "", subShort: p[3] || "", subSource: p[4] || "", level: Number(p[5] || 0) };
 }
+// Muitas subclasses (homebrew principalmente, mas também conteúdo oficial
+// 2024) agrupam várias características sob uma só, apontando pra elas via
+// nós {type:"refClassFeature"|"refSubclassFeature", ...Feature: "ref"} em
+// vez de embutir o texto direto — sem resolver isso aqui, o texto (e
+// qualquer proficiência/benefício descrito nele) simplesmente some da
+// característica "guarda-chuva" que os referencia. Resolve só 1 nível
+// (não segue refs dentro de refs) pra não arriscar ciclo.
+function matchClassFeatureRef(refStr, pool) {
+  const ref = parseFeatureRef(refStr);
+  return pool.find((f) => String(f.name).toLowerCase() === ref.name.toLowerCase() && Number(f.level) === ref.level &&
+    (!ref.classSource || String(f.classSource || "").toLowerCase() === ref.classSource.toLowerCase()));
+}
+function matchSubclassFeatureRef(refStr, pool) {
+  const ref = parseSubFeatureRef(refStr);
+  return pool.find((f) => String(f.name).toLowerCase() === ref.name.toLowerCase() && Number(f.level) === ref.level &&
+    String(f.subclassShortName || "").toLowerCase() === ref.subShort.toLowerCase());
+}
+function resolveFeatureRefs(entries, refType, matchFn, pool) {
+  const walk = (x) => {
+    if (Array.isArray(x)) return x.map(walk).filter((v) => v != null);
+    if (x && typeof x === "object") {
+      if (x.type === refType) {
+        const refStr = refType === "refClassFeature" ? x.classFeature : x.subclassFeature;
+        const feat = refStr && matchFn(refStr, pool);
+        return feat ? { name: feat.name, entries: feat.entries } : null;
+      }
+      if (x.entries || x.items) return { ...x, ...(x.entries ? { entries: walk(x.entries) } : {}), ...(x.items ? { items: walk(x.items) } : {}) };
+      return x;
+    }
+    return x;
+  };
+  return walk(entries);
+}
 
 export async function findClassFeatures(classStub, level) {
   if (!classStub) return [];
@@ -787,7 +820,7 @@ export async function findClassFeatures(classStub, level) {
       String(f.name).toLowerCase() === ref.name.toLowerCase() &&
       Number(f.level) === ref.level &&
       (!ref.classSource || String(f.classSource).toLowerCase() === ref.classSource.toLowerCase()));
-    if (feat) out.push({ name: feat.name, level: feat.level, entries: feat.entries, source: feat.source });
+    if (feat) out.push({ name: feat.name, level: feat.level, entries: resolveFeatureRefs(feat.entries, "refClassFeature", matchClassFeatureRef, pool), source: feat.source });
     else out.push({ name: ref.name, level: ref.level, entries: null, source: ref.featureSource || ref.classSource });
   }
   return dedupe(out);
@@ -818,7 +851,7 @@ export async function findSubclassFeatures(subclassStub, level) {
       String(f.name).toLowerCase() === ref.name.toLowerCase() &&
       Number(f.level) === ref.level &&
       String(f.subclassShortName || "").toLowerCase() === ref.subShort.toLowerCase());
-    if (feat) out.push({ name: feat.name, level: feat.level, entries: feat.entries, source: feat.source });
+    if (feat) out.push({ name: feat.name, level: feat.level, entries: resolveFeatureRefs(feat.entries, "refSubclassFeature", matchSubclassFeatureRef, pool), source: feat.source });
     else out.push({ name: ref.name, level: ref.level, entries: null, source: ref.subSource });
   }
   return dedupe(out);
