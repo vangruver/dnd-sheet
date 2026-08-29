@@ -26,6 +26,11 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   mecânicos com um aviso.
 - **Múltiplos personagens salvos**: botão **"Meus Personagens"** lista todas as fichas salvas neste navegador — cria, alterna, duplica e apaga cada uma independente, sem perder o progresso das outras.
 - **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
+- **Exportar pro Foundry VTT**: botão **"⇩ Foundry"** baixa um Actor no formato do sistema dnd5e (atributos,
+  PV, CA, perícias, deslocamento, magias conhecidas e as características até o nível atual como itens) —
+  importe pela aba de Atores do seu mundo Foundry. É uma exportação pontual, sem servidor: diferente do
+  Discord (webhook público), o Foundry não tem como receber dados de um site externo sem o mestre instalar
+  algo no próprio servidor dele, então isso não manda rolagens ao vivo — só o retrato do personagem.
 - **Assistente guiado completo**: espécie → classe → subclasse → nível → background → multiclasse
   (opcional) → atributos → equipamento inicial → revisão, com "voltar" e passos opcionais puláveis.
 - **Assistente de "Subir de Nível"**: ao aumentar o nível da classe primária, um resumo mostra o que

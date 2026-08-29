@@ -3789,6 +3789,173 @@ function wizardNext() {
 }
 function wizardBack() { if (wizardIndex > 0) { wizardIndex--; renderWizardStep(); } }
 
+// ------------------------------------------------------------
+// Exportar pro Foundry VTT (sistema dnd5e)
+// ------------------------------------------------------------
+// Diferente do Discord (webhook público, sem servidor), o Foundry não tem
+// nenhuma forma de aceitar dados de um site externo sem que o próprio
+// mestre instale algo no servidor dele — então em vez de uma integração ao
+// vivo, isso gera um Actor "character" no formato que o sistema dnd5e
+// entende, pra importar pela aba de Atores do mundo Foundry (botão
+// "Importar Dados" no diretório de Atores, ou arrastar o .json pra lá).
+//
+// Ficamos deliberadamente conservadores nos campos mais sensíveis a versão
+// do dnd5e (raça/background como Item por referência, damage.parts
+// estruturado, progressão de magia da classe): preferimos um Actor que
+// sempre importa sem erro, com os números certos (atributos, PV, CA,
+// perícias, deslocamento, magias conhecidas) e o texto completo de cada
+// característica/magia, a arriscar um campo com formato errado travando
+// a importação inteira numa versão do Foundry que não teste aqui.
+function downloadJson(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+}
+const FOUNDRY_SKILL_KEY = {
+  acrobatics: "acr", animalHandling: "ani", arcana: "arc", athletics: "ath", deception: "dec",
+  history: "his", insight: "ins", intimidation: "itm", investigation: "inv", medicine: "med",
+  nature: "nat", perception: "prc", performance: "prf", persuasion: "per", religion: "rel",
+  sleightOfHand: "slt", stealth: "ste", survival: "sur",
+};
+const FOUNDRY_SIZE_KEY = { T: "tiny", S: "sm", M: "med", L: "lg", H: "huge", G: "grg" };
+const FOUNDRY_SCHOOL_KEY = { A: "abj", C: "con", D: "div", EN: "enc", EV: "evo", I: "ill", N: "nec", T: "trs" };
+function foundryFeatItem(name, entries) {
+  return { name: name || "Característica", type: "feat", img: "icons/svg/book.svg", system: { description: { value: richText(entries) || "" } } };
+}
+function foundrySpellItem(rec) {
+  return {
+    name: rec.name, type: "spell", img: "icons/svg/daze.svg",
+    system: {
+      description: { value: richText(rec.entries) || "" },
+      level: Number(rec.level) || 0,
+      school: FOUNDRY_SCHOOL_KEY[String(rec.school || "").toUpperCase()] || "",
+      source: { book: rec.source || "" },
+    },
+  };
+}
+function foundryInventoryItem(x, rec) {
+  const at = armorTypeOf(rec);
+  if (at) {
+    return {
+      name: x.name, type: "equipment", img: "icons/svg/shield.svg",
+      system: {
+        description: { value: x.meta || "" }, quantity: Number(x.qty) || 1, equipped: !!x.equipped,
+        armor: { value: Number(rec?.ac) || (at === "shield" ? 2 : 10), type: at },
+      },
+    };
+  }
+  return { name: x.name, type: "loot", img: "icons/svg/item-bag.svg", system: { description: { value: x.meta || "" }, quantity: Number(x.qty) || 1 } };
+}
+function foundryWeaponAbility(a) {
+  if (a.abilityMode === "dex") return "dex";
+  if (a.abilityMode === "spell") return abilityKey(character.spellAbility) || "";
+  if (a.abilityMode === "manual") return "";
+  return "str";
+}
+function foundryWeaponItem(a) {
+  return {
+    name: a.name || "Ataque", type: "weapon", img: "icons/svg/sword.svg",
+    system: {
+      description: { value: a.damage ? `Dano: ${esc(a.damage)}` : "" },
+      proficient: a.proficient ? 1 : 0,
+      ability: foundryWeaponAbility(a),
+    },
+  };
+}
+async function buildFoundryActor() {
+  const c = calc();
+  const level = totalLevel();
+  const raceRec = details.raceRec || {};
+  const sizeCode = Array.isArray(raceRec.size) ? raceRec.size[0] : raceRec.size;
+
+  const abilities = {};
+  for (const a of ABILITIES) abilities[a] = { value: effScore(a), proficient: character.saveProficiencies.includes(a) ? 1 : 0 };
+
+  const skills = {};
+  for (const [key] of SKILLS) {
+    const fk = FOUNDRY_SKILL_KEY[key];
+    if (fk) skills[fk] = { value: character.skillExpertise.includes(key) ? 2 : character.skillProficiencies.includes(key) ? 1 : 0 };
+  }
+
+  const speedMatch = String(c.speed || "").match(/^(\d+)/);
+  const movement = { walk: speedMatch ? Number(speedMatch[1]) : 30, units: "ft" };
+  const speedExtra = String(c.speed || "").match(/\(([^)]+)\)/)?.[1] || "";
+  if (/nata[cç][aã]o|swim/i.test(speedExtra)) movement.swim = movement.walk;
+  if (/escalada|climb/i.test(speedExtra)) movement.climb = movement.walk;
+
+  const senses = { units: "ft" };
+  if (raceRec.darkvision) senses.darkvision = Number(raceRec.darkvision) || 0;
+
+  const classLabel = refs.class ? titleOf(refs.class) : "";
+  const subclassLabel = refs.subclass ? titleOf(refs.subclass) : "";
+  const raceLabel = refs.race ? titleOf(refs.race) : "";
+  const bgLabel = refs.background ? titleOf(refs.background) : "";
+  const mcLabels = (details.multiclasses || []).map((m) => m.classEntry ? `${titleOf(m.classEntry)} ${m.level}` : null).filter(Boolean);
+  const biography = `<p><strong>Importado da Ficha de D&D 5e automatizada.</strong></p>` +
+    `<p>${esc(raceLabel)} · ${esc(classLabel)}${subclassLabel ? ` (${esc(subclassLabel)})` : ""} nível ${level}` +
+    `${mcLabels.length ? ` + ${mcLabels.map(esc).join(", ")}` : ""} · Antecedente: ${esc(bgLabel)}</p>`;
+
+  const items = [];
+  if (refs.class) (await findClassFeatures(refs.class, level).catch(() => [])).forEach((f) => items.push(foundryFeatItem(`${f.name} (${classLabel})`, f.entries)));
+  for (const m of details.multiclasses || []) {
+    if (!m.classEntry) continue;
+    (await findClassFeatures(m.classEntry, m.level).catch(() => [])).forEach((f) => items.push(foundryFeatItem(`${f.name} (${titleOf(m.classEntry)})`, f.entries)));
+  }
+  if (refs.subclass) (await findSubclassFeatures(refs.subclass, level).catch(() => [])).forEach((f) => items.push(foundryFeatItem(`${f.name} (${subclassLabel})`, f.entries)));
+  if (refs.race) {
+    const r = await firstRecord(refs.race);
+    (Array.isArray(r?.entries) ? r.entries.filter((x) => x?.name) : []).forEach((x) => items.push(foundryFeatItem(`${x.name} (${raceLabel})`, x.entries || x)));
+  }
+  if (refs.background) {
+    const r = await firstRecord(refs.background);
+    (Array.isArray(r?.entries) ? r.entries.filter((x) => x?.name) : []).forEach((x) => items.push(foundryFeatItem(`${x.name} (${bgLabel})`, x.entries)));
+  }
+
+  const spellSeen = new Set();
+  for (const cc of spellcastingClasses()) {
+    if (!spellcastingInfoFor(cc.cr, cc.sr, cc.level)) continue;
+    const spellEd = editionOf(cc.classEntry) === "both" ? character.edition : editionOf(cc.classEntry);
+    for (const rec of await spellsForClass(cc.classEntry, cc.subclassEntry, spellEd).catch(() => [])) {
+      const key = `${rec.name}|${rec.source}`;
+      if (spellSeen.has(key)) continue;
+      spellSeen.add(key);
+      items.push(foundrySpellItem(rec));
+    }
+  }
+  for (const rec of extraSpellRecords()) {
+    const key = `${rec.name}|${rec.source}`;
+    if (spellSeen.has(key)) continue;
+    spellSeen.add(key);
+    items.push(foundrySpellItem(rec));
+  }
+
+  for (const a of character.attacks || []) items.push(foundryWeaponItem(a));
+  for (const x of character.inventory || []) items.push(foundryInventoryItem(x, invItemRecord(x)));
+
+  return {
+    name: character.name || "Personagem sem nome",
+    type: "character",
+    img: "icons/svg/mystery-man.svg",
+    system: {
+      abilities,
+      attributes: {
+        hp: { value: character.hpCurrent == null ? c.hp : character.hpCurrent, max: c.hp, temp: character.hpTemp || 0 },
+        ac: { flat: c.ac, calc: "flat" },
+        movement,
+        senses,
+        spellcasting: c.sa || "",
+        death: { success: character.deathSaves?.success || 0, failure: character.deathSaves?.failure || 0 },
+      },
+      details: { level, biography: { value: biography } },
+      traits: { size: FOUNDRY_SIZE_KEY[sizeCode] || "med" },
+      skills,
+      currency: { pp: 0, gp: 0, ep: 0, sp: 0, cp: 0 },
+    },
+    items,
+  };
+}
+
 function setup() {
   $("edition").addEventListener("change", () => {
     character.edition = $("edition").value;
@@ -3906,6 +4073,10 @@ function setup() {
   });
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
+  $("export-foundry")?.addEventListener("click", async () => {
+    try { downloadJson(await buildFoundryActor(), `${(character.name || "personagem").replace(/[^a-z0-9-_]+/gi, "_")}_foundry.json`); }
+    catch (err) { console.error(err); toast("Não foi possível gerar o arquivo pro Foundry."); }
+  });
   $("new-character").addEventListener("click", createNewCharacter);
   $("random-character")?.addEventListener("click", openRandomCharacterModal);
   $("characters-btn")?.addEventListener("click", openCharactersModal);
