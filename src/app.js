@@ -1471,7 +1471,7 @@ function renderSaves(c) {
   $("save-list").innerHTML = ABILITIES.map((a) => {
     const ok = character.saveProficiencies.includes(a), am = mod(effScore(a)), v = am + (ok ? c.pb : 0);
     const formula = `${ABILITY_NAMES[a]} ${fmt(am)}${ok ? ` + proficiência ${fmt(c.pb)}` : ""} = ${fmt(v)}`;
-    return `<label class="check-row" title="${esc(formula)}"><input type="checkbox" data-save="${a}" ${ok ? "checked" : ""}><span>${ABILITY_NAMES[a]}</span><b>${fmt(v)}</b></label>`;
+    return `<div class="check-row"><label title="${esc(formula)}"><input type="checkbox" data-save="${a}" ${ok ? "checked" : ""}><span>${ABILITY_NAMES[a]}</span></label><button type="button" class="roll-badge" data-save-roll="${a}" title="${esc(formula)}">${fmt(v)}</button></div>`;
   }).join("");
   $("save-list").querySelectorAll("[data-save]").forEach((i) => i.addEventListener("change", () => {
     character.manualSaveProficiencies = character.manualSaveProficiencies || [];
@@ -1479,13 +1479,19 @@ function renderSaves(c) {
     toggleIn(character.saveProficiencies, i.dataset.save, i.checked || (character.auto?.classSaves || []).includes(i.dataset.save));
     saveCharacter(character); recalc();
   }));
+  $("save-list").querySelectorAll("[data-save-roll]").forEach((b) => b.addEventListener("click", () => {
+    const a = b.dataset.saveRoll, ok = character.saveProficiencies.includes(a), bonus = mod(effScore(a)) + (ok ? c.pb : 0);
+    const roll = rollDie(20), total = roll + bonus;
+    toast(`Resistência de ${ABILITY_NAMES[a]}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
+    sendToDiscord(discordMessage(`Resistência de ${ABILITY_NAMES[a]}`, `d20 (${roll}) ${fmt(bonus)}`, total));
+  }));
 }
 function renderSkills(c) {
   $("skill-list").innerHTML = SKILLS.map(([k, n, a]) => {
     const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
     const am = mod(effScore(a)), v = am + c.pb * (ex ? 2 : p ? 1 : 0);
     const formula = `${ABILITY_NAMES[a]} ${fmt(am)}${ex ? ` + especialização (2× prof. ${fmt(c.pb)})` : p ? ` + proficiência ${fmt(c.pb)}` : ""} = ${fmt(v)}`;
-    return `<label class="skill-row" title="${esc(formula)}"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${n}</span><b>${fmt(v)}</b>${ex ? '<small>EXP</small>' : ""}</label>`;
+    return `<div class="skill-row"><label title="${esc(formula)}"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${n}</span></label><button type="button" class="roll-badge" data-skill-roll="${k}" title="${esc(formula)}">${fmt(v)}</button>${ex ? '<small>EXP</small>' : ""}</div>`;
   }).join("");
   $("skill-list").querySelectorAll("[data-skill]").forEach((i) => i.addEventListener("change", () => {
     const k = i.dataset.skill;
@@ -1493,6 +1499,14 @@ function renderSkills(c) {
     if (!auto.includes(k)) toggleIn(character.manualSkillProficiencies, k, i.checked);
     toggleIn(character.skillProficiencies, k, i.checked || auto.includes(k));
     saveCharacter(character); recalc();
+  }));
+  $("skill-list").querySelectorAll("[data-skill-roll]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.skillRoll, [, n, a] = SKILLS.find((s) => s[0] === k);
+    const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
+    const bonus = mod(effScore(a)) + c.pb * (ex ? 2 : p ? 1 : 0);
+    const roll = rollDie(20), total = roll + bonus;
+    toast(`${n}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
+    sendToDiscord(discordMessage(n, `d20 (${roll}) ${fmt(bonus)}`, total));
   }));
 }
 function profLabel(x) {

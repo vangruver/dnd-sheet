@@ -299,17 +299,19 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 /* ---------- Testes & perícias ---------- */
 .check-list,.skill-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 18px}
 .check-row,.skill-row{
-  display:grid;grid-template-columns:16px 1fr auto;align-items:center;gap:8px;
+  display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;
   padding:6px 6px;border-radius:var(--radius-xs);font-size:12px;transition:background .12s
 }
-.skill-row{grid-template-columns:16px 1fr auto auto}
+.skill-row{grid-template-columns:1fr auto auto}
 .check-row:hover,.skill-row:hover{background:var(--surface-2)}
-.check-row span,.skill-row span{color:var(--text-dim)}
-.check-row input,.skill-row input{accent-color:var(--red);width:15px;height:15px}
-.check-row b,.skill-row b{
+.check-row label,.skill-row label{display:flex;align-items:center;gap:8px;overflow:hidden;cursor:pointer}
+.check-row span,.skill-row span{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.check-row input,.skill-row input{accent-color:var(--red);width:15px;height:15px;flex:none}
+.check-row .roll-badge,.skill-row .roll-badge{
   font:700 12px var(--font-head);color:var(--text);background:var(--surface-3);
-  border:1px solid var(--border);border-radius:20px;padding:2px 9px;min-width:38px;text-align:center
+  border:1px solid var(--border);border-radius:20px;padding:2px 9px;min-width:38px;text-align:center;cursor:pointer
 }
+.check-row .roll-badge:hover,.skill-row .roll-badge:hover{background:linear-gradient(160deg,var(--red),var(--red-dim));border-color:var(--red);color:#fff}
 .skill-row small{font-size:8px;color:var(--red-hi);font-weight:700}
 
 /* ---------- Identidade ---------- */
