@@ -1,0 +1,682 @@
+{
+	"$schema": "https://raw.githubusercontent.com/TheGiddyLimit/5etools-utils/master/schema/brew-fast/homebrew.json",
+	"_meta": {
+		"sources": [
+			{
+				"json": "DDWEBWater",
+				"abbreviation": "D&D Wiki",
+				"full": "D&D Wiki - Waterbender (Element Bender, 5e Class)",
+				"url": "https://www.dandwiki.com/wiki/Element_Bender_(5e_Class)",
+				"version": "unknown",
+				"authors": [
+					"Various Contributors"
+				],
+				"convertedBy": [
+					"Claude"
+				]
+			}
+		],
+		"edition": "classic",
+		"dateAdded": 1787961600,
+		"dateLastModified": 1787961600
+	},
+	"class": [
+		{
+			"name": "Waterbender",
+			"source": "DDWEBWater",
+			"page": 0,
+			"hd": {
+				"number": 1,
+				"faces": 8
+			},
+			"proficiency": [
+				"dex",
+				"wis"
+			],
+			"spellcastingAbility": "wis",
+			"casterProgression": "innate",
+			"classSpells": [
+				"shape water|XGE",
+				"grease",
+				"misty step",
+				"slow",
+				"control water",
+				"tsunami"
+			],
+			"startingProficiencies": {
+				"armor": [
+					"light"
+				],
+				"armorProficiencies": [
+					{
+						"light": true
+					}
+				],
+				"weapons": [
+					"simple",
+					"{@filter one martial weapon of your choice|weapons|type=Martial}"
+				],
+				"skills": [
+					{
+						"choose": {
+							"from": [
+								"acrobatics",
+								"athletics",
+								"history",
+								"insight",
+								"intimidation",
+								"nature",
+								"arcana"
+							],
+							"count": 2
+						}
+					}
+				]
+			},
+			"startingEquipment": {
+				"additionalFromBackground": true,
+				"default": [
+					"(a) two simple weapons or (b) one martial weapon",
+					"(a) a {@item dungeoneer's pack|phb} or (b) an {@item explorer's pack|phb}",
+					"(a) a {@item waterskin|phb}, (b) a {@item tinderbox|phb}, (c) a small piece of meteorite, or (d) an air chime"
+				],
+				"goldAlternative": "{@dice 2d4 × 10|2d4 x 10|Starting Gold}"
+			},
+			"classTableGroups": [
+				{
+					"colLabels": [
+						"{@filter Cantrips Known|spells|level=0}",
+						"Bend Effects",
+						"Elemental Strike",
+						"Bending Range"
+					],
+					"rows": [
+						[
+							0,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"60 ft."
+						]
+					]
+				}
+			],
+			"classFeatures": [
+				"Unarmored Defense|Waterbender||1",
+				"Bending|Waterbender||1",
+				"Bending Effect|Waterbender||1",
+				"Born of the Moon|Waterbender||1",
+				"Ebb and Flow|Waterbender||1",
+				"Variant: Elemental Heal (Optional)|Waterbender||1",
+				"Elemental Spellcasting|Waterbender||2",
+				"Ability Score Increase|Waterbender||4",
+				"Bending Improvement|Waterbender||5",
+				"Water Bender Style|Waterbender||6",
+				"Wise Fighter|Waterbender||7",
+				"Primordial Body|Waterbender||7",
+				"Ability Score Increase|Waterbender||8",
+				"Empowered Bending Arts|Waterbender||10",
+				"Mind Bending and Element Creation|Waterbender||10",
+				"Bending Improvement|Waterbender||11",
+				"Ability Score Increase|Waterbender||12",
+				"Strength of Jing|Waterbender||13",
+				"Element of Change|Waterbender||14",
+				"Bending Improvement|Waterbender||15",
+				"Ability Score Increase|Waterbender||16",
+				"Master Skill: Blood Bending|Waterbender||17",
+				"Transformation|Waterbender||18",
+				"Ability Score Increase|Waterbender||19",
+				"Psychic Bending|Waterbender||20"
+			],
+			"hasFluff": true
+		}
+	],
+	"classFluff": [
+		{
+			"name": "Waterbender",
+			"source": "DDWEBWater",
+			"entries": [
+				{
+					"type": "section",
+					"name": "Waterbender",
+					"source": "DDWEBWater",
+					"entries": [
+						"Bending is the ability to manipulate an element's form and shape. There are four known bending arts, each bending a specific physical element: water, earth, fire, and air. Each is manipulated through martial art styles reminiscent of the qualities of the element itself. While bending is traditionally performed through the motions of the hands and feet, skilled benders can effectively manipulate their element with only minimal movement, and master benders can bend without any physical movement at all, using sheer focus and force of will — a skill known as psychic bending.",
+						"Water bending, one of the four elemental bending arts, is the hydrokinetic ability to control water in all of its various forms. Water is a versatile element, as is fitting for the element of change. The moon is the source of power in water bending, and the original water benders learned to bend by observing how the moon pushed and pulled the tides.",
+						"Similar to their element, water benders are extremely adaptable and versatile. Water bending concentrates on the flow of energy and focuses less on strength and more on turning an opponent's own energy against them. Even when water benders take an attack stance, their moves always appear to flow from one to the other. As the element of change, water benders can fluidly and quickly alternate from defense to offense — from a wall of ice to a jet of water — turning their opponent's strength against them.",
+						"The opposite of water bending is fire bending, with its relatively stagnant and direct philosophy.",
+						{
+							"type": "entries",
+							"name": "Quick Build",
+							"entries": [
+								"You can make a Waterbender quickly by following these suggestions. First, Wisdom should be your highest ability score, followed by Constitution. Second, choose the {@background Hermit} background."
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"classFeature": [
+		{
+			"name": "Unarmored Defense",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"Beginning at 1st level, while you are wearing no armor and not wielding a shield, your Armor Class equals 10 + your Dexterity modifier + your Wisdom modifier."
+			]
+		},
+		{
+			"name": "Bending",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you are able to manipulate water to a significant degree. You gain the {@b Bend} action, which allows you to control your element. You cannot create your element, only change and move it — your element must be present in some form for you to bend it.",
+				"When you take the Bend action, your bending has a limited amount of power. To begin with you can only cause one effect; when you reach 5th level you can cause 2 effects, at 11th level 3 effects, and at 15th level 4 effects. You can pick the same option multiple times, different ones, or any combination. The effects you can cause are listed below and in later features.",
+				"Bending requires hand movements to use, functioning the same as the somatic component of a spell. Your DM may determine that you are unable to bend if {@condition restrained}, {@condition paralyzed}, or subjected to some other condition that limits movement.",
+				"Unless stated otherwise, damage dealt by your bending is magical bludgeoning damage.",
+				{
+					"type": "entries",
+					"name": "Elemental Attacks",
+					"entries": [
+						"{@b Elemental Strike.} You throw a projectile made of your element at an enemy. Make a ranged spell attack roll against a creature within range, dealing {@damage 1d6} damage on a hit. Being within 5 feet of the target does not impose disadvantage on this attack. The damage die increases with your level: {@damage 1d8} at 5th level, {@damage 1d10} at 11th level, and {@damage 1d12} at 15th level.",
+						"{@b Elemental Flow.} You manipulate your element into striking a large area. This effect is contained in a cube with sides equal to 2 times your bender level (minimum of 10 feet), with at least one corner of the cube within your bending range. Every creature in the cube must make a Dexterity saving throw, taking {@damage 1d10} damage on a failed save, or half as much on a successful one. This attack requires two effects of the Bend action.",
+						"{@b Elemental Push.} You use your element to move your enemies. A creature of your choice within range must succeed on a Strength saving throw against your spell save DC or be knocked {@condition prone} or moved 5 feet in any direction (state your intended result before it rolls). The distance you can push increases to 10 feet at 11th level and 15 feet at 15th level.",
+						"{@b Element Hold.} You use your element to hold an enemy in place — make a grapple check against a creature within range. You must concentrate to maintain the grapple, as if concentrating on a spell.",
+						"Add your Wisdom modifier to damage rolls made by Elemental Strike and Elemental Flow."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Bending Range and Volume",
+					"entries": [
+						"The range of your bending is 30 feet at 1st level, increasing to 40 feet at 5th level, 50 feet at 11th level, and 60 feet at 20th level. The maximum volume of your element you can manipulate at any one time in combat is a cube with sides in feet equal to twice your Element Bender level — you are not restricted to bending in a cube that shape, this only limits the total volume.",
+						"You can maintain this many separate element cubes at once: one from 1st–4th level, two from 5th–10th level, three from 11th–14th level, and four from 15th–20th level."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Effect",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"You gain an additional effect depending on your element, usable only once per round, applied immediately after a successful bending attack that deals damage.",
+				"{@b Water.} The freezing cold and inconvenience of being wet in battle cause your target to suffer a 10-foot decrease to its speed until the start of your next turn. Creatures with a swim speed are immune to this effect."
+			]
+		},
+		{
+			"name": "Born of the Moon",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"At 1st level, your water bending lets you propel yourself across and through water — you gain a swim speed equal to your walking speed. You can also anchor water, holding it in place so you can step or hold onto it. When you are standing in at least a foot of water, you can use it to move faster: your speed increases by 5 feet, plus another 5 feet at 5th, 10th, 15th, and 20th level."
+			]
+		},
+		{
+			"name": "Ebb and Flow",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"You can alter the physical state of the water you manipulate between liquid, solid, and gas. Whenever you take the Bend action, you can also turn water into fog (or control fog already present) the size of your maximum bend volume, within your bending range. This fog is lightly obscuring by default; at 10th level you can compress it to make it heavily obscuring instead. (One gram of water makes a 1-foot cube of fog.)"
+			]
+		},
+		{
+			"name": "Variant: Elemental Heal (Optional)",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 1,
+			"entries": [
+				"With your DM's permission, you can replace one bending effect option with the following:",
+				"{@b Elemental Heal.} You channel water to heal wounds. When you take the Bend action, you can heal a creature you touch for {@dice 1d10} + your Wisdom modifier hit points. You can heal this way twice before you must complete a long rest, though you can also spend 10 minutes performing this healing as a ritual, restoring the same number of hit points, as many times as time allows."
+			]
+		},
+		{
+			"name": "Elemental Spellcasting",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 2,
+			"entries": [
+				"An event in your past, or in the life of a parent or ancestor, granted them a primordial power that was passed down to you, infusing you with an affinity for your element. This font of magic fuels your abilities.",
+				"While bending is separate from the way spellcasters cast spells, you can manifest the effect of a particular spell depending on your level. Each spell effect can only be manifested once before you must complete a short or long rest to regain the use of it, with the exception of cantrips.",
+				"Starting at 2nd level, you can manifest the effect of {@spell shape water} as if you had cast it, at will.",
+				{
+					"type": "entries",
+					"name": "Spells Gained",
+					"entries": [
+						"You gain the ability to manifest the following spells at the Element Bender levels shown below. Once gained, you always have the spell available and it doesn't count against any number of spells you know or prepare.",
+						{
+							"type": "table",
+							"colLabels": [
+								"Bender Level",
+								"Spell"
+							],
+							"colStyles": [
+								"col-4 text-center",
+								"col-8"
+							],
+							"rows": [
+								[
+									"1",
+									"{@spell grease}"
+								],
+								[
+									"3",
+									"{@spell misty step}"
+								],
+								[
+									"6",
+									"{@spell slow}"
+								],
+								[
+									"11",
+									"{@spell control water}"
+								],
+								[
+									"17",
+									"{@spell tsunami}"
+								]
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spellcasting Ability",
+					"entries": [
+						"Wisdom is your spellcasting ability for your Element Bender spells, since your magic draws upon your devotion to your bending art and your attunement to the natural world. You use your Wisdom whenever a spell refers to your spellcasting ability.",
+						"Element Bender spell save DC = 8 + your proficiency bonus + your Wisdom modifier.",
+						"Element Bender spell attack modifier = your proficiency bonus + your Wisdom modifier.",
+						{
+							"type": "abilityDc",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						},
+						{
+							"type": "abilityAttackMod",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Elemental Focus",
+					"entries": [
+						"You do not require material components to manifest your Element Bender spells."
+					]
+				}
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 4,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 5,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 2 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Water Bender Style",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 6,
+			"entries": [
+				"At 6th level, you've learned to use your opponent's energy against them. Once per round as a reaction, if an opponent hits you with a melee attack, you can halve the incoming damage and reflect a quarter of the original damage back at the attacker as an unarmed strike."
+			]
+		},
+		{
+			"name": "Wise Fighter",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 7,
+			"entries": [
+				"Beginning at 7th level, you can add your Wisdom modifier to your initiative rolls."
+			]
+		},
+		{
+			"name": "Primordial Body",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 7,
+			"entries": [
+				"Also at 7th level, the elemental plane from which your power originates changes your body in a number of ways. You gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You have advantage on saving throws against extreme cold and against hazards such as slippery ice.",
+						"You can read, write, and speak Aquan, the primordial dialect associated with your element.",
+						"Elemental beings are aware of your primordial origins and the power you wield: you have advantage on Charisma checks against {@creature Water Elemental|MM}s and other water-aligned elementals, and disadvantage on Charisma checks against elementals of your opposing element."
+					]
+				}
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 8,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Empowered Bending Arts",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 10,
+			"entries": [
+				"Starting at 10th level, you've learned to harm even the most elementally attuned creatures with your element. When you deal damage to a creature with resistance to your elemental damage, it instead takes normal damage. When you deal damage to a creature with immunity to your elemental damage, you treat that immunity as resistance instead."
+			]
+		},
+		{
+			"name": "Mind Bending and Element Creation",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 10,
+			"entries": [
+				"Also at 10th level, you can bend without the somatic component as long as you are concentrating. In addition, with 10 minutes of concentration you can tap into your elemental nature deeply enough to create a usable amount of your element, equal to a single element cube you're able to manipulate."
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 11,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 3 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 12,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Strength of Jing",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, you gain proficiency in Strength saving throws."
+			]
+		},
+		{
+			"name": "Element of Change",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 14,
+			"entries": [
+				"At 14th level, through your embodiment of the element of change, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are resistant to cold, fire, and piercing damage.",
+						"You can move across difficult terrain created by liquid or any form of water without spending extra movement.",
+						"As an action, you can make the ground in a 10-foot radius around you icy, becoming difficult terrain for creatures other than you and those you choose; the radius moves with you for as long as you concentrate, as if concentrating on a spell."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 15,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 4 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 16,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Master Skill: Blood Bending",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 17,
+			"entries": [
+				"You've learned the taboo skill of blood bending, which lets you hydrokinetically take hold of and manipulate the fluids within a living creature's body. It's regarded as the darkest, most powerful, and most feared of all bending techniques, and the only one known to endanger the user's own mind.",
+				"Starting at 17th level, whenever you use the Bend action against a creature, you can spend all of your available bend effects on it at once to gain the following techniques against that target instead of your normal bend effects:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Disconnect.} If all of your bend effects hit or otherwise affect the target this turn, it must succeed on a Constitution saving throw or fall unconscious. If you or a creature friendly to you is fighting it, it has advantage on this save. If the target takes damage, it can repeat the save, waking up on a success.",
+						"{@b Compel.} You can try to compel a creature you can see within range to follow your commands. The target must succeed on a Constitution saving throw or be affected as though by the {@spell command} spell.",
+						"{@b Dominate.} You use blood bending to control a creature you can see within range. The target must succeed on a Constitution saving throw or be affected as though by the {@spell dominate monster} spell for 3 hours; maintaining this effect requires concentration, as if concentrating on a spell. Each time you use this technique again before finishing a long rest, you must succeed on a DC 20 Wisdom saving throw or suffer a random effect from the short-term madness table.",
+						"{@b Severing.} While a creature is affected by one of your other blood bending techniques, you can attempt to cut it off from its own energy flow. The target must succeed on a Constitution saving throw or lose its spellcasting ability (if any), its ability to use magic items, its own bending (if any), and any other ability based on magic from within its own body (at your DM's discretion), and it falls unconscious for 1 minute. A creature affected this way can only repair its energy flow by succeeding on a Constitution saving throw made after being targeted by the {@spell greater restoration} spell."
+					]
+				},
+				"While you are using any blood bending technique on a creature, that creature can't use any bending techniques of its own unless it succeeds on its saving throw, or unless it is an Avatar.",
+				{
+					"type": "entries",
+					"name": "Variant Master Skill: Plant Bending",
+					"entries": [
+						"As an alternative to Blood Bending, you can instead learn to control the water inside of plants — a technique far less taxing on your mind.",
+						"{@b Animate Plants.} As an action, if there are plants nearby, you can animate up to one Large plant, two Medium plants, four Small plants, or eight Tiny plants. If a plant is a creature of the plant type, it must succeed on a Wisdom saving throw to resist being animated.",
+						"{@b Vine Armor.} As a bonus action, you cover yourself in vines, increasing your AC by 1. The vines disappear once you've taken a total of 10 damage times your Element Bender level while wearing them. While wearing the vine armor, you can use your action to make an unarmed strike with a 5-foot bonus to its range that deals an extra {@damage 1d4} bludgeoning damage on a hit."
+					]
+				}
+			]
+		},
+		{
+			"name": "Transformation",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 18,
+			"entries": [
+				"At 18th level, you can use an action to transform into a {@creature Water Elemental|MM}. The transformation lasts until you end it (no action required) or you complete a long rest, after which you can't use this feature again until you finish a long rest. This transformation otherwise follows the same rules as the druid's Wild Shape feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 19,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Psychic Bending",
+			"source": "DDWEBWater",
+			"page": 0,
+			"className": "Waterbender",
+			"classSource": "DDWEBWater",
+			"level": 20,
+			"entries": [
+				"At 20th level, you no longer need somatic components to bend, and you can use your bonus action to perform one Bend effect."
+			]
+		}
+	]
+}

@@ -1,0 +1,969 @@
+{
+	"$schema": "https://raw.githubusercontent.com/TheGiddyLimit/5etools-utils/master/schema/brew-fast/homebrew.json",
+	"_meta": {
+		"sources": [
+			{
+				"json": "DDWEBAvatar",
+				"abbreviation": "D&D Wiki",
+				"full": "D&D Wiki - Avatar (Element Bender variant, 5e Class)",
+				"url": "https://www.dandwiki.com/wiki/Element_Bender_(5e_Class)",
+				"version": "unknown",
+				"authors": [
+					"Various Contributors"
+				],
+				"convertedBy": [
+					"Claude"
+				]
+			}
+		],
+		"edition": "classic",
+		"dateAdded": 1787961600,
+		"dateLastModified": 1787961600
+	},
+	"class": [
+		{
+			"name": "Avatar",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"hd": {
+				"number": 1,
+				"faces": 8
+			},
+			"proficiency": [
+				"dex",
+				"wis"
+			],
+			"spellcastingAbility": "wis",
+			"casterProgression": "innate",
+			"classSpells": [
+				"shape water|XGE",
+				"mold earth|XGE",
+				"control flames|XGE",
+				"gust|XGE",
+				"grease",
+				"misty step",
+				"slow",
+				"control water",
+				"tsunami",
+				"catapult|XGE",
+				"Maximilian's earthen grasp|XGE",
+				"erupting earth|XGE",
+				"summon elemental|TCE",
+				"earthquake",
+				"hellish rebuke",
+				"Aganazzar's scorcher|XGE",
+				"fireball",
+				"wall of fire",
+				"sunburst",
+				"feather fall",
+				"gaseous form",
+				"haste",
+				"Otiluke's freezing sphere",
+				"whirlwind|XGE"
+			],
+			"startingProficiencies": {
+				"armor": [
+					"light"
+				],
+				"armorProficiencies": [
+					{
+						"light": true
+					}
+				],
+				"weapons": [
+					"simple",
+					"{@filter one martial weapon of your choice|weapons|type=Martial}"
+				],
+				"skills": [
+					{
+						"choose": {
+							"from": [
+								"acrobatics",
+								"athletics",
+								"history",
+								"insight",
+								"intimidation",
+								"nature",
+								"arcana"
+							],
+							"count": 2
+						}
+					}
+				]
+			},
+			"startingEquipment": {
+				"additionalFromBackground": true,
+				"default": [
+					"(a) two simple weapons or (b) one martial weapon",
+					"(a) a {@item dungeoneer's pack|phb} or (b) an {@item explorer's pack|phb}",
+					"a {@item waterskin|phb}, a {@item tinderbox|phb}, a small piece of meteorite, and an air chime — one token of each element you bend"
+				],
+				"goldAlternative": "{@dice 2d4 × 10|2d4 x 10|Starting Gold}"
+			},
+			"classTableGroups": [
+				{
+					"colLabels": [
+						"{@filter Cantrips Known|spells|level=0}",
+						"Bend Effects",
+						"Elemental Strike",
+						"Bending Range"
+					],
+					"rows": [
+						[
+							0,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							4,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							4,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							4,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							4,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							4,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							4,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							4,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							4,
+							4,
+							"1d12",
+							"60 ft."
+						]
+					]
+				}
+			],
+			"classFeatures": [
+				"Unarmored Defense|Avatar||1",
+				"Bending|Avatar||1",
+				"Bending Effect|Avatar||1",
+				"Born of the Moon|Avatar||1",
+				"Ebb and Flow|Avatar||1",
+				"Born of the Earth|Avatar||1",
+				"Born of the Sun|Avatar||1",
+				"Born of the Wind|Avatar||1",
+				"Bending Nature|Avatar||1",
+				"Avatar State (Reflexive)|Avatar||1",
+				"Elemental Spellcasting|Avatar||2",
+				"Earthen Defense|Avatar||3",
+				"Jumping Flame|Avatar||3",
+				"Defensive Current|Avatar||3",
+				"Ability Score Increase|Avatar||4",
+				"Bending Improvement|Avatar||5",
+				"Water Bender Style|Avatar||6",
+				"Earth Benders Style|Avatar||6",
+				"Fire Bender Style|Avatar||6",
+				"Air Bender Style|Avatar||6",
+				"Avatar Soul|Avatar||6",
+				"Wise Fighter|Avatar||7",
+				"Primordial Body|Avatar||7",
+				"Ability Score Increase|Avatar||8",
+				"Empowered Bending Arts|Avatar||10",
+				"Mind Bending and Element Creation|Avatar||10",
+				"Element of Substance|Avatar||11",
+				"Element of Power|Avatar||11",
+				"Element of Freedom|Avatar||11",
+				"Bending Improvement|Avatar||11",
+				"Ability Score Increase|Avatar||12",
+				"Strength of Jing|Avatar||13",
+				"Element of Change|Avatar||14",
+				"Creature Shape|Avatar||14",
+				"Bending Improvement|Avatar||15",
+				"Ability Score Increase|Avatar||16",
+				"Master Skill: Avatar State|Avatar||17",
+				"Transformation|Avatar||18",
+				"Ability Score Increase|Avatar||19",
+				"Psychic Bending|Avatar||20"
+			],
+			"hasFluff": true
+		}
+	],
+	"classFluff": [
+		{
+			"name": "Avatar",
+			"source": "DDWEBAvatar",
+			"entries": [
+				{
+					"type": "section",
+					"name": "Avatar",
+					"source": "DDWEBAvatar",
+					"entries": [
+						"Some players want to play an Avatar — a figure who can bend all four elements, rather than just one. The Avatar is significantly stronger than even a master bender, so this class should only be allowed with your DM's considered approval and the shared understanding that it is meaningfully stronger than the four single-element Element Bender classes.",
+						"You are no longer limited to a single bending nature: you can freely mix and match features and effects granted by each of the four elements, switching which feature of a given tier is active between short rests. In addition, you cannot use the Master Skill of any single element — you always use the Avatar Master Skill, Avatar State, instead.",
+						{
+							"type": "entries",
+							"name": "Quick Build",
+							"entries": [
+								"You can make an Avatar quickly by following these suggestions. First, Wisdom should be your highest ability score. Second, choose the {@background Hermit} background."
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"classFeature": [
+		{
+			"name": "Unarmored Defense",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"Beginning at 1st level, while you are wearing no armor and not wielding a shield, your Armor Class equals 10 + your Dexterity modifier + your Wisdom modifier."
+			]
+		},
+		{
+			"name": "Bending",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you are able to manipulate any of the four elements — water, earth, fire, or air — to a significant degree. You gain the {@b Bend} action, which allows you to control whichever of your elements is present. You cannot create your elements, only change and move them — the element must be present in some form for you to bend it. Choose which element you're bending each time you take the Bend action; the damage type of that action matches the chosen element (force for air, magical bludgeoning for earth or water, fire for fire).",
+				"When you take the Bend action, your bending has a limited amount of power. To begin with you can only cause one effect; when you reach 5th level you can cause 2 effects, at 11th level 3 effects, and at 15th level 4 effects. You can pick the same option multiple times, different ones, or any combination, and can mix elements freely between effects of the same Bend action.",
+				"Bending requires hand movements to use, functioning the same as the somatic component of a spell. Your DM may determine that you are unable to bend if {@condition restrained}, {@condition paralyzed}, or subjected to some other condition that limits movement.",
+				{
+					"type": "entries",
+					"name": "Elemental Attacks",
+					"entries": [
+						"{@b Elemental Strike.} You throw a projectile made of your element at an enemy. Make a ranged spell attack roll against a creature within range, dealing {@damage 1d6} damage on a hit. Being within 5 feet of the target does not impose disadvantage on this attack. The damage die increases with your level: {@damage 1d8} at 5th level, {@damage 1d10} at 11th level, and {@damage 1d12} at 15th level.",
+						"{@b Elemental Flow.} You manipulate your element into striking a large area. This effect is contained in a cube with sides equal to 2 times your bender level (minimum of 10 feet), with at least one corner of the cube within your bending range. Every creature in the cube must make a Dexterity saving throw, taking {@damage 1d10} damage on a failed save, or half as much on a successful one. This attack requires two effects of the Bend action.",
+						"{@b Elemental Push.} You use your element to move your enemies. A creature of your choice within range must succeed on a Strength saving throw against your spell save DC or be knocked {@condition prone} or moved 5 feet in any direction (state your intended result before it rolls). The distance you can push increases to 10 feet at 11th level and 15 feet at 15th level.",
+						"{@b Element Hold.} You use your element to hold an enemy in place — make a grapple check against a creature within range. You must concentrate to maintain the grapple, as if concentrating on a spell.",
+						"Add your Wisdom modifier to damage rolls made by Elemental Strike and Elemental Flow."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Bending Range and Volume",
+					"entries": [
+						"The range of your bending is 30 feet at 1st level, increasing to 40 feet at 5th level, 50 feet at 11th level, and 60 feet at 20th level. The maximum volume of your element you can manipulate at any one time in combat is a cube with sides in feet equal to twice your Element Bender level — you are not restricted to bending in a cube that shape, this only limits the total volume.",
+						"You can maintain this many separate element cubes at once (of any mix of elements): one from 1st–4th level, two from 5th–10th level, three from 11th–14th level, and four from 15th–20th level."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Effect",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"You gain an additional effect depending on the element you bend with, usable only once per round, applied immediately after a successful bending attack that deals damage.",
+				{
+					"type": "list",
+					"items": [
+						"{@b Water.} The freezing cold and inconvenience of being wet in battle cause your target to suffer a 10-foot decrease to its speed until the start of your next turn. Creatures with a swim speed are immune to this effect.",
+						"{@b Earth.} Your hits shake your target to its very core. When you roll higher than half your damage die's maximum on a bending damage roll against a creature, you can force it to make a Constitution saving throw or fall {@condition prone}. Constructs are immune to this effect.",
+						"{@b Fire.} Your flames heat metal with ease. When you strike a target twice in a row with an attack that deals fire damage, you can force it to make a Constitution saving throw or flinch, dropping whatever it's holding and effectively disarming it.",
+						"{@b Air.} The wind moves with you during every strike, letting you knock a target no larger than Large back 10 feet."
+					]
+				}
+			]
+		},
+		{
+			"name": "Born of the Moon",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"At 1st level, your water bending lets you propel yourself across and through water — you gain a swim speed equal to your walking speed. You can also anchor water, holding it in place so you can step or hold onto it. When you are standing in at least a foot of water, you can use it to move faster: your speed increases by 5 feet, plus another 5 feet at 5th, 10th, 15th, and 20th level."
+			]
+		},
+		{
+			"name": "Ebb and Flow",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"You can alter the physical state of the water you manipulate between liquid, solid, and gas. Whenever you take the Bend action, you can also turn water into fog (or control fog already present) the size of your maximum bend volume, within your bending range. This fog is lightly obscuring by default; at 10th level you can compress it to make it heavily obscuring instead. (One gram of water makes a 1-foot cube of fog.)"
+			]
+		},
+		{
+			"name": "Born of the Earth",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"At 1st level, your earth bending extends your senses, letting you 'see' every vibration that passes through the ground. You have tremorsense with a range of 30 feet as long as your feet are on solid ground; this range increases by 5 feet at 6th, 10th, 14th, and 18th level. You also instinctively bend hand- and foot-holds for yourself while climbing, giving you a climbing speed of 30 feet."
+			]
+		},
+		{
+			"name": "Born of the Sun",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"At 1st level, you've learned to use fire to propel yourself at high speed. You always move your full jumping distance when you jump, regardless of the movement you have remaining. Your jumping distance increases by 5 feet for both long and high jumps, plus another 5 feet at 6th, 10th, 14th, and 18th level, due to your propulsion of flame."
+			]
+		},
+		{
+			"name": "Born of the Wind",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"At 1st level, you've learned to enhance your movement by decreasing the air resistance around you. You can move up vertical surfaces as if they were normal ground, but you can't end your turn on one — if you do, you fall and take falling damage as normal. In addition, your speed increases by 10 feet, plus another 5 feet at 6th, 10th, 14th, and 18th level. When falling, you can choose to glide as if under the effect of the {@spell feather fall} spell."
+			]
+		},
+		{
+			"name": "Bending Nature",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"You are not limited to a single bending nature: you have access to the 1st-level bending feature of all four elements at once (Born of the Moon, Born of the Earth, Born of the Sun, and Born of the Wind, plus Ebb and Flow), and gain every other element's bending nature feature at the same levels as the elemental classes above. You cannot use the Master Skill of any single element — you always use the Avatar Master Skill below instead."
+			]
+		},
+		{
+			"name": "Avatar State (Reflexive)",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 1,
+			"entries": [
+				"The strongest and most powerful ability an Avatar can invoke is the Avatar State, created when the first Avatar permanently bonded with the spirit of harmony that lives between lifetimes. It lets the Avatar channel vast cosmic energy and the knowledge of past Avatars, granting increased strength and the ability to perform especially powerful feats of bending. Until you reach 17th level and gain full mastery over it (see {@b Master Skill: Avatar State} below), you have no conscious control over the State — it can only trigger unconsciously, as a defense mechanism, at your DM's discretion when your life is in danger or you are under extreme emotional distress. If you fail three death saving throws, you enter the Avatar State reflexively.",
+				"While in the Avatar State you gain resistance to acid, cold, fire, force, and lightning damage, and access to bending techniques you may not have consciously learned yet (which can cause collateral damage, at your DM's discretion) — but you have no control over the resulting actions while your mastery is incomplete.",
+				"{@b Weakness.} While the Avatar is nearly invincible in the Avatar State, having access to the bending experience of all past lives, there is one grave weakness: while in effect, the Avatar's spirit itself can be harmed. If the Avatar dies while in the Avatar State, the cycle of reincarnation breaks and the Avatar ceases to exist for good."
+			]
+		},
+		{
+			"name": "Elemental Spellcasting",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 2,
+			"entries": [
+				"An event in your past, or in the life of a parent or ancestor, granted them a primordial power that was passed down to you, infusing you with an affinity for every element. This font of magic fuels your abilities.",
+				"While bending is separate from the way spellcasters cast spells, you can manifest the effect of a particular spell depending on your level. Each spell effect can only be manifested once before you must complete a short or long rest to regain the use of it, with the exception of cantrips.",
+				"Starting at 2nd level, you can manifest the effect of any of the following cantrips as if you had cast it, at will: {@spell shape water}, {@spell mold earth}, {@spell control flames}, {@spell gust}.",
+				{
+					"type": "entries",
+					"name": "Spells Gained",
+					"entries": [
+						"You gain the ability to manifest the following spells at the Element Bender levels shown below. Once gained, you always have the spell available and it doesn't count against any number of spells you know or prepare.",
+						{
+							"type": "table",
+							"colLabels": [
+								"Bender Level",
+								"Spell"
+							],
+							"colStyles": [
+								"col-4 text-center",
+								"col-8"
+							],
+							"rows": [
+								[
+									"1",
+									"{@spell grease}"
+								],
+								[
+									"3",
+									"{@spell misty step}"
+								],
+								[
+									"6",
+									"{@spell slow}"
+								],
+								[
+									"11",
+									"{@spell control water}"
+								],
+								[
+									"17",
+									"{@spell tsunami}"
+								],
+								[
+									"1",
+									"{@spell catapult}"
+								],
+								[
+									"3",
+									"{@spell Maximilian's earthen grasp}"
+								],
+								[
+									"6",
+									"{@spell erupting earth}"
+								],
+								[
+									"11",
+									"{@spell summon elemental}"
+								],
+								[
+									"17",
+									"{@spell earthquake}"
+								],
+								[
+									"1",
+									"{@spell hellish rebuke}"
+								],
+								[
+									"3",
+									"{@spell Aganazzar's scorcher}"
+								],
+								[
+									"6",
+									"{@spell fireball}"
+								],
+								[
+									"11",
+									"{@spell wall of fire}"
+								],
+								[
+									"17",
+									"{@spell sunburst}"
+								],
+								[
+									"1",
+									"{@spell feather fall}"
+								],
+								[
+									"3",
+									"{@spell gaseous form}"
+								],
+								[
+									"6",
+									"{@spell haste}"
+								],
+								[
+									"11",
+									"{@spell Otiluke's freezing sphere}"
+								],
+								[
+									"17",
+									"{@spell whirlwind}"
+								]
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spellcasting Ability",
+					"entries": [
+						"Wisdom is your spellcasting ability for your Element Bender spells, since your magic draws upon your devotion to your bending art and your attunement to the natural world. You use your Wisdom whenever a spell refers to your spellcasting ability.",
+						"Element Bender spell save DC = 8 + your proficiency bonus + your Wisdom modifier.",
+						"Element Bender spell attack modifier = your proficiency bonus + your Wisdom modifier.",
+						{
+							"type": "abilityDc",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						},
+						{
+							"type": "abilityAttackMod",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Elemental Focus",
+					"entries": [
+						"You do not require material components to manifest your Element Bender spells."
+					]
+				}
+			]
+		},
+		{
+			"name": "Earthen Defense",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 3,
+			"entries": [
+				"At 3rd level, you've learned to protect yourself with the rock and stone of the world. As a bonus action, you call earth to your defense, encasing yourself in earthen armor: your Armor Class becomes 13 + your Dexterity modifier (max 2) + your Wisdom modifier, and your speed is halved. You can remove the armor with a bonus action.",
+				"In addition, as an action you can fully encase yourself in a ball of earthen mass. The mass has an Armor Class of 15, hit points equal to 10 times your Element Bender level, and gains whatever resistances or immunities you have, plus immunity to psychic and poison damage. You can't move while in this form. Once you use this feature, you can't do so again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Jumping Flame",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 3,
+			"entries": [
+				"Beginning at 3rd level, you're a continuous blur of fiery motion in battle, darting in, attacking, and slipping away to safety. During your turn, once you make an attack against a creature, that creature can't make opportunity attacks against you for the rest of your turn."
+			]
+		},
+		{
+			"name": "Defensive Current",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 3,
+			"entries": [
+				"Starting at 3rd level, you maintain a passive wind current flowing around you like a shield: ranged attack rolls against you and against creatures within 5 feet of you have disadvantage.",
+				"As an action, you can expand this current to a size equal to your maximum bend volume, centered on you, knocking creatures of your choice out of the radius and granting everyone else inside it the same passive benefit. Moving through this space is difficult terrain for creatures you haven't permitted to enter. You can maintain this field for up to 1 minute, as if concentrating on a spell; when it ends, you lose the field's passive and active benefits until you finish a short rest."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 4,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 5,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 2 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Water Bender Style",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 6,
+			"entries": [
+				"At 6th level, you've learned to use your opponent's energy against them. Once per round as a reaction, if an opponent hits you with a melee attack, you can halve the incoming damage and reflect a quarter of the original damage back at the attacker as an unarmed strike."
+			]
+		},
+		{
+			"name": "Earth Benders Style",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 6,
+			"entries": [
+				"At 6th level, you've learned to capitalize on openings in your enemies' defenses. Once per round, when an enemy within your bending range makes an attack against you and misses, you can make a single Elemental Strike against it as a reaction.",
+				"In addition, if you take the Ready action to bend in response to being attacked, you have advantage on the attack roll, and if you hit, the target has disadvantage on its next attack roll."
+			]
+		},
+		{
+			"name": "Fire Bender Style",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 6,
+			"entries": [
+				"At 6th level, landing two successive attacks against the same target lets you add one bending die of damage against that target. You can increase your number of bending dice this way by an amount equal to your proficiency bonus."
+			]
+		},
+		{
+			"name": "Air Bender Style",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 6,
+			"entries": [
+				"Starting at 6th level, reading the flow of air around you lets you sense movement you wouldn't normally see. When a creature attacks you with a ranged weapon or a thrown attack while you're {@condition surprised}, you can make a competing Dexterity check against the attacker; if your total is higher, you act before it does.",
+				"In addition, your dedication to negative jing sharpens your evasive maneuvers to the point where you can avoid attacks that would normally hit you. When an attacker you can see hits you with an attack, you can use your reaction to halve the attack's damage against you."
+			]
+		},
+		{
+			"name": "Avatar Soul",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 6,
+			"entries": [
+				"At 6th level, you have greater control over the Avatar spirit inside you. You can now end your Avatar State (see {@b Master Skill: Avatar State} below) as a reaction instead of losing control of it only when its duration ends. You can also communicate with the spirits of your past lives as past Avatars, at your DM's discretion."
+			]
+		},
+		{
+			"name": "Wise Fighter",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 7,
+			"entries": [
+				"Beginning at 7th level, you can add your Wisdom modifier to your initiative rolls."
+			]
+		},
+		{
+			"name": "Primordial Body",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 7,
+			"entries": [
+				"Also at 7th level, your connection to all four elemental planes changes your body in a number of ways. You gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You have advantage on saving throws against extreme cold and against hazards such as slippery ice.",
+						"You have advantage on saving throws against being knocked {@condition prone} while in direct contact with the earth, and you can hold your breath twice as long as normal while suffocating.",
+						"You have advantage on saving throws against the effects of extreme heat and dehydration.",
+						"You are acclimated to high altitude and have advantage on saving throws against strong winds.",
+						"You can read, write, and speak Aquan, Terran, Iganan, and Auran, the primordial dialects of all four elements.",
+						"Elemental beings are aware of your primordial origins and the power you wield: you have advantage on Charisma checks against water, earth, fire, and air elementals alike, since no element opposes you."
+					]
+				}
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 8,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Empowered Bending Arts",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 10,
+			"entries": [
+				"Starting at 10th level, you've learned to harm even the most elementally attuned creatures with your element. When you deal damage to a creature with resistance to your elemental damage, it instead takes normal damage. When you deal damage to a creature with immunity to your elemental damage, you treat that immunity as resistance instead."
+			]
+		},
+		{
+			"name": "Mind Bending and Element Creation",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 10,
+			"entries": [
+				"Also at 10th level, you can bend without the somatic component as long as you are concentrating. In addition, with 10 minutes of concentration you can tap into your elemental nature deeply enough to create a usable amount of your element, equal to a single element cube you're able to manipulate."
+			]
+		},
+		{
+			"name": "Element of Substance",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 11,
+			"entries": [
+				"At 11th level, through your embodiment of the element of substance, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are immune to being {@condition petrified}.",
+						"You have resistance to bludgeoning, piercing, and slashing damage.",
+						"You can move across difficult terrain made of earth or stone without spending extra movement.",
+						"You can move through solid earth or stone as if it were air, without disturbing it, but you can't end your movement there. If you do, you're ejected to the nearest unoccupied space and are {@condition stunned} until the end of your next turn."
+					]
+				}
+			]
+		},
+		{
+			"name": "Element of Power",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 11,
+			"entries": [
+				"Starting at 11th level, through your embodiment of the element of power, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are immune to fire damage and have resistance to cold damage.",
+						"Your speed increases by 10 feet while you aren't wearing armor or using a shield.",
+						"Standing up from {@condition prone} knocks nearby targets back 10 feet, dealing {@damage 1d10} fire damage to each, and doesn't cost any movement.",
+						"If you are subject to an effect that lets you take half damage on a successful save, you instead take no damage on a success."
+					]
+				}
+			]
+		},
+		{
+			"name": "Element of Freedom",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 11,
+			"entries": [
+				"At 11th level, through your embodiment of the element of freedom, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are immune to being moved against your will by an effect that would push or knock you back.",
+						"You have advantage on checks made to escape a grapple.",
+						"Standing up from {@condition prone} knocks nearby targets back 15 feet and doesn't cost any movement.",
+						"If you are subject to an effect that lets you take half damage on a successful save, you instead take no damage on a success."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 11,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 3 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 12,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Strength of Jing",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, your mastery of every element grants you proficiency in Strength, Constitution, Charisma, and Intelligence saving throws, in addition to your normal saving throw proficiencies."
+			]
+		},
+		{
+			"name": "Element of Change",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 14,
+			"entries": [
+				"At 14th level, through your embodiment of the element of change, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are resistant to cold, fire, and piercing damage.",
+						"You can move across difficult terrain created by liquid or any form of water without spending extra movement.",
+						"As an action, you can make the ground in a 10-foot radius around you icy, becoming difficult terrain for creatures other than you and those you choose; the radius moves with you for as long as you concentrate, as if concentrating on a spell."
+					]
+				}
+			]
+		},
+		{
+			"name": "Creature Shape",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 14,
+			"entries": [
+				"At 14th level, you can use an action to turn into a titanic being based on one of your elemental origins. You can't bend while in this form. Use the next stat block appropriate to the element you choose (you can still determine your character's appearance, as long as it doesn't create inconsistencies with the chosen stat block):",
+				{
+					"type": "list",
+					"items": [
+						"Water: {@creature Frost Giant|MM}",
+						"Fire: {@creature Fire Giant|MM}",
+						"Air: {@creature Cloud Giant|MM}",
+						"Earth: {@creature Stone Giant|MM}"
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 15,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 4 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 16,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Master Skill: Avatar State",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 17,
+			"entries": [
+				"Starting at 17th level, you achieve full mastery over the Avatar State: you gain conscious control over it and can enter or leave it as an action, no longer only in response to mortal danger. While consciously in control, you have full command over the extraordinary bending feats the State grants you, rather than acting on instinct alone. The benefits, and the weakness, of the Avatar State (see {@b Avatar State (Reflexive)} above) otherwise remain the same."
+			]
+		},
+		{
+			"name": "Transformation",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 18,
+			"entries": [
+				"At 18th level, you can use an action to transform into a {@creature water elemental|MM}, {@creature earth elemental|MM}, {@creature fire elemental|MM}, or {@creature air elemental|MM} of your choice. The transformation lasts until you end it (no action required) or you complete a long rest, after which you can't use this feature again until you finish a long rest. This transformation otherwise follows the same rules as the druid's Wild Shape feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 19,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Psychic Bending",
+			"source": "DDWEBAvatar",
+			"page": 0,
+			"className": "Avatar",
+			"classSource": "DDWEBAvatar",
+			"level": 20,
+			"entries": [
+				"At 20th level, you no longer need somatic components to bend, and you can use your bonus action to perform one Bend effect."
+			]
+		}
+	]
+}
