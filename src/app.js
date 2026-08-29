@@ -919,7 +919,12 @@ async function buildAutomation() {
   const bgProf = br.skillProficiencies ? br : (br.startingProficiencies || br);
   const classFixedSkills = fixedSkillsFrom(classProf);
   const bgFixedSkills = fixedSkillsFrom(br.skillProficiencies || bgProf);
-  const raceFixedSkills = fixedSkillsFrom(rr.skillProficiencies);
+  // Deformações do Lefou marcadas como escolhidas (ver LEFOU_DEFORMATION_BONUSES)
+  // entram junto com as perícias fixas da raça, como se a própria raça as
+  // concedesse — assim ficam corretamente marcadas como automáticas (não
+  // "manuais") no restante da automação de perícias.
+  const deformationBonuses = lefouDeformationBonuses(rr);
+  const raceFixedSkills = [...new Set([...fixedSkillsFrom(rr.skillProficiencies), ...deformationBonuses.skills])];
   const classSaves = savesFrom(cr);
   const previousAuto = [...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || [])];
   const previousChoices = [...Object.values(character.choiceSelections?.classSkills || {}).flat(), ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat()];
@@ -931,6 +936,20 @@ async function buildAutomation() {
   character.auto.raceSkills = raceFixedSkills;
   character.auto.classSaves = classSaves;
   character.auto.speed = speedFrom(rr);
+  // Membranous Hands/Rigid Fingers (Lefou): a deslocamento adicional (natação/
+  // escalada) igual ao deslocamento normal vira uma nota anexada ao mesmo
+  // campo de deslocamento automático — não existe um campo separado por tipo
+  // de deslocamento nesta ficha (nem pra raças oficiais com a mesma forma de
+  // traço, como natação/escalada do Tritão), então seguimos o padrão já usado.
+  if (deformationBonuses.speedTypes.length && character.auto.speed) {
+    const m = String(character.auto.speed).match(/^(\d+)\s*(.*)$/);
+    if (m) {
+      const [, num, unit] = m;
+      const extra = deformationBonuses.speedTypes.map((t) => `${t} ${num}${unit ? ` ${unit}` : ""}`).join(", ");
+      character.auto.speed = `${character.auto.speed} (${extra})`;
+    }
+  }
+  character.auto.acBonus = deformationBonuses.ac;
   character.auto.hitDice = hitDiceFrom(cr);
   character.auto.spellcastingAbility = spellAbilityFrom(cr);
   const fixedSkills = [...new Set([...classFixedSkills, ...bgFixedSkills, ...raceFixedSkills])];
@@ -1380,25 +1399,27 @@ function calc() {
     acAuto = 10 + dexMod + (ud ? mod(effScore(ud)) : 0);
   }
   if (equippedArmor.shield) acAuto += equippedArmor.shield.ac;
+  acAuto += character.auto?.acBonus || 0; // Carapace (Lefou) e bônus fixos de CA equivalentes
   const ac = Number(character.ac) || acAuto;
   const speed = character.speed || character.auto?.speed || "30 ft";
   const sa = character.spellAbility || spellAbilityFrom(classInfo());
   const dc = sa ? spellDc(pb, mod(effScore(sa))) : null;
   const atk = sa ? spellAttack(pb, mod(effScore(sa))) : null;
-  return { lvl, pb, init, passive, hp, ac, acAuto, ud, equippedArmor, speed, sa, dc, atk };
+  return { lvl, pb, init, passive, hp, ac, acAuto, acBonus: character.auto?.acBonus || 0, ud, equippedArmor, speed, sa, dc, atk };
 }
 function acAutoTitle(c) {
   if (character.ac) return "";
   const eq = c.equippedArmor || {};
   const shieldPart = eq.shield ? ` + ${eq.shield.name} ${fmt(eq.shield.ac)}` : "";
+  const bonusPart = c.acBonus ? ` + ${c.acBonus} (Deformações)` : "";
   if (eq.bodyArmor) {
     const dexMod = mod(effScore("dex"));
     const dexPart = eq.bodyArmor.type === "light" ? dexMod : eq.bodyArmor.type === "medium" ? Math.min(2, dexMod) : 0;
     const dexLabel = eq.bodyArmor.type === "heavy" ? "" : ` + DES ${fmt(dexPart)}${eq.bodyArmor.type === "medium" ? " (máx. +2)" : ""}`;
-    return `${eq.bodyArmor.name}: ${eq.bodyArmor.ac}${dexLabel}${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+    return `${eq.bodyArmor.name}: ${eq.bodyArmor.ac}${dexLabel}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
   }
-  if (c.ud) return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense)${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
-  if (eq.shield) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  if (c.ud) return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense)${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  if (eq.shield || c.acBonus) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
   return "";
 }
 async function recalc() {
@@ -1626,6 +1647,41 @@ function findEntryList(entries) {
   return null;
 }
 function traitPickKey(sourceId, traitName) { return `${sourceId || ""}::${traitName}`; }
+// A maior parte das listas de escolha narrativa (ver findEntryList acima)
+// fica só de olho — texto pra lembrete, sem efeito mecânico, do mesmo jeito
+// que o app trata escolhas oficiais equivalentes (ex.: as opções de
+// Celestial Revelation do Assimar 2024 também são só texto + checkbox por
+// aqui). As Deformações do Lefou são a exceção: como o jogador pediu pra
+// elas realmente mexerem na ficha, mapeamos as que têm efeito numérico
+// simples (perícia, CA, deslocamento) pros campos automáticos de verdade —
+// as situacionais (dano reativo, chance de anular crítico, braços extras
+// etc.) continuam só descritivas, que nem qualquer outro traço homebrew.
+const LEFOU_DEFORMATION_BONUSES = {
+  "Insectoid Eyes.": { skills: ["perception"] },
+  "Flexible Joints.": { skills: ["acrobatics"] },
+  "Carapace.": { ac: 1 },
+  "Membranous Hands.": { speedTypes: ["natação"] },
+  "Rigid Fingers.": { speedTypes: ["escalada"] },
+};
+function isLefouRace(rr) { return !!rr && String(rr.source || "").toLowerCase() === "lefou" && String(rr.name || "").toLowerCase() === "lefou"; }
+function lefouDeformationPicks(rr) {
+  if (!isLefouRace(rr)) return [];
+  const key = traitPickKey(refs.race?.id, "Deformations");
+  return character.choiceSelections?.traitPicks?.[key] || [];
+}
+function lefouDeformationBonuses(rr) {
+  const picks = lefouDeformationPicks(rr);
+  const skills = [], speedTypes = [];
+  let ac = 0;
+  for (const name of picks) {
+    const b = LEFOU_DEFORMATION_BONUSES[name];
+    if (!b) continue;
+    if (b.skills) skills.push(...b.skills);
+    if (b.speedTypes) speedTypes.push(...b.speedTypes);
+    if (b.ac) ac += b.ac;
+  }
+  return { skills: [...new Set(skills)], speedTypes: [...new Set(speedTypes)], ac };
+}
 function traitPickListHtml(sourceId, traitName, list) {
   const key = traitPickKey(sourceId, traitName);
   const picked = character.choiceSelections?.traitPicks?.[key] || [];
@@ -1691,7 +1747,10 @@ async function renderFeatures() {
     toggleIn(cur, v, i.checked);
     character.choiceSelections.traitPicks[key] = cur;
     saveCharacter(character);
-    renderFeatures();
+    // recalc() (não só renderFeatures()) porque algumas escolhas têm efeito
+    // mecânico de verdade agora (ver LEFOU_DEFORMATION_BONUSES) — precisa
+    // recalcular perícias/CA/deslocamento, não só re-renderizar a lista.
+    recalc();
   }));
 }
 
