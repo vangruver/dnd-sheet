@@ -3,16 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0f1012">
+<meta name="theme-color" content="#0f1012" id="meta-theme-color">
 <meta name="color-scheme" content="dark light">
 <title>Ficha D&D 5e automatizada</title>
-<script>(function(){try{if(localStorage.getItem('dnd-ficha-auto-theme')==='light'){document.documentElement.setAttribute('data-theme','light');}}catch(e){}})();</script>
+<script>(function(){try{
+  var s=localStorage.getItem('dnd-ficha-auto-skin');
+  if(!s){s=localStorage.getItem('dnd-ficha-auto-theme')==='light'?'papel':'noite';}
+  document.documentElement.setAttribute('data-skin',s);
+}catch(e){document.documentElement.setAttribute('data-skin','noite');}})();</script>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Condensed:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Condensed:wght@400;500;700&family=Spectral:ital,wght@0,400;0,600;1,400&display=swap">
 <link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
@@ -22,21 +26,42 @@
     <div><h1>Ficha de Personagem</h1><small id="db-status">Carregando dados do 5etools…</small></div>
   </div>
   <div class="toolbar">
-    <label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
-    <label>Conteúdo<select id="content"><option value="official">Apenas oficial</option><option value="all">Oficial + Homebrew</option><option value="homebrew">Apenas Homebrew</option></select></label>
-    <button id="characters-btn">Meus Personagens</button>
-    <button id="new-character">Novo</button>
-    <button id="random-character" title="Sorteia espécie, classe, subclasse, background, atributos e nome — pronto pra jogar">🎲 Aleatório</button>
-    <button id="save-character">Salvar</button>
-    <button id="templates-btn">Modelos</button>
-    <button id="export-character">Exportar</button>
-    <button id="export-foundry" title="Baixa um Actor (Personagem) compatível com o sistema dnd5e do Foundry VTT — importe pela aba de Atores do seu mundo">⇩ Foundry</button>
-    <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
-    <button id="refresh-data">Atualizar dados</button>
-    <button id="discord-settings" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
-    <button id="mestre-mode-btn" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Mestre</button>
-    <button id="theme-toggle" title="Alternar tema claro/escuro" aria-pressed="false">☀️ Claro</button>
-    <button id="preview-pdf" class="primary">Ficha em PDF</button><button id="print-character">Imprimir / PDF</button>
+    <details class="menu" id="menu-character">
+      <summary>Personagem</summary>
+      <div class="menu-body">
+        <button id="characters-btn">Meus Personagens</button>
+        <button id="new-character">Novo</button>
+        <button id="save-character">Salvar</button>
+        <button id="templates-btn">Modelos</button>
+        <button id="random-character" title="Sorteia espécie, classe, subclasse, background, atributos e nome — pronto pra jogar">🎲 Personagem aleatório</button>
+      </div>
+    </details>
+    <details class="menu" id="menu-file">
+      <summary>Arquivo</summary>
+      <div class="menu-body">
+        <button id="export-character">Exportar JSON</button>
+        <label class="file-button">Importar JSON<input id="import-character" type="file" accept=".json,application/json"></label>
+        <button id="export-foundry" title="Baixa um Actor (Personagem) compatível com o sistema dnd5e do Foundry VTT — importe pela aba de Atores do seu mundo">⇩ Exportar pro Foundry VTT</button>
+        <button id="print-character">Imprimir direto</button>
+      </div>
+    </details>
+    <details class="menu" id="menu-tools">
+      <summary>Ferramentas</summary>
+      <div class="menu-body">
+        <button id="discord-settings" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
+        <button id="mestre-mode-btn" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Ambiente do Mestre</button>
+        <button id="refresh-data">Atualizar dados do 5etools</button>
+      </div>
+    </details>
+    <details class="menu" id="menu-prefs">
+      <summary>Ajustes</summary>
+      <div class="menu-body menu-fields">
+        <label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
+        <label>Conteúdo<select id="content"><option value="official">Apenas oficial</option><option value="all">Oficial + Homebrew</option><option value="homebrew">Apenas Homebrew</option></select></label>
+        <label>Tema<select id="skin-select" title="Visual da ficha na tela — a ficha em PDF sai sempre no papel da ficha oficial"><option value="noite">Noite (escuro)</option><option value="papel">Papel Branco (claro)</option><option value="pergaminho">Pergaminho (igual ao PDF)</option><option value="mesa">Mesa (denso)</option></select></label>
+      </div>
+    </details>
+    <button id="preview-pdf" class="primary">Ficha em PDF</button>
   </div>
 </header>
 
@@ -129,14 +154,14 @@
   </section>
 
   <nav class="tabs no-print" id="tabs">
-    <button class="tab active" data-tab="sheet">📋 Ficha</button>
-    <button class="tab" data-tab="abilities">🎯 Atributos & Talentos</button>
-    <button class="tab" data-tab="spells">✨ Magias</button>
-    <button class="tab" data-tab="features">📖 Características</button>
-    <button class="tab" data-tab="equipment">🎒 Equipamento</button>
-    <button class="tab" data-tab="notes">📝 Notas</button>
-    <button class="tab" data-tab="codex">📚 Raças & Classes</button>
-    <button class="tab" data-tab="compendium">🔎 Compêndio</button>
+    <button class="tab active" data-tab="sheet">Ficha</button>
+    <button class="tab" data-tab="abilities">Atributos & Talentos</button>
+    <button class="tab" data-tab="spells">Magias</button>
+    <button class="tab" data-tab="features">Características</button>
+    <button class="tab" data-tab="equipment">Equipamento</button>
+    <button class="tab" data-tab="notes">Notas</button>
+    <button class="tab" data-tab="codex">Raças & Classes</button>
+    <button class="tab" data-tab="compendium">Compêndio</button>
   </nav>
 
   <!--
@@ -152,6 +177,7 @@
       <section class="paper-card defense-card"><h2>Defesa & Movimento</h2><div class="defense-grid">
         <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div>
       </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div>
+      <div id="ud-note" class="ud-note hidden"></div>
       <div class="two-input manual-override no-print"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section>
       <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div id="death-panel"></div></section>
       <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>

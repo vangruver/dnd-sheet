@@ -112,6 +112,20 @@ const THEME_KEY = "dnd-ficha-auto-theme";
 export function getSavedTheme() { try { return localStorage.getItem(THEME_KEY); } catch { return null; } }
 export function saveTheme(v) { try { localStorage.setItem(THEME_KEY, v); } catch { /* modo privado */ } }
 
+// Tema visual da ficha na tela: "noite" | "papel" | "pergaminho" | "mesa".
+// Quem já tinha o antigo botão claro/escuro salvo migra pro tema
+// equivalente na primeira visita (claro → papel).
+const SKIN_KEY = "dnd-ficha-auto-skin";
+export const SKINS = ["noite", "papel", "pergaminho", "mesa"];
+export function getSavedSkin() {
+  try {
+    const v = localStorage.getItem(SKIN_KEY);
+    if (SKINS.includes(v)) return v;
+    return getSavedTheme() === "light" ? "papel" : "noite";
+  } catch { return "noite"; }
+}
+export function saveSkin(v) { try { localStorage.setItem(SKIN_KEY, SKINS.includes(v) ? v : "noite"); } catch { /* modo privado */ } }
+
 const CREATION_MODE_KEY = "dnd-ficha-auto-creation-mode";
 export function getSavedCreationMode() { try { return localStorage.getItem(CREATION_MODE_KEY) || "free"; } catch { return "free"; } }
 export function saveCreationMode(v) { try { localStorage.setItem(CREATION_MODE_KEY, v); } catch { /* modo privado */ } }

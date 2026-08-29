@@ -9,7 +9,10 @@
 // botão "Atualizar dados" próprio; interceptar aqui também só criaria
 // uma segunda cópia desatualizada por cima da primeira.
 // ============================================================
-const CACHE_NAME = "dnd-ficha-shell-v1";
+// Subir a versão invalida a casca cacheada — necessário sempre que
+// HTML/CSS/JS mudam de forma visível (aqui: os quatro temas e a barra
+// do topo agrupada em menus).
+const CACHE_NAME = "dnd-ficha-shell-v2";
 const CORE_ASSETS = [
   "./",
   "./index.html",

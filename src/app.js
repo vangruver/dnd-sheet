@@ -12,7 +12,7 @@ import {
 } from "./rules.js";
 import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
-  getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
+  getSavedSkin, saveSkin, SKINS, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
   getDiscordWebhook, saveDiscordWebhook,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
@@ -55,7 +55,7 @@ const fresh = () => ({
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
-  hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
+  hpCurrent: null, hpTemp: 0, ac: null, udChoice: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   alignment: "", languages: "", appearance: "", backstory: "",
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
@@ -187,10 +187,16 @@ function totalLevel() {
   const extra = (character.multiclasses || []).reduce((n, m) => n + (Number(m.level) || 0), 0);
   return Math.max(1, Number(character.level) || 1) + extra;
 }
-function usedMulticlassIds(excludeIndex) {
+// Classes já usadas (primária + outras linhas de multiclasse). Compara
+// pelo NOME, não pelo id: "Bárbaro (PHB)" e "Bárbaro (XPHB)" são o mesmo
+// bicho em fontes diferentes, e a lista mostrava as duas como se fossem
+// classes distintas pra multiclassar.
+function usedMulticlassNames(excludeIndex) {
   const set = new Set();
-  if (character.classId) set.add(character.classId);
-  (character.multiclasses || []).forEach((m, i) => { if (i !== excludeIndex && m.classId) set.add(m.classId); });
+  const nameOf = (id) => String(manifest().find((x) => x.id === id)?.name || "").toLowerCase();
+  if (character.classId) set.add(nameOf(character.classId));
+  (character.multiclasses || []).forEach((m, i) => { if (i !== excludeIndex && m.classId) set.add(nameOf(m.classId)); });
+  set.delete("");
   return set;
 }
 function resolveMulticlassRefs() {
@@ -357,14 +363,39 @@ function openInfo(type) {
 // no painel de construção, independentes do modal de escolha usado
 // pela classe primária.
 // ------------------------------------------------------------
+// Rótulo de uma opção de <select> de classe/subclasse: nome + a SIGLA da
+// fonte de onde ela vem (PHB, XPHB, TCE, DnDWiki…) + a edição quando ela
+// não é a da sessão. Sem a sigla, listas com o mesmo nome repetido (uma
+// classe reimpressa em 2024, ou duas versões homebrew do mesmo conceito)
+// ficavam indistinguíveis — escolher virava chute.
+function entryOptionLabel(x) {
+  const bits = [];
+  if (x?.source) bits.push(String(x.source));
+  const ed = editionOf(x);
+  if (ed !== "both" && ed !== String(character.edition)) bits.push(ed);
+  if (ext(x)) bits.push("externo");
+  else if (pre(x)) bits.push("pré-lançamento");
+  return `${titleOf(x)}${bits.length ? ` — ${bits.join(" · ")}` : ""}`;
+}
+// Agrupa as opções em Oficial / Pré-lançamento / Homebrew, pra ficar
+// óbvio de onde cada linha vem antes mesmo de ler a sigla.
+function groupedEntryOptions(arr, selectedId) {
+  const groups = [["Oficial", (x) => !hb(x) && !pre(x)], ["Pré-lançamento (UA)", (x) => pre(x) && !hb(x)], ["Homebrew", (x) => hb(x)]];
+  return groups.map(([label, test]) => {
+    const items = arr.filter(test);
+    if (!items.length) return "";
+    const opts = items.map((x) =>
+      `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""} title="${esc(labelMeta(x))}">${esc(entryOptionLabel(x))}</option>`).join("");
+    return `<optgroup label="${esc(label)} (${items.length})">${opts}</optgroup>`;
+  }).join("");
+}
 function classSelectOptions(selectedId, excludeIndex) {
-  const used = usedMulticlassIds(excludeIndex);
+  const used = usedMulticlassNames(excludeIndex);
   const arr = manifest().filter((x) =>
     normType(x.type) === "class" && matchesEdition(x, character.edition, true) && pickerContentOk(x) &&
-    (x.id === selectedId || !used.has(x.id)))
-    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
-  return `<option value="">Selecionar classe…</option>` + arr.map((x) =>
-    `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""}>${esc(titleOf(x))}${hb(x) ? " (Homebrew)" : ""}</option>`).join("");
+    (x.id === selectedId || !used.has(String(x.name || "").toLowerCase())))
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR") || String(a.source || "").localeCompare(String(b.source || "")));
+  return `<option value="">Selecionar classe…</option>` + groupedEntryOptions(arr, selectedId);
 }
 function subclassSelectOptions(classEntry, selectedId) {
   if (!classEntry) return `<option value="">Escolha a classe primeiro</option>`;
@@ -372,9 +403,8 @@ function subclassSelectOptions(classEntry, selectedId) {
   const arr = manifest().filter((x) =>
     normType(x.type) === "subclass" && matchesEdition(x, character.edition, true) &&
     String(x.className || "").toLowerCase() === cn && pickerContentOk(x))
-    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR"));
-  return `<option value="">Sem subclasse ainda</option>` + arr.map((x) =>
-    `<option value="${esc(x.id)}"${x.id === selectedId ? " selected" : ""}>${esc(titleOf(x))}${hb(x) ? " (Homebrew)" : ""}</option>`).join("");
+    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR") || String(a.source || "").localeCompare(String(b.source || "")));
+  return `<option value="">Sem subclasse ainda</option>` + groupedEntryOptions(arr, selectedId);
 }
 function renderMulticlasses(boxId) {
   const box = $(boxId || "multiclass-list");
@@ -755,15 +785,40 @@ function spellAbilityFrom(r) {
 // lendo o próprio texto da característica em vez de fixar por nome de
 // classe — funciona pra qualquer classe oficial ou homebrew que conceda
 // o traço com esse nome.
-function detectUnarmoredDefense(feats) {
-  const f = (feats || []).find((x) => /^unarmored defense$/i.test(String(x.name || "").trim()));
-  if (!f) return null;
-  const text = plain(f.entries).toLowerCase();
-  if (/constitution modifier/.test(text)) return "con";
-  if (/wisdom modifier/.test(text)) return "wis";
-  if (/intelligence modifier/.test(text)) return "int";
-  if (/charisma modifier/.test(text)) return "cha";
-  return null;
+//
+// Devolve TODAS as variantes encontradas (um multiclasse Monge/Bárbaro
+// tem duas), cada uma com o atributo, se ela permite escudo e de qual
+// classe veio. Pelas regras você não soma as duas: escolhe uma — quem
+// escolhe é pickUnarmoredDefense(), pegando a de maior CA no momento.
+function detectUnarmoredDefense(feats, sourceLabel) {
+  const out = [];
+  for (const f of feats || []) {
+    if (!/^unarmored defense$/i.test(String(f.name || "").trim())) continue;
+    const text = plain(f.entries).toLowerCase();
+    const ability = /constitution modifier/.test(text) ? "con"
+      : /wisdom modifier/.test(text) ? "wis"
+      : /intelligence modifier/.test(text) ? "int"
+      : /charisma modifier/.test(text) ? "cha" : null;
+    if (!ability) continue;
+    // Monge: "while you are wearing no armor and not wielding a shield".
+    // Bárbaro: "you can use a shield and still gain this benefit".
+    const shieldOk = !/\bnot (?:wielding|using|carrying|holding) a shield\b/.test(text);
+    out.push({ ability, shieldOk, label: sourceLabel || f.className || "Classe" });
+  }
+  return out;
+}
+// Escolhe qual Unarmored Defense usar: descarta as que não valem com o
+// escudo equipado e, entre as que sobram, fica com a que dá a MAIOR CA
+// com os atributos atuais (antes a ficha pegava sempre a primeira da
+// lista, então um Monge/Bárbaro com SAB baixa ficava com a pior).
+function pickUnarmoredDefense(hasShield) {
+  const usable = (character?.auto?.unarmoredDefenseOptions || []).filter((o) => o.shieldOk || !hasShield);
+  // Preferência manual (select "Defesa desarmada") vence, desde que a
+  // variante escolhida ainda seja válida com o que está equipado.
+  const forced = usable.find((o) => o.ability === character?.udChoice);
+  const chosen = forced || usable.reduce((best, o) =>
+    (!best || mod(effScore(o.ability)) > mod(effScore(best.ability))) ? o : best, null);
+  return chosen ? { ...chosen, value: mod(effScore(chosen.ability)), manual: !!forced } : null;
 }
 // Proficiência de armadura/escudo concedida por uma característica de
 // classe/subclasse ALÉM da proficiência inicial (nível 1) — comum em
@@ -1011,9 +1066,23 @@ async function buildAutomation() {
     m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])));
 
   // Unarmored Defense (Bárbaro/Monge e variantes homebrew): usado como CA
-  // padrão quando não há CA manual definida (ver calc()). Considera a
-  // classe primária e as de multiclasse.
-  character.auto.unarmoredDefense = detectUnarmoredDefense(classFeats) || mcClassFeats.map(detectUnarmoredDefense).find(Boolean) || null;
+  // padrão quando não há CA manual definida (ver calc()). Junta a classe
+  // primária, a subclasse e cada classe de multiclasse; qual delas vale
+  // é decidido em calc() por pickUnarmoredDefense (a de maior CA).
+  const udOptions = [
+    ...detectUnarmoredDefense(classFeats, refs.class ? titleOf(refs.class) : "Classe"),
+    ...detectUnarmoredDefense(subFeats, refs.subclass ? titleOf(refs.subclass) : "Subclasse"),
+    ...mcClassFeats.flatMap((fs, i) => detectUnarmoredDefense(fs, titleOf((details.multiclasses || [])[i]?.classEntry) || "Multiclasse")),
+  ];
+  // Mesmo atributo vindo de duas classes é uma opção só (não soma).
+  const udSeen = new Map();
+  for (const o of udOptions) {
+    const prev = udSeen.get(o.ability);
+    if (!prev) udSeen.set(o.ability, o);
+    else if (o.shieldOk && !prev.shieldOk) udSeen.set(o.ability, o); // a versão mais permissiva vence
+  }
+  character.auto.unarmoredDefenseOptions = [...udSeen.values()];
+  character.auto.unarmoredDefense = character.auto.unarmoredDefenseOptions[0]?.ability || null;
   // Armadura/escudo concedido por característica (não startingProficiencies)
   // — ex. subclasse que destrava armadura média/pesada num nível mais alto.
   character.auto.armorGrants = [...detectProficiencyGrants([...classFeats, ...subFeats, ...mcClassFeats.flat()])];
@@ -1427,8 +1496,11 @@ function calc() {
   const init = dexMod;
   const passive = 10 + mod(effScore("wis")) + (character.skillProficiencies.includes("perception") ? pb : 0) + (character.skillExpertise.includes("perception") ? pb : 0);
   const hp = inferHP();
-  const ud = character.auto?.unarmoredDefense;
   const equippedArmor = equippedArmorInfo();
+  // Unarmored Defense só entra sem armadura de corpo, e a variante usada
+  // é a de maior CA entre as que o escudo equipado permite.
+  const udInfo = equippedArmor.bodyArmor ? null : pickUnarmoredDefense(!!equippedArmor.shield);
+  const ud = udInfo?.ability || null;
   let acAuto;
   if (equippedArmor.bodyArmor) {
     const dexPart = equippedArmor.bodyArmor.type === "light" ? dexMod : equippedArmor.bodyArmor.type === "medium" ? Math.min(2, dexMod) : 0;
@@ -1443,7 +1515,7 @@ function calc() {
   const sa = character.spellAbility || spellAbilityFrom(classInfo());
   const dc = sa ? spellDc(pb, mod(effScore(sa))) : null;
   const atk = sa ? spellAttack(pb, mod(effScore(sa))) : null;
-  return { lvl, pb, init, passive, hp, ac, acAuto, acBonus: character.auto?.acBonus || 0, ud, equippedArmor, speed, sa, dc, atk };
+  return { lvl, pb, init, passive, hp, ac, acAuto, acBonus: character.auto?.acBonus || 0, ud, udInfo, equippedArmor, speed, sa, dc, atk };
 }
 function acAutoTitle(c) {
   if (character.ac) return "";
@@ -1456,7 +1528,16 @@ function acAutoTitle(c) {
     const dexLabel = eq.bodyArmor.type === "heavy" ? "" : ` + DES ${fmt(dexPart)}${eq.bodyArmor.type === "medium" ? " (máx. +2)" : ""}`;
     return `${eq.bodyArmor.name}: ${eq.bodyArmor.ac}${dexLabel}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
   }
-  if (c.ud) return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense)${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  if (c.ud) {
+    // Com mais de uma variante (Monge/Bárbaro), diz qual foi escolhida e
+    // por quê — e lista as descartadas, pra não parecer bug.
+    const all = character.auto?.unarmoredDefenseOptions || [];
+    const others = all.filter((o) => o.ability !== c.ud)
+      .map((o) => `${ABILITY_NAMES[o.ability]} ${fmt(mod(effScore(o.ability)))}${eq.shield && !o.shieldOk ? " — não vale com escudo" : ""} (${o.label})`);
+    const chosen = c.udInfo?.label ? ` — ${c.udInfo.label}` : "";
+    const altPart = others.length ? ` Outra opção de Unarmored Defense: ${others.join("; ")} (você usa só uma, a ficha pega a melhor).` : "";
+    return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense${chosen})${shieldPart}${bonusPart} = ${c.ac}.${altPart} Defina uma CA manual pra sobrescrever.`;
+  }
   if (eq.shield || c.acBonus) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
   return "";
 }
@@ -1488,14 +1569,44 @@ async function recalc() {
   $("hp-current").value = character.hpCurrent == null ? c.hp : character.hpCurrent;
   $("hp-temp").value = character.hpTemp || 0;
   $("ac-input").value = character.ac ?? "";
-  $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense)` : `Auto: ${c.acAuto}`;
+  $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense · ${ABILITY_NAMES[c.ud]}${c.udInfo?.label ? ` — ${c.udInfo.label}` : ""})` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
+  renderUnarmoredDefense(c);
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
   renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") renderFeatures();
   if (active === "spells") renderSpells();
   if (active === "equipment" && eqCat === "inventory") renderStartingEquipment();
+}
+// Quando o personagem tem mais de uma Defesa sem Armadura (clássico
+// Monge/Bárbaro), mostra qual está valendo e deixa trocar na mão — a
+// regra manda escolher uma, e o padrão da ficha é a de maior CA.
+function renderUnarmoredDefense(c) {
+  const box = $("ud-note");
+  if (!box) return;
+  const opts = character.auto?.unarmoredDefenseOptions || [];
+  if (!opts.length || c.equippedArmor?.bodyArmor) { box.innerHTML = ""; box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  const hasShield = !!c.equippedArmor?.shield;
+  const line = (o) => `${ABILITY_NAMES[o.ability]} ${fmt(mod(effScore(o.ability)))} — ${o.label}${hasShield && !o.shieldOk ? " (não vale com escudo)" : ""}`;
+  if (opts.length === 1) {
+    const o = opts[0];
+    box.innerHTML = hasShield && !o.shieldOk
+      ? `<span class="ud-label">Defesa sem Armadura</span><span class="ud-off">${esc(line(o))} — desativada pelo escudo equipado.</span>`
+      : `<span class="ud-label">Defesa sem Armadura</span><span>${esc(line(o))}</span>`;
+    return;
+  }
+  box.innerHTML = `<span class="ud-label">Defesa sem Armadura</span>
+    <select id="ud-choice" title="Você usa apenas uma Defesa sem Armadura; a ficha escolhe sozinha a de maior CA.">
+      <option value="">Automático (maior CA)</option>
+      ${opts.map((o) => `<option value="${o.ability}"${character.udChoice === o.ability ? " selected" : ""}${hasShield && !o.shieldOk ? " disabled" : ""}>${esc(line(o))}</option>`).join("")}
+    </select>
+    <span class="ud-active">Usando: <b>${c.ud ? esc(`${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))}`) : "—"}</b>${c.udInfo?.label ? ` (${esc(c.udInfo.label)})` : ""}</span>`;
+  $("ud-choice")?.addEventListener("change", (e) => {
+    character.udChoice = e.target.value || null;
+    saveCharacter(character); recalc();
+  });
 }
 function renderSaves(c) {
   $("save-list").innerHTML = ABILITIES.map((a) => {
@@ -2326,18 +2437,29 @@ function spellcastingInfoFor(cr, sr, level) {
   // NB: "spellsKnownProgressionFixed" NÃO é isso — é o nº de magias que o
   // Mago copia pro grimório por nível — então não entra aqui.
   let known = Array.isArray(src.spellsKnownProgression) ? src.spellsKnownProgression[Math.min(level, src.spellsKnownProgression.length) - 1] : null;
-  let prepared = null;
+  let prepared = null, preparedEstimated = false;
   if (known == null) {
     // 2024: coluna "Prepared Spells" na tabela da classe (sem fórmula).
     const tp = tableCol(src, level, /prepared spells/i);
     if (tp != null) prepared = tp;
     else if (src.preparedSpells) prepared = preparedFromFormula(src.preparedSpells, level, abilMod);
     else { const tk = tableCol(src, level, /spells known/i); if (tk != null) known = tk; }
+    // Classes de 2014 (e homebrew nos mesmos moldes) não trazem número
+    // nenhum: quem prepara magias usa a fórmula do PHB — modificador do
+    // atributo + nível na classe (metade, arredondada pra baixo, nos meio
+    // conjuradores), mínimo 1. Sem isso a ficha ficava sem responder
+    // "quantas eu posso preparar hoje?", que é a pergunta do dia a dia.
+    if (prepared == null && known == null && prog !== "pact" && (slots || []).some(Boolean)) {
+      const div = prog === "full" ? 1 : 2;
+      prepared = Math.max(1, Math.floor(level / div) + abilMod);
+      preparedEstimated = true;
+    }
   }
   return {
     ability: abilKey, abilityMod: abilMod, progression: prog,
     label: CASTER_LABEL[prog] || "Conjurador",
     slots, pact, cantrips: cantrips ?? null, known: known ?? null, prepared: prepared ?? null,
+    preparedEstimated,
   };
 }
 // Classes conjuradoras do personagem (primária + multiclasse), cada
@@ -2386,7 +2508,7 @@ function renderSpellResources(msi) {
   const classCards = perClass.map((p) => {
     const pips = [];
     if (p.cantrips != null) pips.push(["Truques", p.cantrips]);
-    if (p.prepared != null) pips.push(["Preparadas", p.prepared]);
+    if (p.prepared != null) pips.push([p.preparedEstimated ? "Preparadas (calculado)" : "Preparadas", p.prepared]);
     if (p.known != null) pips.push(["Conhecidas", p.known]);
     if (p.ability) { pips.push(["CD", spellDc(proficiency(totalLevel()), p.abilityMod)]); pips.push(["Ataque", fmt(spellAttack(proficiency(totalLevel()), p.abilityMod))]); }
     return `<div class="spell-res-class"><b>${esc(p.classLabel)}</b><span>${esc(p.label)}${p.ability ? ` · ${ABILITY_NAMES[p.ability]}` : ""}</span>${pips.length ? `<div class="spell-res-pips">${pips.map(([k, v]) => `<div><span>${esc(k)}</span><b>${v}</b></div>`).join("")}</div>` : ""}</div>`;
@@ -2406,19 +2528,19 @@ function renderSpellResources(msi) {
     character.spellSlotsUsed = character.spellSlotsUsed || Array(9).fill(0);
     const used = Math.min(n, Number(character.spellSlotsUsed[lvl]) || 0);
     character.spellSlotsUsed[lvl] = Math.max(0, Math.min(n, idx < used ? idx : idx + 1));
-    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+    saveCharacter(character); renderSpellResources(msi); renderDashboard(); repaintSpellBook();
   }));
   box.querySelectorAll("[data-pact-pip]").forEach((p) => p.addEventListener("click", () => {
     const idx = Number(p.dataset.pactPip);
     const n = pactCasters[0]?.pact?.count || 0;
     const used = Math.min(n, Number(character.pactSlotsUsed) || 0);
     character.pactSlotsUsed = Math.max(0, Math.min(n, idx < used ? idx : idx + 1));
-    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+    saveCharacter(character); renderSpellResources(msi); renderDashboard(); repaintSpellBook();
   }));
   $("reset-spell-slots")?.addEventListener("click", () => {
     character.spellSlotsUsed = Array(9).fill(0);
     character.pactSlotsUsed = 0;
-    saveCharacter(character); renderSpellResources(msi); renderDashboard();
+    saveCharacter(character); renderSpellResources(msi); renderDashboard(); repaintSpellBook();
     toast("Espaços de magia restaurados.");
   });
 }
@@ -2444,7 +2566,7 @@ function extraSpellRecords() {
     return { ...rec, _extra: true, _extraId: id };
   }).filter(Boolean);
 }
-function spellListHtml(spells, hasSubclass, active) {
+function spellListHtml(spells, hasSubclass, active, limits) {
   const spellOrigin = (s) => {
     if (s._extra) return "Manual";
     if (!hasSubclass) return "";
@@ -2454,7 +2576,31 @@ function spellListHtml(spells, hasSubclass, active) {
     return "";
   };
   const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
-  return groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} magias</span></div><div class="spell-list">${arr.map((s) => {
+  const slots = limits?.slots || [];
+  const pact = limits?.pact || null;
+  return groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} na lista</span>${
+    (() => {
+      const marked = arr.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`)).length;
+      const chips = [];
+      if (lvl === 0) {
+        if (limits?.cantrips != null) chips.push(`<span class="spell-level-chip${marked > limits.cantrips ? " over" : ""}">${marked}/${limits.cantrips} truques conhecidos</span>`);
+        else if (marked) chips.push(`<span class="spell-level-chip">${marked} marcados</span>`);
+      } else {
+        chips.push(`<span class="spell-level-chip">${marked} marcada(s)</span>`);
+        const n = slots[lvl - 1] || 0;
+        if (n) {
+          const used = Math.min(n, Number(character.spellSlotsUsed?.[lvl - 1]) || 0);
+          chips.push(`<span class="spell-level-chip slots">${n - used}/${n} espaços de ${lvl}º</span>`);
+        } else if (pact && pact.level === lvl) {
+          const used = Math.min(pact.count, Number(character.pactSlotsUsed) || 0);
+          chips.push(`<span class="spell-level-chip slots">${pact.count - used}/${pact.count} espaços de Pacto</span>`);
+        } else {
+          chips.push(`<span class="spell-level-chip none">ainda fora do seu alcance</span>`);
+        }
+      }
+      return chips.join("");
+    })()
+  }</div><div class="spell-list">${arr.map((s) => {
     const key = `${s.name}|${s.source || ""}`;
     const checked = character.preparedSpells.includes(key);
     const origin = spellOrigin(s);
@@ -2463,11 +2609,27 @@ function spellListHtml(spells, hasSubclass, active) {
     return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button>${s._extra ? `<button type="button" class="remove-btn no-print" data-remove-extra-spell="${esc(s._extraId)}" title="Remover">×</button>` : ""}</label>`;
   }).join("")}</div></section>` : "").join("");
 }
+// Último grimório pintado (magias já carregadas + limites) — permite
+// repintar os contadores de "preparadas/espaços" na hora em que uma
+// magia é marcada, sem refazer o fetch da lista da classe.
+let lastSpellPaint = null;
+function repaintSpellBook() {
+  if (!lastSpellPaint) return;
+  const box = $("spellbook");
+  if (!box) return;
+  const { spells, limits, active, hasSubclass } = lastSpellPaint;
+  const scroll = window.scrollY;
+  box.innerHTML = (active ? renderPrepareBanner(spells, limits, active) : "")
+    + (spellListHtml(spells, hasSubclass, active, limits) || `<div class="paper-card empty">Nenhuma magia.</div>`);
+  wireSpellListEvents(box);
+  window.scrollTo({ top: scroll });
+}
 function wireSpellListEvents(box) {
   box.querySelectorAll("[data-spell]").forEach((i) => i.addEventListener("change", () => {
     toggleIn(character.preparedSpells, i.dataset.spell, i.checked);
     saveCharacter(character);
     i.nextElementSibling.textContent = i.checked ? "●" : "○";
+    repaintSpellBook();
   }));
   box.querySelectorAll("[data-spell-key]").forEach((b) => b.addEventListener("click", () => {
     const [name, source] = b.dataset.spellKey.split("|");
@@ -2482,13 +2644,44 @@ function wireSpellListEvents(box) {
     saveCharacter(character); renderSpells();
   }));
 }
+// Faixa no topo do grimório: quantas magias/truques a classe deixa
+// preparar (ou conhecer) neste nível, quantas já estão marcadas e até
+// que nível de magia os espaços alcançam. Sem isso, a lista completa da
+// classe não dizia quantas dela você pode de fato levar pro dia.
+function renderPrepareBanner(spells, limits, active) {
+  if (!limits) return "";
+  const isPrepared = (s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`);
+  const markedCantrips = spells.filter((s) => spellLevel(s) === 0 && isPrepared(s)).length;
+  const markedSpells = spells.filter((s) => spellLevel(s) > 0 && isPrepared(s)).length;
+  const maxSlotLevel = (limits.slots || []).reduce((m, n, i) => (n ? i + 1 : m), 0);
+  const maxLevel = Math.max(maxSlotLevel, limits.pact?.level || 0);
+  const cap = limits.prepared ?? limits.known ?? null;
+  const capLabel = limits.prepared != null ? (limits.preparedEstimated ? "Preparadas (calculado)" : "Preparadas") : limits.known != null ? "Conhecidas" : "Marcadas";
+  const capHint = limits.preparedEstimated
+    ? `A tabela desta classe não traz a coluna de magias preparadas (é o caso de todas as classes de 2014), então o número vem da fórmula do PHB: ${ABILITY_NAMES[limits.ability] || "modificador"} ${fmt(limits.abilityMod || 0)} + ${limits.progression === "full" ? "nível na classe" : "metade do nível na classe"}.`
+    : "";
+  const pill = (label, value, cls = "") => `<div class="prep-pill ${cls}"><span>${esc(label)}</span><b>${esc(String(value))}</b></div>`;
+  return `<section class="paper-card prepare-banner">
+    <div class="prepare-head"><h3>Quanto você leva de ${esc(titleOf(active.classEntry))} no nível ${active.level}</h3>
+      <span class="muted">Marque na lista abaixo — a lista mostra TODAS as magias que a classe pode aprender.</span></div>
+    ${capHint ? `<p class="prepare-hint">${esc(capHint)}</p>` : ""}
+    <div class="prepare-pills">
+      ${limits.cantrips != null ? pill("Truques", `${markedCantrips}/${limits.cantrips}`, markedCantrips > limits.cantrips ? "over" : "") : ""}
+      ${cap != null ? pill(capLabel, `${markedSpells}/${cap}`, markedSpells > cap ? "over" : "") : pill(capLabel, markedSpells)}
+      ${maxLevel ? pill("Nível máx. de magia", `${maxLevel}º`) : ""}
+      ${(limits.slots || []).map((n, i) => n ? pill(`${i + 1}º nível`, `${n - Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0)}/${n} espaços`, "slot") : "").join("")}
+      ${limits.pact ? pill(`Pacto ${limits.pact.level}º`, `${limits.pact.count - Math.min(limits.pact.count, Number(character.pactSlotsUsed) || 0)}/${limits.pact.count} espaços`, "slot pact") : ""}
+    </div>
+  </section>`;
+}
 async function renderSpells() {
   const box = $("spellbook"), c = calc(), ab = c.sa;
   $("spell-ability").textContent = ab ? ABILITY_NAMES[ab] : "—";
   if ($("spell-ability-override")) $("spell-ability-override").value = character.manualSpellAbility ? (character.spellAbility || "") : "";
   $("spell-dc-big").textContent = c.dc ?? "—";
   $("spell-atk-big").textContent = c.atk != null ? fmt(c.atk) : "—";
-  renderSpellResources(multiclassSpellcasting());
+  const msi = multiclassSpellcasting();
+  renderSpellResources(msi);
   const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
   const tabsBox = $("spellbook-tabs");
   if (!casters.length) {
@@ -2496,7 +2689,8 @@ async function renderSpells() {
     $("spell-count").textContent = String(extras.length);
     if (tabsBox) tabsBox.innerHTML = "";
     if (!extras.length) { box.innerHTML = `<div class="paper-card empty">Escolha uma classe conjuradora para carregar a lista de magias — ou adicione magias avulsas pelo Compêndio.</div>`; return; }
-    box.innerHTML = spellListHtml(extras, false, null) || `<div class="paper-card empty">Nenhuma magia.</div>`;
+    lastSpellPaint = { spells: extras, limits: null, active: null, hasSubclass: false };
+    box.innerHTML = spellListHtml(extras, false, null, null) || `<div class="paper-card empty">Nenhuma magia.</div>`;
     wireSpellListEvents(box);
     return;
   }
@@ -2522,7 +2716,24 @@ async function renderSpells() {
   // Com subclasse escolhida, deixa explícito se cada magia vem da lista da
   // classe, é concedida pela subclasse (domínio/círculo/patrono…) ou as duas.
   const hasSubclass = !!active.subclassEntry;
-  box.innerHTML = spellListHtml(spells, hasSubclass, active) || `<div class="paper-card empty">Nenhuma magia foi associada a esta classe nesta edição.</div>`;
+  // Limites da classe ATIVA (truques/preparadas/conhecidas) + os espaços
+  // efetivos do personagem (combinados quando é multiclasse) — é o que
+  // alimenta os contadores por nível no cabeçalho de cada bloco.
+  const activeInfo = spellcastingInfoFor(active.cr, active.sr, active.level);
+  const limits = {
+    cantrips: activeInfo?.cantrips ?? null,
+    prepared: activeInfo?.prepared ?? null,
+    preparedEstimated: !!activeInfo?.preparedEstimated,
+    known: activeInfo?.known ?? null,
+    ability: activeInfo?.ability || null,
+    abilityMod: activeInfo?.abilityMod || 0,
+    progression: activeInfo?.progression || "",
+    slots: msi?.slots || activeInfo?.slots || [],
+    pact: activeInfo?.pact || msi?.perClass.find((p) => p.pact)?.pact || null,
+  };
+  lastSpellPaint = { spells, limits, active, hasSubclass };
+  box.innerHTML = renderPrepareBanner(spells, limits, active)
+    + (spellListHtml(spells, hasSubclass, active, limits) || `<div class="paper-card empty">Nenhuma magia foi associada a esta classe nesta edição.</div>`);
   wireSpellListEvents(box);
 }
 
@@ -4140,42 +4351,127 @@ async function buildOfficialSheet() {
   const msi = multiclassSpellcasting();
   const slots = msi?.slots || [];
   const multiCaster = casters.length > 1;
-  let preparedRows = [];
+  // A ficha impressa traz a lista COMPLETA de magias que o personagem pode
+  // aprender (a lista da classe + subclasse + as avulsas do Compêndio), com
+  // as preparadas marcadas — e não só as marcadas, que era o comportamento
+  // antigo: quem prepara magias todo dia precisa do cardápio inteiro em mãos.
+  const seenSpell = new Set();
+  let spellRows = [];
   for (const caster of casters) {
     const spellEd = editionOf(caster.classEntry) === "both" ? character.edition : editionOf(caster.classEntry);
     try {
       const all = await spellsForClass(caster.classEntry, caster.subclassEntry, spellEd);
-      const rows = all.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`))
-        .map((s) => ({ ...s, _classLabel: titleOf(caster.classEntry) }));
-      preparedRows.push(...rows);
+      for (const sp of all) {
+        const key = `${sp.name}|${sp.source || ""}`;
+        if (seenSpell.has(key)) continue;
+        seenSpell.add(key);
+        spellRows.push({ ...sp, _classLabel: titleOf(caster.classEntry), _prepared: character.preparedSpells.includes(key) });
+      }
     } catch (err) { console.error(err); }
   }
-  preparedRows.sort((x, y) => (x.level ?? 0) - (y.level ?? 0) || String(x.name).localeCompare(String(y.name), "pt-BR"));
+  for (const ex of extraSpellRecords()) {
+    const key = `${ex.name}|${ex.source || ""}`;
+    if (seenSpell.has(key)) continue;
+    seenSpell.add(key);
+    spellRows.push({ ...ex, _classLabel: "Avulsa", _prepared: character.preparedSpells.includes(key) });
+  }
+  spellRows.sort((x, y) => (x.level ?? 0) - (y.level ?? 0) || String(x.name).localeCompare(String(y.name), "pt-BR"));
+  const preparedCount = spellRows.filter((s) => s._prepared && spellLevel(s) > 0).length;
+  const cantripCount = spellRows.filter((s) => s._prepared && spellLevel(s) === 0).length;
+  // Limites de preparação por classe conjuradora (truques/preparadas/
+  // conhecidas vindos da tabela da própria classe no nível dela).
+  const casterLimits = casters.map((caster) => {
+    const info = spellcastingInfoFor(caster.cr, caster.sr, caster.level);
+    return { label: titleOf(caster.classEntry), level: caster.level, info };
+  }).filter((x) => x.info);
   const inv = character.inventory || [];
+  const pactInfo = (msi?.perClass || []).find((x) => x.pact)?.pact || null;
+  const pactBoxHtml = pactInfo
+    ? `<div class="off-slot off-slot-pact"><span>Pacto ${pactInfo.level}º</span><b>${pactInfo.count}</b><div class="off-slot-pips">${Array.from({ length: pactInfo.count }, (_, k) => `<i class="${k < Math.min(pactInfo.count, Number(character.pactSlotsUsed) || 0) ? "on" : ""}"></i>`).join("")}</div></div>`
+    : "";
 
-  const page2 = `<div class="off-page off-page2">
+  // --- Página 2: detalhes do personagem ---
+  // A ficha oficial separa "quem é o personagem" da parte de combate:
+  // aparência, história, idiomas, equipamento e moedas ficam numa
+  // página própria, e conjuração vai pra seguinte.
+  const page2 = `<div class="off-page off-page-detail">
+    <div class="off-page-title"><h2>${esc(character.name || "Personagem")}</h2><span>Detalhes do personagem</span></div>
+    <div class="off-detail-grid">
+      ${offBox("Aparência", `<p>${esc(character.appearance || "")}</p>`, "off-tall")}
+      ${offBox("História &amp; Personalidade", `<p>${esc(character.backstory || "")}</p><div class="off-align"><b>Alinhamento</b> ${esc(character.alignment || "—")}</div>`, "off-tall")}
+      ${offBox("Idiomas", `<p>${esc(character.languages || "—")}</p>`)}
+      ${offBox("Moedas", `<div class="off-coins">${["cp", "pp", "pe", "po", "pl"].map((k) => `<div><span>${k.toUpperCase()}</span><b>${character.coins?.[k] || 0}</b></div>`).join("")}</div>`)}
+      ${offBox("Equipamento", inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}${i.equipped ? " (equipado)" : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`, "off-tall off-span2")}
+    </div>
+  </div>`;
+
+  // --- Página 3: conjuração ---
+  const page3 = casterLimits.length || spellRows.length ? `<div class="off-page off-page2">
+    <div class="off-page-title"><h2>${esc(character.name || "Personagem")}</h2><span>Conjuração</span></div>
     <div class="off-spell-top">
       <div class="off-box off-spell-ability"><div class="off-box-title">Atributo de Conjuração</div><div class="off-box-body off-center"><b>${c.sa ? esc(ABILITY_NAMES[c.sa]) : "—"}</b></div></div>
       <div class="off-oval"><span>Modificador<br>de Conjuração</span><b>${c.sa ? fmt(mod(effScore(c.sa))) : "—"}</b></div>
       <div class="off-oval"><span>CD de Resistência<br>de Magia</span><b>${c.dc ?? "—"}</b></div>
       <div class="off-oval"><span>Bônus de Ataque<br>de Magia</span><b>${c.atk != null ? fmt(c.atk) : "—"}</b></div>
     </div>
-    ${offBox("Espaços de Magia", `<div class="off-slots">${Array.from({ length: 9 }, (_, i) => `<div class="off-slot"><span>Nível ${i + 1}</span><b>${slots[i] || 0}</b></div>`).join("")}</div>`)}
-    ${offBox("Truques & Magias Preparadas", `<table class="off-table off-spell-table"><thead><tr><th>Nv.</th><th>Nome</th><th>Tempo</th><th>Alcance</th><th>C/R/M</th>${multiCaster ? "<th>Classe</th>" : "<th>Anotações</th>"}</tr></thead><tbody>${
-      preparedRows.length ? preparedRows.map((s) => { const fl = offSpellFlags(s); return `<tr><td>${spellLevel(s) === 0 ? "T" : spellLevel(s)}</td><td>${esc(s.name)}</td><td>${esc(spellTime(s))}</td><td>${esc(offSpellRange(s))}</td><td>${fl.c ? "C " : ""}${fl.r ? "R " : ""}${fl.m ? "M" : ""}</td><td>${multiCaster ? esc(s._classLabel) : ""}</td></tr>`; }).join("")
-      : `<tr><td colspan="6" class="off-muted">Nenhuma magia marcada como preparada na aba "Magias".</td></tr>`
+    ${offBox("Espaços de Magia", `<div class="off-slots">${Array.from({ length: 9 }, (_, i) => {
+      const total = slots[i] || 0;
+      const used = Math.min(total, Number(character.spellSlotsUsed?.[i]) || 0);
+      return `<div class="off-slot${total ? "" : " off-slot-empty"}"><span>Nível ${i + 1}</span><b>${total}</b>${total ? `<div class="off-slot-pips">${Array.from({ length: total }, (_, k) => `<i class="${k < used ? "on" : ""}"></i>`).join("")}</div>` : ""}</div>`;
+    }).join("")}${pactBoxHtml}</div>`)}
+    ${offBox("Preparação de Magias", `<table class="off-table off-prep-table"><thead><tr><th>Classe</th><th>Nv.</th><th>Progressão</th><th>Truques</th><th>Magias preparadas / conhecidas</th><th>Nível máx.</th></tr></thead><tbody>${
+      casterLimits.map(({ label, level, info }) => {
+        const cap = info.prepared != null ? `${info.prepared} preparadas${info.preparedEstimated ? " (mod. + nível)" : ""}` : info.known != null ? `${info.known} conhecidas` : "à vontade (grimório/lista completa)";
+        const maxLvl = Math.max((info.slots || slots || []).reduce((m, n, i) => (n ? i + 1 : m), 0), info.pact?.level || 0);
+        return `<tr><td>${esc(label)}</td><td>${level}</td><td>${esc(info.label)}</td><td>${info.cantrips ?? "—"}</td><td>${esc(cap)}</td><td>${maxLvl ? `${maxLvl}º` : "—"}</td></tr>`;
+      }).join("") || `<tr><td colspan="6" class="off-muted">Sem conjuração.</td></tr>`
+    }</tbody></table><p class="off-prep-now">Marcadas nesta ficha: <b>${cantripCount}</b> truque(s) e <b>${preparedCount}</b> magia(s).</p>`)}
+    ${offBox("Magias Preparadas / Conhecidas (as marcadas na ficha)", `<table class="off-table off-spell-table"><thead><tr><th>Nv.</th><th>Nome</th><th>Tempo</th><th>Alcance</th><th>C/R/M</th>${multiCaster ? "<th>Classe</th>" : "<th>Anotações</th>"}</tr></thead><tbody>${
+      spellRows.some((s) => s._prepared) ? spellRows.filter((s) => s._prepared).map((s) => { const fl = offSpellFlags(s); return `<tr><td>${spellLevel(s) === 0 ? "T" : spellLevel(s)}</td><td>${esc(s.name)}</td><td>${esc(spellTime(s))}</td><td>${esc(offSpellRange(s))}</td><td>${fl.c ? "C " : ""}${fl.r ? "R " : ""}${fl.m ? "M" : ""}</td><td>${multiCaster ? esc(s._classLabel) : ""}</td></tr>`; }).join("")
+      : `<tr><td colspan="6" class="off-muted">Nenhuma magia marcada como preparada na aba "Magias" — o repertório completo está na página seguinte.</td></tr>`
     }</tbody></table>`, "off-tall")}
 
-    <div class="off-page2-side">
-      ${offBox("Aparência", `<p>${esc(character.appearance || "")}</p>`, "off-tall")}
-      ${offBox("História & Personalidade", `<p>${esc(character.backstory || "")}</p><div class="off-align"><b>Alinhamento</b> ${esc(character.alignment || "—")}</div>`, "off-tall")}
-      ${offBox("Idiomas", `<p>${esc(character.languages || "—")}</p>`)}
-      ${offBox("Equipamento", inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`, "off-tall")}
-      ${offBox("Moedas", `<div class="off-coins">${["cp", "pp", "pe", "po", "pl"].map((k) => `<div><span>${k.toUpperCase()}</span><b>${character.coins?.[k] || 0}</b></div>`).join("")}</div>`)}
-    </div>
-  </div>`;
+  </div>` : "";
 
-  $("official-sheet").innerHTML = page1 + page2;
+  // --- Página 4: repertório completo ---
+  // Tudo que a classe (e a subclasse) pode aprender, marcado ou não, em
+  // colunas por nível de magia. É a página que a pessoa consulta quando
+  // vai preparar magias no dia seguinte, então precisa do cardápio todo.
+  const spellsByLevel = Array.from({ length: 10 }, (_, i) => spellRows.filter((s) => spellLevel(s) === i));
+  const repMaxLevel = Math.max((slots || []).reduce((m, n, i) => (n ? i + 1 : m), 0), pactInfo?.level || 0);
+  const levelBlock = (arr, lvl) => {
+    if (!arr.length) return "";
+    const marked = arr.filter((s) => s._prepared).length;
+    const total = lvl === 0 ? null : (slots[lvl - 1] || 0);
+    const pactHere = pactInfo && pactInfo.level === lvl ? pactInfo.count : 0;
+    // Acima do nível de magia que os espaços alcançam, a magia está na
+    // lista da classe mas ainda não dá pra lançar — fica na página, em
+    // cinza, pra servir de plano dos próximos níveis.
+    const locked = lvl > repMaxLevel;
+    const slotLabel = lvl === 0 ? "" : total ? ` · ${total} espaço(s)` : pactHere ? ` · ${pactHere} espaço(s) de Pacto` : " · ainda fora do seu alcance";
+    return `<div class="off-rep-block${locked ? " off-rep-locked" : ""}">
+      <div class="off-rep-head">${lvl === 0 ? "Truques" : `${lvl}º nível`} <small>${arr.length} magia(s) · ${marked} marcada(s)${slotLabel}</small></div>
+      <ul class="off-rep-list">${arr.map((s) => {
+        const fl = offSpellFlags(s);
+        const tags = [fl.c ? "C" : "", fl.r ? "R" : "", fl.m ? "M" : ""].filter(Boolean).join("");
+        return `<li class="${s._prepared ? "on" : ""}"><i>${s._prepared ? "●" : "○"}</i><span>${esc(s.name)}</span>${tags ? `<em>${tags}</em>` : ""}</li>`;
+      }).join("")}</ul>
+    </div>`;
+  };
+  const page4 = spellRows.length ? `<div class="off-page off-page3">
+    <div class="off-rep-title">
+      <h2>Repertório completo${refs.class ? ` — ${esc(titleOf(refs.class))}` : ""}</h2>
+      <p>Todas as ${spellRows.length} magias que ${esc(character.name || "o personagem")} pode aprender neste nível — as marcadas (●) estão preparadas/conhecidas. C = concentração · R = ritual · M = componente material.</p>
+      <div class="off-rep-limits">${casterLimits.map(({ label, level, info }) => {
+        const cap = info.prepared != null ? `${info.prepared} preparadas` : info.known != null ? `${info.known} conhecidas` : "lista completa";
+
+        return `<span><b>${esc(label)} ${level}</b> · ${info.cantrips != null ? `${info.cantrips} truques · ` : ""}${esc(cap)}</span>`;
+      }).join("")}</div>
+    </div>
+    <div class="off-rep-cols">${spellsByLevel.map(levelBlock).join("")}</div>
+  </div>` : "";
+
+  $("official-sheet").innerHTML = page1 + page2 + page3 + page4;
 }
 async function openPdfPreview() {
   const modal = $("modal"), box = $("modal-content");
@@ -4721,20 +5017,30 @@ function setup() {
   $("wizard-next")?.addEventListener("click", wizardNext);
   document.addEventListener("click", (e) => { const b = e.target.closest("[data-ability-detail]"); if (b) openAbilityDetail(b.dataset.abilityDetail); });
 
-  $("theme-toggle")?.addEventListener("click", () => {
-    const light = document.documentElement.getAttribute("data-theme") === "light";
-    if (light) document.documentElement.removeAttribute("data-theme"); else document.documentElement.setAttribute("data-theme", "light");
-    saveTheme(light ? "dark" : "light");
-    updateThemeToggleLabel();
-  });
-  updateThemeToggleLabel();
+  // Menus da barra do topo: um aberto por vez, e clicar fora fecha.
+  const menus = [...document.querySelectorAll(".appbar .menu")];
+  for (const m of menus) {
+    m.addEventListener("toggle", () => { if (m.open) menus.forEach((o) => { if (o !== m) o.open = false; }); });
+    m.querySelector(".menu-body")?.addEventListener("click", (e) => { if (e.target.closest("button")) m.open = false; });
+  }
+  document.addEventListener("click", (e) => { if (!e.target.closest(".appbar .menu")) menus.forEach((m) => { m.open = false; }); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") menus.forEach((m) => { m.open = false; }); });
+
+  $("skin-select")?.addEventListener("change", (e) => applySkin(e.target.value));
+  applySkin(getSavedSkin());
 }
-function updateThemeToggleLabel() {
-  const btn = $("theme-toggle");
-  if (!btn) return;
-  const light = document.documentElement.getAttribute("data-theme") === "light";
-  btn.textContent = light ? "🌙 Escuro" : "☀️ Claro";
-  btn.setAttribute("aria-pressed", light ? "true" : "false");
+// Cor da barra do navegador no celular por tema — sem isso o topo do
+// aparelho continua preto num tema claro.
+const SKIN_THEME_COLOR = { noite: "#0f1012", papel: "#ffffff", pergaminho: "#e7ddc6", mesa: "#141518" };
+function applySkin(skin) {
+  const v = SKINS.includes(skin) ? skin : "noite";
+  document.documentElement.setAttribute("data-skin", v);
+  document.documentElement.removeAttribute("data-theme"); // resquício do antigo botão claro/escuro
+  saveSkin(v);
+  const sel = $("skin-select");
+  if (sel && sel.value !== v) sel.value = v;
+  const meta = $("meta-theme-color");
+  if (meta) meta.setAttribute("content", SKIN_THEME_COLOR[v]);
 }
 
 // ------------------------------------------------------------

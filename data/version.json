@@ -2440,16 +2440,11 @@
   },
   "external": {
     "classFiles": [
-      "raw/external/class/D&D Wiki; Airbender (Element Bender).json",
-      "raw/external/class/D&D Wiki; Avatar (Element Bender).json",
       "raw/external/class/D&D Wiki; Brawler.json",
-      "raw/external/class/D&D Wiki; Earthbender (Element Bender).json",
-      "raw/external/class/D&D Wiki; Firebender (Element Bender).json",
-      "raw/external/class/D&D Wiki; Waterbender (Element Bender).json",
       "raw/external/subclass/KibblesTasty; Way of the Demon.json",
       "raw/external/subclass/OnTheRivir; The Rotting Blood.json"
     ],
-    "classFileCount": 8,
+    "classFileCount": 3,
     "raceFiles": [
       "raw/external/race/D&D Wiki; Dai-Oni.json",
       "raw/external/race/ESKape_Key; Lefou.json"

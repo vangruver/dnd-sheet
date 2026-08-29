@@ -15,7 +15,13 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   - **deslocamento**, tamanho, visão no escuro e traços da espécie;
   - **atributo de conjuração**, CD de magia e bônus de ataque mágico;
   - **características** de classe/subclasse/espécie/background até o nível atual;
-  - **lista de magias completa** da classe, por nível, via `spells/sources.json`.
+  - **lista de magias completa** da classe, por nível, via `spells/sources.json`, com
+    quantos truques/magias dá pra preparar naquele nível e quantos espaços de cada nível
+    o personagem tem (nas classes de 2014, que não trazem esse número na tabela, ele vem
+    da fórmula do PHB: modificador do atributo + nível na classe);
+  - **Defesa sem Armadura** de todas as classes do personagem: num Monge/Bárbaro a ficha
+    usa a de **maior CA** (e desconsidera a do Monge quando há escudo equipado), com um
+    seletor pra fixar outra na mão.
 - **Point buy** 27 pontos, atributos editáveis, especialização.
 - **Compêndio** e **catálogo de equipamento** pesquisáveis (itens e magias carregam sob demanda).
 - **Aba "Raças & Classes"**: galeria com a descrição narrativa completa (lore) de cada raça/espécie
@@ -25,7 +31,15 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   lista de subclasses/subespécies. Quando o registro não tem lore estruturada, mostra os traços
   mecânicos com um aviso.
 - **Múltiplos personagens salvos**: botão **"Meus Personagens"** lista todas as fichas salvas neste navegador — cria, alterna, duplica e apaga cada uma independente, sem perder o progresso das outras.
-- **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador).
+- **Quatro temas visuais** (barra do topo → **Ajustes → Tema**), salvos no navegador:
+  **Noite** (escuro, padrão), **Papel Branco** (claro e silencioso), **Pergaminho**
+  (o mesmo papel da ficha impressa — a tela fica igual ao PDF) e **Mesa** (denso, pra
+  ficha aberta durante a sessão). O tema é só aparência: não muda personagem, magias
+  marcadas nem o arquivo gerado.
+- **Importar / exportar** o personagem em JSON e **Ficha em PDF** (via impressão do navegador),
+  em quatro páginas no formato da ficha oficial: ficha de combate → detalhes do personagem →
+  conjuração (espaços, quantas magias dá pra preparar por classe e as marcadas) →
+  **repertório completo**, com todas as magias que a classe pode aprender e ● nas preparadas.
 - **Exportar pro Foundry VTT**: botão **"⇩ Foundry"** baixa um Actor no formato do sistema dnd5e (atributos,
   PV, CA, perícias, deslocamento, magias conhecidas e as características até o nível atual como itens) —
   importe pela aba de Atores do seu mundo Foundry. É uma exportação pontual, sem servidor: diferente do
