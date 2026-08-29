@@ -101,6 +101,39 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 
 O arquivo `.nojekyll` garante que a pasta `src/` seja servida sem processamento do Jekyll.
 
+## Instalar no celular
+
+A ficha é um **PWA**: não vai pra loja de aplicativos, você instala direto do navegador e
+ela vira um ícone na tela inicial, abre em tela cheia (sem barra de endereço) e funciona
+offline. Precisa ser a URL publicada em **HTTPS** (`https://<usuário>.github.io/<repo>/`) —
+por `file://` ou HTTP puro o service worker não registra e o botão de instalar não aparece.
+
+**Android (Chrome / Edge / Samsung Internet)**
+
+1. Abra a URL do site no navegador.
+2. Espere carregar uma vez (é o que registra o service worker e cacheia a casca do app).
+3. Toque no menu **⋮** → **Instalar app** / **Adicionar à tela inicial** — em muitos casos o
+   próprio Chrome mostra um banner de instalação no rodapé.
+4. Confirme. O ícone aparece na tela inicial como qualquer outro app.
+
+**iPhone / iPad (precisa ser o Safari)**
+
+1. Abra a URL **no Safari** — Chrome e Firefox no iOS não instalam PWA.
+2. Toque no botão **Compartilhar** (quadrado com a seta pra cima).
+3. Role a lista e toque em **Adicionar à Tela de Início** → **Adicionar**.
+
+**Primeiro uso e offline**
+
+Depois de instalar, abra o app uma vez **com internet** e toque em **"Atualizar dados"**: o
+service worker só cacheia HTML/JS/CSS/ícones, enquanto os dados do 5etools ficam num cache
+próprio em IndexedDB (7 dias). Sem esse primeiro carregamento a ficha abre offline, mas sem
+raças/classes/magias. Os personagens ficam salvos no armazenamento do próprio navegador —
+apagar os dados do site ou desinstalar o app apaga as fichas junto, então exporte antes.
+
+**Atualizações**: o service worker é *network-first*, então basta abrir o app com internet
+que ele já pega a versão nova. Se algo travar numa versão antiga, feche e reabra o app com
+conexão, ou desinstale e instale de novo.
+
 ## Rodar localmente
 
 ```bash
