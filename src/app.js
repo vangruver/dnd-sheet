@@ -1620,12 +1620,12 @@ function renderSaves(c) {
     toggleIn(character.saveProficiencies, i.dataset.save, i.checked || (character.auto?.classSaves || []).includes(i.dataset.save));
     saveCharacter(character); recalc();
   }));
-  $("save-list").querySelectorAll("[data-save-roll]").forEach((b) => b.addEventListener("click", () => {
+  $("save-list").querySelectorAll("[data-save-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const a = b.dataset.saveRoll, ok = character.saveProficiencies.includes(a), bonus = mod(effScore(a)) + (ok ? c.pb : 0);
-    const roll = rollDie(20), total = roll + bonus;
-    toast(`Resistência de ${ABILITY_NAMES[a]}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
-    sendToDiscord(discordMessage(`Resistência de ${ABILITY_NAMES[a]}`, `d20 (${roll}) ${fmt(bonus)}`, total));
-  }));
+    const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+    toast(`Resistência de ${ABILITY_NAMES[a]}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
+    sendToDiscord(discordMessage(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+  }); });
 }
 function renderSkills(c) {
   $("skill-list").innerHTML = SKILLS.map(([k, n, a]) => {
@@ -1641,14 +1641,14 @@ function renderSkills(c) {
     toggleIn(character.skillProficiencies, k, i.checked || auto.includes(k));
     saveCharacter(character); recalc();
   }));
-  $("skill-list").querySelectorAll("[data-skill-roll]").forEach((b) => b.addEventListener("click", () => {
+  $("skill-list").querySelectorAll("[data-skill-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const k = b.dataset.skillRoll, [, n, a] = SKILLS.find((s) => s[0] === k);
     const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
     const bonus = mod(effScore(a)) + c.pb * (ex ? 2 : p ? 1 : 0);
-    const roll = rollDie(20), total = roll + bonus;
-    toast(`${n}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
-    sendToDiscord(discordMessage(n, `d20 (${roll}) ${fmt(bonus)}`, total));
-  }));
+    const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+    toast(`${n}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
+    sendToDiscord(discordMessage(n, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+  }); });
 }
 function profLabel(x) {
   if (typeof x === "string") return inlineTags(x).replace(/\s*\|.*$/, "");
@@ -1697,6 +1697,42 @@ function renderIdentity() {
   $("identity").innerHTML = html;
 }
 // ------------------------------------------------------------
+// Rolagens de d20 com vantagem/desvantagem — qualquer botão de rolar
+// d20 (ataque, resistência, perícia, testes de monstro) aceita segurar
+// Shift (vantagem) ou Ctrl (desvantagem) no clique; os dois juntos se
+// cancelam, como na regra. Cada botão que usa isso ganha um title
+// explicando o atalho.
+// ------------------------------------------------------------
+function d20WithMode(e) {
+  const adv = !!e?.shiftKey, dis = !!e?.ctrlKey;
+  if (adv !== dis) {
+    const rolls = [rollDie(20), rollDie(20)];
+    const roll = adv ? Math.max(...rolls) : Math.min(...rolls);
+    return { rolls, roll, mode: adv ? "adv" : "dis" };
+  }
+  const roll = rollDie(20);
+  return { rolls: [roll], roll, mode: "normal" };
+}
+function d20RollHtml(rolls, roll, mode, cls = "") {
+  const picked = `<b class="${cls}">${roll}</b>`;
+  if (mode === "normal") return `d20 (${picked})`;
+  const label = mode === "adv" ? "vantagem" : "desvantagem";
+  return `2d20 ${label} (${rolls.map((r) => r === roll ? picked : r).join(", ")})`;
+}
+function d20RollPlain(rolls, roll, mode) {
+  if (mode === "normal") return `d20 (${roll})`;
+  return `2d20 ${mode === "adv" ? "vantagem" : "desvantagem"} [${rolls.join(", ")}] → ${roll}`;
+}
+const D20_MODE_TITLE = "Clique: normal · Shift: vantagem · Ctrl: desvantagem";
+// Dano crítico (segurar Shift ao clicar): dobra a quantidade de dados
+// rolados, sem dobrar o bônus fixo — regra padrão de crítico do 5e.
+function rollDamageWithMode(n, faces, e) {
+  const crit = !!e?.shiftKey;
+  const { rolls, total } = rollDice(crit ? n * 2 : n, faces);
+  return { rolls, total, crit };
+}
+const DAMAGE_MODE_TITLE = "Clique: normal · Shift: dano crítico (dobra os dados)";
+// ------------------------------------------------------------
 // Ataques — cálculo automático (atributo + proficiência + item)
 // ------------------------------------------------------------
 const ATTACK_ABILITY_LABEL = { str: "Força (corpo a corpo)", dex: "Destreza (à distância/leve)", spell: "Conjuração", manual: "Manual" };
@@ -1731,10 +1767,11 @@ function renderAttacks() {
         <label><input type="checkbox" data-a-prof="${i}" ${a.proficient ? "checked" : ""}> Proficiente</label>
         <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item">
         <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus manual" ${manual ? "" : "disabled"}>
+        <input data-a="range" data-i="${i}" value="${esc(a.range || "")}" placeholder="Distância (ex.: 9m/18m)">
       </div>
       <div class="attack-roll-row no-print">
-        <button type="button" data-roll-attack="${i}">🎲 Rolar Ataque</button>
-        <button type="button" data-roll-damage="${i}">🎲 Rolar Dano</button>
+        <button type="button" data-roll-attack="${i}" title="${D20_MODE_TITLE}">🎲 Rolar Ataque</button>
+        <button type="button" data-roll-damage="${i}" title="${DAMAGE_MODE_TITLE}">🎲 Rolar Dano</button>
         <span class="attack-roll-result" id="attack-result-${i}">${attackRollMessages[i] || ""}</span>
       </div>
     </div>`;
@@ -1771,26 +1808,28 @@ function renderAttacks() {
     delete attackRollMessages[Number(b.dataset.removeAttack)];
     character.attacks.splice(Number(b.dataset.removeAttack), 1); saveCharacter(character); renderAttacks();
   }));
-  $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", () => {
+  $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", (e) => {
     const i = Number(b.dataset.rollAttack), a = character.attacks[i];
-    const roll = rollDie(20), bonus = computeAttackBonus(a), total = roll + bonus;
+    const { rolls, roll, mode } = d20WithMode(e);
+    const bonus = computeAttackBonus(a), total = roll + bonus;
     const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
     const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
-    attackRollMessages[i] = `d20 (<b class="${cls}">${roll}</b>) ${fmt(bonus)} = <b>${total}</b>${note}`;
+    attackRollMessages[i] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    sendToDiscord(discordMessage(`Ataque — ${a.name || "arma sem nome"}`, `d20 (${roll}) ${fmt(bonus)}`, total) + note);
+    sendToDiscord(discordMessage(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total) + note);
   }));
-  $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", () => {
+  $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", (e) => {
     const i = Number(b.dataset.rollDamage), a = character.attacks[i];
     const parsed = parseDiceExpr(a.damage || "1d6");
     if (!parsed) { toast('Escreva o dano como "1d8" ou "2d6+1".'); return; }
-    const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
+    const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
     let extra = parsed.bonus || 0;
     if ((a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
     const total = diceTotal + extra;
-    attackRollMessages[i] = `${parsed.n}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>`;
+    const note = crit ? " — CRÍTICO" : "";
+    attackRollMessages[i] = `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    sendToDiscord(discordMessage(`Dano — ${a.name || "arma sem nome"}`, `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total));
+    sendToDiscord(discordMessage(`Dano — ${a.name || "arma sem nome"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total) + note);
   }));
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
@@ -3312,31 +3351,32 @@ async function renderMonsterStatblock(m) {
 }
 function wireMonsterModalRolls() {
   const box = $("modal-content");
-  box.querySelectorAll("[data-mon-attack]").forEach((b) => b.addEventListener("click", () => {
+  box.querySelectorAll("[data-mon-attack]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const a = currentModalMonsterGroups[b.dataset.monKind]?.[Number(b.dataset.monAttack)];
     const { toHit } = a ? actionRollables(a) : {};
     if (toHit == null) return;
-    const roll = rollDie(20), total = roll + toHit;
+    const { rolls, roll, mode } = d20WithMode(e), total = roll + toHit;
     const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
-    toast(`${a.name || "Ataque"}: d20 (${roll}) ${fmt(toHit)} = ${total}${note}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Ataque — ${a.name || "ação"}`, `d20 (${roll}) ${fmt(toHit)}`, total) + note);
-  }));
-  box.querySelectorAll("[data-mon-damage]").forEach((b) => b.addEventListener("click", () => {
+    toast(`${a.name || "Ataque"}: ${d20RollPlain(rolls, roll, mode)} ${fmt(toHit)} = ${total}${note}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Ataque — ${a.name || "ação"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(toHit)}`, total) + note);
+  }); });
+  box.querySelectorAll("[data-mon-damage]").forEach((b) => { b.title = DAMAGE_MODE_TITLE; b.addEventListener("click", (e) => {
     const a = currentModalMonsterGroups[b.dataset.monKind]?.[Number(b.dataset.monDamage)];
     const { damageExpr } = a ? actionRollables(a) : {};
     const parsed = damageExpr && parseDiceExpr(damageExpr);
     if (!parsed) { toast("Expressão de dano inválida."); return; }
-    const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
+    const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
     const total = diceTotal + (parsed.bonus || 0);
-    toast(`${a.name || "Dano"}: ${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Dano — ${a.name || "ação"}`, `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total));
-  }));
-  box.querySelectorAll("[data-mon-bonus-roll]").forEach((b) => b.addEventListener("click", () => {
+    const note = crit ? " — CRÍTICO" : "";
+    toast(`${a.name || "Dano"}: ${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}${note}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Dano — ${a.name || "ação"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total) + note);
+  }); });
+  box.querySelectorAll("[data-mon-bonus-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const bonus = Number(b.dataset.monBonusRoll) || 0, label = b.dataset.monBonusLabel || "Teste";
-    const roll = rollDie(20), total = roll + bonus;
-    toast(`${label}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, label, `d20 (${roll}) ${fmt(bonus)}`, total));
-  }));
+    const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+    toast(`${label}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, label, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+  }); });
   box.querySelector("[data-mon-hp-roll]")?.addEventListener("click", () => {
     const parsed = parseDiceExpr(currentModalMonster.hp?.formula || "");
     if (!parsed) { toast("Sem fórmula de dado de vida pra rolar."); return; }
@@ -3547,6 +3587,61 @@ function addAllSourceMonstersToActiveList() {
   renderMonsters();
 }
 
+// ------------------------------------------------------------
+// Importar lista de monstros exportada do site 5etools.com (botão
+// "Download JSON" de uma lista salva no bestiário — fileType
+// "bestiary-sublist"). Cada item vem só como um hash "nome_sigla"
+// (ex.: "axolotl_scoc" = Axolotl, fonte ScoC) — resolvemos contra o
+// mesmo bestiário oficial já usado pra pesquisar/adicionar monstros
+// individualmente. Itens de fontes de terceiros/homebrew (que a ficha
+// não sincroniza) ficam de fora e são listados pro mestre adicionar
+// à mão com "+ Criar monstro".
+// ------------------------------------------------------------
+function parseMonsterSublistItem(h) {
+  const decoded = decodeURIComponent(String(h || ""));
+  const idx = decoded.lastIndexOf("_");
+  if (idx < 0) return null;
+  return { name: decoded.slice(0, idx), sourceTag: decoded.slice(idx + 1) };
+}
+async function resolveBestiarySourceKey(tag) {
+  const idx = await loadBestiaryIndex();
+  return Object.keys(idx).find((k) => k.toLowerCase() === tag.toLowerCase()) || null;
+}
+async function importMonsterSublistFile(file) {
+  let json;
+  try { json = JSON.parse(await file.text()); }
+  catch { toast("Arquivo inválido — não é um JSON."); return; }
+  const items = Array.isArray(json?.items) ? json.items : null;
+  if (!items) { toast('Arquivo não reconhecido. Exporte uma lista do 5etools ("bestiary-sublist").'); return; }
+  const lists = ensureMonsterListsState();
+  const target = activeMonsterList(lists);
+  let added = 0, dup = 0;
+  const notFound = [];
+  const sourceKeyCache = new Map();
+  for (const item of items) {
+    const parsed = parseMonsterSublistItem(item?.h);
+    if (!parsed) continue;
+    if (!sourceKeyCache.has(parsed.sourceTag)) sourceKeyCache.set(parsed.sourceTag, await resolveBestiarySourceKey(parsed.sourceTag));
+    const sourceKey = sourceKeyCache.get(parsed.sourceTag);
+    const pool = sourceKey ? await loadBestiarySource(sourceKey) : [];
+    const m = pool.find((x) => String(x.name).toLowerCase() === parsed.name.toLowerCase());
+    if (!m) { notFound.push(parsed.name); continue; }
+    if (addMonsterToList(m, lists, target.id)) added++; else dup++;
+  }
+  saveMonsterLists(lists);
+  renderMonsters();
+  openMonsterImportResultModal({ total: items.length, added, dup, notFound, listName: target.name });
+}
+function openMonsterImportResultModal({ total, added, dup, notFound, listName }) {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">IMPORTAR LISTA</span><h2>Resultado da importação</h2></div></div>
+    <div class="modal-body">
+      <p>${added} de ${total} monstro(s) adicionado(s) a "<b>${esc(listName)}</b>".${dup ? ` ${dup} já estava(m) na lista.` : ""}</p>
+      ${notFound.length ? `<p class="muted">${notFound.length} não encontrado(s) no bestiário oficial sincronizado (provavelmente de fonte de terceiros/homebrew não coberta por aqui) — adicione-os à mão com "+ Criar monstro" se precisar deles:</p><ul>${notFound.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+      <div class="modal-actions"><button type="button" class="primary" id="mi-close">Fechar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("mi-close").addEventListener("click", () => $("modal").classList.add("hidden"));
+}
 function openMonsterCreateModal() {
   $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">MONSTRO</span><h2>Criar monstro</h2><p class="muted">Só o essencial pra ter um stat block jogável, com botões de rolagem prontos. Ações/traços podem ficar sem bônus de ataque/dano estruturado — nesse caso o texto aparece, mas sem botão de rolar.</p></div></div>
     <div class="modal-body monster-create-form">
@@ -4323,7 +4418,7 @@ async function buildOfficialSheet() {
           <div class="off-oval"><span>Tamanho</span><b>${esc(offSizeLabel())}</b></div>
           <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
         </div>
-        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
+        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
         ${offBox("Características de Classe", offFeatureLines([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]), "off-tall")}
       </div>
     </div>
@@ -4731,10 +4826,11 @@ function foundryWeaponAbility(a) {
   return "str";
 }
 function foundryWeaponItem(a) {
+  const descLines = [a.damage ? `Dano: ${esc(a.damage)}` : "", a.range ? `Distância: ${esc(a.range)}` : ""].filter(Boolean);
   return {
     name: a.name || "Ataque", type: "weapon", img: "icons/svg/sword.svg",
     system: {
-      description: { value: a.damage ? `Dano: ${esc(a.damage)}` : "" },
+      description: { value: descLines.join("<br>") },
       proficient: a.proficient ? 1 : 0,
       ability: foundryWeaponAbility(a),
     },
@@ -4946,11 +5042,17 @@ function setup() {
   $("monster-list-rename")?.addEventListener("click", () => openMonsterListNameModal("rename"));
   $("monster-list-delete")?.addEventListener("click", deleteActiveMonsterList);
   $("monster-add-all-source")?.addEventListener("click", addAllSourceMonstersToActiveList);
+  $("monster-import-btn")?.addEventListener("click", () => $("monster-import-input").click());
+  $("monster-import-input")?.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (file) await importMonsterSublistFile(file);
+  });
   $("collapse-creator").addEventListener("click", () => {
     $("creator").classList.toggle("collapsed");
     $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";
   });
-  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0 }); saveCharacter(character); renderAttacks(); });
+  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", range: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0 }); saveCharacter(character); renderAttacks(); });
   $("add-condition")?.addEventListener("click", openConditionPicker);
   $("next-round")?.addEventListener("click", advanceRound);
   $("short-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso curto? Restaura os recursos que recuperam em descanso curto (e espaços de Pacto, se houver).")) shortRest(); });
