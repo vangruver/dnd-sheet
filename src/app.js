@@ -2938,7 +2938,7 @@ function extractRollablesFromEntries(entries) {
 function actionText(a) { return a.text != null ? esc(a.text) : esc(plainOf(a.entries)); }
 function actionRollables(a) {
   if (a.toHit != null || a.damageExpr) return { toHit: a.toHit ?? null, damageExpr: a.damageExpr || null };
-  return extractRollablesFromEntries(a.entries);
+  return extractRollablesFromEntries(a.entries ?? a.headerEntries);
 }
 // Normaliza os grupos de ações do monstro (oficial ou criado na mão) num
 // único formato { trait, action, bonus, reaction, legendary }. Se o
@@ -2952,6 +2952,7 @@ function normalizeMonsterGroups(m) {
     bonus: m.bonus || [],
     reaction: m.reaction || [],
     legendary: m.legendary || [],
+    spellcasting: m.spellcasting || [],
   };
   if (!groups.legendary.length && m.legendaryGroup) {
     const g = monsterLegendaryGroups.find((x) => String(x.name).toLowerCase() === String(m.legendaryGroup.name).toLowerCase() && String(x.source).toLowerCase() === String(m.legendaryGroup.source).toLowerCase());
@@ -2972,18 +2973,47 @@ function monsterEntryGroupHtml(list, kind) {
   if (!list?.length) return "";
   return list.map((a, i) => monsterEntryHtml(a, i, kind)).join("");
 }
-function bonusRollButtonsHtml(map, kind) {
-  if (!map || typeof map !== "object") return "";
-  return Object.entries(map).filter(([k]) => k !== "other" && k !== "choose").map(([k, v]) => {
-    const n = parseInt(String(typeof v === "object" ? v.special || "" : v).replace(/[^-\d]/g, ""), 10);
-    if (Number.isNaN(n)) return "";
-    const label = kind === "save" ? (ABILITY_NAMES[k] || k.toUpperCase()) : (SKILLS.find((s) => s[0] === k)?.[1] || k);
-    return `<button type="button" class="mon-roll-btn" data-mon-bonus-roll="${n}" data-mon-bonus-label="${esc(label)}">${esc(label)} ${fmt(n)}</button>`;
+// Extrai o bônus numérico de um valor bruto de save/skill do 5etools
+// ({@dc}, "+5", {special:"+5"}...) — null se não der pra converter.
+function parseBonusNum(v) {
+  const n = parseInt(String(typeof v === "object" ? v?.special || "" : v ?? "").replace(/[^-\d]/g, ""), 10);
+  return Number.isNaN(n) ? null : n;
+}
+// Bônus de resistência/perícia do monstro: usa o valor listado no
+// bloco (já inclui proficiência/expertise) quando existe, senão cai
+// pro modificador puro do atributo — assim dá pra rolar qualquer
+// resistência/perícia, proficiente ou não.
+function monsterSaveBonus(m, ability) {
+  const n = parseBonusNum(m.save?.[ability]);
+  return n != null ? n : monsterAbilityMod(m, ability);
+}
+function monsterSkillBonus(m, key, ability) {
+  const n = parseBonusNum(m.skill?.[key]);
+  return n != null ? n : monsterAbilityMod(m, ability);
+}
+function allSavesButtonsHtml(m) {
+  return ABILITIES.map((a) => {
+    const proficient = parseBonusNum(m.save?.[a]) != null;
+    const n = monsterSaveBonus(m, a);
+    return `<button type="button" class="mon-roll-btn${proficient ? " mon-roll-prof" : ""}" data-mon-bonus-roll="${n}" data-mon-bonus-label="Resistência de ${esc(ABILITY_NAMES[a])}">${esc(ABILITY_NAMES[a].slice(0, 3))} ${fmt(n)}</button>`;
+  }).join(" ");
+}
+function allSkillsButtonsHtml(m) {
+  return SKILLS.map(([key, label, ability]) => {
+    const proficient = parseBonusNum(m.skill?.[key]) != null;
+    const n = monsterSkillBonus(m, key, ability);
+    return `<button type="button" class="mon-roll-btn${proficient ? " mon-roll-prof" : ""}" data-mon-bonus-roll="${n}" data-mon-bonus-label="${esc(label)}">${esc(label)} ${fmt(n)}</button>`;
   }).join(" ");
 }
 function monsterSpellcastingHtml(m) {
   if (!Array.isArray(m.spellcasting) || !m.spellcasting.length) return "";
-  return m.spellcasting.map((sc) => `<div class="monster-action-row"><p>${sc.name ? `<strong>${esc(inlineTags(sc.name))}.</strong> ` : ""}${esc(plainOf(sc.headerEntries || sc.entries || ""))}</p></div>`).join("");
+  return m.spellcasting.map((sc, idx) => {
+    const name = sc.name ? esc(inlineTags(sc.name)) : "";
+    const text = esc(plainOf(sc.headerEntries || sc.entries || ""));
+    const { toHit } = actionRollables(sc);
+    const btn = toHit != null ? `<div class="monster-action-btns"><button type="button" class="mon-roll-btn" data-mon-attack="${idx}" data-mon-kind="spellcasting">🎯 Ataque com magia ${fmt(toHit)}</button></div>` : "";
+    return `<div class="monster-action-row"><p>${name ? `<strong>${name}.</strong> ` : ""}${text}</p>${btn}</div>`;
+  }).join("");
 }
 function monsterCardTag(m) {
   const src = m.custom ? "Criado" : (m.source || "—");
@@ -3005,10 +3035,10 @@ async function renderMonsterStatblock(m) {
         <div><span>Iniciativa</span><button type="button" class="mon-roll-btn" data-mon-bonus-roll="${monsterAbilityMod(m, "dex")}" data-mon-bonus-label="Iniciativa">🎲 d20 ${fmt(monsterAbilityMod(m, "dex"))}</button></div>
       </div>
       <div class="monster-ability-grid">
-        ${ABILITIES.map((a) => `<div><span>${ABILITY_NAMES[a].slice(0, 3).toUpperCase()}</span><b>${Number(m[a]) || 10}</b><small>${fmt(monsterAbilityMod(m, a))}</small></div>`).join("")}
+        ${ABILITIES.map((a) => `<div><span>${ABILITY_NAMES[a].slice(0, 3).toUpperCase()}</span><b>${Number(m[a]) || 10}</b><small>${fmt(monsterAbilityMod(m, a))}</small><button type="button" class="mon-roll-btn" data-mon-bonus-roll="${monsterAbilityMod(m, a)}" data-mon-bonus-label="Teste de ${esc(ABILITY_NAMES[a])}">🎲</button></div>`).join("")}
       </div>
-      <p><b>Resistências</b> ${bonusRollButtonsHtml(m.save, "save") || esc(m.savesText || "—")}</p>
-      <p><b>Perícias</b> ${bonusRollButtonsHtml(m.skill, "skill") || esc(m.skillsText || "—")}</p>
+      <p><b>Resistências</b>${m.savesText ? ` <span class="muted">(bloco original: ${esc(m.savesText)})</span>` : ""}</p><div class="monster-btn-wrap">${allSavesButtonsHtml(m)}</div>
+      <p><b>Perícias</b>${m.skillsText ? ` <span class="muted">(bloco original: ${esc(m.skillsText)})</span>` : ""}</p><div class="monster-btn-wrap">${allSkillsButtonsHtml(m)}</div>
       ${m.resist ? `<p><b>Resistência a dano</b> ${esc((Array.isArray(m.resist) ? m.resist : [m.resist]).map((x) => typeof x === "string" ? x : plainOf(x)).join(", "))}</p>` : ""}
       ${m.immune ? `<p><b>Imunidade a dano</b> ${esc((Array.isArray(m.immune) ? m.immune : [m.immune]).map((x) => typeof x === "string" ? x : plainOf(x)).join(", "))}</p>` : ""}
       ${m.conditionImmune ? `<p><b>Imunidade a condição</b> ${esc(m.conditionImmune.join(", "))}</p>` : ""}
