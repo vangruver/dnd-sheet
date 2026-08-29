@@ -13,6 +13,7 @@ import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
   getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
+  getDiscordWebhook, saveDiscordWebhook,
 } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
@@ -41,7 +42,7 @@ let wizardIndex = 0;
 let creationMode = getSavedCreationMode();
 
 const fresh = () => ({
-  schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "official", abilityMode: "pointbuy",
+  schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "all", abilityMode: "pointbuy",
   classId: "", subclassId: "", raceId: "", backgroundId: "",
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
@@ -1592,6 +1593,7 @@ function renderAttacks() {
     const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
     attackRollMessages[i] = `d20 (<b class="${cls}">${roll}</b>) ${fmt(bonus)} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
+    sendToDiscord(discordMessage(`Ataque — ${a.name || "arma sem nome"}`, `d20 (${roll}) ${fmt(bonus)}`, total) + note);
   }));
   $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", () => {
     const i = Number(b.dataset.rollDamage), a = character.attacks[i];
@@ -1603,6 +1605,7 @@ function renderAttacks() {
     const total = diceTotal + extra;
     attackRollMessages[i] = `${parsed.n}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
+    sendToDiscord(discordMessage(`Dano — ${a.name || "arma sem nome"}`, `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total));
   }));
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
@@ -1853,6 +1856,7 @@ function renderHitDiceTracker() {
     const maxHp = calc().hp;
     character.hpCurrent = Math.min(maxHp, (character.hpCurrent == null ? maxHp : character.hpCurrent) + healed);
     hdRollMessages[key] = `Rolou d${die}: <b>${roll}</b> + CON ${fmt(conMod)} = <b>${healed} PV recuperados</b> (repouso curto obrigatório).`;
+    sendToDiscord(discordMessage("Dado de Vida", `d${die} (${roll}) + CON ${fmt(conMod)}`, `${healed} PV recuperados`));
     saveCharacter(character);
     recalc();
   }));
@@ -2013,6 +2017,63 @@ function openConcentrationPicker() {
 }
 
 // ------------------------------------------------------------
+// Integração com Discord — cada rolagem vira uma mensagem num canal
+// via webhook (cada jogador cola o link do PRÓPRIO servidor/canal em
+// "🔗 Discord" no topo; sem webhook configurado, sendToDiscord não faz
+// nada). Mensagem sempre traz quem rolou, o que foi rolado, o valor de
+// cada dado e o total somado — nunca só o resultado final.
+// ------------------------------------------------------------
+function discordMessage(label, detail, total) {
+  const name = (character?.name || "").trim() || "Personagem sem nome";
+  return `🎲 **${name}** rolou **${label}**: ${detail} = **${total}**`;
+}
+async function sendToDiscord(text) {
+  const url = getDiscordWebhook();
+  if (!url) return;
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: text.slice(0, 1900) }),
+    });
+    if (!res.ok) toast(`Discord recusou a rolagem (HTTP ${res.status}).`);
+  } catch {
+    toast("Não deu pra enviar a rolagem pro Discord — confira o link do webhook.");
+  }
+}
+function renderDiscordSettings() {
+  const url = getDiscordWebhook();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Discord</h2><p class="muted">Cole aqui o link do webhook do canal onde as rolagens devem aparecer. Cada jogador configura o seu — dá pra usar servidores diferentes ou o mesmo, cada um no próprio navegador.</p></div></div>
+    <div class="modal-body">
+      <label>Link do webhook<br><input id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." value="${esc(url)}" style="width:100%"></label>
+      <p class="muted" style="margin-top:8px">No Discord: Configurações do Canal → Integrações → Webhooks → Novo Webhook → Copiar link do Webhook.</p>
+      <div class="condition-duration-row" style="margin-top:12px">
+        <button type="button" class="add-btn" id="discord-webhook-save">Salvar</button>
+        <button type="button" id="discord-webhook-test">Enviar teste</button>
+        ${url ? `<button type="button" id="discord-webhook-remove">Remover</button>` : ""}
+      </div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("discord-webhook-save")?.addEventListener("click", () => {
+    saveDiscordWebhook($("discord-webhook-input").value.trim());
+    toast("Webhook do Discord salvo.");
+    renderDiscordSettings();
+  });
+  $("discord-webhook-test")?.addEventListener("click", async () => {
+    const pending = $("discord-webhook-input").value.trim();
+    if (pending) saveDiscordWebhook(pending);
+    await sendToDiscord(discordMessage("um teste", "🎉", "funcionou!"));
+    toast("Mensagem de teste enviada.");
+  });
+  $("discord-webhook-remove")?.addEventListener("click", () => {
+    saveDiscordWebhook("");
+    toast("Webhook removido.");
+    renderDiscordSettings();
+  });
+}
+
+// ------------------------------------------------------------
 // Rolador de dados genérico — expressão tipo "2d6+3" sempre à mão
 // (botão flutuante), útil além dos rolamentos de ataque/dano/morte.
 // Histórico é só da sessão atual (não é salvo com o personagem).
@@ -2027,6 +2088,7 @@ function rollExpression(expr) {
   diceHistory.unshift({ n, faces, bonus, rolls, result });
   diceHistory = diceHistory.slice(0, 12);
   renderDiceHistory();
+  sendToDiscord(discordMessage(`${n}d${faces}${bonus ? fmt(bonus) : ""}`, `[${rolls.join(", ")}]${bonus ? ` ${fmt(bonus)}` : ""}`, result));
   return result;
 }
 function renderDiceHistory() {
@@ -2591,11 +2653,13 @@ function renderDeath(c) {
   }));
   $("death-roll")?.addEventListener("click", () => {
     const roll = rollDie(20);
-    if (roll === 20) { d.success = 0; d.failure = 0; character.hpCurrent = 1; toast("Rolou 20 natural! Recupera 1 PV e volta à consciência."); }
-    else if (roll === 1) { d.failure = Math.min(3, d.failure + 2); toast("Rolou 1 natural — conta como 2 falhas."); }
-    else if (roll >= 10) { d.success = Math.min(3, d.success + 1); toast(`Rolou ${roll} — sucesso (CD 10).`); }
-    else { d.failure = Math.min(3, d.failure + 1); toast(`Rolou ${roll} — falha (CD 10).`); }
+    let outcome;
+    if (roll === 20) { d.success = 0; d.failure = 0; character.hpCurrent = 1; toast("Rolou 20 natural! Recupera 1 PV e volta à consciência."); outcome = "20 natural — recupera 1 PV e volta à consciência!"; }
+    else if (roll === 1) { d.failure = Math.min(3, d.failure + 2); toast("Rolou 1 natural — conta como 2 falhas."); outcome = "1 natural — conta como 2 falhas"; }
+    else if (roll >= 10) { d.success = Math.min(3, d.success + 1); toast(`Rolou ${roll} — sucesso (CD 10).`); outcome = "sucesso (CD 10)"; }
+    else { d.failure = Math.min(3, d.failure + 1); toast(`Rolou ${roll} — falha (CD 10).`); outcome = "falha (CD 10)"; }
     character.deathSaves = d; saveCharacter(character); recalc();
+    sendToDiscord(discordMessage("Teste de Resistência contra a Morte", `d20 (${roll})`, outcome));
   });
   $("death-reset")?.addEventListener("click", () => {
     character.deathSaves = { success: 0, failure: 0 };
@@ -3780,6 +3844,7 @@ function setup() {
   $("import-character").addEventListener("change", async (e) => { try { attackRollMessages = {}; hdRollMessages = {}; applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
   $("modal-close").addEventListener("click", () => $("modal").classList.add("hidden"));
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) $("modal").classList.add("hidden"); });
+  $("discord-settings")?.addEventListener("click", renderDiscordSettings);
   const refresh = $("refresh-data");
   if (refresh) refresh.addEventListener("click", async () => {
     if (!confirm("Baixar novamente os dados do 5etools? O cache local será limpo.")) return;
