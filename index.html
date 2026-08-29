@@ -136,6 +136,7 @@
     <button class="tab" data-tab="notes">📝 Notas</button>
     <button class="tab" data-tab="codex">📚 Raças & Classes</button>
     <button class="tab" data-tab="compendium">🔎 Compêndio</button>
+    <button class="tab" data-tab="monsters">🐉 Monstros</button>
   </nav>
 
   <!--
@@ -250,6 +251,27 @@
   </section>
 
   <section class="tab-page" id="tab-compendium"><div class="page-title"><h2>Compêndio</h2><p>Pesquise diretamente nos registros carregados do 5etools.</p></div><section class="paper-card compendium-toolbar"><input id="compendium-search" placeholder="Pesquisar no compêndio…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="spell">Magias</option><option value="item">Itens</option><option value="feat">Talentos</option></select></section><div id="compendium-results" class="catalog-grid"></div></section>
+
+  <section class="tab-page" id="tab-monsters">
+    <div class="page-title"><h2>Monstros</h2><p>Kit do mestre: puxe qualquer criatura do bestiário oficial do 5etools (Manual dos Monstros e todas as aventuras prontas — Curse of Strahd, Storm King's Thunder, Lost Mine of Phandelver etc.) ou crie a sua. Independe do personagem aberto na ficha. Cada rolagem de ataque/dano/teste vai direto pro Discord configurado em "🔗 Discord" no topo.</p></div>
+    <section class="paper-card no-print">
+      <div class="segmented" id="monster-view-tabs">
+        <button class="active" data-monview="roster">Meus Monstros</button>
+        <button data-monview="browse">Bestiário Oficial</button>
+      </div>
+      <div id="monster-browse-toolbar" class="hidden">
+        <div class="search-row">
+          <input id="monster-search" placeholder="Pesquisar monstro pelo nome…">
+          <select id="monster-source"><option value="">Escolha um livro/aventura…</option></select>
+        </div>
+        <p class="muted">Escolher um livro carrega só aquele arquivo (rápido). Pra pesquisar em <b>todo</b> o bestiário oficial de uma vez (mais de 150 livros/aventuras), use o botão abaixo — demora mais na primeira vez, depois fica em cache.</p>
+        <button type="button" class="add-btn" id="monster-load-all">🔎 Buscar em todas as fontes</button>
+        <span id="monster-load-status" class="muted"></span>
+      </div>
+      <button type="button" class="add-btn no-print" id="monster-create-btn">+ Criar monstro</button>
+    </section>
+    <div id="monster-results" class="catalog-grid"></div>
+  </section>
 </main>
 
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-box"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>

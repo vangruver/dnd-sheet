@@ -1024,6 +1024,34 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .off-coins span{display:block;font-size:6.5px;color:#777}
 .off-coins b{font:800 13px var(--font-head)}
 
+/* ============================================================
+   Aba Monstros (kit do mestre)
+   ============================================================ */
+#monster-browse-toolbar{margin-top:10px}
+#monster-browse-toolbar .search-row{margin-bottom:8px}
+#monster-load-status{margin-left:10px}
+#monster-create-btn{margin-top:10px}
+.monster-statblock h3{margin-top:22px}
+.monster-top-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:12px 0}
+.monster-top-stats>div{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 10px;text-align:center}
+.monster-top-stats span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mut)}
+.monster-top-stats b{font:700 16px var(--font-head);color:var(--text)}
+.monster-top-stats button{display:block;margin:4px auto 0}
+.monster-ability-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}
+.monster-ability-grid>div{background:var(--inset);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px;text-align:center}
+.monster-ability-grid span{display:block;font-size:9px;color:var(--text-mut)}
+.monster-ability-grid b{font:700 15px var(--font-head)}
+.monster-ability-grid small{display:block;color:var(--text-dim)}
+.monster-action-row{margin:10px 0}
+.monster-action-row p{margin:0 0 6px}
+.monster-action-btns{display:flex;flex-wrap:wrap;gap:6px}
+.mon-roll-btn{border:1px solid var(--red-dim);background:var(--red-soft);color:var(--red-hi);border-radius:var(--radius-xs);padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer}
+.mon-roll-btn:hover{background:linear-gradient(160deg,var(--red),var(--red-dim));color:#fff}
+.monster-form-row{display:grid;gap:6px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-xs);padding:10px;margin-bottom:8px;position:relative}
+.monster-form-row textarea{width:100%;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px;font:inherit;resize:vertical}
+.monster-form-row [data-mc-remove-row]{position:absolute;top:6px;right:6px}
+.monster-form-action-row .two-input{margin-top:2px}
+
 @media print{
   @page{size:A4 portrait;margin:8mm}
   body{background:#fff;color:#111;font-size:11px}

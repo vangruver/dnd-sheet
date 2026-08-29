@@ -133,3 +133,11 @@ export function saveDiscordWebhook(url) {
   try { url ? localStorage.setItem(DISCORD_WEBHOOK_KEY, url) : localStorage.removeItem(DISCORD_WEBHOOK_KEY); }
   catch { /* modo privado */ }
 }
+
+// Monstros do mestre — lista à parte de qualquer personagem salvo neste
+// navegador: monstros do bestiário oficial (5etools, todas as aventuras)
+// adicionados pra consulta rápida, mais monstros criados na mão. Fica
+// solta (não é "ficha" de ninguém), já que quem usa essa aba é o mestre.
+const MONSTERS_KEY = "dnd-ficha-auto-monsters-v1";
+export function getMonsters() { try { const v = localStorage.getItem(MONSTERS_KEY); const arr = v ? JSON.parse(v) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
+export function saveMonsters(arr) { try { localStorage.setItem(MONSTERS_KEY, JSON.stringify(arr || [])); } catch { /* modo privado */ } }

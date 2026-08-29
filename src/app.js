@@ -3,6 +3,7 @@ import {
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
   manifestEntries, isHomebrew as hb, isPrerelease as pre, isExternal as ext, normType, editionOf, currentVersionInfo,
   descriptionEntries, matchesEdition, isReprinted,
+  loadBestiaryIndex, loadBestiarySource, loadAllBestiary, loadLegendaryGroups,
 } from "./database.js";
 import { clearCache } from "./store.js";
 import {
@@ -13,13 +14,19 @@ import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
   getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
-  getDiscordWebhook, saveDiscordWebhook,
+  getDiscordWebhook, saveDiscordWebhook, getMonsters, saveMonsters,
 } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
 let pickerType = null, eqCat = "inventory", pickerLegacy = true, spellBookClassId = null;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
+let monsterState = { view: "roster", query: "", source: "" };
+let monsterBrowseCache = []; // monstros já baixados nesta sessão (por fonte selecionada, ou tudo se "carregar todas")
+let monsterAllLoaded = false;
+let monsterLegendaryGroups = [];
+let currentModalMonster = null;      // monstro exibido no modal de stat block agora
+let currentModalMonsterGroups = {};  // { trait:[], action:[], bonus:[], reaction:[], legendary:[] } já normalizados
 
 // ------------------------------------------------------------
 // Assistente guiado de criação — passo a passo (espécie → classe →
@@ -1088,7 +1095,7 @@ function renderAutoChoices(data) {
     const types = new Set(prog.featureType);
     const lvl = Number(character.level);
     const opts = manifest().filter((x) =>
-      normType(x.type) === "optionalfeature" && !hb(x) &&
+      normType(x.type) === "optionalfeature" && pickerContentOk(x) &&
       ((x.__rec || recordsForEntity(x)[0])?.featureType || []).some((t) => types.has(t)) &&
       matchesEdition(x, character.edition, true) &&
       prereqLevel(x.__rec || recordsForEntity(x)[0] || {}) <= lvl
@@ -2838,6 +2845,394 @@ async function renderCompendium() {
 }
 
 // ------------------------------------------------------------
+// Monstros (kit do mestre) — independente do personagem aberto na
+// ficha. Duas fontes: o bestiário oficial do 5etools (baixado sob
+// demanda, por livro/aventura — mesmo padrão de spellsForClass) e
+// monstros criados na mão. Os dois formatos são normalizados na hora de
+// desenhar o stat block (ver monsterAC/monsterHp/monsterSpeed/etc.), pra
+// um único renderizador cobrir os dois casos. Cada botão de rolagem
+// (ataque, dano, resistência/perícia, iniciativa, dado de vida) manda a
+// rolagem pro Discord com sendToDiscord, do mesmo jeito que os ataques
+// do personagem — só troca o nome de quem rolou.
+// ------------------------------------------------------------
+function crText(cr) {
+  if (cr == null) return "—";
+  if (typeof cr === "object") return crText(cr.cr) + (cr.lair ? ` (covil ${crText(cr.lair)})` : "");
+  return String(cr);
+}
+function monsterTypeText(t) {
+  if (t == null) return "";
+  if (typeof t === "string") return t;
+  const tags = Array.isArray(t.tags) ? t.tags.map((x) => (typeof x === "string" ? x : x.tag)).join(", ") : "";
+  return `${t.type || ""}${tags ? ` (${tags})` : ""}`;
+}
+function monsterSizeText(s) {
+  const MAP = { T: "Miúdo", S: "Pequeno", M: "Médio", L: "Grande", H: "Enorme", G: "Colossal" };
+  const arr = Array.isArray(s) ? s : [s];
+  return arr.filter(Boolean).map((x) => MAP[x] || x).join("/") || "—";
+}
+function monsterAbilityMod(m, key) { return mod(Number(m?.[key]) || 10); }
+function monsterPassive(m) {
+  if (m.passive != null) return m.passive;
+  return 10 + monsterAbilityMod(m, "wis");
+}
+function monsterAC(m) {
+  if (m.ac == null) return "—";
+  if (Array.isArray(m.ac)) {
+    return m.ac.map((a) => {
+      if (typeof a === "number") return String(a);
+      const src = a.from ? a.from.map((f) => esc(inlineTags(f))).join(", ") : a.condition ? esc(inlineTags(a.condition)) : "";
+      return `${a.ac}${src ? ` (${src})` : ""}`;
+    }).join(" / ");
+  }
+  return `${m.ac}${m.acNote ? ` (${esc(m.acNote)})` : ""}`;
+}
+function monsterHpAverage(m) {
+  if (m.hp && typeof m.hp === "object" && m.hp.average != null) return m.hp.average;
+  return null;
+}
+function monsterHp(m) {
+  const avg = monsterHpAverage(m);
+  const formula = m.hp?.formula;
+  if (avg == null && !formula) return "—";
+  return `${avg ?? "—"}${formula ? ` (${esc(formula)})` : ""}`;
+}
+const SPEED_LABELS = { walk: "", fly: "voo ", swim: "natação ", climb: "escalada ", burrow: "escavação " };
+function monsterSpeed(m) {
+  if (m.speed && typeof m.speed === "object") {
+    const parts = Object.entries(m.speed)
+      .filter(([k, v]) => v && k !== "canHover" && k !== "choose")
+      .map(([k, v]) => `${SPEED_LABELS[k] ?? `${k} `}${typeof v === "object" ? v.number : v} pés`);
+    return parts.join(", ") || "—";
+  }
+  return m.speedText || "—";
+}
+function monsterSenses(m) {
+  const parts = [];
+  if (Array.isArray(m.senses) && m.senses.length) parts.push(m.senses.map((s) => esc(inlineTags(s))).join(", "));
+  else if (m.sensesText) parts.push(esc(m.sensesText));
+  parts.push(`percepção passiva ${monsterPassive(m)}`);
+  return parts.join(", ");
+}
+function monsterLanguages(m) {
+  if (Array.isArray(m.languages) && m.languages.length) return m.languages.map((l) => esc(inlineTags(l))).join(", ");
+  if (m.languagesText) return esc(m.languagesText);
+  return "—";
+}
+function monsterAlignmentText(m) {
+  if (typeof m.alignment === "string") return m.alignment;
+  if (Array.isArray(m.alignment)) return m.alignment.map((a) => (typeof a === "string" ? a : a.alignment?.join?.("") || "")).join(" ou ");
+  return m.alignmentText || "—";
+}
+// Extrai bônus de ataque ({@hit N}) e expressão de dano ({@damage NdM+B})
+// de dentro do texto bruto (entries) de uma ação oficial do 5etools —
+// usado só quando a ação não já traz toHit/damageExpr estruturados
+// (caso dos monstros criados na mão, ver openMonsterCreateModal).
+function extractRollablesFromEntries(entries) {
+  const raw = JSON.stringify(entries ?? "");
+  const hitM = raw.match(/\{@hit\s+(-?\d+)/i);
+  const dmgM = raw.match(/\{@(?:damage|dice)\s+([^}|"\\]+)/i);
+  return { toHit: hitM ? Number(hitM[1]) : null, damageExpr: dmgM ? dmgM[1].trim() : null };
+}
+function actionText(a) { return a.text != null ? esc(a.text) : esc(plainOf(a.entries)); }
+function actionRollables(a) {
+  if (a.toHit != null || a.damageExpr) return { toHit: a.toHit ?? null, damageExpr: a.damageExpr || null };
+  return extractRollablesFromEntries(a.entries);
+}
+// Normaliza os grupos de ações do monstro (oficial ou criado na mão) num
+// único formato { trait, action, bonus, reaction, legendary }. Se o
+// monstro não tem ações lendárias próprias mas aponta pra um
+// legendaryGroup (5etools compartilha o texto entre vários monstros da
+// mesma "família", ex. todos os dragões), busca o grupo já carregado.
+function normalizeMonsterGroups(m) {
+  const groups = {
+    trait: m.trait || [],
+    action: m.action || [],
+    bonus: m.bonus || [],
+    reaction: m.reaction || [],
+    legendary: m.legendary || [],
+  };
+  if (!groups.legendary.length && m.legendaryGroup) {
+    const g = monsterLegendaryGroups.find((x) => String(x.name).toLowerCase() === String(m.legendaryGroup.name).toLowerCase() && String(x.source).toLowerCase() === String(m.legendaryGroup.source).toLowerCase());
+    if (g?.legendary) groups.legendary = g.legendary;
+  }
+  return groups;
+}
+function monsterEntryHtml(a, idx, kind) {
+  const name = a.name ? esc(inlineTags(a.name)) : "";
+  const text = actionText(a);
+  const { toHit, damageExpr } = actionRollables(a);
+  const btns = [];
+  if (toHit != null) btns.push(`<button type="button" class="mon-roll-btn" data-mon-attack="${idx}" data-mon-kind="${esc(kind)}">🎯 Ataque ${fmt(toHit)}</button>`);
+  if (damageExpr) btns.push(`<button type="button" class="mon-roll-btn" data-mon-damage="${idx}" data-mon-kind="${esc(kind)}">💥 Dano ${esc(damageExpr)}</button>`);
+  return `<div class="monster-action-row"><p>${name ? `<strong>${name}.</strong> ` : ""}${text}</p>${btns.length ? `<div class="monster-action-btns">${btns.join("")}</div>` : ""}</div>`;
+}
+function monsterEntryGroupHtml(list, kind) {
+  if (!list?.length) return "";
+  return list.map((a, i) => monsterEntryHtml(a, i, kind)).join("");
+}
+function bonusRollButtonsHtml(map, kind) {
+  if (!map || typeof map !== "object") return "";
+  return Object.entries(map).filter(([k]) => k !== "other" && k !== "choose").map(([k, v]) => {
+    const n = parseInt(String(typeof v === "object" ? v.special || "" : v).replace(/[^-\d]/g, ""), 10);
+    if (Number.isNaN(n)) return "";
+    const label = kind === "save" ? (ABILITY_NAMES[k] || k.toUpperCase()) : (SKILLS.find((s) => s[0] === k)?.[1] || k);
+    return `<button type="button" class="mon-roll-btn" data-mon-bonus-roll="${n}" data-mon-bonus-label="${esc(label)}">${esc(label)} ${fmt(n)}</button>`;
+  }).join(" ");
+}
+function monsterSpellcastingHtml(m) {
+  if (!Array.isArray(m.spellcasting) || !m.spellcasting.length) return "";
+  return m.spellcasting.map((sc) => `<div class="monster-action-row"><p>${sc.name ? `<strong>${esc(inlineTags(sc.name))}.</strong> ` : ""}${esc(plainOf(sc.headerEntries || sc.entries || ""))}</p></div>`).join("");
+}
+function monsterCardTag(m) {
+  const src = m.custom ? "Criado" : (m.source || "—");
+  return `<span class="tag ${m.custom ? "brew" : "official"}">${m.custom ? "CRIADO" : "OFICIAL"} · ${esc(src)}</span>`;
+}
+async function renderMonsterStatblock(m) {
+  if (m.legendaryGroup && !monsterLegendaryGroups.length) monsterLegendaryGroups = await loadLegendaryGroups().catch(() => []);
+  currentModalMonster = m;
+  currentModalMonsterGroups = normalizeMonsterGroups(m);
+  const g = currentModalMonsterGroups;
+  const hpFormula = m.hp?.formula;
+  $("modal-content").innerHTML = `
+    <div class="modal-title"><div><span class="eyebrow">${m.custom ? "MONSTRO CRIADO" : "BESTIÁRIO 5E"}</span><h2>${esc(m.name || "Monstro")}</h2><p class="muted">${esc(monsterSizeText(m.size))} · ${esc(monsterTypeText(m.type) || m.typeText || "—")}, ${esc(monsterAlignmentText(m))} — CD ${esc(crText(m.cr))}${m.source ? ` · ${esc(m.source)}` : ""}</p></div></div>
+    <div class="modal-body monster-statblock">
+      <div class="monster-top-stats">
+        <div><span>CA</span><b>${monsterAC(m)}</b></div>
+        <div><span>PV</span><b>${monsterHp(m)}</b>${hpFormula ? `<button type="button" class="mon-roll-btn" data-mon-hp-roll="1">🎲 Rolar PV</button>` : ""}</div>
+        <div><span>Deslocamento</span><b>${esc(monsterSpeed(m))}</b></div>
+        <div><span>Iniciativa</span><button type="button" class="mon-roll-btn" data-mon-bonus-roll="${monsterAbilityMod(m, "dex")}" data-mon-bonus-label="Iniciativa">🎲 d20 ${fmt(monsterAbilityMod(m, "dex"))}</button></div>
+      </div>
+      <div class="monster-ability-grid">
+        ${ABILITIES.map((a) => `<div><span>${ABILITY_NAMES[a].slice(0, 3).toUpperCase()}</span><b>${Number(m[a]) || 10}</b><small>${fmt(monsterAbilityMod(m, a))}</small></div>`).join("")}
+      </div>
+      <p><b>Resistências</b> ${bonusRollButtonsHtml(m.save, "save") || esc(m.savesText || "—")}</p>
+      <p><b>Perícias</b> ${bonusRollButtonsHtml(m.skill, "skill") || esc(m.skillsText || "—")}</p>
+      ${m.resist ? `<p><b>Resistência a dano</b> ${esc((Array.isArray(m.resist) ? m.resist : [m.resist]).map((x) => typeof x === "string" ? x : plainOf(x)).join(", "))}</p>` : ""}
+      ${m.immune ? `<p><b>Imunidade a dano</b> ${esc((Array.isArray(m.immune) ? m.immune : [m.immune]).map((x) => typeof x === "string" ? x : plainOf(x)).join(", "))}</p>` : ""}
+      ${m.conditionImmune ? `<p><b>Imunidade a condição</b> ${esc(m.conditionImmune.join(", "))}</p>` : ""}
+      <p><b>Sentidos</b> ${monsterSenses(m)}</p>
+      <p><b>Idiomas</b> ${monsterLanguages(m)}</p>
+      ${g.trait.length ? `<h3>Características</h3>${monsterEntryGroupHtml(g.trait, "trait")}` : ""}
+      ${monsterSpellcastingHtml(m)}
+      ${g.action.length ? `<h3>Ações</h3>${monsterEntryGroupHtml(g.action, "action")}` : ""}
+      ${g.bonus.length ? `<h3>Ações Bônus</h3>${monsterEntryGroupHtml(g.bonus, "bonus")}` : ""}
+      ${g.reaction.length ? `<h3>Reações</h3>${monsterEntryGroupHtml(g.reaction, "reaction")}` : ""}
+      ${g.legendary.length ? `<h3>Ações Lendárias</h3>${monsterEntryGroupHtml(g.legendary, "legendary")}` : ""}
+    </div>`;
+  $("modal").classList.remove("hidden");
+  wireMonsterModalRolls();
+}
+function wireMonsterModalRolls() {
+  const box = $("modal-content");
+  box.querySelectorAll("[data-mon-attack]").forEach((b) => b.addEventListener("click", () => {
+    const a = currentModalMonsterGroups[b.dataset.monKind]?.[Number(b.dataset.monAttack)];
+    const { toHit } = a ? actionRollables(a) : {};
+    if (toHit == null) return;
+    const roll = rollDie(20), total = roll + toHit;
+    const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
+    toast(`${a.name || "Ataque"}: d20 (${roll}) ${fmt(toHit)} = ${total}${note}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Ataque — ${a.name || "ação"}`, `d20 (${roll}) ${fmt(toHit)}`, total) + note);
+  }));
+  box.querySelectorAll("[data-mon-damage]").forEach((b) => b.addEventListener("click", () => {
+    const a = currentModalMonsterGroups[b.dataset.monKind]?.[Number(b.dataset.monDamage)];
+    const { damageExpr } = a ? actionRollables(a) : {};
+    const parsed = damageExpr && parseDiceExpr(damageExpr);
+    if (!parsed) { toast("Expressão de dano inválida."); return; }
+    const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
+    const total = diceTotal + (parsed.bonus || 0);
+    toast(`${a.name || "Dano"}: ${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Dano — ${a.name || "ação"}`, `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total));
+  }));
+  box.querySelectorAll("[data-mon-bonus-roll]").forEach((b) => b.addEventListener("click", () => {
+    const bonus = Number(b.dataset.monBonusRoll) || 0, label = b.dataset.monBonusLabel || "Teste";
+    const roll = rollDie(20), total = roll + bonus;
+    toast(`${label}: d20 (${roll}) ${fmt(bonus)} = ${total}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, label, `d20 (${roll}) ${fmt(bonus)}`, total));
+  }));
+  box.querySelector("[data-mon-hp-roll]")?.addEventListener("click", () => {
+    const parsed = parseDiceExpr(currentModalMonster.hp?.formula || "");
+    if (!parsed) { toast("Sem fórmula de dado de vida pra rolar."); return; }
+    const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
+    const total = diceTotal + (parsed.bonus || 0);
+    toast(`PV: ${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}`);
+    sendToDiscord(monsterDiscordMessage(currentModalMonster, "Pontos de Vida", `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total));
+  });
+}
+function monsterDiscordMessage(m, label, detail, total) {
+  const name = (m?.name || "Monstro").trim();
+  return `🐉 **${name}** (mestre) rolou **${label}**: ${detail} = **${total}**`;
+}
+
+function addMonsterToRoster(m) {
+  const roster = getMonsters();
+  const clone = { ...m, _id: `mon-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, _addedAt: Date.now() };
+  roster.push(clone);
+  saveMonsters(roster);
+  toast(`"${m.name}" adicionado aos seus monstros.`);
+}
+function removeMonsterFromRoster(id) {
+  saveMonsters(getMonsters().filter((x) => x._id !== id));
+  renderMonsters();
+}
+
+async function renderMonsterSourceOptions() {
+  const sel = $("monster-source");
+  if (sel.dataset.filled) return;
+  try {
+    const idx = await loadBestiaryIndex();
+    const sources = Object.keys(idx).sort((a, b) => a.localeCompare(b));
+    sel.insertAdjacentHTML("beforeend", sources.map((s) => `<option value="${esc(s)}">${esc(s)}</option>`).join(""));
+    sel.dataset.filled = "1";
+  } catch { /* fica só com "Todas" se o índice falhar */ }
+}
+
+function monsterResultCardHtml(m, opts = {}) {
+  const cr = m.custom ? "" : ` · CD ${esc(crText(m.cr))}`;
+  return `<article class="catalog-card">
+    <div class="pick-top"><strong>${esc(m.name || "Sem nome")}</strong>${monsterCardTag(m)}</div>
+    <div class="pick-meta">${esc(monsterTypeText(m.type) || m.typeText || "—")}${cr}</div>
+    <div class="catalog-actions">
+      <button data-mon-view="${esc(opts.viewKey)}">ⓘ Ver stat block</button>
+      ${opts.addable ? `<button class="add-btn" data-mon-add="${esc(opts.viewKey)}">+ Adicionar aos meus monstros</button>` : ""}
+      ${opts.removable ? `<button data-mon-remove="${esc(m._id)}">🗑️ Remover</button>` : ""}
+    </div>
+  </article>`;
+}
+
+async function renderMonsters() {
+  $("monster-browse-toolbar").classList.toggle("hidden", monsterState.view !== "browse");
+  const box = $("monster-results");
+  if (monsterState.view === "roster") {
+    const roster = getMonsters();
+    box.innerHTML = roster.length
+      ? roster.map((m, i) => monsterResultCardHtml(m, { viewKey: `roster:${i}`, removable: true })).join("")
+      : `<div class="empty">Nenhum monstro ainda. Adicione um do bestiário oficial (aba "Bestiário Oficial") ou clique em "+ Criar monstro".</div>`;
+    box.querySelectorAll("[data-mon-view]").forEach((b) => b.addEventListener("click", () => {
+      const i = Number(b.dataset.monView.split(":")[1]);
+      renderMonsterStatblock(getMonsters()[i]);
+    }));
+    box.querySelectorAll("[data-mon-remove]").forEach((b) => b.addEventListener("click", () => {
+      if (confirm("Remover este monstro dos seus monstros salvos?")) removeMonsterFromRoster(b.dataset.monRemove);
+    }));
+    return;
+  }
+  // view === "browse"
+  await renderMonsterSourceOptions();
+  const q = $("monster-search").value.trim().toLowerCase();
+  const src = $("monster-source").value;
+  if (src && src !== monsterState.source) {
+    monsterState.source = src;
+    monsterAllLoaded = false;
+    box.innerHTML = `<div class="empty">Carregando…</div>`;
+    monsterBrowseCache = await loadBestiarySource(src).catch(() => []);
+  } else if (!src && !monsterAllLoaded) {
+    monsterState.source = "";
+  }
+  const pool = (monsterAllLoaded || monsterState.source) ? monsterBrowseCache : [];
+  if (!pool.length) {
+    box.innerHTML = `<div class="empty">Escolha um livro/aventura acima, ou clique em "Buscar em todas as fontes" pra pesquisar em tudo de uma vez.</div>`;
+    return;
+  }
+  const filtered = (q ? pool.filter((m) => String(m.name).toLowerCase().includes(q)) : pool).slice(0, 240);
+  box.innerHTML = filtered.length
+    ? filtered.map((m) => monsterResultCardHtml(m, { viewKey: JSON.stringify([m.name, m.source]), addable: true })).join("")
+    : `<div class="empty">Nenhum resultado.</div>`;
+  box.querySelectorAll("[data-mon-view]").forEach((b) => b.addEventListener("click", () => {
+    const [name, source] = JSON.parse(b.dataset.monView);
+    const m = pool.find((x) => x.name === name && x.source === source);
+    if (m) renderMonsterStatblock(m);
+  }));
+  box.querySelectorAll("[data-mon-add]").forEach((b) => b.addEventListener("click", () => {
+    const [name, source] = JSON.parse(b.dataset.monAdd);
+    const m = pool.find((x) => x.name === name && x.source === source);
+    if (m) addMonsterToRoster(m);
+  }));
+}
+
+function openMonsterCreateModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">MONSTRO</span><h2>Criar monstro</h2><p class="muted">Só o essencial pra ter um stat block jogável, com botões de rolagem prontos. Ações/traços podem ficar sem bônus de ataque/dano estruturado — nesse caso o texto aparece, mas sem botão de rolar.</p></div></div>
+    <div class="modal-body monster-create-form">
+      <div class="two-input"><label>Nome<input id="mc-name" placeholder="Ex.: Guarda do Culto"></label><label>CD (desafio)<input id="mc-cr" placeholder="Ex.: 1/4, 1, 5"></label></div>
+      <div class="two-input"><label>Tamanho
+        <select id="mc-size"><option value="T">Miúdo</option><option value="S">Pequeno</option><option value="M" selected>Médio</option><option value="L">Grande</option><option value="H">Enorme</option><option value="G">Colossal</option></select>
+      </label><label>Tipo<input id="mc-type" placeholder="Ex.: humanoide, morto-vivo, dragão"></label></div>
+      <div class="two-input"><label>Alinhamento<input id="mc-alignment" placeholder="Ex.: Caótico e Mau"></label><label>Deslocamento<input id="mc-speed" placeholder="Ex.: 9 m, voo 18 m" value="9 m"></label></div>
+      <div class="two-input"><label>CA<input id="mc-ac" type="number" value="12"></label><label>Nota da CA (opcional)<input id="mc-ac-note" placeholder="Ex.: armadura de couro"></label></div>
+      <div class="two-input"><label>PV médio<input id="mc-hp" type="number" value="11"></label><label>Fórmula do dado de vida (opcional, ativa "Rolar PV")<input id="mc-hp-formula" placeholder="Ex.: 2d8+2"></label></div>
+      <label class="buff-field">Atributos
+        <div class="buff-abilities">${ABILITIES.map((a) => `<label>${ABILITY_NAMES[a]}<input type="number" id="mc-${a}" value="10" style="width:56px;margin-left:6px"></label>`).join("")}</div>
+      </label>
+      <div class="two-input"><label>Sentidos (opcional)<input id="mc-senses" placeholder="Ex.: visão no escuro 18 m"></label><label>Idiomas<input id="mc-languages" placeholder="Ex.: Comum, Infernal"></label></div>
+      <div class="two-input"><label>Resistências (texto livre)<input id="mc-saves" placeholder="Ex.: Con +4"></label><label>Perícias (texto livre)<input id="mc-skills" placeholder="Ex.: Percepção +3, Furtividade +4"></label></div>
+      <h3>Características</h3><div id="mc-traits"></div><button type="button" class="add-btn" id="mc-add-trait">+ Adicionar característica</button>
+      <h3>Ações</h3><p class="muted">Bônus de ataque e dano são opcionais — se preenchidos, a ação ganha botão de rolagem.</p><div id="mc-actions"></div><button type="button" class="add-btn" id="mc-add-action">+ Adicionar ação</button>
+      <div class="modal-actions"><button type="button" id="mc-cancel">Cancelar</button><button type="button" class="primary" id="mc-save">Criar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+
+  const traitRowHtml = (t = {}) => `<div class="monster-form-row" data-mc-trait-row>
+    <input placeholder="Nome" data-mc-trait-name value="${esc(t.name || "")}">
+    <textarea placeholder="Texto" rows="2" data-mc-trait-text>${esc(t.text || "")}</textarea>
+    <button type="button" class="remove-btn" data-mc-remove-row>×</button>
+  </div>`;
+  const actionRowHtml = (a = {}) => `<div class="monster-form-row monster-form-action-row" data-mc-action-row>
+    <input placeholder="Nome" data-mc-action-name value="${esc(a.name || "")}">
+    <textarea placeholder="Texto" rows="2" data-mc-action-text>${esc(a.text || "")}</textarea>
+    <div class="two-input"><input type="number" placeholder="Bônus de ataque (ex.: 4)" data-mc-action-tohit value="${a.toHit ?? ""}"><input placeholder="Dano (ex.: 1d6+2)" data-mc-action-dmg value="${esc(a.damageExpr || "")}"></div>
+    <button type="button" class="remove-btn" data-mc-remove-row>×</button>
+  </div>`;
+  // Cada linha ganha o listener de remover na hora em que é criada (em vez
+  // de um listener delegado no container do modal, que ficaria empilhando
+  // um handler a mais cada vez que este modal for reaberto na mesma sessão).
+  function addFormRow(container, html) {
+    container.insertAdjacentHTML("beforeend", html);
+    const row = container.lastElementChild;
+    row.querySelector("[data-mc-remove-row]").addEventListener("click", () => row.remove());
+  }
+  addFormRow($("mc-traits"), traitRowHtml());
+  addFormRow($("mc-actions"), actionRowHtml());
+  $("mc-add-trait").addEventListener("click", () => addFormRow($("mc-traits"), traitRowHtml()));
+  $("mc-add-action").addEventListener("click", () => addFormRow($("mc-actions"), actionRowHtml()));
+
+  $("mc-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("mc-save").addEventListener("click", () => {
+    const name = $("mc-name").value.trim();
+    if (!name) { toast("Dê um nome pro monstro."); return; }
+    const hpAvg = Number($("mc-hp").value) || 1;
+    const monster = {
+      name, custom: true,
+      cr: $("mc-cr").value.trim() || "—",
+      size: [$("mc-size").value], type: undefined, typeText: $("mc-type").value.trim(),
+      alignmentText: $("mc-alignment").value.trim(),
+      speedText: $("mc-speed").value.trim(),
+      ac: Number($("mc-ac").value) || 10, acNote: $("mc-ac-note").value.trim() || undefined,
+      hp: { average: hpAvg, formula: $("mc-hp-formula").value.trim() || undefined },
+      str: Number($("mc-str").value) || 10, dex: Number($("mc-dex").value) || 10, con: Number($("mc-con").value) || 10,
+      int: Number($("mc-int").value) || 10, wis: Number($("mc-wis").value) || 10, cha: Number($("mc-cha").value) || 10,
+      sensesText: $("mc-senses").value.trim() || undefined,
+      languagesText: $("mc-languages").value.trim() || undefined,
+      savesText: $("mc-saves").value.trim() || undefined,
+      skillsText: $("mc-skills").value.trim() || undefined,
+      trait: [...$("mc-traits").querySelectorAll("[data-mc-trait-row]")]
+        .map((r) => ({ name: r.querySelector("[data-mc-trait-name]").value.trim(), text: r.querySelector("[data-mc-trait-text]").value.trim() }))
+        .filter((t) => t.name || t.text),
+      action: [...$("mc-actions").querySelectorAll("[data-mc-action-row]")]
+        .map((r) => ({
+          name: r.querySelector("[data-mc-action-name]").value.trim(),
+          text: r.querySelector("[data-mc-action-text]").value.trim(),
+          toHit: r.querySelector("[data-mc-action-tohit]").value !== "" ? Number(r.querySelector("[data-mc-action-tohit]").value) : null,
+          damageExpr: r.querySelector("[data-mc-action-dmg]").value.trim() || null,
+        }))
+        .filter((a) => a.name || a.text),
+    };
+    addMonsterToRoster(monster);
+    $("modal").classList.add("hidden");
+    if (monsterState.view === "roster") renderMonsters();
+  });
+}
+
+// ------------------------------------------------------------
 // Notas de sessão / journal
 // ------------------------------------------------------------
 function todayIso() { return new Date().toISOString().slice(0, 10); }
@@ -3182,7 +3577,7 @@ function randomizeChoiceSelections(data) {
     const types = new Set(prog.featureType);
     const lvl = Number(character.level);
     const opts = manifest().filter((x) =>
-      normType(x.type) === "optionalfeature" && !hb(x) &&
+      normType(x.type) === "optionalfeature" && pickerContentOk(x) &&
       ((x.__rec || recordsForEntity(x)[0])?.featureType || []).some((t) => types.has(t)) &&
       matchesEdition(x, character.edition, true) &&
       prereqLevel(x.__rec || recordsForEntity(x)[0] || {}) <= lvl);
@@ -4017,6 +4412,7 @@ function setup() {
     if (b.dataset.tab === "notes") renderJournal();
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
+    if (b.dataset.tab === "monsters") await renderMonsters();
   }));
   $("codex-search")?.addEventListener("input", () => { codexState.query = $("codex-search").value; renderCodex(); });
   document.querySelectorAll("#codex-type [data-codextype]").forEach((b) => b.addEventListener("click", () => {
@@ -4036,6 +4432,21 @@ function setup() {
   $("weapon-filter").addEventListener("change", () => { if (eqCat !== "inventory") renderEquipmentCatalog(); });
   $("compendium-search").addEventListener("input", renderCompendium);
   $("compendium-type").addEventListener("change", renderCompendium);
+  document.querySelectorAll("#monster-view-tabs [data-monview]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#monster-view-tabs [data-monview]").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); monsterState.view = b.dataset.monview; renderMonsters();
+  }));
+  $("monster-search")?.addEventListener("input", () => { if (monsterState.view === "browse") renderMonsters(); });
+  $("monster-source")?.addEventListener("change", () => { if (monsterState.view === "browse") renderMonsters(); });
+  $("monster-load-all")?.addEventListener("click", async () => {
+    $("monster-load-status").textContent = "Carregando…";
+    monsterBrowseCache = await loadAllBestiary((done, total) => { $("monster-load-status").textContent = `Carregando… ${done}/${total}`; }).catch(() => []);
+    monsterLegendaryGroups = await loadLegendaryGroups().catch(() => []);
+    monsterAllLoaded = true;
+    $("monster-load-status").textContent = `${monsterBrowseCache.length.toLocaleString("pt-BR")} monstros carregados.`;
+    renderMonsters();
+  });
+  $("monster-create-btn")?.addEventListener("click", openMonsterCreateModal);
   $("collapse-creator").addEventListener("click", () => {
     $("creator").classList.toggle("collapsed");
     $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";

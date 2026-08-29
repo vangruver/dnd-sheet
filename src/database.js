@@ -672,6 +672,55 @@ async function loadItemCatalog(onProgress) {
 }
 
 // ------------------------------------------------------------
+// Bestiário (monstros) — usado pela aba "Monstros" (kit do mestre), à
+// parte do registro genérico acima: um stat block tem forma muito
+// diferente de classe/magia/item, então fica com sua própria API em vez
+// de entrar em manifestEntries()/filterEntities(). O 5etools guarda um
+// arquivo por livro/aventura (bestiary-mm.json, bestiary-cos.json,
+// bestiary-skt.json…), listado em bestiary/index.json — mesmo padrão de
+// spells/index.json, carregado sob demanda por fonte.
+// ------------------------------------------------------------
+let bestiaryIndex = null;          // { MM: "bestiary-mm.json", CoS: "bestiary-cos.json", ... }
+const bestiaryFileCache = new Map(); // fonte -> monster[]
+let legendaryGroupList = null;      // [{ name, source, action?, legendary?, lairActions?, ... }]
+
+export async function loadBestiaryIndex() {
+  bestiaryIndex = bestiaryIndex || await getJson("bestiary/index.json");
+  return bestiaryIndex;
+}
+export async function loadBestiarySource(src) {
+  if (bestiaryFileCache.has(src)) return bestiaryFileCache.get(src);
+  await loadBestiaryIndex();
+  const fname = bestiaryIndex[src];
+  if (!fname) { bestiaryFileCache.set(src, []); return []; }
+  const json = await tryJson(`bestiary/${fname}`);
+  const arr = (json && json.monster) || [];
+  bestiaryFileCache.set(src, arr);
+  return arr;
+}
+// Baixa TODAS as fontes (mais de 150 arquivos) — usado só quando o
+// mestre pede explicitamente uma busca em todo o bestiário, nunca
+// automaticamente ao abrir a aba.
+export async function loadAllBestiary(onProgress) {
+  await loadBestiaryIndex();
+  const sources = Object.keys(bestiaryIndex);
+  let done = 0;
+  const lists = await Promise.all(sources.map(async (src) => {
+    const arr = await loadBestiarySource(src);
+    done++; onProgress && onProgress(done, sources.length);
+    return arr;
+  }));
+  return lists.flat();
+}
+export async function loadLegendaryGroups() {
+  if (!legendaryGroupList) {
+    const json = await tryJson("bestiary/legendarygroups.json");
+    legendaryGroupList = (json && json.legendaryGroup) || [];
+  }
+  return legendaryGroupList;
+}
+
+// ------------------------------------------------------------
 // Consulta
 // ------------------------------------------------------------
 export function manifestEntries() {
