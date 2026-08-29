@@ -4349,13 +4349,21 @@ function offAbilityBox(a) {
     <div class="off-skill-list">${rows.map((r) => `<div class="off-skill-row${r.strong ? " strong" : ""}">${offCheck(r.on)}<span>${esc(r.label)}</span><b>${fmt(r.v)}</b></div>`).join("")}</div>
   </div>`;
 }
-function offFeatureLines(feats) {
+function offFeatureLines(feats, limit = 240) {
   if (!feats || !feats.length) return `<p class="off-muted">—</p>`;
   return feats.map((f) => {
     const txt = plain(f.entries).trim();
-    const short = txt.length > 240 ? txt.slice(0, 240).replace(/\s+\S*$/, "") + "…" : txt;
+    const short = txt.length > limit ? txt.slice(0, limit).replace(/\s+\S*$/, "") + "…" : txt;
     return `<p><b>${esc(f.name || "Característica")}.</b> ${esc(short) || ""}</p>`;
   }).join("");
+}
+// Referência rápida da 1ª página: só os nomes (o texto completo das
+// características de classe/subclasse foi pra sua própria página —
+// ver buildOfficialSheet — porque truncado em 240 caracteres cortava
+// bem a parte que mais importa de ler à mesa).
+function offFeatureNames(feats) {
+  if (!feats || !feats.length) return `<p class="off-muted">—</p>`;
+  return `<p class="off-feature-names">${feats.map((f) => esc(f.name || "Característica")).join(" · ")}</p>`;
 }
 async function buildOfficialSheet() {
   const c = calc(), pb = c.pb;
@@ -4419,21 +4427,13 @@ async function buildOfficialSheet() {
           <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
         </div>
         ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
-        ${offBox("Características de Classe", offFeatureLines([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]), "off-tall")}
+        ${offBox("Características de Classe", offFeatureNames([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]) + `<p class="off-muted off-feature-note">Texto completo na próxima página.</p>`)}
       </div>
     </div>
 
     <div class="off-row3">
-      ${offBox("Características Raciais", offFeatureLines(raceTraits))}
-      ${offBox("Talentos", offFeatureLines(feats))}
-    </div>
-
-    <div class="off-row4">
-      ${offBox("Equipamento, Treino & Proficiências", `
-        <div class="off-training"><b>Treino de armadura</b> <span class="off-inline-check">${offCheck(armorOn("light"))} Leve</span> <span class="off-inline-check">${offCheck(armorOn("medium"))} Média</span> <span class="off-inline-check">${offCheck(armorOn("heavy"))} Pesada</span> <span class="off-inline-check">${offCheck(armorOn("shield"))} Escudos</span></div>
-        <div class="off-training"><b>Armas</b> ${esc(weapons.join(", ") || "—")}</div>
-        <div class="off-training"><b>Ferramentas</b> ${esc(tools.join(", ") || "—")}</div>
-      `)}
+      ${offBox("Características Raciais", offFeatureLines(raceTraits, 500))}
+      ${offBox("Talentos", offFeatureLines(feats, 500))}
     </div>
   </div>`;
 
@@ -4485,10 +4485,26 @@ async function buildOfficialSheet() {
     ? `<div class="off-slot off-slot-pact"><span>Pacto ${pactInfo.level}º</span><b>${pactInfo.count}</b><div class="off-slot-pips">${Array.from({ length: pactInfo.count }, (_, k) => `<i class="${k < Math.min(pactInfo.count, Number(character.pactSlotsUsed) || 0) ? "on" : ""}"></i>`).join("")}</div></div>`
     : "";
 
+  // --- Página das Características de Classe ---
+  // O texto completo de características de classe/subclasse (às vezes
+  // vários parágrafos) não cabia na 1ª página sem truncar em 240
+  // caracteres — cortando bem a parte mais importante de ler à mesa.
+  // A 1ª página agora só lista os nomes; o texto inteiro mora aqui.
+  const allClassFeats = [...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats];
+  const pageFeatures = allClassFeats.length ? `<div class="off-page off-page-features">
+    <div class="off-page-title"><h2>${esc(character.name || "Personagem")}</h2><span>Características de Classe</span></div>
+    ${offBox(`Classe${refs.class ? ` — ${esc(titleOf(refs.class))}` : ""}`, offFeatureLines(classFeats, Infinity))}
+    ${subFeats.length ? offBox(`Subclasse${refs.subclass ? ` — ${esc(titleOf(refs.subclass))}` : ""}`, offFeatureLines(subFeats, Infinity)) : ""}
+    ${mcClassFeats.length ? offBox("Multiclasse", offFeatureLines(mcClassFeats, Infinity)) : ""}
+    ${mcSubFeats.length ? offBox("Subclasse (Multiclasse)", offFeatureLines(mcSubFeats, Infinity)) : ""}
+  </div>` : "";
+
   // --- Página 2: detalhes do personagem ---
   // A ficha oficial separa "quem é o personagem" da parte de combate:
-  // aparência, história, idiomas, equipamento e moedas ficam numa
-  // página própria, e conjuração vai pra seguinte.
+  // aparência, história, idiomas, equipamento, moedas e treino/
+  // proficiências ficam numa página própria, e conjuração vai pra
+  // seguinte. Treino & Proficiências morava na 1ª página — tirado de
+  // lá pra abrir espaço, e faz mais sentido aqui do lado do Equipamento.
   const page2 = `<div class="off-page off-page-detail">
     <div class="off-page-title"><h2>${esc(character.name || "Personagem")}</h2><span>Detalhes do personagem</span></div>
     <div class="off-detail-grid">
@@ -4496,6 +4512,11 @@ async function buildOfficialSheet() {
       ${offBox("História &amp; Personalidade", `<p>${esc(character.backstory || "")}</p><div class="off-align"><b>Alinhamento</b> ${esc(character.alignment || "—")}</div>`, "off-tall")}
       ${offBox("Idiomas", `<p>${esc(character.languages || "—")}</p>`)}
       ${offBox("Moedas", `<div class="off-coins">${["cp", "pp", "pe", "po", "pl"].map((k) => `<div><span>${k.toUpperCase()}</span><b>${character.coins?.[k] || 0}</b></div>`).join("")}</div>`)}
+      ${offBox("Treino &amp; Proficiências", `
+        <div class="off-training"><b>Treino de armadura</b> <span class="off-inline-check">${offCheck(armorOn("light"))} Leve</span> <span class="off-inline-check">${offCheck(armorOn("medium"))} Média</span> <span class="off-inline-check">${offCheck(armorOn("heavy"))} Pesada</span> <span class="off-inline-check">${offCheck(armorOn("shield"))} Escudos</span></div>
+        <div class="off-training"><b>Armas</b> ${esc(weapons.join(", ") || "—")}</div>
+        <div class="off-training"><b>Ferramentas</b> ${esc(tools.join(", ") || "—")}</div>
+      `, "off-span2")}
       ${offBox("Equipamento", inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}${i.equipped ? " (equipado)" : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`, "off-tall off-span2")}
     </div>
   </div>`;
@@ -4566,7 +4587,7 @@ async function buildOfficialSheet() {
     <div class="off-rep-cols">${spellsByLevel.map(levelBlock).join("")}</div>
   </div>` : "";
 
-  $("official-sheet").innerHTML = page1 + page2 + page3 + page4;
+  $("official-sheet").innerHTML = page1 + pageFeatures + page2 + page3 + page4;
 }
 async function openPdfPreview() {
   const modal = $("modal"), box = $("modal-content");

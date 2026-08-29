@@ -1142,9 +1142,13 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .off-spell-table td:nth-child(1){text-align:center}
 
 .off-row3{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
-.off-row4{margin-bottom:2px}
 .off-training{font-size:8.5px;margin:4px 0;color:#222}
 .off-training b{margin-right:4px}
+/* Referência rápida de Características de Classe na 1ª página — só os
+   nomes, separados por "·"; o texto completo mora na página própria
+   (.off-page-features). */
+.off-feature-names{margin:2px 0;font-size:8.5px;line-height:1.55;color:#222}
+.off-feature-note{margin-top:5px}
 .off-inline-check{display:inline-flex;align-items:center;gap:3px;margin-right:8px}
 
 .off-spell-top{display:grid;grid-template-columns:1fr .8fr .8fr .8fr;gap:6px;margin-bottom:7px}
