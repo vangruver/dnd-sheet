@@ -1,0 +1,662 @@
+{
+	"$schema": "https://raw.githubusercontent.com/TheGiddyLimit/5etools-utils/master/schema/brew-fast/homebrew.json",
+	"_meta": {
+		"sources": [
+			{
+				"json": "DDWEBEarth",
+				"abbreviation": "D&D Wiki",
+				"full": "D&D Wiki - Earthbender (Element Bender, 5e Class)",
+				"url": "https://www.dandwiki.com/wiki/Element_Bender_(5e_Class)",
+				"version": "unknown",
+				"authors": [
+					"Various Contributors"
+				],
+				"convertedBy": [
+					"Claude"
+				]
+			}
+		],
+		"edition": "classic",
+		"dateAdded": 1787961600,
+		"dateLastModified": 1787961600
+	},
+	"class": [
+		{
+			"name": "Earthbender",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"hd": {
+				"number": 1,
+				"faces": 8
+			},
+			"proficiency": [
+				"dex",
+				"wis"
+			],
+			"spellcastingAbility": "wis",
+			"casterProgression": "innate",
+			"classSpells": [
+				"mold earth|XGE",
+				"catapult|XGE",
+				"Maximilian's earthen grasp|XGE",
+				"erupting earth|XGE",
+				"summon elemental|TCE",
+				"earthquake"
+			],
+			"startingProficiencies": {
+				"armor": [
+					"light"
+				],
+				"armorProficiencies": [
+					{
+						"light": true
+					}
+				],
+				"weapons": [
+					"simple",
+					"{@filter one martial weapon of your choice|weapons|type=Martial}"
+				],
+				"skills": [
+					{
+						"choose": {
+							"from": [
+								"acrobatics",
+								"athletics",
+								"history",
+								"insight",
+								"intimidation",
+								"nature",
+								"arcana"
+							],
+							"count": 2
+						}
+					}
+				]
+			},
+			"startingEquipment": {
+				"additionalFromBackground": true,
+				"default": [
+					"(a) two simple weapons or (b) one martial weapon",
+					"(a) a {@item dungeoneer's pack|phb} or (b) an {@item explorer's pack|phb}",
+					"(a) a {@item waterskin|phb}, (b) a {@item tinderbox|phb}, (c) a small piece of meteorite, or (d) an air chime"
+				],
+				"goldAlternative": "{@dice 2d4 × 10|2d4 x 10|Starting Gold}"
+			},
+			"classTableGroups": [
+				{
+					"colLabels": [
+						"{@filter Cantrips Known|spells|level=0}",
+						"Bend Effects",
+						"Elemental Strike",
+						"Bending Range"
+					],
+					"rows": [
+						[
+							0,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							1,
+							"1d6",
+							"30 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							2,
+							"1d8",
+							"40 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							3,
+							"1d10",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"50 ft."
+						],
+						[
+							1,
+							4,
+							"1d12",
+							"60 ft."
+						]
+					]
+				}
+			],
+			"classFeatures": [
+				"Unarmored Defense|Earthbender||1",
+				"Bending|Earthbender||1",
+				"Bending Effect|Earthbender||1",
+				"Born of the Earth|Earthbender||1",
+				"Elemental Spellcasting|Earthbender||2",
+				"Earthen Defense|Earthbender||3",
+				"Ability Score Increase|Earthbender||4",
+				"Bending Improvement|Earthbender||5",
+				"Earth Benders Style|Earthbender||6",
+				"Wise Fighter|Earthbender||7",
+				"Primordial Body|Earthbender||7",
+				"Ability Score Increase|Earthbender||8",
+				"Empowered Bending Arts|Earthbender||10",
+				"Mind Bending and Element Creation|Earthbender||10",
+				"Element of Substance|Earthbender||11",
+				"Bending Improvement|Earthbender||11",
+				"Ability Score Increase|Earthbender||12",
+				"Strength of Jing|Earthbender||13",
+				"Master Skill: Metal Bending|Earthbender||15",
+				"Bending Improvement|Earthbender||15",
+				"Ability Score Increase|Earthbender||16",
+				"Transformation|Earthbender||18",
+				"Ability Score Increase|Earthbender||19",
+				"Psychic Bending|Earthbender||20"
+			],
+			"hasFluff": true
+		}
+	],
+	"classFluff": [
+		{
+			"name": "Earthbender",
+			"source": "DDWEBEarth",
+			"entries": [
+				{
+					"type": "section",
+					"name": "Earthbender",
+					"source": "DDWEBEarth",
+					"entries": [
+						"Bending is the ability to manipulate an element's form and shape. There are four known bending arts, each bending a specific physical element: water, earth, fire, and air. Each is manipulated through martial art styles reminiscent of the qualities of the element itself. While bending is traditionally performed through the motions of the hands and feet, skilled benders can effectively manipulate their element with only minimal movement, and master benders can bend without any physical movement at all, using sheer focus and force of will — a skill known as psychic bending.",
+						"Earth bending, one of the four elemental bending arts, is the geokinetic ability to manipulate earth and rock in all their various forms. Earth is the element of substance, and as such earth benders are diverse, strong, and enduring.",
+						"The key to earth bending is utilizing neutral jing: waiting and listening for the right moment to strike and, when that moment comes, acting decisively. Earth benders generally endure their enemies' attacks until the right opportunity to counterattack reveals itself. Unlike the other bending arts, earth bending's strength lies equally in offense and defense.",
+						"Earth bending stands in stark contrast to air bending, whose emphasis is on evasion and mobility rather than fortitude and strength.",
+						{
+							"type": "entries",
+							"name": "Quick Build",
+							"entries": [
+								"You can make an Earthbender quickly by following these suggestions. First, Wisdom should be your highest ability score, followed by Constitution. Second, choose the {@background Hermit} background."
+							]
+						}
+					]
+				}
+			]
+		}
+	],
+	"classFeature": [
+		{
+			"name": "Unarmored Defense",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 1,
+			"entries": [
+				"Beginning at 1st level, while you are wearing no armor and not wielding a shield, your Armor Class equals 10 + your Dexterity modifier + your Wisdom modifier."
+			]
+		},
+		{
+			"name": "Bending",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 1,
+			"entries": [
+				"Starting at 1st level, you are able to manipulate earth to a significant degree. You gain the {@b Bend} action, which allows you to control your element. You cannot create your element, only change and move it — your element must be present in some form for you to bend it.",
+				"When you take the Bend action, your bending has a limited amount of power. To begin with you can only cause one effect; when you reach 5th level you can cause 2 effects, at 11th level 3 effects, and at 15th level 4 effects. You can pick the same option multiple times, different ones, or any combination. The effects you can cause are listed below and in later features.",
+				"Bending requires hand movements to use, functioning the same as the somatic component of a spell. Your DM may determine that you are unable to bend if {@condition restrained}, {@condition paralyzed}, or subjected to some other condition that limits movement.",
+				"Unless stated otherwise, damage dealt by your bending is magical bludgeoning damage.",
+				{
+					"type": "entries",
+					"name": "Elemental Attacks",
+					"entries": [
+						"{@b Elemental Strike.} You throw a projectile made of your element at an enemy. Make a ranged spell attack roll against a creature within range, dealing {@damage 1d6} damage on a hit. Being within 5 feet of the target does not impose disadvantage on this attack. The damage die increases with your level: {@damage 1d8} at 5th level, {@damage 1d10} at 11th level, and {@damage 1d12} at 15th level.",
+						"{@b Elemental Flow.} You manipulate your element into striking a large area. This effect is contained in a cube with sides equal to 2 times your bender level (minimum of 10 feet), with at least one corner of the cube within your bending range. Every creature in the cube must make a Dexterity saving throw, taking {@damage 1d10} damage on a failed save, or half as much on a successful one. This attack requires two effects of the Bend action.",
+						"{@b Elemental Push.} You use your element to move your enemies. A creature of your choice within range must succeed on a Strength saving throw against your spell save DC or be knocked {@condition prone} or moved 5 feet in any direction (state your intended result before it rolls). The distance you can push increases to 10 feet at 11th level and 15 feet at 15th level.",
+						"{@b Element Hold.} You use your element to hold an enemy in place — make a grapple check against a creature within range. You must concentrate to maintain the grapple, as if concentrating on a spell.",
+						"Add your Wisdom modifier to damage rolls made by Elemental Strike and Elemental Flow."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Bending Range and Volume",
+					"entries": [
+						"The range of your bending is 30 feet at 1st level, increasing to 40 feet at 5th level, 50 feet at 11th level, and 60 feet at 20th level. The maximum volume of your element you can manipulate at any one time in combat is a cube with sides in feet equal to twice your Element Bender level — you are not restricted to bending in a cube that shape, this only limits the total volume.",
+						"You can maintain this many separate element cubes at once: one from 1st–4th level, two from 5th–10th level, three from 11th–14th level, and four from 15th–20th level."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Effect",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 1,
+			"entries": [
+				"You gain an additional effect depending on your element, usable only once per round, applied immediately after a successful bending attack that deals damage.",
+				"{@b Earth.} Your hits shake your target to its very core. When you roll higher than half your damage die's maximum on a bending damage roll against a creature, you can force it to make a Constitution saving throw or fall {@condition prone}. Constructs are immune to this effect."
+			]
+		},
+		{
+			"name": "Born of the Earth",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 1,
+			"entries": [
+				"At 1st level, your earth bending extends your senses, letting you 'see' every vibration that passes through the ground. You have tremorsense with a range of 30 feet as long as your feet are on solid ground; this range increases by 5 feet at 6th, 10th, 14th, and 18th level. You also instinctively bend hand- and foot-holds for yourself while climbing, giving you a climbing speed of 30 feet."
+			]
+		},
+		{
+			"name": "Elemental Spellcasting",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 2,
+			"entries": [
+				"An event in your past, or in the life of a parent or ancestor, granted them a primordial power that was passed down to you, infusing you with an affinity for your element. This font of magic fuels your abilities.",
+				"While bending is separate from the way spellcasters cast spells, you can manifest the effect of a particular spell depending on your level. Each spell effect can only be manifested once before you must complete a short or long rest to regain the use of it, with the exception of cantrips.",
+				"Starting at 2nd level, you can manifest the effect of {@spell mold earth} as if you had cast it, at will.",
+				{
+					"type": "entries",
+					"name": "Spells Gained",
+					"entries": [
+						"You gain the ability to manifest the following spells at the Element Bender levels shown below. Once gained, you always have the spell available and it doesn't count against any number of spells you know or prepare.",
+						{
+							"type": "table",
+							"colLabels": [
+								"Bender Level",
+								"Spell"
+							],
+							"colStyles": [
+								"col-4 text-center",
+								"col-8"
+							],
+							"rows": [
+								[
+									"1",
+									"{@spell catapult}"
+								],
+								[
+									"3",
+									"{@spell Maximilian's earthen grasp}"
+								],
+								[
+									"6",
+									"{@spell erupting earth}"
+								],
+								[
+									"11",
+									"{@spell summon elemental}"
+								],
+								[
+									"17",
+									"{@spell earthquake}"
+								]
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Spellcasting Ability",
+					"entries": [
+						"Wisdom is your spellcasting ability for your Element Bender spells, since your magic draws upon your devotion to your bending art and your attunement to the natural world. You use your Wisdom whenever a spell refers to your spellcasting ability.",
+						"Element Bender spell save DC = 8 + your proficiency bonus + your Wisdom modifier.",
+						"Element Bender spell attack modifier = your proficiency bonus + your Wisdom modifier.",
+						{
+							"type": "abilityDc",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						},
+						{
+							"type": "abilityAttackMod",
+							"name": "Element Bender",
+							"attributes": [
+								"wis"
+							]
+						}
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Elemental Focus",
+					"entries": [
+						"You do not require material components to manifest your Element Bender spells."
+					]
+				}
+			]
+		},
+		{
+			"name": "Earthen Defense",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 3,
+			"entries": [
+				"At 3rd level, you've learned to protect yourself with the rock and stone of the world. As a bonus action, you call earth to your defense, encasing yourself in earthen armor: your Armor Class becomes 13 + your Dexterity modifier (max 2) + your Wisdom modifier, and your speed is halved. You can remove the armor with a bonus action.",
+				"In addition, as an action you can fully encase yourself in a ball of earthen mass. The mass has an Armor Class of 15, hit points equal to 10 times your Element Bender level, and gains whatever resistances or immunities you have, plus immunity to psychic and poison damage. You can't move while in this form. Once you use this feature, you can't do so again until you finish a short or long rest."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 4,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 5,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 2 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Earth Benders Style",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 6,
+			"entries": [
+				"At 6th level, you've learned to capitalize on openings in your enemies' defenses. Once per round, when an enemy within your bending range makes an attack against you and misses, you can make a single Elemental Strike against it as a reaction.",
+				"In addition, if you take the Ready action to bend in response to being attacked, you have advantage on the attack roll, and if you hit, the target has disadvantage on its next attack roll."
+			]
+		},
+		{
+			"name": "Wise Fighter",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 7,
+			"entries": [
+				"Beginning at 7th level, you can add your Wisdom modifier to your initiative rolls."
+			]
+		},
+		{
+			"name": "Primordial Body",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 7,
+			"entries": [
+				"Also at 7th level, the elemental plane from which your power originates changes your body in a number of ways. You gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You have advantage on saving throws against being knocked {@condition prone} while in direct contact with the earth, and you can hold your breath twice as long as normal while suffocating.",
+						"You can read, write, and speak Terran, the primordial dialect associated with your element.",
+						"Elemental beings are aware of your primordial origins and the power you wield: you have advantage on Charisma checks against {@creature Earth Elemental|MM}s and other earth-aligned elementals, and disadvantage on Charisma checks against elementals of your opposing element."
+					]
+				}
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 8,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Empowered Bending Arts",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 10,
+			"entries": [
+				"Starting at 10th level, you've learned to harm even the most elementally attuned creatures with your element. When you deal damage to a creature with resistance to your elemental damage, it instead takes normal damage. When you deal damage to a creature with immunity to your elemental damage, you treat that immunity as resistance instead."
+			]
+		},
+		{
+			"name": "Mind Bending and Element Creation",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 10,
+			"entries": [
+				"Also at 10th level, you can bend without the somatic component as long as you are concentrating. In addition, with 10 minutes of concentration you can tap into your elemental nature deeply enough to create a usable amount of your element, equal to a single element cube you're able to manipulate."
+			]
+		},
+		{
+			"name": "Element of Substance",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 11,
+			"entries": [
+				"At 11th level, through your embodiment of the element of substance, you gain the following traits:",
+				{
+					"type": "list",
+					"items": [
+						"You are immune to being {@condition petrified}.",
+						"You have resistance to bludgeoning, piercing, and slashing damage.",
+						"You can move across difficult terrain made of earth or stone without spending extra movement.",
+						"You can move through solid earth or stone as if it were air, without disturbing it, but you can't end your movement there. If you do, you're ejected to the nearest unoccupied space and are {@condition stunned} until the end of your next turn."
+					]
+				}
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 11,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 3 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 12,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Strength of Jing",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 13,
+			"entries": [
+				"Starting at 13th level, you gain proficiency in Constitution saving throws."
+			]
+		},
+		{
+			"name": "Master Skill: Metal Bending",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 15,
+			"entries": [
+				"Through experience and experimentation, you've learned that metal derives from ore found in the earth, and that it's merely earth that has been purified and refined. By locating the impurities in metal, you can bend it to a degree.",
+				"Starting at 15th level, you gain the ability to bend metal, along with the following techniques:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Metallic Defense.} Your Earthen Armor can now incorporate metal: when you call metal to you, its Armor Class becomes 17 + your Wisdom modifier, and you no longer suffer a penalty to your movement speed while wearing it.",
+						"{@b Lava Bending.} By observing how metal transforms into a molten state, you've learned to heat up your bending substance. If you spend an action while bending earth or metal, you can heat it into a liquid, adding two extra bending dice to its damage and changing its damage type to fire. It stays heated for a number of rounds equal to half your Element Bender level.",
+						"{@b Advanced Bending.} Metal is a more solid and refined substance than rock and earth. When bending metal offensively, you increase your bending save DC by 2 and add one bending die to its damage."
+					]
+				},
+				"Highly purified metals, such as platinum, don't have enough impurities left to bend, rendering them impervious to your metal bending."
+			]
+		},
+		{
+			"name": "Bending Improvement",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 15,
+			"entries": [
+				"Your bending grows more powerful. You can now cause 4 effects with a single Bend action (see Bending, above), and your Elemental Strike, Elemental Push, and bending range and volume improve as noted in that feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 16,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Transformation",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 18,
+			"entries": [
+				"At 18th level, you can use an action to transform into a {@creature Earth Elemental|MM}. The transformation lasts until you end it (no action required) or you complete a long rest, after which you can't use this feature again until you finish a long rest. This transformation otherwise follows the same rules as the druid's Wild Shape feature."
+			]
+		},
+		{
+			"name": "Ability Score Increase",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 19,
+			"entries": [
+				"At levels 4, 8, 12, 16, and 19, you can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1. You cannot increase an ability score above 20 using this feature."
+			]
+		},
+		{
+			"name": "Psychic Bending",
+			"source": "DDWEBEarth",
+			"page": 0,
+			"className": "Earthbender",
+			"classSource": "DDWEBEarth",
+			"level": 20,
+			"entries": [
+				"At 20th level, you no longer need somatic components to bend, and you can use your bonus action to perform one Bend effect."
+			]
+		}
+	]
+}
