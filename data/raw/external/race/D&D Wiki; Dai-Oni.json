@@ -1,0 +1,801 @@
+{
+	"_meta": {
+		"sources": [
+			{
+				"json": "DaiOni",
+				"abbreviation": "DaiOni",
+				"full": "Dai-Oni (5e Race)",
+				"url": "https://www.dandwiki.com/wiki/Dai-Oni_(5e_Race)",
+				"authors": [
+					"D&D Wiki community"
+				],
+				"convertedBy": [
+					"Claude"
+				],
+				"version": "1.0.0"
+			}
+		],
+		"edition": "both",
+		"dateAdded": 1756512000,
+		"dateLastModified": 1756512000
+	},
+	"race": [
+		{
+			"name": "Red Oni (Dai-Oni)",
+			"source": "DaiOni",
+			"page": 1,
+			"size": [
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"con": 2,
+					"str": 1
+				}
+			],
+			"age": {
+				"mature": 20,
+				"max": 1000
+			},
+			"darkvision": 60,
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"languageProficiencies": [
+				{
+					"common": true,
+					"giant": true,
+					"abyssal": true
+				}
+			],
+			"heightAndWeight": {
+				"baseHeight": 72,
+				"heightMod": "2d12",
+				"baseWeight": 300,
+				"weightMod": "2d6"
+			},
+			"traitTags": [
+				"Darkvision",
+				"NaturalWeapon",
+				"Shapechanger"
+			],
+			"creatureTypeTags": [
+				"humanoid"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your Constitution score increases by 2, and your Strength score increases by 1."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Age",
+					"entries": [
+						"Oni reach maturity at the same age as humans, and can live well past 1,000 years old."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Alignment",
+					"entries": [
+						"These demons tend to be Neutral or Chaotic creatures, and though they primarily lean towards Evil due to their demonic instincts, many are neutral, or are capable of becoming good."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"Dai-Oni in their mortal form vary in height and build as most mortals do, but in their true forms range from just over six feet tall to eight feet tall. Your size is Medium. Dai-Oni in their true form regularly weigh between 300 to 500 pounds."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Speed",
+					"entries": [
+						"Your base walking speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Build",
+					"entries": [
+						"You gain proficiency in Intimidation and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Regeneration",
+					"entries": [
+						"When you roll a Hit Die to regain hit points as part of a short rest, you add your Constitution modifier twice to the roll, instead of once, and if you are restored to full hit points as part of completing a short rest, you also regrow any severed limbs or lost body parts."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Oni Shapeshifting",
+					"entries": [
+						"Oni generally take advantage of their limited shapeshifting in order to live amongst mortal races and avoid being hunted for their demonic nature. As an Oni, you have a singular Oni form and Humanoid form that you can switch between as an action. Your Humanoid form most closely resembles a half-elven version of yourself, except with more demonic eyes. The Humanoid form resembles your Oni form enough that those who have seen you in your Oni form can immediately recognize you despite the change in form."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Pride of Claw and Horn",
+					"entries": [
+						"You have sharp, durable claws at the ends of your fingertips and nearly indestructible horns. You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d4 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike. And you gain advantage on Athletics checks when using your horns to shatter objects or break down doors."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Tainted Blood",
+					"entries": [
+						"You retain your creature type, yet you register as a fiend to spells and other effects that detect the presence of the fiend creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Languages",
+					"entries": [
+						"You can speak, read, and write Common, Giant and Abyssal."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Unstoppable Charge",
+					"entries": [
+						"Red Oni find their demonic nature most closely related to demons of physical might, and are often the greatest warriors of Oni-kind.",
+						"As a bonus action, you can charge up to your movement speed in a straight line towards a direction of your choice while ignoring difficult terrain and being able to move through a creature's space. If you move at least 10 feet with this movement, you gain resistance to all damage until the start of your next turn, and any creature of your choice that you move within 5 feet of for the first time on this turn must make a Strength saving throw against a DC equal to (8 + your proficiency bonus + Strength modifier) as you batter them aside. On a failure they are knocked up to 5 feet in a direction of your choice and fall prone. You can use this trait twice, and restore all expended uses on a long rest."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Formidable by Nature",
+					"entries": [
+						"Your musculature is intensely dense and that is only solidified further when you feel the adrenaline of running into battle unarmored. When you aren't wearing armor or a shield, your base AC is 13 + your Strength modifier. You cannot use a shield and gain this benefit."
+					]
+				}
+			],
+			"hasFluffImages": false
+		},
+		{
+			"name": "Blue Oni (Dai-Oni)",
+			"source": "DaiOni",
+			"page": 1,
+			"size": [
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"con": 2,
+					"int": 1
+				}
+			],
+			"age": {
+				"mature": 20,
+				"max": 1000
+			},
+			"darkvision": 60,
+			"resist": [
+				"force"
+			],
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"languageProficiencies": [
+				{
+					"common": true,
+					"giant": true,
+					"abyssal": true
+				}
+			],
+			"heightAndWeight": {
+				"baseHeight": 72,
+				"heightMod": "2d12",
+				"baseWeight": 300,
+				"weightMod": "2d6"
+			},
+			"traitTags": [
+				"Darkvision",
+				"NaturalWeapon",
+				"Shapechanger",
+				"Resistance"
+			],
+			"creatureTypeTags": [
+				"humanoid"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your Constitution score increases by 2, and your Intelligence score increases by 1."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Age",
+					"entries": [
+						"Oni reach maturity at the same age as humans, and can live well past 1,000 years old."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Alignment",
+					"entries": [
+						"These demons tend to be Neutral or Chaotic creatures, and though they primarily lean towards Evil due to their demonic instincts, many are neutral, or are capable of becoming good."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"Dai-Oni in their mortal form vary in height and build as most mortals do, but in their true forms range from just over six feet tall to eight feet tall. Your size is Medium. Dai-Oni in their true form regularly weigh between 300 to 500 pounds."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Speed",
+					"entries": [
+						"Your base walking speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Build",
+					"entries": [
+						"You gain proficiency in Intimidation and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Regeneration",
+					"entries": [
+						"When you roll a Hit Die to regain hit points as part of a short rest, you add your Constitution modifier twice to the roll, instead of once, and if you are restored to full hit points as part of completing a short rest, you also regrow any severed limbs or lost body parts."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Oni Shapeshifting",
+					"entries": [
+						"Oni generally take advantage of their limited shapeshifting in order to live amongst mortal races and avoid being hunted for their demonic nature. As an Oni, you have a singular Oni form and Humanoid form that you can switch between as an action. Your Humanoid form most closely resembles a half-elven version of yourself, except with more demonic eyes. The Humanoid form resembles your Oni form enough that those who have seen you in your Oni form can immediately recognize you despite the change in form."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Pride of Claw and Horn",
+					"entries": [
+						"You have sharp, durable claws at the ends of your fingertips and nearly indestructible horns. You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d4 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike. And you gain advantage on Athletics checks when using your horns to shatter objects or break down doors."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Tainted Blood",
+					"entries": [
+						"You retain your creature type, yet you register as a fiend to spells and other effects that detect the presence of the fiend creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Languages",
+					"entries": [
+						"You can speak, read, and write Common, Giant and Abyssal."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Consume Magic",
+					"entries": [
+						"Blue Oni find their demonic nature most closely related to demons of magical might, and are often the greatest mages of Oni-kind.",
+						"As an action, you can choose one creature, object, or magical effect within 60 feet. A single spell of a level lower than your proficiency bonus ends on that target. For a spell of a level higher than that, make an ability check using your Constitution modifier; the DC equals 10 + the spell's level. On a successful check, the spell ends. You can use this trait once, regaining use after you finish a short or long rest.",
+						"Starting at 5th level, you can store that dispelled spell within your body as raw magical energy until the end of your next long rest or when you release it. While this magical energy is stored in your body, you can target an enemy within 120 feet that you can see and release it as a concentrated blast of magical force as an action. The target and all creatures within 10 feet of it must make a Dexterity saving throw against a DC equal to (8 + your proficiency bonus + Constitution modifier) or take 2d10 force damage + (your proficiency bonus × the level of the spell stored by this feature) as force damage."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Magical Blood",
+					"entries": [
+						"You gain resistance to force damage."
+					]
+				}
+			],
+			"hasFluffImages": false
+		},
+		{
+			"name": "Gray Oni (Dai-Oni)",
+			"source": "DaiOni",
+			"page": 1,
+			"size": [
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"con": 2,
+					"wis": 1
+				}
+			],
+			"age": {
+				"mature": 20,
+				"max": 1000
+			},
+			"darkvision": 60,
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"languageProficiencies": [
+				{
+					"common": true,
+					"giant": true,
+					"abyssal": true
+				}
+			],
+			"heightAndWeight": {
+				"baseHeight": 72,
+				"heightMod": "2d12",
+				"baseWeight": 300,
+				"weightMod": "2d6"
+			},
+			"traitTags": [
+				"Darkvision",
+				"NaturalWeapon",
+				"Shapechanger"
+			],
+			"creatureTypeTags": [
+				"humanoid"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your Constitution score increases by 2, and your Wisdom score increases by 1."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Age",
+					"entries": [
+						"Oni reach maturity at the same age as humans, and can live well past 1,000 years old."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Alignment",
+					"entries": [
+						"These demons tend to be Neutral or Chaotic creatures, and though they primarily lean towards Evil due to their demonic instincts, many are neutral, or are capable of becoming good."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"Dai-Oni in their mortal form vary in height and build as most mortals do, but in their true forms range from just over six feet tall to eight feet tall. Your size is Medium. Dai-Oni in their true form regularly weigh between 300 to 500 pounds."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Speed",
+					"entries": [
+						"Your base walking speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Build",
+					"entries": [
+						"You gain proficiency in Intimidation and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Regeneration",
+					"entries": [
+						"When you roll a Hit Die to regain hit points as part of a short rest, you add your Constitution modifier twice to the roll, instead of once, and if you are restored to full hit points as part of completing a short rest, you also regrow any severed limbs or lost body parts."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Oni Shapeshifting",
+					"entries": [
+						"Oni generally take advantage of their limited shapeshifting in order to live amongst mortal races and avoid being hunted for their demonic nature. As an Oni, you have a singular Oni form and Humanoid form that you can switch between as an action. Your Humanoid form most closely resembles a half-elven version of yourself, except with more demonic eyes. The Humanoid form resembles your Oni form enough that those who have seen you in your Oni form can immediately recognize you despite the change in form."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Pride of Claw and Horn",
+					"entries": [
+						"You have sharp, durable claws at the ends of your fingertips and nearly indestructible horns. You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d4 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike. And you gain advantage on Athletics checks when using your horns to shatter objects or break down doors."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Tainted Blood",
+					"entries": [
+						"You retain your creature type, yet you register as a fiend to spells and other effects that detect the presence of the fiend creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Languages",
+					"entries": [
+						"You can speak, read, and write Common, Giant and Abyssal."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Dependable Presence",
+					"entries": [
+						"Gray Oni find their demonic nature most closely related to demons of wisdom and guile, and are often the greatest leaders of Oni-kind.",
+						"When an ally within 30 feet of you that can see or hear you fails a saving throw, misses an attack roll, or fails an ability check, you can use a reaction to incite a spur of encouragement within them due to your presence. They can choose to re-roll the d20 and potentially turn it into a success. You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Thoughtful Practice",
+					"entries": [
+						"You have always made it a point to keep an active and focused mind in learning and honing your skills. When you finish a long rest, choose one skill that you have proficiency in to become practiced in. Whenever you make an ability check with the chosen skill, roll a d4 and add the number rolled to the check's total."
+					]
+				}
+			],
+			"hasFluffImages": false
+		},
+		{
+			"name": "Green Oni (Dai-Oni)",
+			"source": "DaiOni",
+			"page": 1,
+			"size": [
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"con": 2,
+					"cha": 1
+				}
+			],
+			"age": {
+				"mature": 20,
+				"max": 1000
+			},
+			"darkvision": 60,
+			"skillProficiencies": [
+				{
+					"intimidation": true,
+					"deception": true
+				}
+			],
+			"languageProficiencies": [
+				{
+					"common": true,
+					"giant": true,
+					"abyssal": true
+				}
+			],
+			"heightAndWeight": {
+				"baseHeight": 72,
+				"heightMod": "2d12",
+				"baseWeight": 300,
+				"weightMod": "2d6"
+			},
+			"traitTags": [
+				"Darkvision",
+				"NaturalWeapon",
+				"Shapechanger"
+			],
+			"creatureTypeTags": [
+				"humanoid"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your Constitution score increases by 2, and your Charisma score increases by 1."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Age",
+					"entries": [
+						"Oni reach maturity at the same age as humans, and can live well past 1,000 years old."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Alignment",
+					"entries": [
+						"These demons tend to be Neutral or Chaotic creatures, and though they primarily lean towards Evil due to their demonic instincts, many are neutral, or are capable of becoming good."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"Dai-Oni in their mortal form vary in height and build as most mortals do, but in their true forms range from just over six feet tall to eight feet tall. Your size is Medium. Dai-Oni in their true form regularly weigh between 300 to 500 pounds."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Speed",
+					"entries": [
+						"Your base walking speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Build",
+					"entries": [
+						"You gain proficiency in Intimidation and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Regeneration",
+					"entries": [
+						"When you roll a Hit Die to regain hit points as part of a short rest, you add your Constitution modifier twice to the roll, instead of once, and if you are restored to full hit points as part of completing a short rest, you also regrow any severed limbs or lost body parts."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Oni Shapeshifting",
+					"entries": [
+						"Oni generally take advantage of their limited shapeshifting in order to live amongst mortal races and avoid being hunted for their demonic nature. As an Oni, you have a singular Oni form and Humanoid form that you can switch between as an action. Your Humanoid form most closely resembles a half-elven version of yourself, except with more demonic eyes. The Humanoid form resembles your Oni form enough that those who have seen you in your Oni form can immediately recognize you despite the change in form."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Pride of Claw and Horn",
+					"entries": [
+						"You have sharp, durable claws at the ends of your fingertips and nearly indestructible horns. You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d4 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike. And you gain advantage on Athletics checks when using your horns to shatter objects or break down doors."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Tainted Blood",
+					"entries": [
+						"You retain your creature type, yet you register as a fiend to spells and other effects that detect the presence of the fiend creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Languages",
+					"entries": [
+						"You can speak, read, and write Common, Giant and Abyssal."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Twisted Soul",
+					"entries": [
+						"Green Oni find the abyssal corruption more deeply ingrained into their physiology, and are often the most wicked and villainous of Oni-kind.",
+						"You can cast the friends cantrip a number of times equal to your proficiency bonus, and you can cast gift of gab and suggestion once each. Charisma is your spellcasting ability score for these spells. The friends and suggestion spells don't require somatic, verbal, or material components, and if friends is cast using this trait, the creature isn't made aware that you attempted to alter its mood. You regain all uses of these spells through this trait when you complete a long rest."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Further Corrupted",
+					"entries": [
+						"Your furthered corruption twists both personality and body. You gain proficiency in Deception. You can create minor alterations to your Oni Shapeshifting forms to further obscure your identity — a creature won't recognize you in your alternate forms unless it succeeds on either an active or passive Investigation check contested against your passive Deception score."
+					]
+				}
+			],
+			"hasFluffImages": false
+		},
+		{
+			"name": "Half-Oni (Dai-Oni)",
+			"source": "DaiOni",
+			"page": 1,
+			"size": [
+				"M"
+			],
+			"speed": 30,
+			"ability": [
+				{
+					"con": 2,
+					"dex": 1
+				}
+			],
+			"age": {
+				"mature": 20,
+				"max": 1000
+			},
+			"darkvision": 60,
+			"skillProficiencies": [
+				{
+					"intimidation": true
+				}
+			],
+			"languageProficiencies": [
+				{
+					"common": true,
+					"giant": true,
+					"abyssal": true
+				}
+			],
+			"heightAndWeight": {
+				"baseHeight": 72,
+				"heightMod": "2d12",
+				"baseWeight": 300,
+				"weightMod": "2d6"
+			},
+			"traitTags": [
+				"Darkvision",
+				"NaturalWeapon",
+				"Shapechanger"
+			],
+			"creatureTypeTags": [
+				"humanoid"
+			],
+			"entries": [
+				{
+					"type": "entries",
+					"name": "Ability Score Increase",
+					"entries": [
+						"Your Constitution score increases by 2, and your Dexterity score increases by 1."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Age",
+					"entries": [
+						"Oni reach maturity at the same age as humans, and can live well past 1,000 years old."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Alignment",
+					"entries": [
+						"These demons tend to be Neutral or Chaotic creatures, and though they primarily lean towards Evil due to their demonic instincts, many are neutral, or are capable of becoming good."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Size",
+					"entries": [
+						"Dai-Oni in their mortal form vary in height and build as most mortals do, but in their true forms range from just over six feet tall to eight feet tall. Your size is Medium. Dai-Oni in their true form regularly weigh between 300 to 500 pounds."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Speed",
+					"entries": [
+						"Your base walking speed is 30 feet."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Darkvision",
+					"entries": [
+						"You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Build",
+					"entries": [
+						"You gain proficiency in Intimidation and you count as one size larger when determining your carrying weight and the weight you can push, drag, or lift."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Demonic Regeneration",
+					"entries": [
+						"When you roll a Hit Die to regain hit points as part of a short rest, you add your Constitution modifier twice to the roll, instead of once, and if you are restored to full hit points as part of completing a short rest, you also regrow any severed limbs or lost body parts."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Oni Shapeshifting",
+					"entries": [
+						"Oni generally take advantage of their limited shapeshifting in order to live amongst mortal races and avoid being hunted for their demonic nature. As an Oni, you have a singular Oni form and Humanoid form that you can switch between as an action. Your Humanoid form most closely resembles a half-elven version of yourself, except with more demonic eyes. The Humanoid form resembles your Oni form enough that those who have seen you in your Oni form can immediately recognize you despite the change in form."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Pride of Claw and Horn",
+					"entries": [
+						"You have sharp, durable claws at the ends of your fingertips and nearly indestructible horns. You can use your claws to make unarmed strikes. When you hit with them, the strike deals 1d4 + your Strength modifier slashing damage, instead of the bludgeoning damage normal for an unarmed strike. And you gain advantage on Athletics checks when using your horns to shatter objects or break down doors."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Tainted Blood",
+					"entries": [
+						"You retain your creature type, yet you register as a fiend to spells and other effects that detect the presence of the fiend creature type."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Languages",
+					"entries": [
+						"You can speak, read, and write Common, Giant and Abyssal."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Bloodline Markings",
+					"entries": [
+						"Half-Oni find no unique demonic traits, yet their original giant nature is far more expressed with the addition of further mortal blood, often gaining markings similar to the natural runic marks of the giants. They are the wildcards of Oni-kind.",
+						"You have giant-kin runic markings unique to yourself that appear in your Oni form. These magical markings store innate power that can be used to ensure your survival in times of duress. When you are reduced below half of your maximum hit points, or you are incapacitated or rendered unnaturally unconscious, you can choose to activate your bloodline markings as an action. While your markings are active, you gain the following benefits:",
+						{
+							"type": "list",
+							"style": "list-hang-notitle",
+							"items": [
+								{
+									"type": "item",
+									"entries": [
+										"You gain temporary hit points equal to your level + your Constitution modifier."
+									]
+								},
+								{
+									"type": "item",
+									"entries": [
+										"You add 1d4 to all attack rolls, ability checks and saving throws while the markings are active."
+									]
+								},
+								{
+									"type": "item",
+									"entries": [
+										"If triggered due to an incapacitating effect, the effect is suppressed while your markings are active and cleared when the transformation ends."
+									]
+								},
+								{
+									"type": "item",
+									"entries": [
+										"If the damage that would reduce you below half of your maximum hit points would reduce you to 0 hit points, you can choose to drop to 1 hit point instead."
+									]
+								}
+							]
+						},
+						"The effect of your markings lasts for one minute. After one minute, the activation of your markings takes a significant toll on your body, and you gain one level of exhaustion when it ends. You can use this trait once, regaining use after you finish a long rest."
+					]
+				},
+				{
+					"type": "entries",
+					"name": "Behemoth Build",
+					"entries": [
+						"You count as one size larger when your size is being considered for grapple or shove attempts you make or that are made against you."
+					]
+				}
+			],
+			"hasFluffImages": false
+		}
+	]
+}
