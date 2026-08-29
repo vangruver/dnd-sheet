@@ -291,8 +291,10 @@
       <button type="button" id="monster-list-new">+ Nova lista</button>
       <button type="button" id="monster-list-rename">✎ Renomear</button>
       <button type="button" id="monster-list-delete">🗑️ Excluir lista</button>
+      <button type="button" id="monster-import-btn">📥 Importar lista (5etools)</button>
+      <input type="file" id="monster-import-input" accept="application/json,.json" class="hidden">
     </div>
-    <p class="muted">Toda vez que você adicionar um monstro (individualmente ou em massa), ele vai pra <b>lista ativa</b> acima — crie uma lista por aventura/campanha pra separar os monstros.</p>
+    <p class="muted">Toda vez que você adicionar um monstro (individualmente ou em massa), ele vai pra <b>lista ativa</b> acima — crie uma lista por aventura/campanha pra separar os monstros. "Importar lista" lê o JSON que o 5etools.com exporta de uma lista salva do bestiário e adiciona os monstros encontrados à lista ativa.</p>
     <div class="segmented" id="monster-view-tabs">
       <button class="active" data-monview="roster">Meus Monstros</button>
       <button data-monview="browse">Bestiário Oficial</button>
