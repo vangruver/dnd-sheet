@@ -2044,10 +2044,21 @@ async function sendToDiscord(text) {
 }
 function renderDiscordSettings() {
   const url = getDiscordWebhook();
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Discord</h2><p class="muted">Cole aqui o link do webhook do canal onde as rolagens devem aparecer. Cada jogador configura o seu — dá pra usar servidores diferentes ou o mesmo, cada um no próprio navegador.</p></div></div>
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Discord</h2><p class="muted">Cada rolagem (ataque, dano, dado de vida, teste de morte, rolador genérico) vira uma mensagem no canal do Discord que você configurar abaixo. Isso fica salvo neste navegador, não no personagem — então cada jogador configura o próprio link, podendo usar servidores diferentes ou o mesmo entre o grupo.</p></div></div>
     <div class="modal-body">
+      <h3>Como criar o link do webhook</h3>
+      <ol>
+        <li>Abra o Discord (aplicativo ou navegador) e entre no <strong>servidor</strong> onde as rolagens devem aparecer.</li>
+        <li>Ao lado do nome do <strong>canal</strong> desejado (ex.: #mesa, #rolagens), clique na engrenagem ⚙️ de "Editar Canal" (ou clique com o botão direito no canal → "Editar Canal").</li>
+        <li>No menu à esquerda, clique em <strong>Integrações</strong>.</li>
+        <li>Clique em <strong>Webhooks</strong> e depois em <strong>Novo Webhook</strong> (se já existir um, pode reaproveitar).</li>
+        <li>Dê um nome pro webhook (ex.: "Rolagens de Dado") — é só o nome que vai aparecer nas mensagens, pode deixar o padrão também.</li>
+        <li>Clique em <strong>Copiar link do Webhook</strong>. Não precisa clicar em Salvar de novo, copiar já basta.</li>
+        <li>Volte aqui, cole o link no campo abaixo e clique em <strong>Salvar</strong>.</li>
+        <li>Clique em <strong>Enviar teste</strong> — se tudo estiver certo, uma mensagem de teste aparece no canal do Discord em poucos segundos.</li>
+      </ol>
+      <p class="muted">⚠️ Esse link funciona como uma senha: quem tiver o link consegue postar mensagens naquele canal. Não compartilhe publicamente — cole só no seu próprio navegador.</p>
       <label>Link do webhook<br><input id="discord-webhook-input" placeholder="https://discord.com/api/webhooks/..." value="${esc(url)}" style="width:100%"></label>
-      <p class="muted" style="margin-top:8px">No Discord: Configurações do Canal → Integrações → Webhooks → Novo Webhook → Copiar link do Webhook.</p>
       <div class="condition-duration-row" style="margin-top:12px">
         <button type="button" class="add-btn" id="discord-webhook-save">Salvar</button>
         <button type="button" id="discord-webhook-test">Enviar teste</button>
