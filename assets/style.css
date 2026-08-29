@@ -1027,6 +1027,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 /* ============================================================
    Aba Monstros (kit do mestre)
    ============================================================ */
+.monster-list-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px}
+.monster-list-row label{display:flex;align-items:center;gap:6px;font-size:10px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.05em}
+.monster-list-row select{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:7px 9px;min-width:220px}
+.monster-list-row button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:7px 11px;font-size:10px;font-weight:600}
+.monster-list-row button:hover{border-color:var(--red);background:var(--red-soft)}
 #monster-browse-toolbar{margin-top:10px}
 #monster-browse-toolbar .search-row{margin-bottom:8px}
 #monster-load-status{margin-left:10px}

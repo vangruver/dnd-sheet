@@ -255,6 +255,13 @@
   <section class="tab-page" id="tab-monsters">
     <div class="page-title"><h2>Monstros</h2><p>Kit do mestre: puxe qualquer criatura do bestiário oficial do 5etools (Manual dos Monstros e todas as aventuras prontas — Curse of Strahd, Storm King's Thunder, Lost Mine of Phandelver etc.) ou crie a sua. Independe do personagem aberto na ficha. Cada rolagem de ataque/dano/teste vai direto pro Discord configurado em "🔗 Discord" no topo.</p></div>
     <section class="paper-card no-print">
+      <div class="monster-list-row">
+        <label>Lista ativa<select id="monster-list-select"></select></label>
+        <button type="button" id="monster-list-new">+ Nova lista</button>
+        <button type="button" id="monster-list-rename">✎ Renomear</button>
+        <button type="button" id="monster-list-delete">🗑️ Excluir lista</button>
+      </div>
+      <p class="muted">Toda vez que você adicionar um monstro (individualmente ou em massa), ele vai pra <b>lista ativa</b> acima — crie uma lista por aventura/campanha pra separar os monstros.</p>
       <div class="segmented" id="monster-view-tabs">
         <button class="active" data-monview="roster">Meus Monstros</button>
         <button data-monview="browse">Bestiário Oficial</button>
@@ -267,6 +274,7 @@
         <p class="muted">Escolher um livro carrega só aquele arquivo (rápido). Pra pesquisar em <b>todo</b> o bestiário oficial de uma vez (mais de 150 livros/aventuras), use o botão abaixo — demora mais na primeira vez, depois fica em cache.</p>
         <button type="button" class="add-btn" id="monster-load-all">🔎 Buscar em todas as fontes</button>
         <span id="monster-load-status" class="muted"></span>
+        <button type="button" class="add-btn hidden" id="monster-add-all-source">📦 Adicionar todos desta fonte à lista ativa</button>
       </div>
       <button type="button" class="add-btn no-print" id="monster-create-btn">+ Criar monstro</button>
     </section>
