@@ -134,10 +134,37 @@ export function saveDiscordWebhook(url) {
   catch { /* modo privado */ }
 }
 
-// Monstros do mestre — lista à parte de qualquer personagem salvo neste
-// navegador: monstros do bestiário oficial (5etools, todas as aventuras)
-// adicionados pra consulta rápida, mais monstros criados na mão. Fica
-// solta (não é "ficha" de ninguém), já que quem usa essa aba é o mestre.
-const MONSTERS_KEY = "dnd-ficha-auto-monsters-v1";
-export function getMonsters() { try { const v = localStorage.getItem(MONSTERS_KEY); const arr = v ? JSON.parse(v) : []; return Array.isArray(arr) ? arr : []; } catch { return []; } }
-export function saveMonsters(arr) { try { localStorage.setItem(MONSTERS_KEY, JSON.stringify(arr || [])); } catch { /* modo privado */ } }
+// Listas de monstros do mestre — à parte de qualquer personagem salvo
+// neste navegador. Várias listas nomeadas (ex.: "Curse of Strahd",
+// "Encontros aleatórios"), cada uma com sua própria coleção de
+// monstros do bestiário oficial e/ou criados na mão — pra separar por
+// aventura/campanha em vez de uma pilha única. Formato:
+// [{ id, name, monsters: [...] }, ...]
+const MONSTER_LISTS_KEY = "dnd-ficha-auto-monster-lists-v1";
+// Formato antigo (uma lista única, achatada) — migra na primeira leitura.
+const LEGACY_MONSTERS_KEY = "dnd-ficha-auto-monsters-v1";
+const MONSTER_ACTIVE_LIST_KEY = "dnd-ficha-auto-monster-active-list";
+function genMonsterListId() { return `mlist-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`; }
+
+export function getMonsterLists() {
+  try {
+    const v = localStorage.getItem(MONSTER_LISTS_KEY);
+    if (v) { const arr = JSON.parse(v); if (Array.isArray(arr)) return arr; }
+  } catch { /* ignore */ }
+  try {
+    const legacy = localStorage.getItem(LEGACY_MONSTERS_KEY);
+    const arr = legacy ? JSON.parse(legacy) : null;
+    if (Array.isArray(arr) && arr.length) {
+      const migrated = [{ id: genMonsterListId(), name: "Meus Monstros", monsters: arr }];
+      saveMonsterLists(migrated);
+      try { localStorage.removeItem(LEGACY_MONSTERS_KEY); } catch { /* ignore */ }
+      return migrated;
+    }
+  } catch { /* ignore */ }
+  return [];
+}
+export function saveMonsterLists(arr) { try { localStorage.setItem(MONSTER_LISTS_KEY, JSON.stringify(arr || [])); } catch { /* modo privado */ } }
+export function newMonsterListId() { return genMonsterListId(); }
+
+export function getActiveMonsterListId() { try { return localStorage.getItem(MONSTER_ACTIVE_LIST_KEY) || ""; } catch { return ""; } }
+export function setActiveMonsterListId(id) { try { localStorage.setItem(MONSTER_ACTIVE_LIST_KEY, id || ""); } catch { /* modo privado */ } }

@@ -14,14 +14,15 @@ import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
   getSavedTheme, saveTheme, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
-  getDiscordWebhook, saveDiscordWebhook, getMonsters, saveMonsters,
+  getDiscordWebhook, saveDiscordWebhook,
+  getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
 } from "./storage.js";
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
 let pickerType = null, eqCat = "inventory", pickerLegacy = true, spellBookClassId = null;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
-let monsterState = { view: "roster", query: "", source: "" };
+let monsterState = { view: "roster", query: "", source: "", listId: "" };
 let monsterBrowseCache = []; // monstros já baixados nesta sessão (por fonte selecionada, ou tudo se "carregar todas")
 let monsterAllLoaded = false;
 let monsterLegendaryGroups = [];
@@ -3064,15 +3065,101 @@ function monsterDiscordMessage(m, label, detail, total) {
   return `🐉 **${name}** (mestre) rolou **${label}**: ${detail} = **${total}**`;
 }
 
+// ------------------------------------------------------------
+// Listas de monstros — o mestre pode ter várias (uma por aventura/
+// campanha, ex. "Curse of Strahd", "Encontros aleatórios") em vez de
+// uma pilha única. Toda operação de "adicionar" (individual ou em
+// massa) vai pra LISTA ATIVA, escolhida no seletor da aba.
+// ------------------------------------------------------------
+function genMonsterEntryId() { return `mon-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`; }
+// Garante que existe ao menos uma lista e que monsterState.listId aponta
+// pra uma lista válida (cria a lista padrão / recupera a última ativa
+// salva / cai pra primeira, nessa ordem) — chamado no início de toda
+// renderização da aba, já que a lista pode ter sido apagada em outra aba.
+function ensureMonsterListsState() {
+  let lists = getMonsterLists();
+  if (!lists.length) {
+    lists = [{ id: newMonsterListId(), name: "Meus Monstros", monsters: [] }];
+    saveMonsterLists(lists);
+  }
+  if (!monsterState.listId || !lists.some((l) => l.id === monsterState.listId)) {
+    monsterState.listId = getActiveMonsterListId();
+    if (!lists.some((l) => l.id === monsterState.listId)) monsterState.listId = lists[0].id;
+    setActiveMonsterListId(monsterState.listId);
+  }
+  return lists;
+}
+function activeMonsterList(lists) {
+  lists = lists || ensureMonsterListsState();
+  return lists.find((l) => l.id === monsterState.listId) || lists[0];
+}
+function renderMonsterListSelect(lists) {
+  lists = lists || ensureMonsterListsState();
+  const sel = $("monster-list-select");
+  if (!sel) return;
+  sel.innerHTML = lists.map((l) => `<option value="${esc(l.id)}"${l.id === monsterState.listId ? " selected" : ""}>${esc(l.name)} (${l.monsters.length})</option>`).join("");
+}
+function openMonsterListNameModal(mode) {
+  const lists = ensureMonsterListsState();
+  const current = mode === "rename" ? activeMonsterList(lists) : null;
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">LISTA DE MONSTROS</span><h2>${mode === "rename" ? "Renomear lista" : "Nova lista"}</h2><p class="muted">${mode === "rename" ? "" : "Ex.: o nome de uma aventura — 'Curse of Strahd', 'Lost Mine of Phandelver' — pra depois jogar todos os monstros dela aqui dentro."}</p></div></div>
+    <div class="modal-body">
+      <label>Nome da lista<br><input id="ml-name" style="width:100%" value="${esc(current?.name || "")}" placeholder="Ex.: Curse of Strahd"></label>
+      <div class="modal-actions"><button type="button" id="ml-cancel">Cancelar</button><button type="button" class="primary" id="ml-save">${mode === "rename" ? "Renomear" : "Criar"}</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("ml-name").focus();
+  $("ml-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("ml-save").addEventListener("click", () => {
+    const name = $("ml-name").value.trim();
+    if (!name) { toast("Dê um nome pra lista."); return; }
+    const freshLists = ensureMonsterListsState();
+    if (mode === "rename") {
+      activeMonsterList(freshLists).name = name;
+    } else {
+      const nl = { id: newMonsterListId(), name, monsters: [] };
+      freshLists.push(nl);
+      monsterState.listId = nl.id;
+      setActiveMonsterListId(nl.id);
+    }
+    saveMonsterLists(freshLists);
+    $("modal").classList.add("hidden");
+    renderMonsters();
+  });
+}
+function deleteActiveMonsterList() {
+  const lists = ensureMonsterListsState();
+  const target = activeMonsterList(lists);
+  if (!confirm(`Excluir a lista "${target.name}" e o(s) ${target.monsters.length} monstro(s) nela? Isso não afeta as outras listas.`)) return;
+  const remaining = lists.filter((l) => l.id !== target.id);
+  const finalLists = remaining.length ? remaining : [{ id: newMonsterListId(), name: "Meus Monstros", monsters: [] }];
+  saveMonsterLists(finalLists);
+  monsterState.listId = finalLists[0].id;
+  setActiveMonsterListId(monsterState.listId);
+  renderMonsters();
+}
+// Adiciona um monstro à lista ativa (ou à lista passada) — usado tanto
+// pelo botão individual do bestiário/criação quanto pelo "adicionar
+// todos desta fonte". Ignora duplicata (mesmo nome+fonte já na lista).
+function addMonsterToList(m, lists, listId) {
+  const target = lists.find((l) => l.id === listId) || lists[0];
+  const exists = target.monsters.some((x) => x.name === m.name && (x.source || "") === (m.source || ""));
+  if (exists) return false;
+  target.monsters.push({ ...m, _id: genMonsterEntryId(), _addedAt: Date.now() });
+  return true;
+}
 function addMonsterToRoster(m) {
-  const roster = getMonsters();
-  const clone = { ...m, _id: `mon-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, _addedAt: Date.now() };
-  roster.push(clone);
-  saveMonsters(roster);
-  toast(`"${m.name}" adicionado aos seus monstros.`);
+  const lists = ensureMonsterListsState();
+  const target = activeMonsterList(lists);
+  const added = addMonsterToList(m, lists, target.id);
+  saveMonsterLists(lists);
+  toast(added ? `"${m.name}" adicionado a "${target.name}".` : `"${m.name}" já está em "${target.name}".`);
 }
 function removeMonsterFromRoster(id) {
-  saveMonsters(getMonsters().filter((x) => x._id !== id));
+  const lists = ensureMonsterListsState();
+  const target = activeMonsterList(lists);
+  target.monsters = target.monsters.filter((x) => x._id !== id);
+  saveMonsterLists(lists);
   renderMonsters();
 }
 
@@ -3094,26 +3181,30 @@ function monsterResultCardHtml(m, opts = {}) {
     <div class="pick-meta">${esc(monsterTypeText(m.type) || m.typeText || "—")}${cr}</div>
     <div class="catalog-actions">
       <button data-mon-view="${esc(opts.viewKey)}">ⓘ Ver stat block</button>
-      ${opts.addable ? `<button class="add-btn" data-mon-add="${esc(opts.viewKey)}">+ Adicionar aos meus monstros</button>` : ""}
+      ${opts.addable ? `<button class="add-btn" data-mon-add="${esc(opts.viewKey)}">+ Adicionar à lista ativa</button>` : ""}
       ${opts.removable ? `<button data-mon-remove="${esc(m._id)}">🗑️ Remover</button>` : ""}
     </div>
   </article>`;
 }
 
 async function renderMonsters() {
+  const lists = ensureMonsterListsState();
+  renderMonsterListSelect(lists);
   $("monster-browse-toolbar").classList.toggle("hidden", monsterState.view !== "browse");
   const box = $("monster-results");
   if (monsterState.view === "roster") {
-    const roster = getMonsters();
+    const active = activeMonsterList(lists);
+    const roster = active.monsters;
     box.innerHTML = roster.length
-      ? roster.map((m, i) => monsterResultCardHtml(m, { viewKey: `roster:${i}`, removable: true })).join("")
-      : `<div class="empty">Nenhum monstro ainda. Adicione um do bestiário oficial (aba "Bestiário Oficial") ou clique em "+ Criar monstro".</div>`;
+      ? roster.map((m) => monsterResultCardHtml(m, { viewKey: `roster:${m._id}`, removable: true })).join("")
+      : `<div class="empty">A lista "${esc(active.name)}" ainda está vazia. Adicione um monstro do bestiário oficial (aba "Bestiário Oficial") ou clique em "+ Criar monstro".</div>`;
     box.querySelectorAll("[data-mon-view]").forEach((b) => b.addEventListener("click", () => {
-      const i = Number(b.dataset.monView.split(":")[1]);
-      renderMonsterStatblock(getMonsters()[i]);
+      const id = b.dataset.monView.slice("roster:".length);
+      const m = activeMonsterList(ensureMonsterListsState()).monsters.find((x) => x._id === id);
+      if (m) renderMonsterStatblock(m);
     }));
     box.querySelectorAll("[data-mon-remove]").forEach((b) => b.addEventListener("click", () => {
-      if (confirm("Remover este monstro dos seus monstros salvos?")) removeMonsterFromRoster(b.dataset.monRemove);
+      if (confirm("Remover este monstro da lista?")) removeMonsterFromRoster(b.dataset.monRemove);
     }));
     return;
   }
@@ -3128,6 +3219,11 @@ async function renderMonsters() {
     monsterBrowseCache = await loadBestiarySource(src).catch(() => []);
   } else if (!src && !monsterAllLoaded) {
     monsterState.source = "";
+  }
+  const addAllBtn = $("monster-add-all-source");
+  if (addAllBtn) {
+    addAllBtn.classList.toggle("hidden", !monsterState.source);
+    if (monsterState.source) addAllBtn.textContent = `📦 Adicionar os ${monsterBrowseCache.length} monstros de "${monsterState.source}" à lista ativa`;
   }
   const pool = (monsterAllLoaded || monsterState.source) ? monsterBrowseCache : [];
   if (!pool.length) {
@@ -3146,8 +3242,23 @@ async function renderMonsters() {
   box.querySelectorAll("[data-mon-add]").forEach((b) => b.addEventListener("click", () => {
     const [name, source] = JSON.parse(b.dataset.monAdd);
     const m = pool.find((x) => x.name === name && x.source === source);
-    if (m) addMonsterToRoster(m);
+    if (m) { addMonsterToRoster(m); renderMonsterListSelect(); }
   }));
+}
+// Joga TODOS os monstros da fonte/aventura atualmente selecionada
+// (monsterBrowseCache inteiro, sem filtro de busca) na lista ativa de
+// uma vez — é o "salvar todos os monstros de uma aventura numa lista".
+function addAllSourceMonstersToActiveList() {
+  if (!monsterState.source || !monsterBrowseCache.length) { toast("Escolha um livro/aventura primeiro."); return; }
+  const lists = ensureMonsterListsState();
+  const target = activeMonsterList(lists);
+  if (!confirm(`Adicionar os ${monsterBrowseCache.length} monstros de "${monsterState.source}" à lista "${target.name}"?`)) return;
+  let added = 0;
+  monsterBrowseCache.forEach((m) => { if (addMonsterToList(m, lists, target.id)) added++; });
+  saveMonsterLists(lists);
+  const skipped = monsterBrowseCache.length - added;
+  toast(`${added} monstro(s) adicionado(s) a "${target.name}"${skipped ? ` (${skipped} já estavam lá)` : ""}.`);
+  renderMonsters();
 }
 
 function openMonsterCreateModal() {
@@ -3228,7 +3339,7 @@ function openMonsterCreateModal() {
     };
     addMonsterToRoster(monster);
     $("modal").classList.add("hidden");
-    if (monsterState.view === "roster") renderMonsters();
+    renderMonsters();
   });
 }
 
@@ -4447,6 +4558,15 @@ function setup() {
     renderMonsters();
   });
   $("monster-create-btn")?.addEventListener("click", openMonsterCreateModal);
+  $("monster-list-select")?.addEventListener("change", () => {
+    monsterState.listId = $("monster-list-select").value;
+    setActiveMonsterListId(monsterState.listId);
+    renderMonsters();
+  });
+  $("monster-list-new")?.addEventListener("click", () => openMonsterListNameModal("create"));
+  $("monster-list-rename")?.addEventListener("click", () => openMonsterListNameModal("rename"));
+  $("monster-list-delete")?.addEventListener("click", deleteActiveMonsterList);
+  $("monster-add-all-source")?.addEventListener("click", addAllSourceMonstersToActiveList);
   $("collapse-creator").addEventListener("click", () => {
     $("creator").classList.toggle("collapsed");
     $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";
