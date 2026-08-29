@@ -34,35 +34,112 @@
   --ink:var(--text);--muted:var(--text-mut);--paper:var(--surface);--line:var(--border);--dark:var(--bg);
 }
 
-/* ---------- Tema claro ---------- */
-:root[data-theme="light"]{
-  --bg:#f3efe6;
-  --bg-2:#ece5d5;
-  --surface:#ffffff;
-  --surface-2:#f5f1e8;
-  --surface-3:#ece4d2;
-  --inset:#faf7f0;
-  --border:#dcd3bd;
-  --border-2:#c9bd9f;
-  --text:#211f1a;
-  --text-dim:#4c4738;
-  --text-mut:#847a60;
-  --red:#a91626;
-  --red-hi:#c2202f;
-  --red-dim:#7d101c;
-  --red-soft:rgba(169,22,38,.10);
-  --gold:#8a6a1e;
-  --blue:#2c6497;
-  --green:#2a7d51;
-  --shadow:0 8px 24px rgba(40,32,10,.10);
-  --shadow-sm:0 2px 10px rgba(40,32,10,.07);
+/* ============================================================
+   Temas ("skins") — quatro visuais completos, escolhidos no
+   seletor "Tema" da barra do topo. Todo o resto da folha de
+   estilo lê só as variáveis abaixo, então trocar de tema é
+   trocar este bloco de tokens (mais alguns ajustes estruturais
+   no fim do arquivo, em "Ajustes por tema").
+     noite       — escuro (padrão, evolução do visual original)
+     papel       — claro e silencioso, tipografia no comando
+     pergaminho  — o mesmo papel da ficha impressa/PDF
+     mesa        — denso, pra ficha aberta durante a sessão
+   ============================================================ */
+
+/* ---------- Papel Branco ---------- */
+:root[data-skin="papel"]{
+  --bg:#F2F2F0;
+  --bg-2:#E9E9E6;
+  --surface:#FFFFFF;
+  --surface-2:#F5F5F3;
+  --surface-3:#EAEAE7;
+  --inset:#FAFAF9;
+  --border:#E2E2DE;
+  --border-2:#CFCFC9;
+  --text:#191A1C;
+  --text-dim:#4A4B4E;
+  --text-mut:#8A8A85;
+  --red:#B3202C;
+  --red-hi:#8E1922;
+  --red-dim:#8E1922;
+  --red-soft:rgba(179,32,44,.08);
+  --gold:#8A6A1E;
+  --blue:#2E5C8A;
+  --green:#2A7D51;
+  --radius:6px;
+  --radius-sm:5px;
+  --radius-xs:4px;
+  --shadow:none;
+  --shadow-sm:none;
 }
-:root[data-theme="light"] body::before{
+
+/* ---------- Pergaminho (mesmo papel da ficha impressa) ---------- */
+:root[data-skin="pergaminho"]{
+  --bg:#E7DDC6;
+  --bg-2:#DED2B6;
+  --surface:#F8F3E7;
+  --surface-2:#F2EAD8;
+  --surface-3:#E9DFC6;
+  --inset:#FCF8EE;
+  --border:#BFAE८8;
+  --border:#BFAE88;
+  --border-2:#9C8A63;
+  --text:#221E17;
+  --text-dim:#4C4436;
+  --text-mut:#7B6E58;
+  --red:#8E1B22;
+  --red-hi:#7A161C;
+  --red-dim:#6B1218;
+  --red-soft:rgba(142,27,34,.10);
+  --gold:#8A6A1E;
+  --blue:#2F5378;
+  --green:#3B6B46;
+  --radius:10px;
+  --radius-sm:9px;
+  --radius-xs:7px;
+  --shadow:none;
+  --shadow-sm:none;
+  --font:"Spectral",Georgia,"Times New Roman",serif;
+  --font-head:"Roboto Condensed",var(--font);
+}
+
+/* ---------- Mesa (denso, pra jogar) ---------- */
+:root[data-skin="mesa"]{
+  --bg:#141518;
+  --bg-2:#0F1012;
+  --surface:#1C1E22;
+  --surface-2:#212429;
+  --surface-3:#282C32;
+  --inset:#17191C;
+  --border:#2A2D33;
+  --border-2:#3A3E46;
+  --text:#E4E6EA;
+  --text-dim:#AEB2BA;
+  --text-mut:#71757D;
+  --red:#2B6E5B;
+  --red-hi:#5FD39B;
+  --red-dim:#22553F;
+  --red-soft:rgba(43,110,91,.16);
+  --gold:#C9A24B;
+  --blue:#5B9BD5;
+  --green:#5FD39B;
+  --radius:5px;
+  --radius-sm:4px;
+  --radius-xs:3px;
+  --shadow:none;
+  --shadow-sm:none;
+}
+
+/* Fundo: o brilho vermelho difuso é do tema Noite. Nos outros ele
+   suja o papel/vira ruído, então sai. */
+:root[data-skin="papel"] body::before,
+:root[data-skin="mesa"] body::before{background:none}
+:root[data-skin="pergaminho"] body::before{
   background:
-    radial-gradient(1100px 620px at 78% -8%,rgba(169,22,38,.06),transparent 60%),
-    radial-gradient(900px 600px at 8% 4%,rgba(44,100,151,.05),transparent 55%);
+    radial-gradient(1200px 700px at 80% -10%,rgba(142,27,34,.06),transparent 62%),
+    radial-gradient(900px 600px at 5% 5%,rgba(120,95,45,.08),transparent 58%);
 }
-:root[data-theme="light"] .modal{background:rgba(30,26,16,.45)}
+:root[data-skin="papel"] .modal,:root[data-skin="pergaminho"] .modal{background:rgba(40,32,16,.42)}
 
 html{scroll-behavior:smooth}
 body{
@@ -117,6 +194,34 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .toolbar .primary:hover{filter:brightness(1.08)}
 .file-button{cursor:pointer}
 .file-button input{display:none}
+
+/* Menus da barra do topo — quatorze botões soltos viravam a coisa
+   mais barulhenta da tela. Agrupados em <details>, que já abre e
+   fecha sozinho e responde a teclado sem JS. */
+.menu{position:relative}
+.menu>summary{
+  list-style:none;background:var(--surface-2);color:var(--text);border:1px solid var(--border-2);
+  border-radius:var(--radius-xs);padding:8px 11px;font-size:12px;user-select:none;white-space:nowrap
+}
+.menu>summary::-webkit-details-marker{display:none}
+.menu>summary::after{content:"▾";margin-left:7px;font-size:9px;color:var(--text-mut)}
+.menu>summary:hover{border-color:var(--red);background:var(--surface-3)}
+.menu[open]>summary{border-color:var(--red);background:var(--surface-3)}
+.menu-body{
+  position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:216px;
+  display:flex;flex-direction:column;gap:4px;padding:7px;
+  background:var(--surface);border:1px solid var(--border-2);border-radius:var(--radius-sm);
+  box-shadow:0 10px 30px rgba(0,0,0,.32)
+}
+.menu-body button,.menu-body .file-button{
+  width:100%;text-align:left;background:transparent;border:1px solid transparent;
+  border-radius:var(--radius-xs);padding:8px 10px;font-size:12px;color:var(--text)
+}
+.menu-body button:hover,.menu-body .file-button:hover{background:var(--surface-2);border-color:var(--border-2)}
+.menu-fields{gap:9px;padding:11px}
+.menu-fields label{display:flex;flex-direction:column;gap:4px;color:var(--text-mut);font-size:9px;text-transform:uppercase;letter-spacing:.07em}
+.menu-fields select{width:100%}
+@media (max-width:720px){.menu-body{right:auto;left:0}}
 
 /* ---------- Shell ---------- */
 .sheet-shell{max-width:1440px;margin:22px auto 80px;padding:0 18px}
@@ -402,13 +507,42 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-res-class>b{display:block;font:700 12px var(--font-head)}
 .spell-res-class>span{display:block;font-size:10px;color:var(--text-mut);margin-bottom:6px}
 .slot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+/* Defesa sem Armadura — aparece só quando o personagem tem uma (ou mais
+   de uma, no clássico Monge/Bárbaro, onde a regra manda escolher só uma). */
+.ud-note{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:9px;padding:8px 10px;background:var(--inset);border:1px solid var(--border);border-radius:var(--radius-xs);font-size:10px;color:var(--text-dim)}
+.ud-note.hidden{display:none}
+.ud-note .ud-label{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-mut)}
+.ud-note select{background:var(--surface-2);color:var(--text);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:4px 7px;font-size:10px;max-width:100%}
+.ud-note .ud-active b{color:var(--text)}
+.ud-note .ud-off{color:var(--text-mut);font-style:italic}
+
 .slot-box{background:linear-gradient(165deg,var(--surface-2),var(--inset));border:1px solid var(--border-2);border-radius:var(--radius-sm);text-align:center;padding:9px 4px}
 .slot-box span{display:block;font-size:7px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.04em}
 .slot-box b{font:800 20px var(--font-head);color:var(--text)}
 .slot-box.pact{border-color:var(--red-dim);background:linear-gradient(165deg,var(--red-soft),var(--inset))}
 .slot-box.pact b{color:var(--red-hi)}
+/* Faixa "quanto você leva" no topo do grimório — limites de preparação
+   e espaços por nível, o que a lista sozinha não dizia. */
+.prepare-banner{margin-bottom:12px}
+.prepare-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-bottom:9px}
+.prepare-head h3{margin:0;font:700 13px var(--font-head);text-transform:uppercase;letter-spacing:.04em;color:var(--text)}
+.prepare-head .muted{font-size:10px}
+.prepare-hint{margin:0 0 9px;font-size:10.5px;color:var(--text-mut);max-width:78ch}
+.prepare-pills{display:flex;flex-wrap:wrap;gap:7px}
+.prep-pill{background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:6px 11px;min-width:92px}
+.prep-pill span{display:block;font-size:7.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-mut)}
+.prep-pill b{font:800 15px var(--font-head);color:var(--text)}
+.prep-pill.slot{border-color:var(--blue);background:color-mix(in srgb,var(--blue) 10%,var(--surface-2))}
+.prep-pill.slot.pact{border-color:var(--red-dim);background:var(--red-soft)}
+.prep-pill.over{border-color:var(--red);background:var(--red-soft)}
+.prep-pill.over b{color:var(--red-hi)}
+
 .spell-level{margin-bottom:12px;padding:0;overflow:hidden}
-.spell-level-head{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.spell-level-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px;padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+.spell-level-chip{font-size:9px;border:1px solid var(--border-2);border-radius:20px;padding:2px 9px;color:var(--text-dim);background:var(--inset)}
+.spell-level-chip.slots{border-color:var(--blue);color:var(--blue)}
+.spell-level-chip.none{opacity:.6}
+.spell-level-chip.over{border-color:var(--red);color:var(--red-hi)}
 .spell-level-head h3{margin:0;color:var(--text);font:700 13px var(--font-head);letter-spacing:.04em;text-transform:uppercase}
 .spell-level-head span{font-size:10px;color:var(--text-mut)}
 .spell-list{display:grid;grid-template-columns:1fr 1fr}
@@ -1015,11 +1149,47 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 
 .off-spell-top{display:grid;grid-template-columns:1fr .8fr .8fr .8fr;gap:6px;margin-bottom:7px}
 .off-spell-top .off-oval{border-radius:10px;padding:6px}
-.off-slots{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.off-slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(38px,1fr));gap:4px}
 .off-slot{border:1px solid #999;border-radius:6px;text-align:center;padding:4px 2px;background:#fff}
 .off-slot span{display:block;font-size:5.5px;text-transform:uppercase;color:#777}
 .off-slot b{font:800 12px var(--font-head)}
+.off-slot-empty{opacity:.42}
+.off-slot-pact{border-color:#7a4bb5;background:#f7f2ff}
+.off-slot-pips{display:flex;justify-content:center;flex-wrap:wrap;gap:1.5px;margin-top:2px}
+.off-slot-pips i{width:5px;height:5px;border:1px solid #666;border-radius:50%;display:block}
+.off-slot-pips i.on{background:#b5192a;border-color:#b5192a}
+.off-prep-table td{font-size:8px}
+.off-prep-now{margin:5px 0 0;font-size:8.5px;color:#333}
+
+/* Página 3 — repertório completo de magias. Diferente das outras, esta
+   página CRESCE com o conteúdo e pode quebrar entre folhas: um Mago de
+   nível alto tem centenas de magias na lista. */
+.off-page3{min-height:0}
+.off-rep-title h2{font:700 15px var(--font-head);margin:0 0 3px;color:#1a1a1a}
+.off-rep-title p{margin:0 0 6px;font-size:8.5px;color:#555}
+.off-rep-limits{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.off-rep-limits span{border:1px solid #999;border-radius:20px;padding:2px 8px;font-size:8px;background:#fff;color:#333}
+.off-rep-cols{column-count:3;column-gap:9px}
+.off-rep-block{break-inside:avoid;margin-bottom:8px;border:1px solid #ccc;border-radius:7px;padding:5px 7px;background:#fff}
+.off-rep-head{font:700 9px var(--font-head);text-transform:uppercase;letter-spacing:.04em;color:#3a3a3a;border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:3px}
+.off-rep-head small{display:block;font:400 6.5px var(--font);text-transform:none;letter-spacing:0;color:#888}
+.off-rep-list{list-style:none;margin:0;padding:0}
+.off-rep-list li{display:flex;align-items:baseline;gap:3px;font-size:7.6px;color:#333;padding:.5px 0}
+.off-rep-list li i{font-style:normal;font-size:6.5px;color:#aaa;width:7px}
+.off-rep-list li em{font-style:normal;font-size:6px;color:#999;letter-spacing:.04em}
+.off-rep-list li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.off-rep-list li.on{font-weight:700;color:#111}
+.off-rep-list li.on i{color:#b5192a}
+.off-rep-locked{opacity:.55;border-style:dashed}
 .off-page2-side{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:7px}
+/* Cabeçalho de página (2 em diante) — a ficha oficial repete o nome do
+   personagem no topo de cada folha, pra não perder a página solta. */
+.off-page-title{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-bottom:1.4px solid #3a3a3a;padding-bottom:5px;margin-bottom:9px}
+.off-page-title h2{font:700 15px var(--font-head);margin:0;text-transform:uppercase;letter-spacing:.04em;color:#1a1a1a}
+.off-page-title span{font:700 8px var(--font-head);text-transform:uppercase;letter-spacing:.12em;color:#7a7a7a}
+.off-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;align-content:start}
+.off-detail-grid .off-span2{grid-column:1/-1}
+.off-detail-grid .off-tall{min-height:120px}
 .off-align{margin-top:6px;font-size:8.5px;border-top:1px solid #ccc;padding-top:4px;color:#222}
 .off-list{margin:0;padding-left:14px;font-size:8.5px;color:#222}
 .off-list li{margin:2px 0}
@@ -1064,6 +1234,83 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .monster-form-row [data-mc-remove-row]{position:absolute;top:6px;right:6px}
 .monster-form-action-row .two-input{margin-top:2px}
 
+/* ============================================================
+   Ajustes por tema
+   ------------------------------------------------------------
+   O que os tokens sozinhos não resolvem: densidade, quantidade
+   de camadas de decoração e a tipografia de cada visual. A regra
+   comum aos três temas novos é uma camada de decoração por
+   elemento — ou borda, ou sombra, ou gradiente; nunca as três.
+   ============================================================ */
+:root[data-skin="papel"] .paper-card,
+:root[data-skin="pergaminho"] .paper-card,
+:root[data-skin="mesa"] .paper-card,
+:root[data-skin="papel"] .sheet-head,
+:root[data-skin="pergaminho"] .sheet-head,
+:root[data-skin="mesa"] .sheet-head,
+:root[data-skin="papel"] .creator,
+:root[data-skin="pergaminho"] .creator,
+:root[data-skin="mesa"] .creator{box-shadow:none}
+:root[data-skin="papel"] .name-block,
+:root[data-skin="pergaminho"] .name-block,
+:root[data-skin="mesa"] .name-block,
+:root[data-skin="papel"] .slot-box,
+:root[data-skin="pergaminho"] .slot-box,
+:root[data-skin="mesa"] .slot-box,
+:root[data-skin="papel"] .spell-summary div,
+:root[data-skin="pergaminho"] .spell-summary div,
+:root[data-skin="mesa"] .spell-summary div,
+:root[data-skin="papel"] .oval,
+:root[data-skin="pergaminho"] .oval,
+:root[data-skin="mesa"] .oval{background:var(--surface-2)}
+:root[data-skin="papel"] .appbar,
+:root[data-skin="papel"] .brand-mark,
+:root[data-skin="pergaminho"] .appbar,
+:root[data-skin="pergaminho"] .brand-mark,
+:root[data-skin="mesa"] .appbar,
+:root[data-skin="mesa"] .brand-mark{box-shadow:none}
+:root[data-skin="papel"] .appbar{background:var(--surface)}
+:root[data-skin="pergaminho"] .appbar{background:var(--surface)}
+:root[data-skin="mesa"] .appbar{background:var(--bg-2)}
+:root[data-skin="papel"] .brand-mark,
+:root[data-skin="pergaminho"] .brand-mark,
+:root[data-skin="mesa"] .brand-mark{background:var(--red)}
+:root[data-skin="papel"] .toolbar .primary,
+:root[data-skin="pergaminho"] .toolbar .primary,
+:root[data-skin="mesa"] .toolbar .primary{background:var(--red);filter:none}
+
+/* --- Pergaminho: contorno grosso e rótulo em versalete, como as
+   caixas da ficha oficial impressa. --- */
+:root[data-skin="pergaminho"] .paper-card{border-width:1.5px;border-color:var(--border-2)}
+:root[data-skin="pergaminho"] .paper-card>h2{
+  font-family:var(--font-head);text-transform:uppercase;letter-spacing:.1em;
+  border-bottom:1.5px solid var(--border-2);padding-bottom:6px
+}
+:root[data-skin="pergaminho"] .character-name{font-family:var(--font-head)}
+:root[data-skin="pergaminho"] .oval{border-radius:999px;border:1.5px solid var(--border-2)}
+:root[data-skin="pergaminho"] .tab.active{background:var(--red);color:#F8F3E7}
+
+/* --- Papel Branco: linha fina no lugar de caixa, número grande. --- */
+:root[data-skin="papel"] .paper-card{border-color:var(--border)}
+:root[data-skin="papel"] .paper-card>h2{letter-spacing:.12em;color:var(--text-mut)}
+:root[data-skin="papel"] .tab{background:transparent;border-color:transparent}
+:root[data-skin="papel"] .tab.active{background:var(--text);color:var(--surface);border-color:var(--text)}
+
+/* --- Mesa: mais informação por tela. Paddings menores, números
+   monoespaçados e alinhados em coluna. --- */
+:root[data-skin="mesa"]{font-size:13px}
+:root[data-skin="mesa"] .paper-card{padding:11px 13px}
+:root[data-skin="mesa"] .sheet-shell,:root[data-skin="mesa"] .mestre-shell{margin-top:14px}
+:root[data-skin="mesa"] .appbar{padding:7px 14px}
+:root[data-skin="mesa"] .skill-row,:root[data-skin="mesa"] .check-row{padding:4px 8px}
+:root[data-skin="mesa"] .spell-line{padding:5px 10px}
+:root[data-skin="mesa"] .oval strong,:root[data-skin="mesa"] .mini-stats b,
+:root[data-skin="mesa"] .slot-box b,:root[data-skin="mesa"] .prep-pill b,
+:root[data-skin="mesa"] .spell-summary b,:root[data-skin="mesa"] .dash-pips b{
+  font-family:ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums
+}
+:root[data-skin="mesa"] .tab{padding:6px 10px}
+
 @media print{
   @page{size:A4 portrait;margin:8mm}
   body{background:#fff;color:#111;font-size:11px}
@@ -1073,4 +1320,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   .off-page{width:auto;min-height:auto;margin:0;padding:0;border:0;border-radius:0}
   .off-page+.off-page{page-break-before:always}
   .off-box{break-inside:avoid}
+  /* O repertório pode ocupar várias folhas — quebrar dentro dele é o
+     comportamento certo aqui (senão o excesso simplesmente some). */
+  .off-page3{break-inside:auto}
+  .off-page3 .off-rep-cols{break-inside:auto}
 }
