@@ -765,6 +765,32 @@ function detectUnarmoredDefense(feats) {
   if (/charisma modifier/.test(text)) return "cha";
   return null;
 }
+// Proficiência de armadura/escudo concedida por uma característica de
+// classe/subclasse ALÉM da proficiência inicial (nível 1) — comum em
+// subclasses que "destravam" armadura média/pesada/escudo num nível
+// mais alto (ex.: Disciple of Fortification, College of Swords). Lê o
+// texto da característica em vez de depender de um campo estruturado,
+// já que esse tipo de concessão quase nunca vem como startingProficiencies.
+function detectProficiencyGrants(feats) {
+  const gained = new Set();
+  for (const f of feats || []) {
+    const text = plain(f.entries).toLowerCase();
+    for (const sentence of text.split(/(?<=[.;])\s+/)) {
+      if (!/proficien/.test(sentence)) continue;
+      if (/\b(not|aren't|isn't|don't|lose|losing)\b[^.;]{0,25}proficien/.test(sentence)) continue;
+      // "medium and heavy armour and shields" — os tamanhos vêm listados
+      // juntos antes de "armor/armour" aparecer uma única vez na frase,
+      // então cada tamanho é checado solto (não "medium armor" grudado).
+      if (/\bshields?\b/.test(sentence)) gained.add("shield");
+      if (/\barmo(u)?r\b/.test(sentence)) {
+        if (/\blight\b/.test(sentence)) gained.add("light");
+        if (/\bmedium\b/.test(sentence)) gained.add("medium");
+        if (/\bheavy\b/.test(sentence)) gained.add("heavy");
+      }
+    }
+  }
+  return gained;
+}
 
 // ------------------------------------------------------------
 // Características opcionais — estilo de luta, metamagia, invocações,
@@ -980,6 +1006,7 @@ async function buildAutomation() {
   if (character.auto.spellcastingAbility && !character.manualSpellAbility) character.spellAbility = character.auto.spellcastingAbility;
 
   const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
+  const subFeats = refs.subclass ? await findSubclassFeatures(refs.subclass, Number(character.level)).catch(() => []) : [];
   const mcClassFeats = await Promise.all((details.multiclasses || []).map((m) =>
     m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])));
 
@@ -987,6 +1014,9 @@ async function buildAutomation() {
   // padrão quando não há CA manual definida (ver calc()). Considera a
   // classe primária e as de multiclasse.
   character.auto.unarmoredDefense = detectUnarmoredDefense(classFeats) || mcClassFeats.map(detectUnarmoredDefense).find(Boolean) || null;
+  // Armadura/escudo concedido por característica (não startingProficiencies)
+  // — ex. subclasse que destrava armadura média/pesada num nível mais alto.
+  character.auto.armorGrants = [...detectProficiencyGrants([...classFeats, ...subFeats, ...mcClassFeats.flat()])];
 
   // Especialização: nº de perícias vem das características "Expertise" da
   // classe até o nível atual (Ladino 1/6, Bardo 3/10 = 2 cada).
@@ -1520,10 +1550,11 @@ function computeProficiencySummary() {
   const cr = details.classRec || {}, br = details.backgroundRec || {}, sp = cr.startingProficiencies || {};
   const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
   const toLabels = (arr) => (arr || []).map(profLabel).map(cap).filter(Boolean);
-  let armor = toLabels(sp.armor);
+  const armorGrants = character.auto?.armorGrants || [];
+  let armor = [...toLabels(sp.armor), ...toLabels(armorGrants)];
   let weapons = toLabels(sp.weapons);
   let tools = [...toLabels(sp.tools), ...flatObjects(br.toolProficiencies || []).flatMap((o) => Object.keys(o).filter((k) => o[k] === true)).map(cap)].filter(Boolean);
-  let armorRaw = (sp.armor || []).map((x) => String(x).toLowerCase());
+  let armorRaw = [...(sp.armor || []), ...armorGrants].map((x) => String(x).toLowerCase());
   // Multiclasse: tabela reduzida do PHB (multiclassing.proficienciesGained
   // de cada classe adicional) — bem menor que a proficiência de nível 1.
   for (const m of details.multiclasses || []) {
