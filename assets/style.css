@@ -226,7 +226,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .tabs{display:flex;gap:5px;margin:16px 0;flex-wrap:wrap}
 .tab{
   border:1px solid var(--border);background:var(--surface);color:var(--text-dim);
-  border-radius:var(--radius-xs);padding:9px 13px;font:600 11px/1 var(--font-head);
+  border-radius:var(--radius-xs);padding:10px 14px;font:600 11px/1 var(--font-head);
   letter-spacing:.05em;text-transform:uppercase;transition:.14s
 }
 .tab:hover{color:var(--text);border-color:var(--border-2)}
@@ -274,6 +274,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .mini-stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--border);margin-top:12px;padding-top:10px;text-align:center;gap:6px}
 .mini-stats span{display:block;font-size:7.5px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.05em}
 .mini-stats b{font:800 14px var(--font-head);color:var(--text)}
+.manual-override{border-top:1px dashed var(--border);margin-top:12px!important;padding-top:10px}
 
 /* ---------- PV ---------- */
 .hp-max{border:1px solid var(--border-2);border-radius:var(--radius-sm);text-align:center;padding:12px;background:linear-gradient(165deg,var(--surface-2),var(--inset))}
@@ -384,6 +385,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-summary div{background:linear-gradient(165deg,var(--surface-2),var(--inset));border:1px solid var(--border-2);border-radius:var(--radius-sm);text-align:center;padding:11px}
 .spell-summary span{display:block;font-size:7.5px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.06em}
 .spell-summary b{font:800 18px var(--font-head);color:var(--text)}
+.spell-summary select{margin-top:5px;width:100%;font-size:9px;background:var(--surface-3);color:var(--text-dim);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:3px 4px}
 .spell-resources{margin-bottom:12px}
 .spell-res-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;border-bottom:1px solid var(--border);padding-bottom:9px;margin-bottom:12px}
 .spell-res-head h3{margin:0;color:var(--text-dim);font:700 11px var(--font-head);letter-spacing:.13em;text-transform:uppercase}
@@ -406,7 +408,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-level-head h3{margin:0;color:var(--text);font:700 13px var(--font-head);letter-spacing:.04em;text-transform:uppercase}
 .spell-level-head span{font-size:10px;color:var(--text-mut)}
 .spell-list{display:grid;grid-template-columns:1fr 1fr}
-.spell-line{display:grid;grid-template-columns:20px 20px 1.2fr 1.5fr 26px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.spell-line{display:grid;grid-template-columns:20px 20px 1.2fr 1.5fr 26px 22px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.spell-line .remove-btn{font-size:11px;padding:2px 6px;line-height:1}
 .spell-line:hover{background:var(--surface-2)}
 .spell-line:nth-child(odd){border-right:1px solid var(--border)}
 .spell-line input{accent-color:var(--red)}
@@ -416,6 +419,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-origin.from-class{color:var(--blue)}
 .spell-origin.from-subclass{color:var(--gold)}
 .spell-origin.from-both{color:var(--green)}
+.spell-origin.from-extra{color:var(--text-mut)}
 .spell-info{border:0;background:transparent;color:var(--text-dim)}
 .spell-info:hover{color:var(--red-hi)}
 
@@ -433,6 +437,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .feature table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}
 .feature th,.feature td{border:1px solid var(--border);padding:5px 7px;text-align:left}
 .feature th{background:var(--surface-2)}
+.trait-pick-list{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.trait-pick-option{display:flex;align-items:flex-start;gap:7px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;cursor:pointer;transition:.13s;margin-bottom:5px}
+.trait-pick-option:hover{border-color:var(--red-dim)}
+.trait-pick-option.on{border-color:var(--red);background:var(--red-soft);color:#fff}
+.trait-pick-option input{accent-color:var(--red);margin:2px 0 0}
+.trait-pick-count{font-size:10px;color:var(--red-hi);font-weight:700}
 
 /* ---------- Equipamento / catálogo ---------- */
 .equipment-toolbar{margin-bottom:12px}

@@ -33,6 +33,7 @@ const WIZARD_STEPS = [
   { key: "background", type: "background", title: "Background", hint: "Escolha um background — ele concede perícias, ferramentas e, na edição 2024, um talento de origem." },
   { key: "multiclass", title: "Multiclasse", hint: "Opcional: adicione outras classes ao personagem. Pule este passo se não for multiclassar.", optional: true },
   { key: "abilities", title: "Atributos", hint: "Distribua seus atributos. Bônus de espécie, background, talentos e melhorias entram automaticamente — clique no ⓘ de cada atributo pra ver de onde vêm." },
+  { key: "talents", title: "Talentos", hint: "Escolha perícias, talento de origem/espécie, melhorias de atributo, especialização e as opções de característica de classe (estilo de combate, invocações, manobras…) liberadas pelo nível atual.", optional: true },
   { key: "equipment", title: "Equipamento", hint: "Confira o equipamento inicial concedido pela classe e pelo background." },
   { key: "review", title: "Revisão", hint: "Revise as escolhas e finalize. Dá pra ajustar tudo depois, a qualquer momento, no modo livre." },
 ];
@@ -45,7 +46,7 @@ const fresh = () => ({
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
-  hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
+  hpCurrent: null, hpTemp: 0, ac: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   alignment: "", languages: "", appearance: "", backstory: "",
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
@@ -53,7 +54,7 @@ const fresh = () => ({
   turnActions: { action: false, bonus: false, reaction: false }, concentration: null,
   rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
-  choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {} }, manualSkillProficiencies: [],
+  choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {}, traitPicks: {} }, manualSkillProficiencies: [],
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -1426,7 +1427,6 @@ async function recalc() {
   $("v-hp-max").textContent = c.hp;
   $("hp-current").value = character.hpCurrent == null ? c.hp : character.hpCurrent;
   $("hp-temp").value = character.hpTemp || 0;
-  $("combat-ac").textContent = c.ac; $("combat-ac").title = acTitle; $("combat-init").textContent = fmt(c.init); $("combat-speed").textContent = c.speed; $("combat-pb").textContent = fmt(c.pb);
   $("ac-input").value = character.ac ?? "";
   $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense)` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
@@ -1605,6 +1605,38 @@ function renderAttacks() {
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
   }));
 }
+// Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
+// próprio texto do traço — uma lista embutida ("Deformações" do Lefou,
+// invocações/dons variados de outras raças homebrew) sem usar o esquema
+// estruturado (feats/optionalfeatureProgression) que o resto da automação
+// entende. Em vez de travar nessas raças, detecta genericamente qualquer
+// lista (`type: "list"`) dentro do traço e deixa o jogador marcar quais já
+// escolheu — sem limite fixo (o texto da própria característica costuma
+// dizer o máximo), inclusive marcando mais conforme o personagem evolui.
+function findEntryList(entries) {
+  const arr = Array.isArray(entries) ? entries : (entries != null ? [entries] : []);
+  for (const e of arr) {
+    if (!e || typeof e !== "object") continue;
+    if (e.type === "list" && Array.isArray(e.items) && e.items.some((it) => it && typeof it === "object" && it.name)) return e;
+    if (Array.isArray(e.entries)) { const found = findEntryList(e.entries); if (found) return found; }
+  }
+  return null;
+}
+function traitPickKey(sourceId, traitName) { return `${sourceId || ""}::${traitName}`; }
+function traitPickListHtml(sourceId, traitName, list) {
+  const key = traitPickKey(sourceId, traitName);
+  const picked = character.choiceSelections?.traitPicks?.[key] || [];
+  const items = list.items.filter((it) => it && typeof it === "object" && it.name);
+  return `<div class="trait-pick-list" data-trait-pick-key="${esc(key)}">
+    <p class="muted">Marque quais você já escolheu — dá pra marcar mais depois, conforme o personagem evolui (o texto acima diz o máximo permitido).</p>
+    ${items.map((it) => {
+      const on = picked.includes(it.name);
+      const desc = esc(inlineTags(plainOf(it.entry || it.entries || "")));
+      return `<label class="trait-pick-option${on ? " on" : ""}"><input type="checkbox" data-trait-pick="${esc(key)}" data-trait-pick-value="${esc(it.name)}" ${on ? "checked" : ""}><span><strong>${esc(inlineTags(it.name))}</strong>${desc ? ` ${desc}` : ""}</span></label>`;
+    }).join("")}
+    ${picked.length ? `<div class="trait-pick-count">${picked.length} escolhida(s)</div>` : ""}
+  </div>`;
+}
 async function renderFeatures() {
   const box = $("feature-list");
   box.innerHTML = `<div class="empty">Carregando características…</div>`;
@@ -1619,7 +1651,7 @@ async function renderFeatures() {
   if (refs.race) {
     const r = await firstRecord(refs.race);
     const f = Array.isArray(r?.entries) ? r.entries.filter((x) => x && x.name) : [];
-    if (f.length) groups.push(["ESPÉCIE / RAÇA", f.map((x, i) => ({ name: x.name || `Traço ${i + 1}`, entries: x.entries || x }))]);
+    if (f.length) groups.push(["ESPÉCIE / RAÇA", f.map((x, i) => ({ name: x.name || `Traço ${i + 1}`, entries: x.entries || x, pickSource: refs.race?.id }))]);
   }
   if (refs.background) {
     const r = await firstRecord(refs.background);
@@ -1643,8 +1675,21 @@ async function renderFeatures() {
   }
   const lvlLabel = (v) => (v == null || v === "") ? "—" : (typeof v === "number" || /^\d/.test(String(v))) ? `Nível ${esc(v)}` : esc(v);
   box.innerHTML = groups.filter((g) => g[1]?.length).map(([name, arr]) =>
-    `<section class="feature-group"><h3>${name}</h3>${arr.map((f) => `<article class="feature"><div><b>${esc(f.name || "Característica")}</b><span>${lvlLabel(f.level)}</span></div><div>${f.entries ? richText(f.entries) : "<p class='muted'>Sem texto no banco para esta característica.</p>"}</div></article>`).join("")}</section>`
+    `<section class="feature-group"><h3>${name}</h3>${arr.map((f) => {
+      const pickList = f.pickSource && f.entries ? findEntryList(f.entries) : null;
+      const body = f.entries ? richText(f.entries) : "<p class='muted'>Sem texto no banco para esta característica.</p>";
+      return `<article class="feature"><div><b>${esc(f.name || "Característica")}</b><span>${lvlLabel(f.level)}</span></div><div>${body}${pickList ? traitPickListHtml(f.pickSource, f.name, pickList) : ""}</div></article>`;
+    }).join("")}</section>`
   ).join("") || `<div class="empty">Escolha uma classe/espécie para carregar as características.</div>`;
+  box.querySelectorAll("[data-trait-pick]").forEach((i) => i.addEventListener("change", () => {
+    const key = i.dataset.traitPick, v = i.dataset.traitPickValue;
+    character.choiceSelections.traitPicks = character.choiceSelections.traitPicks || {};
+    const cur = character.choiceSelections.traitPicks[key] || [];
+    toggleIn(cur, v, i.checked);
+    character.choiceSelections.traitPicks[key] = cur;
+    saveCharacter(character);
+    renderFeatures();
+  }));
 }
 
 // ------------------------------------------------------------
@@ -2202,18 +2247,72 @@ function spellTime(sp) {
   if (!t) return "";
   return `${t.number || 1} ${t.unit || ""}`.trim();
 }
+// Magias adicionadas manualmente pelo Compêndio (fora da lista da classe
+// — magia de item mágico, dom de raça homebrew sem dado estruturado etc.).
+// Guardadas por id do catálogo; sempre aparecem no grimório com uma
+// etiqueta "Manual", independente de classe/subclasse conjuradora.
+function extraSpellRecords() {
+  return (character.extraSpells || []).map((id) => {
+    const e = manifest().find((x) => x.id === id);
+    if (!e) return null;
+    const rec = recordsForEntity(e)[0] || e;
+    return { ...rec, _extra: true, _extraId: id };
+  }).filter(Boolean);
+}
+function spellListHtml(spells, hasSubclass, active) {
+  const spellOrigin = (s) => {
+    if (s._extra) return "Manual";
+    if (!hasSubclass) return "";
+    if (s._fromClass && s._fromSubclass) return `Classe + ${titleOf(active.subclassEntry)}`;
+    if (s._fromSubclass) return titleOf(active.subclassEntry);
+    if (s._fromClass) return titleOf(active.classEntry);
+    return "";
+  };
+  const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
+  return groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} magias</span></div><div class="spell-list">${arr.map((s) => {
+    const key = `${s.name}|${s.source || ""}`;
+    const checked = character.preparedSpells.includes(key);
+    const origin = spellOrigin(s);
+    const originCls = s._extra ? "from-extra" : s._fromSubclass && s._fromClass ? "from-both" : s._fromSubclass ? "from-subclass" : "from-class";
+    const originTag = origin ? ` · <b class="spell-origin ${originCls}">${esc(origin)}</b>` : "";
+    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button>${s._extra ? `<button type="button" class="remove-btn no-print" data-remove-extra-spell="${esc(s._extraId)}" title="Remover">×</button>` : ""}</label>`;
+  }).join("")}</div></section>` : "").join("");
+}
+function wireSpellListEvents(box) {
+  box.querySelectorAll("[data-spell]").forEach((i) => i.addEventListener("change", () => {
+    toggleIn(character.preparedSpells, i.dataset.spell, i.checked);
+    saveCharacter(character);
+    i.nextElementSibling.textContent = i.checked ? "●" : "○";
+  }));
+  box.querySelectorAll("[data-spell-key]").forEach((b) => b.addEventListener("click", () => {
+    const [name, source] = b.dataset.spellKey.split("|");
+    const e = manifest().find((x) => normType(x.type) === "spell" && x.name === name && (x.source || "") === source);
+    if (e) openEntityModal(e);
+  }));
+  box.querySelectorAll("[data-remove-extra-spell]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.removeExtraSpell;
+    const e = manifest().find((x) => x.id === id);
+    character.extraSpells = (character.extraSpells || []).filter((x) => x !== id);
+    if (e) { const key = `${e.name}|${e.source || ""}`; character.preparedSpells = character.preparedSpells.filter((k) => k !== key); }
+    saveCharacter(character); renderSpells();
+  }));
+}
 async function renderSpells() {
   const box = $("spellbook"), c = calc(), ab = c.sa;
   $("spell-ability").textContent = ab ? ABILITY_NAMES[ab] : "—";
+  if ($("spell-ability-override")) $("spell-ability-override").value = character.manualSpellAbility ? (character.spellAbility || "") : "";
   $("spell-dc-big").textContent = c.dc ?? "—";
   $("spell-atk-big").textContent = c.atk != null ? fmt(c.atk) : "—";
   renderSpellResources(multiclassSpellcasting());
   const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
   const tabsBox = $("spellbook-tabs");
   if (!casters.length) {
-    $("spell-count").textContent = "0";
+    const extras = extraSpellRecords();
+    $("spell-count").textContent = String(extras.length);
     if (tabsBox) tabsBox.innerHTML = "";
-    box.innerHTML = `<div class="paper-card empty">Escolha uma classe conjuradora para carregar a lista de magias.</div>`;
+    if (!extras.length) { box.innerHTML = `<div class="paper-card empty">Escolha uma classe conjuradora para carregar a lista de magias — ou adicione magias avulsas pelo Compêndio.</div>`; return; }
+    box.innerHTML = spellListHtml(extras, false, null) || `<div class="paper-card empty">Nenhuma magia.</div>`;
+    wireSpellListEvents(box);
     return;
   }
   if (!spellBookClassId || !casters.some((cc) => cc.id === spellBookClassId)) spellBookClassId = casters[0].id;
@@ -2229,36 +2328,17 @@ async function renderSpells() {
   const spellEd = editionOf(active.classEntry) === "both" ? character.edition : editionOf(active.classEntry);
   try { spells = await spellsForClass(active.classEntry, active.subclassEntry, spellEd); }
   catch (err) { console.error(err); box.innerHTML = `<div class="paper-card empty">Não foi possível carregar as magias.</div>`; return; }
+  // Magias avulsas adicionadas pelo Compêndio aparecem junto — só na aba
+  // ativa (evita duplicar em cada classe de um multiclasse conjurador).
+  for (const ex of extraSpellRecords()) {
+    if (!spells.some((s) => s.name === ex.name && (s.source || "") === (ex.source || ""))) spells.push(ex);
+  }
   $("spell-count").textContent = spells.length;
   // Com subclasse escolhida, deixa explícito se cada magia vem da lista da
   // classe, é concedida pela subclasse (domínio/círculo/patrono…) ou as duas.
   const hasSubclass = !!active.subclassEntry;
-  const spellOrigin = (s) => {
-    if (!hasSubclass) return "";
-    if (s._fromClass && s._fromSubclass) return `Classe + ${titleOf(active.subclassEntry)}`;
-    if (s._fromSubclass) return titleOf(active.subclassEntry);
-    if (s._fromClass) return titleOf(active.classEntry);
-    return "";
-  };
-  const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
-  box.innerHTML = groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} magias</span></div><div class="spell-list">${arr.map((s) => {
-    const key = `${s.name}|${s.source || ""}`;
-    const checked = character.preparedSpells.includes(key);
-    const origin = spellOrigin(s);
-    const originCls = s._fromSubclass && s._fromClass ? "from-both" : s._fromSubclass ? "from-subclass" : "from-class";
-    const originTag = origin ? ` · <b class="spell-origin ${originCls}">${esc(origin)}</b>` : "";
-    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button></label>`;
-  }).join("")}</div></section>` : "").join("") || `<div class="paper-card empty">Nenhuma magia foi associada a esta classe nesta edição.</div>`;
-  box.querySelectorAll("[data-spell]").forEach((i) => i.addEventListener("change", () => {
-    toggleIn(character.preparedSpells, i.dataset.spell, i.checked);
-    saveCharacter(character);
-    i.nextElementSibling.textContent = i.checked ? "●" : "○";
-  }));
-  box.querySelectorAll("[data-spell-key]").forEach((b) => b.addEventListener("click", () => {
-    const [name, source] = b.dataset.spellKey.split("|");
-    const e = manifest().find((x) => normType(x.type) === "spell" && x.name === name && (x.source || "") === source);
-    if (e) openEntityModal(e);
-  }));
+  box.innerHTML = spellListHtml(spells, hasSubclass, active) || `<div class="paper-card empty">Nenhuma magia foi associada a esta classe nesta edição.</div>`;
+  wireSpellListEvents(box);
 }
 
 // ------------------------------------------------------------
@@ -2340,6 +2420,34 @@ function addInventory(id) {
   if (f) f.qty = (f.qty || 1) + 1;
   else character.inventory.push({ id, name: titleOf(e), qty: 1, meta: labelMeta(e) });
   saveCharacter(character); renderInventory(); toast(`${titleOf(e)} adicionado.`);
+}
+// Adiciona um talento à lista de "Talentos Extras" — mesma ação usada
+// pelo seletor dedicado (openExtraFeatPicker) e pelo botão "+ Adicionar à
+// ficha" do Compêndio.
+function addExtraFeat(id) {
+  const e = manifest().find((x) => x.id === id);
+  if (!e) return;
+  character.extraFeats = character.extraFeats || [];
+  if (character.extraFeats.includes(id)) { toast("Esse talento já foi adicionado."); return; }
+  character.extraFeats.push(id);
+  saveCharacter(character);
+  renderExtraFeats(); recalc();
+  toast(`${titleOf(e)} adicionado.`);
+}
+// Adiciona uma magia avulsa (fora da lista da classe) ao grimório — ela
+// aparece marcada como preparada/conhecida com a etiqueta "Manual".
+function addExtraSpell(id) {
+  const e = manifest().find((x) => x.id === id);
+  if (!e) return;
+  character.extraSpells = character.extraSpells || [];
+  if (character.extraSpells.includes(id)) { toast("Essa magia já foi adicionada."); return; }
+  character.extraSpells.push(id);
+  const key = `${e.name}|${e.source || ""}`;
+  character.preparedSpells = character.preparedSpells || [];
+  if (!character.preparedSpells.includes(key)) character.preparedSpells.push(key);
+  saveCharacter(character);
+  recalc();
+  toast(`${titleOf(e)} adicionada.`);
 }
 async function equipmentTab() {
   $("inventory-panel").classList.toggle("hidden", eqCat !== "inventory");
@@ -2564,16 +2672,35 @@ async function renderCodex() {
 // ------------------------------------------------------------
 // Compêndio
 // ------------------------------------------------------------
+// Tipos "pesados" (magia/item/talento) só são carregados sob demanda —
+// sem isso, filtrar o Compêndio por eles (ou por "Tudo") não achava nada.
+const COMPENDIUM_LAZY_TYPES = ["spell", "item", "feat", "optionalfeature"];
+// Tipos que dá pra jogar direto na ficha a partir do Compêndio (itens vão
+// pro inventário, magias pro grimório como "avulsa", talentos pra lista
+// de talentos extras).
+const COMPENDIUM_ADDABLE = { spell: addExtraSpell, item: addInventory, feat: addExtraFeat };
 async function renderCompendium() {
   const q = $("compendium-search").value.trim().toLowerCase(), t = $("compendium-type").value;
-  if (t === "spell" || t === "item") { $("compendium-results").innerHTML = `<div class="empty">Carregando ${typeLabel(t).toLowerCase()}s…</div>`; await ensureCatalog(t); }
+  const toLoad = t === "all" ? COMPENDIUM_LAZY_TYPES : COMPENDIUM_LAZY_TYPES.filter((x) => x === t);
+  if (toLoad.length) {
+    $("compendium-results").innerHTML = `<div class="empty">Carregando catálogo…</div>`;
+    await Promise.all(toLoad.map((lt) => ensureCatalog(lt).catch((err) => console.warn(`Catálogo (${lt}) indisponível:`, err))));
+  }
   let arr = manifest().filter((e) =>
     (t === "all" || normType(e.type) === t) &&
     matchesEdition(e, character.edition, true) &&
     (!q || `${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q))
   ).slice(0, 240);
-  $("compendium-results").innerHTML = arr.map((e) => `<article class="catalog-card"><div class="pick-top"><strong>${esc(titleOf(e))}</strong>${sourceTag(e)}</div><div class="pick-meta">${esc(typeLabel(e.type))} · ${esc(labelMeta(e))}</div><div class="catalog-actions"><button data-comp-info="${esc(e.id)}">ⓘ Ver detalhes</button></div></article>`).join("") || `<div class="empty">Nenhum resultado.</div>`;
+  $("compendium-results").innerHTML = arr.map((e) => {
+    const addable = COMPENDIUM_ADDABLE[normType(e.type)];
+    return `<article class="catalog-card"><div class="pick-top"><strong>${esc(titleOf(e))}</strong>${sourceTag(e)}</div><div class="pick-meta">${esc(typeLabel(e.type))} · ${esc(labelMeta(e))}</div><div class="catalog-actions"><button data-comp-info="${esc(e.id)}">ⓘ Ver detalhes</button>${addable ? `<button class="add-btn" data-comp-add="${esc(e.id)}">+ Adicionar à ficha</button>` : ""}</div></article>`;
+  }).join("") || `<div class="empty">Nenhum resultado.</div>`;
   $("compendium-results").querySelectorAll("[data-comp-info]").forEach((b) => b.addEventListener("click", () => { const e = manifest().find((x) => x.id === b.dataset.compInfo); if (e) openEntityModal(e); }));
+  $("compendium-results").querySelectorAll("[data-comp-add]").forEach((b) => b.addEventListener("click", () => {
+    const e = manifest().find((x) => x.id === b.dataset.compAdd);
+    const fn = e && COMPENDIUM_ADDABLE[normType(e.type)];
+    if (fn) fn(e.id);
+  }));
 }
 
 // ------------------------------------------------------------
@@ -2713,13 +2840,8 @@ async function openExtraFeatPicker() {
     const q = $("picker-search").value.trim();
     const arr = filteredPicker("feat", q).filter((e) => !/ability score improvement/i.test(e.name));
     paintPickResults($("picker-results"), arr.slice(0, 200), (e) => {
-      character.extraFeats = character.extraFeats || [];
-      if (character.extraFeats.includes(e.id)) { toast("Esse talento já foi adicionado."); return; }
-      character.extraFeats.push(e.id);
-      saveCharacter(character);
       $("modal").classList.add("hidden");
-      renderExtraFeats(); recalc();
-      toast(`${titleOf(e)} adicionado.`);
+      addExtraFeat(e.id);
     });
   };
   $("picker-search").addEventListener("input", render);
@@ -3295,19 +3417,25 @@ async function buildOfficialSheet() {
   </div>`;
 
   // --- Página 2: conjuração + notas de personagem ---
+  // Junta as magias marcadas em TODAS as classes conjuradoras do
+  // personagem (não só a aba selecionada por último em "Magias") — num
+  // multiclasse com duas classes conjuradoras, marcar magias na segunda
+  // aba não pode fazer a primeira sumir da ficha impressa.
   const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
-  const primaryCaster = casters.find((cc) => cc.id === spellBookClassId) || casters[0] || null;
   const msi = multiclassSpellcasting();
   const slots = msi?.slots || [];
+  const multiCaster = casters.length > 1;
   let preparedRows = [];
-  if (primaryCaster) {
-    const spellEd = editionOf(primaryCaster.classEntry) === "both" ? character.edition : editionOf(primaryCaster.classEntry);
+  for (const caster of casters) {
+    const spellEd = editionOf(caster.classEntry) === "both" ? character.edition : editionOf(caster.classEntry);
     try {
-      const all = await spellsForClass(primaryCaster.classEntry, primaryCaster.subclassEntry, spellEd);
-      preparedRows = all.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`))
-        .sort((x, y) => (x.level ?? 0) - (y.level ?? 0) || String(x.name).localeCompare(String(y.name), "pt-BR"));
+      const all = await spellsForClass(caster.classEntry, caster.subclassEntry, spellEd);
+      const rows = all.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`))
+        .map((s) => ({ ...s, _classLabel: titleOf(caster.classEntry) }));
+      preparedRows.push(...rows);
     } catch (err) { console.error(err); }
   }
+  preparedRows.sort((x, y) => (x.level ?? 0) - (y.level ?? 0) || String(x.name).localeCompare(String(y.name), "pt-BR"));
   const inv = character.inventory || [];
 
   const page2 = `<div class="off-page off-page2">
@@ -3318,8 +3446,8 @@ async function buildOfficialSheet() {
       <div class="off-oval"><span>Bônus de Ataque<br>de Magia</span><b>${c.atk != null ? fmt(c.atk) : "—"}</b></div>
     </div>
     ${offBox("Espaços de Magia", `<div class="off-slots">${Array.from({ length: 9 }, (_, i) => `<div class="off-slot"><span>Nível ${i + 1}</span><b>${slots[i] || 0}</b></div>`).join("")}</div>`)}
-    ${offBox("Truques & Magias Preparadas", `<table class="off-table off-spell-table"><thead><tr><th>Nv.</th><th>Nome</th><th>Tempo</th><th>Alcance</th><th>C/R/M</th><th>Anotações</th></tr></thead><tbody>${
-      preparedRows.length ? preparedRows.map((s) => { const fl = offSpellFlags(s); return `<tr><td>${spellLevel(s) === 0 ? "T" : spellLevel(s)}</td><td>${esc(s.name)}</td><td>${esc(spellTime(s))}</td><td>${esc(offSpellRange(s))}</td><td>${fl.c ? "C " : ""}${fl.r ? "R " : ""}${fl.m ? "M" : ""}</td><td></td></tr>`; }).join("")
+    ${offBox("Truques & Magias Preparadas", `<table class="off-table off-spell-table"><thead><tr><th>Nv.</th><th>Nome</th><th>Tempo</th><th>Alcance</th><th>C/R/M</th>${multiCaster ? "<th>Classe</th>" : "<th>Anotações</th>"}</tr></thead><tbody>${
+      preparedRows.length ? preparedRows.map((s) => { const fl = offSpellFlags(s); return `<tr><td>${spellLevel(s) === 0 ? "T" : spellLevel(s)}</td><td>${esc(s.name)}</td><td>${esc(spellTime(s))}</td><td>${esc(offSpellRange(s))}</td><td>${fl.c ? "C " : ""}${fl.r ? "R " : ""}${fl.m ? "M" : ""}</td><td>${multiCaster ? esc(s._classLabel) : ""}</td></tr>`; }).join("")
       : `<tr><td colspan="6" class="off-muted">Nenhuma magia marcada como preparada na aba "Magias".</td></tr>`
     }</tbody></table>`, "off-tall")}
 
@@ -3353,6 +3481,7 @@ function setCreationMode(mode) {
   $("wizard")?.classList.toggle("hidden", creationMode !== "guided");
   $("free-mode-content")?.classList.toggle("hidden", creationMode === "guided");
   if (creationMode === "guided") { $("creator")?.classList.remove("collapsed"); renderWizardStep(); }
+  else restoreAutoPanelPosition();
 }
 function renderWizardSteps() {
   const box = $("wizard-steps");
@@ -3453,6 +3582,23 @@ function renderWizardAbilitiesStep(step) {
     <p class="muted" id="wiz-ability-editor-hint"></p>`;
   paintAbilityEditor("wiz-");
 }
+// O painel "AUTOMAÇÃO DA FICHA" (#auto-panel) é o único lugar que
+// concentra escolhas de talento/perícia/ASI/opções de classe — vive fora
+// do wizard (visível também no modo livre). Em vez de duplicar toda a
+// lógica de renderAutoChoices() dentro do passo do wizard, reaproveita o
+// próprio elemento: move-o pra dentro do corpo do wizard nesse passo e
+// devolve pro lugar original (antes de #tabs) em qualquer outro passo.
+function restoreAutoPanelPosition() {
+  const panel = $("auto-panel"), tabs = $("tabs");
+  if (panel && tabs && panel.nextElementSibling !== tabs) tabs.parentNode.insertBefore(panel, tabs);
+}
+function renderWizardTalentsStep(step) {
+  const body = $("wizard-body");
+  if (!body) return;
+  body.innerHTML = `<p class="wizard-hint">${esc(step.hint)}</p><div id="wizard-talents-slot"></div>`;
+  const panel = $("auto-panel");
+  if (panel) $("wizard-talents-slot").appendChild(panel);
+}
 function renderWizardReviewStep(step) {
   const body = $("wizard-body");
   if (!body) return;
@@ -3483,10 +3629,12 @@ async function renderWizardStep() {
     const skippable = step.optional && (step.type ? !refs[step.type] : step.key === "multiclass" && !(character.multiclasses || []).length);
     $("wizard-next").textContent = isLast ? "Concluir →" : skippable ? "Pular →" : "Próximo →";
   }
+  if (step.key !== "talents") restoreAutoPanelPosition();
   if (step.type) await renderWizardPickStep(step);
   else if (step.key === "level") renderWizardLevelStep(step);
   else if (step.key === "multiclass") renderWizardMulticlassStep(step);
   else if (step.key === "abilities") renderWizardAbilitiesStep(step);
+  else if (step.key === "talents") renderWizardTalentsStep(step);
   else if (step.key === "equipment") renderWizardEquipmentStep(step);
   else if (step.key === "review") renderWizardReviewStep(step);
 }
@@ -3549,6 +3697,12 @@ function setup() {
   $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); renderDashboard(); });
   $("ac-input").addEventListener("input", () => { character.ac = Number($("ac-input").value) || null; character.manualAc = $("ac-input").value !== ""; recalc(); });
   $("speed-input").addEventListener("input", () => { character.speed = $("speed-input").value || "30 ft"; character.manualSpeed = true; recalc(); });
+  $("spell-ability-override")?.addEventListener("change", () => {
+    const v = $("spell-ability-override").value;
+    character.manualSpellAbility = !!v;
+    character.spellAbility = v || character.auto?.spellcastingAbility || null;
+    saveCharacter(character); recalc();
+  });
   document.querySelectorAll(".change-choice").forEach((b) => b.addEventListener("click", () => openPicker(b.dataset.pick)));
   document.querySelectorAll(".tiny-info").forEach((b) => b.addEventListener("click", () => openInfo(b.dataset.info)));
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", async () => {

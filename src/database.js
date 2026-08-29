@@ -522,25 +522,50 @@ export async function spellsForClass(classStub, subclassStub, edition) {
   const className = String(classStub.name);
   const classSrcWanted = edition === "2024" ? "XPHB" : "PHB";
   const subName = subclassStub ? String(subclassStub.shortName || subclassStub.name) : null;
+  const classRec = recordsForEntity(classStub)[0] || classStub.__rec || null;
 
   // Cada magia é marcada como vinda da lista da CLASSE, concedida pela
   // SUBCLASSE (magias de domínio/círculo/patrono etc.), ou as duas — pra
   // deixar explícito na ficha de onde ela veio, em vez de uma lista única
   // sem distinção entre o que é da classe e o que é específico da subclasse.
   const wanted = []; // { name, bookSource, viaClass, viaSubclass }
+  const matchByNameSource = (refs, wantName, wantSrc) => refs.some((r) => {
+    if (!r) return false;
+    const n = String(r.name || r.className || "");
+    const s = String(r.source || r.classSource || "");
+    return n.toLowerCase() === wantName.toLowerCase() &&
+      (!wantSrc || !s || s === wantSrc || (edition === "2014" && s === "PHB") || (edition === "2024" && s === "XPHB"));
+  });
   for (const [bookSource, spells] of Object.entries(spellSources)) {
     for (const [spellName, info] of Object.entries(spells)) {
       const refs = [].concat(info.class || [], info.classVariant || [], info.subclass || []);
-      let viaClass = false, viaSubclass = false;
-      for (const r of refs) {
-        if (!r) continue;
-        const n = String(r.name || r.className || "");
-        const s = String(r.source || r.classSource || "");
-        if (n.toLowerCase() === className.toLowerCase() &&
-            (!s || s === classSrcWanted || (edition === "2014" && s === "PHB") || (edition === "2024" && s === "XPHB"))) viaClass = true;
-        if (subName && String(r.subclass?.name || r.subclassShortName || "").toLowerCase() === subName.toLowerCase()) viaSubclass = true;
-      }
+      let viaClass = matchByNameSource(refs, className, classSrcWanted);
+      let viaSubclass = subName && refs.some((r) => r && String(r.subclass?.name || r.subclassShortName || "").toLowerCase() === subName.toLowerCase());
       if (viaClass || viaSubclass) wanted.push({ name: spellName, bookSource, viaClass, viaSubclass });
+    }
+  }
+
+  // Homebrew geralmente não registra a classe em spells/sources.json (esse
+  // índice só cobre o conteúdo oficial da 5etools) — em vez disso, a
+  // própria classe traz um campo `classSpells` com a lista de magias.
+  // Duas formas aparecem na prática: uma lista de referências de magia
+  // ("nome" ou "nome|fonte", tratada abaixo junto com `additionalSpells` da
+  // subclasse) ou uma lista de `{className, classSource}` — "esta classe
+  // usa a mesma lista de magias de tal classe oficial" (ex.: conjuradores
+  // arcanos que herdam a lista do Bruxo/Feiticeiro/Mago).
+  const literalClassSpellRefs = [];
+  for (const raw of classRec?.classSpells || []) {
+    if (raw && typeof raw === "object" && (raw.className || raw.name)) {
+      const wantName = String(raw.className || raw.name);
+      const wantSrc = raw.classSource ? String(raw.classSource) : null;
+      for (const [bookSource, spells] of Object.entries(spellSources)) {
+        for (const [spellName, info] of Object.entries(spells)) {
+          const refs = [].concat(info.class || [], info.classVariant || []);
+          if (matchByNameSource(refs, wantName, wantSrc)) wanted.push({ name: spellName, bookSource, viaClass: true, viaSubclass: false });
+        }
+      }
+    } else if (raw) {
+      literalClassSpellRefs.push(raw);
     }
   }
 
@@ -562,6 +587,37 @@ export async function spellsForClass(classStub, subclassStub, edition) {
     found.set(key, cur);
   }
 
+  // Resolve uma lista de referências de magia em texto ("nome" ou
+  // "nome|fonte") contra os livros candidatos, e marca cada uma encontrada
+  // como viaClass e/ou viaSubclass em `found`. Usado tanto para o
+  // `classSpells` (lista de magias) da própria classe homebrew quanto para
+  // o `additionalSpells` da subclasse (domínio/patrono/tradição/círculo…),
+  // que também não aparecem em spells/sources.json.
+  async function resolveLiteralSpellRefs(refsArr, extraSourceHint, mark) {
+    const seenRef = new Set();
+    for (const raw of refsArr) {
+      let [name, src] = String(raw).split("|");
+      name = name.replace(/#.*$/, "").trim();
+      src = src ? src.toUpperCase() : null;
+      const refKey = `${name.toLowerCase()}|${src || ""}`;
+      if (!name || seenRef.has(refKey)) continue;
+      seenRef.add(refKey);
+      const candidates = [...new Set([src, classSrcWanted, extraSourceHint].filter(Boolean))];
+      let rec = null;
+      for (const book of candidates) {
+        if (!bySource.has(book)) bySource.set(book, await loadSpellFile(book).catch(() => []));
+        rec = (bySource.get(book) || []).find((s) => String(s.name).toLowerCase() === name.toLowerCase());
+        if (rec) break;
+      }
+      if (!rec) continue;
+      const key = `${rec.name}|${rec.source}`;
+      const cur = found.get(key) || { rec, viaClass: false, viaSubclass: false };
+      mark(cur);
+      found.set(key, cur);
+    }
+  }
+  if (literalClassSpellRefs.length) await resolveLiteralSpellRefs(literalClassSpellRefs, classRec?.source, (cur) => { cur.viaClass = true; });
+
   // Magias concedidas pela própria subclasse (domínio do Clérigo, patrono
   // do Bruxo, tradição arcana do Mago, círculo do Druida…) NÃO aparecem em
   // spells/sources.json — elas ficam no campo `additionalSpells` do
@@ -578,27 +634,7 @@ export async function spellsForClass(classStub, subclassStub, edition) {
       if (typeof node === "object") Object.values(node).forEach(walk);
     };
     walk(subRec?.additionalSpells);
-    const seenRef = new Set();
-    for (const raw of refs) {
-      let [name, src] = String(raw).split("|");
-      name = name.replace(/#.*$/, "").trim();
-      src = src ? src.toUpperCase() : null;
-      const refKey = `${name.toLowerCase()}|${src || ""}`;
-      if (!name || seenRef.has(refKey)) continue;
-      seenRef.add(refKey);
-      const candidates = [...new Set([src, classSrcWanted, subRec?.source].filter(Boolean))];
-      let rec = null;
-      for (const book of candidates) {
-        if (!bySource.has(book)) bySource.set(book, await loadSpellFile(book).catch(() => []));
-        rec = (bySource.get(book) || []).find((s) => String(s.name).toLowerCase() === name.toLowerCase());
-        if (rec) break;
-      }
-      if (!rec) continue;
-      const key = `${rec.name}|${rec.source}`;
-      const cur = found.get(key) || { rec, viaClass: false, viaSubclass: false };
-      cur.viaSubclass = true;
-      found.set(key, cur);
-    }
+    if (refs.length) await resolveLiteralSpellRefs(refs, subRec?.source, (cur) => { cur.viaSubclass = true; });
   }
 
   const out = [];

@@ -126,27 +126,39 @@
   </section>
 
   <nav class="tabs no-print" id="tabs">
-    <button class="tab active" data-tab="sheet">Ficha</button>
-    <button class="tab" data-tab="abilities">Atributos & Perícias</button>
-    <button class="tab" data-tab="combat">Combate</button>
-    <button class="tab" data-tab="spells">Magias</button>
-    <button class="tab" data-tab="features">Características</button>
-    <button class="tab" data-tab="equipment">Equipamento</button>
-    <button class="tab" data-tab="notes">Notas</button>
-    <button class="tab" data-tab="codex">Raças & Classes</button>
-    <button class="tab" data-tab="compendium">Compêndio</button>
+    <button class="tab active" data-tab="sheet">📋 Ficha</button>
+    <button class="tab" data-tab="abilities">🎯 Atributos & Talentos</button>
+    <button class="tab" data-tab="spells">✨ Magias</button>
+    <button class="tab" data-tab="features">📖 Características</button>
+    <button class="tab" data-tab="equipment">🎒 Equipamento</button>
+    <button class="tab" data-tab="notes">📝 Notas</button>
+    <button class="tab" data-tab="codex">📚 Raças & Classes</button>
+    <button class="tab" data-tab="compendium">🔎 Compêndio</button>
   </nav>
 
+  <!--
+    A aba "Ficha" reúne tudo que se usa DURANTE o jogo (atributos, defesa,
+    PV, testes/perícias, ataques, recursos de combate, condições) numa
+    página só, pra não precisar ficar trocando de aba no meio da mesa —
+    as outras abas ficam pra construção/consulta (talentos, magias,
+    características, equipamento, notas, referência).
+  -->
   <section class="tab-page active" id="tab-sheet">
     <div class="page-grid">
       <section class="paper-card abilities-card"><h2>Atributos</h2><div id="ability-grid" class="ability-grid"></div></section>
       <section class="paper-card defense-card"><h2>Defesa & Movimento</h2><div class="defense-grid">
         <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div>
-      </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div></section>
+      </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div>
+      <div class="two-input manual-override no-print"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section>
       <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div id="death-panel"></div></section>
       <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>
       <section class="paper-card skills-card"><h2>Perícias</h2><div id="skill-list" class="skill-grid"></div></section>
       <section class="paper-card identity-card"><h2>Identidade & Fontes</h2><div id="identity"></div></section>
+      <section class="paper-card full-span" id="attacks-card"><h2>⚔ Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section>
+      <section class="paper-card full-span" id="conditions-card"><h2>Condições Ativas</h2><div id="conditions-list" class="conditions-list"></div><div class="resource-actions no-print"><button class="add-btn" id="add-condition">+ Aplicar condição</button><button class="add-btn" id="next-round">▶ Avançar rodada</button></div></section>
+      <section class="paper-card full-span" id="turn-card"><h2>Turno Atual</h2><p class="muted">O que já foi gasto nesta rodada — zera sozinho em "Avançar rodada".</p><div class="turn-actions" data-turn-actions-slot></div><div class="concentration-badge" data-concentration-slot></div></section>
+      <section class="paper-card full-span" id="resources-card"><h2>Recursos de Combate</h2><div id="hit-dice-tracker"></div><div id="class-resources"></div></section>
+      <section class="paper-card full-span" id="rest-card"><h2>Descanso</h2><p class="muted">Restaura de uma vez os recursos que a regra de cada descanso permite — sem precisar zerar dado de vida, espaços de magia e recursos de classe um por um.</p><div class="rest-actions no-print"><button type="button" class="add-btn rest-btn short" id="short-rest-btn">🌙 Descanso Curto</button><button type="button" class="add-btn rest-btn long" id="long-rest-btn">🛌 Descanso Longo</button></div></section>
       <section class="paper-card details-card full-span"><h2>Detalhes do Personagem</h2>
         <div class="details-row">
           <label>Alinhamento<select id="alignment">
@@ -166,7 +178,7 @@
     </div>
   </section>
 
-  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Perícias</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode">
+  <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Talentos</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode">
       <option value="pointbuy">Point buy (27 pontos)</option>
       <option value="standard">Array Padrão (15,14,13,12,10,8)</option>
       <option value="heroic">Array Heroico (16,15,14,13,12,10)</option>
@@ -178,15 +190,8 @@
     <section class="paper-card full-span" id="buffs-card"><h2>Modificadores Temporários (Buffs/Debuffs)</h2><div id="buffs-list"></div><button class="add-btn no-print" id="add-buff">+ Aplicar modificador</button></section>
   </div></section>
 
-  <section class="tab-page" id="tab-combat"><div class="page-title"><h2>Combate</h2><p>Área preparada para impressão e uso durante a sessão.</p></div><div class="wide-grid"><section class="paper-card"><h2>Dados de combate</h2><div class="combat-big"><div><span>CA</span><b id="combat-ac">10</b></div><div><span>Iniciativa</span><b id="combat-init">+0</b></div><div><span>Deslocamento</span><b id="combat-speed">30 ft</b></div><div><span>Proficiência</span><b id="combat-pb">+2</b></div></div><div class="two-input"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section><section class="paper-card"><h2>Ataques & Truques</h2><div id="attacks"></div><button class="add-btn no-print" id="add-attack">+ Adicionar ataque</button></section>
-    <section class="paper-card full-span" id="rest-card"><h2>Descanso</h2><p class="muted">Restaura de uma vez os recursos que a regra de cada descanso permite — sem precisar zerar dado de vida, espaços de magia e recursos de classe um por um.</p><div class="rest-actions no-print"><button type="button" class="add-btn rest-btn short" id="short-rest-btn">🌙 Descanso Curto</button><button type="button" class="add-btn rest-btn long" id="long-rest-btn">🛌 Descanso Longo</button></div></section>
-    <section class="paper-card full-span" id="resources-card"><h2>Recursos de Combate</h2><div id="hit-dice-tracker"></div><div id="class-resources"></div></section>
-    <section class="paper-card full-span" id="turn-card"><h2>Turno Atual</h2><p class="muted">O que já foi gasto nesta rodada — zera sozinho em "Avançar rodada".</p><div class="turn-actions" data-turn-actions-slot></div><div class="concentration-badge" data-concentration-slot></div></section>
-    <section class="paper-card full-span" id="conditions-card"><h2>Condições Ativas</h2><div id="conditions-list" class="conditions-list"></div><div class="resource-actions no-print"><button class="add-btn" id="add-condition">+ Aplicar condição</button><button class="add-btn" id="next-round">▶ Avançar rodada</button></div></section>
-  </div></section>
-
   <section class="tab-page" id="tab-spells"><div class="page-title"><h2>Magias</h2><p>A lista completa de magias da classe aparece por nível, filtrada pela edição escolhida. Use as bolinhas para marcar as magias preparadas/conhecidas.</p></div>
-    <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias na lista</span><b id="spell-count">0</b></div></section>
+    <section class="paper-card spell-summary"><div><span>Atributo de conjuração</span><b id="spell-ability">—</b><select id="spell-ability-override" class="no-print" title="Sobrescrever o atributo de conjuração"><option value="">Automático (via classe)</option><option value="str">Força</option><option value="dex">Destreza</option><option value="con">Constituição</option><option value="int">Inteligência</option><option value="wis">Sabedoria</option><option value="cha">Carisma</option></select></div><div><span>CD de magia</span><b id="spell-dc-big">—</b></div><div><span>Ataque mágico</span><b id="spell-atk-big">—</b></div><div><span>Magias na lista</span><b id="spell-count">0</b></div></section>
     <div class="concentration-badge no-print" data-concentration-slot></div>
     <div id="spell-resources"></div>
     <div id="spellbook-tabs" class="segmented no-print"></div>
