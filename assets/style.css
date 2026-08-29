@@ -120,6 +120,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 
 /* ---------- Shell ---------- */
 .sheet-shell{max-width:1440px;margin:22px auto 80px;padding:0 18px}
+.mestre-shell{max-width:1440px;margin:22px auto 80px;padding:0 18px}
+.mestre-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
 
 /* ---------- Cabeçalho da ficha ---------- */
 .sheet-head{

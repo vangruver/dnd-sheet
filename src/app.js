@@ -4523,8 +4523,16 @@ function setup() {
     if (b.dataset.tab === "notes") renderJournal();
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
-    if (b.dataset.tab === "monsters") await renderMonsters();
   }));
+  $("mestre-mode-btn")?.addEventListener("click", async () => {
+    document.querySelector(".sheet-shell").classList.add("hidden");
+    $("mestre-shell").classList.remove("hidden");
+    await renderMonsters();
+  });
+  $("mestre-exit-btn")?.addEventListener("click", () => {
+    $("mestre-shell").classList.add("hidden");
+    document.querySelector(".sheet-shell").classList.remove("hidden");
+  });
   $("codex-search")?.addEventListener("input", () => { codexState.query = $("codex-search").value; renderCodex(); });
   document.querySelectorAll("#codex-type [data-codextype]").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("#codex-type [data-codextype]").forEach((x) => x.classList.remove("active"));

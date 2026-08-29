@@ -34,6 +34,7 @@
     <label class="file-button">Importar<input id="import-character" type="file" accept=".json,application/json"></label>
     <button id="refresh-data">Atualizar dados</button>
     <button id="discord-settings" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
+    <button id="mestre-mode-btn" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Mestre</button>
     <button id="theme-toggle" title="Alternar tema claro/escuro" aria-pressed="false">☀️ Claro</button>
     <button id="preview-pdf" class="primary">Ficha em PDF</button><button id="print-character">Imprimir / PDF</button>
   </div>
@@ -136,7 +137,6 @@
     <button class="tab" data-tab="notes">📝 Notas</button>
     <button class="tab" data-tab="codex">📚 Raças & Classes</button>
     <button class="tab" data-tab="compendium">🔎 Compêndio</button>
-    <button class="tab" data-tab="monsters">🐉 Monstros</button>
   </nav>
 
   <!--
@@ -252,35 +252,39 @@
 
   <section class="tab-page" id="tab-compendium"><div class="page-title"><h2>Compêndio</h2><p>Pesquise diretamente nos registros carregados do 5etools.</p></div><section class="paper-card compendium-toolbar"><input id="compendium-search" placeholder="Pesquisar no compêndio…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="spell">Magias</option><option value="item">Itens</option><option value="feat">Talentos</option></select></section><div id="compendium-results" class="catalog-grid"></div></section>
 
-  <section class="tab-page" id="tab-monsters">
-    <div class="page-title"><h2>Monstros</h2><p>Kit do mestre: puxe qualquer criatura do bestiário oficial do 5etools (Manual dos Monstros e todas as aventuras prontas — Curse of Strahd, Storm King's Thunder, Lost Mine of Phandelver etc.) ou crie a sua. Independe do personagem aberto na ficha. Cada rolagem de ataque/dano/teste vai direto pro Discord configurado em "🔗 Discord" no topo.</p></div>
-    <section class="paper-card no-print">
-      <div class="monster-list-row">
-        <label>Lista ativa<select id="monster-list-select"></select></label>
-        <button type="button" id="monster-list-new">+ Nova lista</button>
-        <button type="button" id="monster-list-rename">✎ Renomear</button>
-        <button type="button" id="monster-list-delete">🗑️ Excluir lista</button>
-      </div>
-      <p class="muted">Toda vez que você adicionar um monstro (individualmente ou em massa), ele vai pra <b>lista ativa</b> acima — crie uma lista por aventura/campanha pra separar os monstros.</p>
-      <div class="segmented" id="monster-view-tabs">
-        <button class="active" data-monview="roster">Meus Monstros</button>
-        <button data-monview="browse">Bestiário Oficial</button>
-      </div>
-      <div id="monster-browse-toolbar" class="hidden">
-        <div class="search-row">
-          <input id="monster-search" placeholder="Pesquisar monstro pelo nome…">
-          <select id="monster-source"><option value="">Escolha um livro/aventura…</option></select>
-        </div>
-        <p class="muted">Escolher um livro carrega só aquele arquivo (rápido). Pra pesquisar em <b>todo</b> o bestiário oficial de uma vez (mais de 150 livros/aventuras), use o botão abaixo — demora mais na primeira vez, depois fica em cache.</p>
-        <button type="button" class="add-btn" id="monster-load-all">🔎 Buscar em todas as fontes</button>
-        <span id="monster-load-status" class="muted"></span>
-        <button type="button" class="add-btn hidden" id="monster-add-all-source">📦 Adicionar todos desta fonte à lista ativa</button>
-      </div>
-      <button type="button" class="add-btn no-print" id="monster-create-btn">+ Criar monstro</button>
-    </section>
-    <div id="monster-results" class="catalog-grid"></div>
-  </section>
 </main>
+
+<section class="mestre-shell hidden no-print" id="mestre-shell">
+  <div class="mestre-head">
+    <div class="page-title"><h2>🐉 Mestre</h2><p>Kit do mestre: puxe qualquer criatura do bestiário oficial do 5etools (Manual dos Monstros e todas as aventuras prontas — Curse of Strahd, Storm King's Thunder, Lost Mine of Phandelver etc.), pegue todos os monstros de uma aventura de uma vez, ou crie os seus. Independe do personagem aberto na ficha. Cada rolagem de ataque/dano/teste vai direto pro Discord configurado em "🔗 Discord" no topo.</p></div>
+    <button type="button" id="mestre-exit-btn" class="link-btn">← Voltar para a ficha</button>
+  </div>
+  <section class="paper-card no-print">
+    <div class="monster-list-row">
+      <label>Lista ativa<select id="monster-list-select"></select></label>
+      <button type="button" id="monster-list-new">+ Nova lista</button>
+      <button type="button" id="monster-list-rename">✎ Renomear</button>
+      <button type="button" id="monster-list-delete">🗑️ Excluir lista</button>
+    </div>
+    <p class="muted">Toda vez que você adicionar um monstro (individualmente ou em massa), ele vai pra <b>lista ativa</b> acima — crie uma lista por aventura/campanha pra separar os monstros.</p>
+    <div class="segmented" id="monster-view-tabs">
+      <button class="active" data-monview="roster">Meus Monstros</button>
+      <button data-monview="browse">Bestiário Oficial</button>
+    </div>
+    <div id="monster-browse-toolbar" class="hidden">
+      <div class="search-row">
+        <input id="monster-search" placeholder="Pesquisar monstro pelo nome…">
+        <select id="monster-source"><option value="">Escolha um livro/aventura…</option></select>
+      </div>
+      <p class="muted">Escolher um livro carrega só aquele arquivo (rápido). Pra pesquisar em <b>todo</b> o bestiário oficial de uma vez (mais de 150 livros/aventuras), use o botão abaixo — demora mais na primeira vez, depois fica em cache.</p>
+      <button type="button" class="add-btn" id="monster-load-all">🔎 Buscar em todas as fontes</button>
+      <span id="monster-load-status" class="muted"></span>
+      <button type="button" class="add-btn hidden" id="monster-add-all-source">📦 Adicionar todos desta fonte à lista ativa</button>
+    </div>
+    <button type="button" class="add-btn no-print" id="monster-create-btn">+ Criar monstro</button>
+  </section>
+  <div id="monster-results" class="catalog-grid"></div>
+</section>
 
 <div id="modal" class="modal hidden" role="dialog" aria-modal="true"><div class="modal-box"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>
 <div id="toast" class="toast"></div>
