@@ -1,0 +1,163 @@
+{
+	"_meta": {
+		"sources": [
+			{
+				"json": "TRB",
+				"abbreviation": "TRB",
+				"full": "The Rotting Blood — Warlock Patron",
+				"authors": ["OnTheRivir"],
+				"convertedBy": ["Claude", "ESKape_Key"],
+				"url": "https://www.reddit.com/r/UnearthedArcana/s/nEiRVD0ov8",
+				"version": "1.0.0"
+			}
+		],
+		"dateAdded": 1756512000,
+		"dateLastModified": 1756512000
+	},
+
+	"subclass": [
+		{
+			"name": "The Rotting Blood",
+			"shortName": "The Rotting Blood",
+			"source": "TRB",
+			"page": 1,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassFeatures": [
+				"Expanded Spell List|Warlock|XPHB|The Rotting Blood|TRB|1",
+				"Rotting Contagion|Warlock|XPHB|The Rotting Blood|TRB|1",
+				"Carrier's Touch|Warlock|XPHB|The Rotting Blood|TRB|1",
+				"Bloodrot|Warlock|XPHB|The Rotting Blood|TRB|6",
+				"Evolved Pathogen|Warlock|XPHB|The Rotting Blood|TRB|10",
+				"Blessing of the Blood-borne Lord|Warlock|XPHB|The Rotting Blood|TRB|14"
+			],
+			"additionalSpells": [
+				{
+					"expanded": {
+						"1": ["ray of sickness", "inflict wounds"],
+						"2": ["blindness/deafness", "lesser restoration"],
+						"3": ["bestow curse", "stinking cloud"],
+						"4": ["blight", "sickening radiance"],
+						"5": ["cloudkill", "contagion"]
+					}
+				}
+			],
+			"entries": [
+				"Your patron is a sentient disease, a virulent, infectious curse that brings ruin upon those who contract it. Few seek out the Rotting Blood to channel its fell power, but those who make a pact in order to survive its infection are granted otherworldly abilities. Making a pact with the Rotting Blood is a cowardly act — preserving your own life by promising to infect your enemies with this dread plague.",
+				"Your symbiotic relationship with the disease within you can outwardly manifest in strange ways. Perhaps you are perpetually gaunt and pale, or perhaps slightly green, or maybe your skin is always feverishly hot to the touch — or conversely, ice-cold. Perhaps when your blood is spilled, it's an unsightly brown color, and exudes a foul odor."
+			]
+		}
+	],
+
+	"subclassFeature": [
+		{
+			"name": "Expanded Spell List",
+			"source": "TRB",
+			"page": 1,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 1,
+			"entries": [
+				"The Rotting Blood lets you choose from an expanded list of spells when you learn a warlock spell. The following spells are added to the warlock spell list for you.",
+				{
+					"type": "table",
+					"caption": "The Rotting Blood Expanded Spells",
+					"colLabels": ["Spell Level", "Spells"],
+					"colStyles": ["col-2 text-center", "col-10"],
+					"rows": [
+						["1st", "{@spell Ray of Sickness}, {@spell Inflict Wounds}"],
+						["2nd", "{@spell Blindness/Deafness}, {@spell Lesser Restoration}"],
+						["3rd", "{@spell Bestow Curse}, {@spell Stinking Cloud}"],
+						["4th", "{@spell Blight}, {@spell Sickening Radiance}"],
+						["5th", "{@spell Cloudkill}, {@spell Contagion}"]
+					]
+				}
+			]
+		},
+		{
+			"name": "Rotting Contagion",
+			"source": "TRB",
+			"page": 1,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 1,
+			"entries": [
+				"You gain the ability to channel your curse's debilitating energy to power your subclass abilities. Your access to this energy is represented by a pool of contagion points. You have a number of contagion points equal to your Warlock level + your Charisma modifier, and you regain all spent contagion points on a {@variantrule Long Rest|XPHB}."
+			]
+		},
+		{
+			"name": "Carrier's Touch",
+			"source": "TRB",
+			"page": 1,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 1,
+			"entries": [
+				"You gain the ability to spread a lesser version of your rotting disease to your enemies. Once on each of your turns when you deal damage to a creature with a weapon attack or a Warlock spell, you can spend a contagion point to infect it or increase the stage of its infection. This infection counts as a curse for any Warlock abilities that involve curses. An infection lasts for 1 minute, and increasing its stage resets its duration. The maximum stage that can be applied to a single creature equals your proficiency bonus.",
+				"An infected creature suffers the following effects:",
+				{
+					"type": "list",
+					"items": [
+						"At the start of each of its turns, it takes 1d4 necrotic damage for each stage of its infection.",
+						"Whenever the infected creature makes a Constitution saving throw, it subtracts the stage of its infection from the roll."
+					]
+				},
+				"You can still target a creature that has already reached the maximum stage of infection, spending a contagion point and resetting the duration as usual, but you do not increase the stage of the infection.",
+				"While infected, a creature can use its action to make a Constitution saving throw against your spell save DC. On a success, it lowers the stage of its infection by 1, or is cured if the stage becomes zero. Alternatively, the infection can be cured by the {@spell Lesser Restoration} spell, the {@spell Remove Curse} spell, or similar magic."
+			]
+		},
+		{
+			"name": "Bloodrot",
+			"source": "TRB",
+			"page": 1,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 6,
+			"entries": [
+				"Your rotten blood becomes more potent and deadly, making it dangerous for your enemies to spill. When you take damage, you can use a {@variantrule Reaction|XPHB} to target creatures of your choice within 5 feet and force each target to take acid damage equal to your proficiency bonus and to make a Constitution saving throw against your spell save DC. On a failure, the creature is {@condition Poisoned|XPHB} until the end of its next turn."
+			]
+		},
+		{
+			"name": "Evolved Pathogen",
+			"source": "TRB",
+			"page": 2,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 10,
+			"entries": [
+				"The rotting disease that you can spread becomes stronger. As a bonus action on your turn, you can target a creature infected by your Carrier's Touch ability and spend 4 contagion points to apply a condition of your choice from the following mutations:",
+				{
+					"type": "list",
+					"items": [
+						"{@b Hemophilic.} For the next minute, the creature's blood becomes thin and unable to clot. The target takes extra necrotic damage equal to the stage of its infection whenever it takes damage from a weapon attack or spell. The creature can make a Constitution saving throw against your spell save DC at the end of each of its turns to end the condition. The condition also ends if the creature is no longer infected.",
+						"{@b Rotting.} For the next minute, the creature's blood becomes thick and rotten, burning it from the inside. Its speed is halved and it cannot take reactions. In addition, every time it makes a weapon attack roll or an ability check, or casts a spell, it takes damage equal to its infection stage. The creature can make a Constitution saving throw against your spell save DC at the end of each of its turns to end the condition. The condition also ends if the creature is no longer infected.",
+						"{@b Fatigued.} The creature becomes mired in its own mind, weighed down by its fears and faced with its own condition. The creature makes a Constitution saving throw against your spell save DC. On a failure, it gains 1 level of {@variantrule Exhaustion|XPHB}. All levels of exhaustion applied by this ability are removed if the condition ends."
+					]
+				}
+			]
+		},
+		{
+			"name": "Blessing of the Blood-borne Lord",
+			"source": "TRB",
+			"page": 2,
+			"className": "Warlock",
+			"classSource": "XPHB",
+			"subclassShortName": "The Rotting Blood",
+			"subclassSource": "TRB",
+			"level": 14,
+			"entries": [
+				"Your patron rewards you for loyally infecting so many creatures. At the start of each of your turns, you gain {@variantrule Temporary Hit Points|XPHB} equal to the total amount of damage dealt by your Carrier's Touch and Evolved Pathogen abilities since the beginning of your previous turn."
+			]
+		}
+	]
+}

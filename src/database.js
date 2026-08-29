@@ -711,10 +711,18 @@ export async function findClassFeatures(classStub, level) {
 export async function findSubclassFeatures(subclassStub, level) {
   if (!subclassStub) return [];
   const sub = recordsForEntity(subclassStub)[0];
+  if (!sub) return [];
+  // ensureClassFile() resolve pelo nome/fonte da CLASSE (ex.: "Warlock|XPHB"),
+  // que quase sempre aponta pro arquivo oficial dessa classe. Uma subclasse
+  // homebrew/externa que só adiciona a uma classe existente (não redefine a
+  // classe em si) traz suas próprias subclassFeature num arquivo à parte —
+  // ver registerClassFile, que grava esse arquivo em __file no registro da
+  // subclasse. Sem consultá-lo aqui, o nome da característica aparecia (vem
+  // da própria referência em subclassFeatures) mas a descrição ficava vazia,
+  // porque o pool só tinha as features do arquivo oficial da classe.
+  const ownFile = subclassStub.__file || registry.get(subclassStub.id)?.__file;
   const packed = await ensureClassFile(subclassStub.className, subclassStub.classSource);
-  const file = packed?.file;
-  if (!sub || !file) return [];
-  const pool = file.subclassFeature || [];
+  const pool = [...(ownFile?.subclassFeature || []), ...(packed?.file?.subclassFeature || [])];
   const out = [];
   for (const raw of sub.subclassFeatures || []) {
     const refStr = typeof raw === "string" ? raw : raw.subclassFeature;
