@@ -122,3 +122,14 @@ export function saveCreationMode(v) { try { localStorage.setItem(CREATION_MODE_K
 const TEMPLATES_KEY = "dnd-ficha-auto-templates-v1";
 export function getTemplates() { try { const v = localStorage.getItem(TEMPLATES_KEY); return v ? JSON.parse(v) : []; } catch { return []; } }
 export function saveTemplates(arr) { try { localStorage.setItem(TEMPLATES_KEY, JSON.stringify(arr || [])); } catch { /* modo privado */ } }
+
+// Webhook do Discord pra onde as rolagens de dado são enviadas — fica
+// preso a este navegador (não ao personagem nem sincronizado), já que
+// cada jogador cola o link do PRÓPRIO canal/servidor. Ver sendToDiscord
+// em app.js.
+const DISCORD_WEBHOOK_KEY = "dnd-ficha-auto-discord-webhook";
+export function getDiscordWebhook() { try { return localStorage.getItem(DISCORD_WEBHOOK_KEY) || ""; } catch { return ""; } }
+export function saveDiscordWebhook(url) {
+  try { url ? localStorage.setItem(DISCORD_WEBHOOK_KEY, url) : localStorage.removeItem(DISCORD_WEBHOOK_KEY); }
+  catch { /* modo privado */ }
+}
