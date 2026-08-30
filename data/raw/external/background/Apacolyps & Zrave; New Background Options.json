@@ -1,0 +1,3313 @@
+{
+	"_meta": {
+		"sources": [
+			{
+				"json": "RMG",
+				"abbreviation": "RMG",
+				"full": "Running Memorable Games: New Background Options (2024)",
+				"authors": [
+					"Apacolyps",
+					"Zrave"
+				],
+				"convertedBy": [
+					"Claude",
+					"ESKape_Key"
+				],
+				"version": "1.1.0"
+			}
+		]
+	},
+	"background": [
+		{
+			"name": "Apothecary",
+			"source": "RMG",
+			"page": 4,
+			"skillProficiencies": [
+				{
+					"medicine": true,
+					"nature": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"alchemist's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Healer|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"herbalism kit|PHB",
+						"healer's kit|PHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 3700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You've spent years mastering the art of herbal remedies and medicinal concoctions, using your knowledge to heal the sick and tend to the wounded. Whether working in a bustling city or a quiet village, you've become a trusted figure for those seeking cures, salves, and tonics. Your familiarity with plants and herbs has made you adept at crafting potions and antidotes, while your skill in medicine allows you to diagnose and treat common ailments.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Healer|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Medicine|XPHB}, {@skill Nature|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Alchemist's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Herbalism Kit|PHB}, {@item Healer's Kit|PHB}, 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 37 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Bouncer",
+			"source": "RMG",
+			"page": 4,
+			"skillProficiencies": [
+				{
+					"insight": true,
+					"intimidation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"leatherworker's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Tavern Brawler|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"mace|PHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 3700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You've spent many a night standing at the entrances of rowdy taverns and clubs, using your imposing presence to keep the peace. Whether you're breaking up fights or turning away troublemakers, you've seen it all and learned how to handle dangerous situations without losing your cool. Over time, you've developed a keen eye for assessing threats, and your reputation for being fair but firm precedes you. You know when to talk your way out of trouble and when to let your fists do the talking, always ensuring that order is maintained.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tavern Brawler|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Insight|XPHB}, {@skill Intimidation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Leatherworker's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Mace|PHB}, 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 37 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Courtier",
+			"source": "RMG",
+			"page": 4,
+			"skillProficiencies": [
+				{
+					"insight": true,
+					"persuasion": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"calligrapher's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Skilled|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"fine clothes|PHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 3
+						},
+						{
+							"item": "parchment|PHB",
+							"quantity": 12
+						},
+						{
+							"value": 2300
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You were raised among the elite, navigating the delicate and dangerous world of political intrigue. Your life was one of diplomacy, influence, and maintaining appearances in the courts of nobility or royalty. Skilled in conversation and negotiation, you've mastered the art of persuasion, knowing when to flatter, when to speak, and when to hold your tongue. Whether you served a noble family or worked your way into a position of influence, you've spent your life surrounded by power, always staying keenly aware of the subtleties that govern courtly life.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Skilled|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Insight|XPHB}, {@skill Persuasion|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Calligrapher's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Fine Clothes|PHB}, {@item Lamp|PHB}, 3 {@item Oil (Flask)|PHB|Flasks of Oil}, 12 {@item Parchment|PHB|Sheets of Parchment}, 23 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Cultist",
+			"source": "RMG",
+			"page": 4,
+			"skillProficiencies": [
+				{
+					"intimidation": true,
+					"religion": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"disguise kit": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Cleric)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"dagger|PHB",
+						"disguise kit|PHB",
+						"robes|PHB",
+						{
+							"value": 2200
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You are a devoted member of a secretive and possibly sinister organization, committed to the worship of hidden powers or the pursuit of forbidden knowledge. Your life revolves around rituals, clandestine meetings, and the fulfillment of the cult's mysterious goals. Whether you are spreading the cult's influence, gathering arcane secrets, or carrying out covert operations, your actions are driven by an unwavering faith in your cause. Your knowledge of esoteric practices and your ability to navigate the underbelly of society have made you both a valuable asset and a dangerous individual.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Cleric)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Intimidation|XPHB}, {@skill Religion|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Disguise Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Dagger|PHB}, {@item Disguise Kit|PHB}, {@item Robes|PHB}, 22 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Drunkard",
+			"source": "RMG",
+			"page": 5,
+			"skillProficiencies": [
+				{
+					"persuasion": true,
+					"intimidation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"brewer's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Tavern Brawler|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						{
+							"special": "5 bottles of common wine"
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 2700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Life has taken you down a hard path, one where the bottom of a bottle became your closest companion. Whether driven by sorrow, failure, or the weight of the world, you've spent countless nights in taverns, swapping stories and drowning your troubles. You've seen the dark side of excess, yet along the way, you've gained a knack for charming strangers, navigating tavern brawls, and finding solace in the chaos. Though often dismissed as unreliable, you've learned to make friends in low places and have a surprising resilience when it comes to life's misfortunes.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tavern Brawler|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Persuasion|XPHB}, {@skill Intimidation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Brewer's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, 5 bottles of common wine, {@item Traveler's Clothes|XPHB}, 27 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Explorer",
+			"source": "RMG",
+			"page": 5,
+			"skillProficiencies": [
+				{
+					"perception": true,
+					"survival": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"navigator's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Alert|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"int"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"int"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"dagger|PHB",
+						"navigator's tools|PHB",
+						{
+							"special": "a map"
+						},
+						"rope, hempen (50 feet)|PHB",
+						"tent, two-person|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 1700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Driven by curiosity and a thirst for adventure, you've spent your life venturing into the unknown. Whether navigating uncharted lands, scaling treacherous mountains, or braving dangerous jungles, you've faced the wild with a mix of courage and skill. You are adept at reading maps, charting courses, and surviving in harsh conditions. Your journeys have taken you to places few others have seen, and each new discovery has only deepened your love for the mysteries of the world. Adaptable and resilient, you know how to thrive in the face of uncertainty and are always prepared for what lies beyond the horizon.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Alert|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Perception|XPHB}, {@skill Survival|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Navigator's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Dagger|PHB}, {@item Navigator's Tools|PHB}, a map, {@item Rope, Hempen (50 Feet)|PHB}, {@item Tent, Two-person|PHB}, {@item Traveler's Clothes|XPHB}, 17 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Folk Hero",
+			"source": "RMG",
+			"page": 5,
+			"skillProficiencies": [
+				{
+					"animal handling": true,
+					"survival": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"cook's utensils": true
+				}
+			],
+			"feats": [
+				{
+					"Lucky|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"spear|PHB",
+						"cook's utensils|PHB",
+						"shovel|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 4400
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You rose from humble beginnings to become a symbol of hope and courage for the common folk. Through acts of bravery, kindness, or defiance against tyranny, you earned the admiration and gratitude of those who see you as a champion of the people. Your journey might have involved defending your village from an outside threat or standing up to corrupt officials. Despite your heroic deeds, you remain deeply connected to the everyday struggles of ordinary people. Your reputation as a folk hero has given you a unique bond with the common folk, who look to you as a beacon of justice and hope.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Lucky|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Animal Handling|XPHB}, {@skill Survival|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Cook's Utensils|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Spear|PHB}, {@item Cook's Utensils|PHB}, {@item Shovel|PHB}, {@item Traveler's Clothes|XPHB}, 44 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Gambler",
+			"source": "RMG",
+			"page": 5,
+			"skillProficiencies": [
+				{
+					"deception": true,
+					"sleight of hand": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"gaming set": true
+				}
+			],
+			"feats": [
+				{
+					"Lucky|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "gaming set|XPHB"
+						},
+						"fine clothes|PHB",
+						{
+							"value": 3400
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You thrive in the high-stakes world of chance and risk, where your expertise lies in games of luck, strategy, and bluffing. Whether at a lavish casino, a smoky backroom, or a rowdy tavern, you know how to read opponents, calculate odds, and play your cards right. Your life has been a series of bets, wagers, and gambles, honing your skills in both deception and risk management. While your lifestyle is unpredictable and often perilous, it has also granted you a keen understanding of human behavior and a knack for seizing opportunities when they arise.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Lucky|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Deception|XPHB}, {@skill Sleight of Hand|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@i Choose one kind of {@item Gaming Set|XPHB}}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Gaming Set|XPHB|Gaming Set (same as above)}, {@item Fine Clothes|PHB}, 34 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Gladiator",
+			"source": "RMG",
+			"page": 5,
+			"skillProficiencies": [
+				{
+					"athletics": true,
+					"performance": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"smith's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Tough|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"con"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"con"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"spear|PHB",
+						"net|PHB",
+						"smith's tools|PHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 2500
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Trained in the brutal art of combat, you honed your skills in the arena with life and death on the line. Whether fighting for fame, fortune, or survival, you faced off against dangerous opponents for the entertainment of the masses. The roar of the crowd and the clash of steel became a part of your life, pushing you to perfect your craft. Through this, you developed a strong physique, relentless endurance, and a flair for showmanship. But behind every victory lies the understanding that the arena is as unforgiving as it is glorious.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tough|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Athletics|XPHB}, {@skill Performance|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Smith's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Spear|PHB}, {@item Net|PHB}, {@item Smith's Tools|PHB}, 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 25 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Goldsmith",
+			"source": "RMG",
+			"page": 6,
+			"skillProficiencies": [
+				{
+					"insight": true,
+					"persuasion": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"jeweler's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Crafter|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"perfume (vial)|PHB",
+						"fine clothes|PHB",
+						{
+							"value": 1400
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"As a goldsmith, you specialize in crafting and selling exquisite jewelry and luxurious items for nobility and the wealthy. Your expertise lies in working with precious metals and gemstones, to create intricate designs that showcase both your artistic talent and technical skill. Whether designing elaborate crowns, elegant necklaces, or finely detailed rings, you combine your knowledge of craftsmanship with an understanding of high society's tastes and demands. Your work often involves negotiating with affluent clients and ensuring that each piece meets the highest standards of quality and refinement, reflecting your reputation in the world of luxury and wealth.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Crafter|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Insight|XPHB}, {@skill Persuasion|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Jeweler's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Perfume (Vial)|PHB}, {@item Fine Clothes|PHB}, 14 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Hunter",
+			"source": "RMG",
+			"page": 6,
+			"skillProficiencies": [
+				{
+					"animal handling": true,
+					"survival": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"carpenter's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Alert|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"shortbow|PHB",
+						"arrows (20)|PHB",
+						"bedroll|PHB",
+						"quiver|PHB",
+						"tent, two-person|PHB",
+						"traveler's clothes|XPHB",
+						"hunting trap|XPHB",
+						{
+							"value": 500
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You grew up tracking game through dense forests, wide plains, or rugged mountains, developing a keen understanding of nature's rhythms and the behavior of wild creatures. Whether hunting for survival or sport, you've honed your skills in archery, tracking, and laying traps. The wilderness is your second home, and you have a natural talent for moving quietly and unseen. With an eye for detail and sharp instincts, you know how to stalk prey allowing you to survive even the harshest environments.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Alert|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Animal Handling|XPHB}, {@skill Survival|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Carpenter's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Shortbow|PHB}, {@item Arrows (20)|PHB}, {@item Bedroll|PHB}, {@item Quiver|PHB}, {@item Tent, Two-person|PHB}, {@item Traveler's Clothes|XPHB}, {@item Hunting Trap|XPHB}, 5 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Inquisitor",
+			"source": "RMG",
+			"page": 6,
+			"skillProficiencies": [
+				{
+					"insight": true,
+					"investigation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"calligrapher's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Cleric)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"int"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"int"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"{@item book|PHB|Book (Religion)}",
+						"traveler's clothes|XPHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 3
+						},
+						{
+							"item": "parchment|PHB",
+							"quantity": 12
+						},
+						{
+							"value": 1100
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You are dedicated to uncovering hidden truths and rooting out corruption or heresy, often working on behalf of an organization or religious order. Your role involves conducting investigations, interrogating suspects, and using your keen analytical skills to piece together complex cases. Whether operating in the shadows or under the guise of authority, you've developed a sharp eye for deception and a methodical approach to problem-solving. Your work requires a blend of rigorous questioning and careful observation, as you navigate the murky waters of secrecy and intrigue to bring hidden wrongs to light.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Cleric)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Insight|XPHB}, {@skill Investigation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Calligrapher's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item book|PHB|Book (Religion)}, {@item Traveler's Clothes|XPHB}, {@item Lamp|PHB}, 3 {@item Oil (Flask)|PHB|Flasks of Oil}, 12 {@item Parchment|PHB|Sheets of Parchment}, 11 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Juggler",
+			"source": "RMG",
+			"page": 6,
+			"skillProficiencies": [
+				{
+					"acrobatics": true,
+					"performance": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"disguise kit": true
+				}
+			],
+			"feats": [
+				{
+					"Tavern Brawler|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "dagger|PHB",
+							"quantity": 5
+						},
+						"costume|XPHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 800
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"With dexterity and flair, you've dazzled audiences with your skillful juggling, balancing acts, and acrobatics. From lively street performances to grand festivals, you've entertained and amazed with your ability to keep multiple objects in the air while performing feats of agility. Your background as a juggler has honed your reflexes and concentration, allowing you to maintain poise under pressure. Beyond the stage, you've used your agility and charm to make a lasting impression wherever you go.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tavern Brawler|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Acrobatics|XPHB}, {@skill Performance|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Disguise Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) 5 {@item Dagger|PHB|Daggers}, {@item Costume|XPHB}, {@item Traveler's Clothes|XPHB}, 8 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Medic",
+			"source": "RMG",
+			"page": 7,
+			"skillProficiencies": [
+				{
+					"medicine": true,
+					"survival": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"herbalism kit": true
+				}
+			],
+			"feats": [
+				{
+					"Healer|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"con",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"con",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"sickle|PHB",
+						"healer's kit|PHB",
+						"bedroll|PHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 5
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 3500
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"In your role as a medic, you've dedicated yourself to providing first aid and emergency care, often in the midst of danger or on the front lines of conflict. Your training includes not only the treatment of wounds and illnesses but also the management of medical supplies and the ability to make quick decisions under stress. Whether tending to fellow soldiers, adventurers, or civilians, you are skilled in stabilizing patients and ensuring their survival until they can receive further treatment. Your practical knowledge and hands-on experience make you a vital asset in any crisis, capable of delivering care when it is most needed.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Healer|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Medicine|XPHB}, {@skill Survival|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Herbalism Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Sickle|PHB}, {@item Healer's Kit|PHB}, {@item Bedroll|PHB}, {@item Lamp|PHB}, 5 {@item Oil (Flask)|PHB|Flasks of Oil}, {@item Traveler's Clothes|XPHB}, 35 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Minstrel",
+			"source": "RMG",
+			"page": 7,
+			"skillProficiencies": [
+				{
+					"history": true,
+					"performance": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"musical instrument": true
+				}
+			],
+			"feats": [
+				{
+					"Musician|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "musical instrument|XPHB"
+						},
+						{
+							"item": "costume|XPHB",
+							"quantity": 2
+						},
+						"mirror, steel|PHB",
+						"perfume (vial)|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 1100
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You traveled from town to town, performing songs and tales in exchange for food, lodging, or coin. Whether playing before a bustling tavern crowd or a noble court, your music brought joy and connection to those who listened. Along the way, you honed your craft, learned the art of storytelling, and perhaps uncovered ancient ballads and forgotten histories. Your life as a performer exposed you to a variety of cultures, granting you a deep appreciation for the power of music to move hearts and inspire minds.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Musician|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill History|XPHB}, {@skill Performance|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@i Choose one kind of {@item Musical Instrument|XPHB}}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Musical Instrument|XPHB|Musical Instrument (same as above)}, 2 {@item Costume|XPHB|Costumes}, {@item Mirror, Steel|PHB}, {@item Perfume (Vial)|PHB}, {@item Traveler's Clothes|XPHB}, 11 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Nature's Adept",
+			"source": "RMG",
+			"page": 7,
+			"skillProficiencies": [
+				{
+					"animal handling": true,
+					"nature": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"herbalism kit": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Druid)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"sickle|PHB",
+						"bedroll|PHB",
+						"{@item book|PHB|Book (Nature)}",
+						"traveler's clothes|XPHB",
+						{
+							"value": 1600
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You have dedicated yourself to understanding and harnessing the natural world, becoming deeply attuned to its rhythms and powers. Your skills in handling animals, growing plants, and navigating the wilderness are matched by your ability to draw upon nature's magic. Whether through studying the behavior of creatures, crafting natural remedies, or tapping into druidic forces, you have developed a profound connection with the environment. You are adept at surviving in the wild, and can use your knowledge to protect the balance of nature.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Druid)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Animal Handling|XPHB}, {@skill Nature|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Herbalism Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Sickle|PHB}, {@item Bedroll|PHB}, {@item book|PHB|Book (Nature)}, {@item Traveler's Clothes|XPHB}, 16 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Rebel",
+			"source": "RMG",
+			"page": 7,
+			"skillProficiencies": [
+				{
+					"persuasion": true,
+					"intimidation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"leatherworker's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Savage Attacker|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"dagger|PHB",
+						"mace|PHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 3500
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You were once part of a movement that stood against authority, fighting for a cause you believed was worth the risk. Whether it was against a tyrant, an oppressive system, or an invading force, your life was marked by secret meetings and dangerous missions. You became skilled at inspiring others to action, often with little more than your convictions and a few trusted allies. This rebellious spirit has stayed with you, as does the understanding of what it means to fight for freedom and justice, even when the odds are against you.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Savage Attacker|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Persuasion|XPHB}, {@skill Intimidation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Leatherworker's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Dagger|PHB}, {@item Mace|PHB}, 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 35 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Researcher",
+			"source": "RMG",
+			"page": 8,
+			"skillProficiencies": [
+				{
+					"arcana": true,
+					"investigation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"alchemist's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Wizard)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"int",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"int",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"equipmentType": "toolArtisan"
+						},
+						"ink (1 ounce bottle)|PHB",
+						{
+							"item": "ink pen|PHB",
+							"quantity": 5
+						},
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 4
+						},
+						{
+							"item": "parchment|PHB",
+							"quantity": 10
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 1100
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You are dedicated to the pursuit of knowledge and the unraveling of mysteries, spending your days immersed in study, experimentation, and analysis. Whether in dusty archives, bustling libraries, or laboratories, you've honed your skills in gathering and interpreting information. Your work often involves reading dusty tomes, deciphering ancient texts, and seeking out rare artifacts. Driven by curiosity and a thirst for discovery, you have become adept at solving intricate problems. Your dedication to research has given you a deep understanding of various subjects and a reputation for uncovering truths that others might overlook.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Wizard)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Arcana|XPHB}, {@skill Investigation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Alchemist's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@i artisan's tools (same as above)}, {@item Ink (1 Ounce Bottle)|PHB}, 5 {@item Ink Pen|PHB|Ink Pens}, {@item Lamp|PHB}, 4 {@item Oil (Flask)|PHB|Flasks of Oil}, 10 {@item Parchment|PHB|Sheets of Parchment}, {@item Traveler's Clothes|XPHB}, 11 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Skald",
+			"source": "RMG",
+			"page": 8,
+			"skillProficiencies": [
+				{
+					"athletics": true,
+					"performance": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"musical instrument": true
+				}
+			],
+			"feats": [
+				{
+					"Musician|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "musical instrument|XPHB"
+						},
+						"spear|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 1700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"As a skald, you are a warrior-poet, hailing from a tradition where strength in battle is matched by the power of song and story. Your voice echoes across the battlefield, inspiring allies with the legends of old or recounting the great deeds of your people. You wield both weapon and verse with equal skill, using your performances to rally the morale of your comrades or to immortalize their victories in song. Raised in a culture that reveres bravery and heroism, your words carry the weight of tradition, binding you to the ancestral spirits and the glory of battle.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Musician|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Athletics|XPHB}, {@skill Performance|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@i Choose one kind of {@item Musical Instrument|XPHB}}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Musical Instrument|XPHB|Musical Instrument (same as above)}, {@item Spear|PHB}, {@item Traveler's Clothes|XPHB}, 17 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Smuggler",
+			"source": "RMG",
+			"page": 8,
+			"skillProficiencies": [
+				{
+					"deception": true,
+					"stealth": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"forgery kit": true
+				}
+			],
+			"feats": [
+				{
+					"Alert|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"dagger|PHB",
+						"forgery kit|PHB",
+						"costume|XPHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"crowbar|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 2300
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Operating in the shadows, you've made your living by transporting illicit goods or people across borders, evading authorities and outsmarting rivals. Whether by land or sea, you know the secret routes, hidden coves, and underground networks that keep your trade alive. Skilled in deception and stealth, you've learned how to slip past guards, forge documents, and avoid unwanted attention. Your life has been one of calculated risks, dealing with dangerous clients and staying one step ahead of the law. Despite the hazards, you've become adept at reading people and situations, ensuring that the cargo always gets through.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Alert|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Deception|XPHB}, {@skill Stealth|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Forgery Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Dagger|PHB}, {@item Forgery Kit|PHB}, {@item Costume|XPHB}, 2 {@item Pouch|PHB|Pouches}, {@item Crowbar|PHB}, {@item Traveler's Clothes|XPHB}, 23 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Spirit Speaker",
+			"source": "RMG",
+			"page": 9,
+			"skillProficiencies": [
+				{
+					"insight": true,
+					"nature": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"herbalism kit": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Druid)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"quarterstaff|PHB",
+						"bedroll|PHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 3
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 4100
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You have a unique connection to the natural realm, allowing you to mediate between people and the spirits of the wild. Ancient trees, flowing rivers, and even the mountains sometimes whisper their secrets to you. These spirits can manifest their influence directly, offering you a pinch of druidic power. Through these interactions, you have gained a profound insight into the natural world, and a sense of responsibility to protect it from harm.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Druid)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Insight|XPHB}, {@skill Nature|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Herbalism Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Quarterstaff|PHB}, {@item Bedroll|PHB}, {@item Lamp|PHB}, 3 {@item Oil (Flask)|PHB|Flasks of Oil}, {@item Traveler's Clothes|XPHB}, 41 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Spy",
+			"source": "RMG",
+			"page": 9,
+			"skillProficiencies": [
+				{
+					"deception": true,
+					"stealth": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"disguise kit": true
+				}
+			],
+			"feats": [
+				{
+					"Skilled|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"dagger|PHB",
+						"disguise kit|PHB",
+						"costume|XPHB",
+						"fine clothes|PHB",
+						{
+							"value": 300
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You lived a life of secrets, moving through society unnoticed while gathering intelligence for a hidden agenda. Whether working for a kingdom, an underground organization, or a shadowy employer, your skills have allowed you to steal sensitive information. Disguises, coded messages, and false identities became second nature to you, as did knowing who to trust and who to deceive. Though you've seen the darkest sides of power and politics, your work has always been essential to the success of your masters' goals.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Skilled|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Deception|XPHB}, {@skill Stealth|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Disguise Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Dagger|PHB}, {@item Disguise Kit|PHB}, {@item Costume|XPHB}, {@item Fine Clothes|PHB}, 3 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Squire",
+			"source": "RMG",
+			"page": 9,
+			"skillProficiencies": [
+				{
+					"animal handling": true,
+					"athletics": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"smith's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Skilled|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"con",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"spear|PHB",
+						"smith's tools|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 2700
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You spent your formative years in service to a knight or noble warrior, learning the ways of combat, chivalry, and courtly life. Your duties involved maintaining armor, caring for mounts, and assisting in the day-to-day tasks of your mentor, all while honing your own skills in battle. You watched great warriors fight and lead, learning strategy and discipline through observation and training. Though you have yet to earn your own title or command, your time as a squire has prepared you for a life of knighthood or leadership, instilling a deep sense of honor and duty.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Skilled|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Animal Handling|XPHB}, {@skill Athletics|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Smith's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Spear|PHB}, {@item Smith's Tools|PHB}, {@item Traveler's Clothes|XPHB}, 27 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Student",
+			"source": "RMG",
+			"page": 9,
+			"skillProficiencies": [
+				{
+					"arcana": true,
+					"history": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"calligrapher's supplies": true
+				}
+			],
+			"feats": [
+				{
+					"Magic Initiate (Wizard)|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"{@item book|PHB|Book (Arcana)}",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 3
+						},
+						{
+							"item": "parchment|PHB",
+							"quantity": 12
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 1100
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You are devoted to learning and expanding your knowledge, whether through formal education, apprenticeships, or personal study. Your time has been spent under the guidance of scholars, mentors, or magical instructors, absorbing information on a wide range of subjects. This background has equipped you with a strong foundation in academics or magic, and you are well-versed in theories, histories, and practices relevant to your field of study. Your dedication to learning has not only expanded your intellectual horizons but also sharpened your critical thinking and problem-solving skills, preparing you for future challenges and adventures.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Magic Initiate (Wizard)|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Arcana|XPHB}, {@skill History|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Calligrapher's Supplies|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item book|PHB|Book (Arcana)}, {@item Lamp|PHB}, 3 {@item Oil (Flask)|PHB|Flasks of Oil}, 12 {@item Parchment|PHB|Sheets of Parchment}, {@item Traveler's Clothes|XPHB}, 11 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Surgeon",
+			"source": "RMG",
+			"page": 10,
+			"skillProficiencies": [
+				{
+					"investigation": true,
+					"medicine": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"herbalism kit": true
+				}
+			],
+			"feats": [
+				{
+					"Healer|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"dagger|PHB",
+						"healer's kit|PHB",
+						"bedroll|PHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 5
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 3400
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Trained in the arts of healing, you have saved many lives with your steady hands and sharp mind. Whether in the battlefield or a house of healing, you've developed a deep understanding of anatomy and medical procedures. Your experience allows you to remain calm under pressure, making split-second decisions that can mean the difference between life and death. Equipped with the tools and knowledge for the job, you've honed your ability to set bones and repair injuries, earning the respect of those who rely on your expertise.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Healer|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Investigation|XPHB}, {@skill Medicine|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Herbalism Kit|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Dagger|PHB}, {@item Healer's Kit|PHB}, {@item Bedroll|PHB}, {@item Lamp|PHB}, 5 {@item Oil (Flask)|PHB|Flasks of Oil}, {@item Traveler's Clothes|XPHB}, 34 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Thug",
+			"source": "RMG",
+			"page": 10,
+			"skillProficiencies": [
+				{
+					"athletics": true,
+					"intimidation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"smith's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Savage Attacker|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"str",
+								"dex",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"mace|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 2300
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You lived on the rougher side of life, surviving in a world where strength and intimidation carried more weight than pleasantries or diplomacy. Whether you worked for a gang, collected debts, or served as muscle for an organization, your days were filled with violence and power struggles. You've learned how to handle yourself in a fight, break through resistance, and use force to get what you want. The law may not have been on your side, but you know how to navigate the streets and how to survive when things get ugly.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Savage Attacker|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Athletics|XPHB}, {@skill Intimidation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Smith's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Mace|PHB}, {@item Traveler's Clothes|XPHB}, 23 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Tinkerer",
+			"source": "RMG",
+			"page": 10,
+			"skillProficiencies": [
+				{
+					"arcana": true,
+					"investigation": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"tinker's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Crafter|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"int",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 2200
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You have a knack for creating and repairing mechanisms and devices, spending your days in workshops or at your workbench, surrounded by tools and parts. Your expertise lies in understanding how things work and finding innovative solutions to problems. From inventing contraptions to fixing broken gear, you approach every project with a blend of creativity and precision. Your skill in crafting and problem-solving makes you a valuable asset whenever ingenuity is required.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Crafter|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Arcana|XPHB}, {@skill Investigation|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Tinker's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 22 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Traveler",
+			"source": "RMG",
+			"page": 11,
+			"skillProficiencies": [
+				{
+					"history": true,
+					"survival": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"cartographer's tools": true
+				}
+			],
+			"feats": [
+				{
+					"Tough|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"int",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"con",
+								"int",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						"quarterstaff|PHB",
+						"bedroll|PHB",
+						"lamp|PHB",
+						{
+							"item": "oil (flask)|PHB",
+							"quantity": 3
+						},
+						{
+							"special": "a map"
+						},
+						"tent, two-person|PHB",
+						"traveler's clothes|XPHB",
+						{
+							"value": 2400
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"You have journeyed far and wide, with no place truly feeling like home. Whether driven by curiosity, necessity, or wanderlust, you have spent your life moving from one land to the next, experiencing different cultures, terrains, and ways of life. The road has taught you resilience and self-reliance, as well as the ability to adapt to ever-changing circumstances. You've learned to survive on little, rely on your instincts, and navigate unfamiliar landscapes. While you may not have roots, your wealth lies in the countless stories and lessons gathered along the way.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tough|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill History|XPHB}, {@skill Survival|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Cartographer's Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Quarterstaff|PHB}, {@item Bedroll|PHB}, {@item Lamp|PHB}, 3 {@item Oil (Flask)|PHB|Flasks of Oil}, a map, {@item Tent, Two-person|PHB}, {@item Traveler's Clothes|XPHB}, 24 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Troubadour",
+			"source": "RMG",
+			"page": 11,
+			"skillProficiencies": [
+				{
+					"performance": true,
+					"persuasion": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"musical instrument": true
+				}
+			],
+			"feats": [
+				{
+					"Musician|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"wis",
+								"cha"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "musical instrument|XPHB"
+						},
+						"mirror, steel|PHB",
+						"perfume (vial)|PHB",
+						"fine clothes|PHB",
+						{
+							"value": 800
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"As a troubadour, you wandered far and wide, bringing songs of love, adventure, and tragedy to distinguished audiences of the realm. Unlike other musicians, your performances were as much about the message as the music, often weaving intricate tales or spreading news of distant lands. Whether performing in royal courts or in elegant theaters, you captivated audiences with your charismatic presence and lyrical skill. You are a messenger of the human experience through your art.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Musician|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Performance|XPHB}, {@skill Persuasion|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@i Choose one kind of {@item Musical Instrument|XPHB}}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) {@item Musical Instrument|XPHB|Musical Instrument (same as above)}, {@item Mirror, Steel|PHB}, {@item Perfume (Vial)|PHB}, {@item Fine Clothes|PHB}, 8 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Urchin",
+			"source": "RMG",
+			"page": 11,
+			"skillProficiencies": [
+				{
+					"sleight of hand": true,
+					"stealth": true
+				}
+			],
+			"toolProficiencies": [
+				{
+					"thieves' tools": true
+				}
+			],
+			"feats": [
+				{
+					"Tough|XPHB": true
+				}
+			],
+			"ability": [
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"con",
+								"wis"
+							],
+							"weights": [
+								2,
+								1
+							]
+						}
+					}
+				},
+				{
+					"choose": {
+						"weighted": {
+							"from": [
+								"dex",
+								"con",
+								"wis"
+							],
+							"weights": [
+								1,
+								1,
+								1
+							]
+						}
+					}
+				}
+			],
+			"startingEquipment": [
+				{
+					"A": [
+						{
+							"item": "dagger|PHB",
+							"quantity": 2
+						},
+						"thieves' tools|PHB",
+						"crowbar|PHB",
+						{
+							"item": "pouch|PHB",
+							"quantity": 2
+						},
+						"traveler's clothes|XPHB",
+						{
+							"value": 1600
+						}
+					],
+					"B": [
+						{
+							"value": 5000
+						}
+					]
+				}
+			],
+			"entries": [
+				"Growing up in the streets, you learned to survive through grit, cunning, and resourcefulness. Life was harsh, but it taught you how to move unnoticed, navigate crowded alleyways, and find shelter wherever you could. You scavenged for food and relied on quick thinking to avoid danger or undue attention. While your upbringing was one of hardship, it also shaped your fierce independence and sharp instincts. The city was your home, its people unaware of your struggles, but you found ways to thrive despite the odds.",
+				{
+					"type": "list",
+					"style": "list-hang-notitle",
+					"items": [
+						{
+							"type": "item",
+							"name": "Ability Scores:",
+							"entry": "Increase one of your starting ability scores by 2 and another by 1, or increase three scores by 1 each."
+						},
+						{
+							"type": "item",
+							"name": "Feat:",
+							"entry": "{@feat Tough|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Skill Proficiencies:",
+							"entry": "{@skill Sleight of Hand|XPHB}, {@skill Stealth|XPHB}"
+						},
+						{
+							"type": "item",
+							"name": "Tool Proficiency:",
+							"entry": "{@item Thieves' Tools|PHB}"
+						},
+						{
+							"type": "item",
+							"name": "Equipment:",
+							"entry": "Choose A or B: (A) 2 {@item Dagger|PHB|Daggers}, {@item Thieves' Tools|PHB}, {@item Crowbar|PHB}, 2 {@item Pouch|PHB|Pouches}, {@item Traveler's Clothes|XPHB}, 16 GP; or (B) 50 GP."
+						}
+					]
+				}
+			]
+		}
+	]
+}
