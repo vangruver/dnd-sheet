@@ -37,8 +37,8 @@
 			"source": "Lefou",
 			"page": 1,
 			"size": [
-				"M",
-				"S"
+				"S",
+				"M"
 			],
 			"speed": 30,
 			"darkvision": 60,
@@ -132,13 +132,6 @@
 								},
 								{
 									"type": "item",
-									"name": "Red Ichor.",
-									"entries": [
-										"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
-									]
-								},
-								{
-									"type": "item",
 									"name": "Extended Limbs.",
 									"entries": [
 										"Your reach for melee attacks and object interactions increases by 5 feet."
@@ -153,7 +146,7 @@
 								},
 								{
 									"type": "item",
-									"name": "Claws/Teeth/Horns.",
+									"name": "Aberrant weapons.",
 									"entries": [
 										"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
 									]
@@ -212,6 +205,13 @@
 									"name": "Aberrant Mind.",
 									"entries": [
 										"You have advantage on saving throws against being {@condition Charmed|XPHB}. Additionally, whenever you must make a Wisdom or Intelligence saving throw to resist a spell (or similar abilities, such as innate spellcasting), its caster takes 1d6 psychic damage if your save succeeds. In addition, whenever you establish a telepathic bond with a creature (such as with the {@spell Message|XPHB} cantrip), that creature must make a Wisdom saving throw with a DC equal to 10 + the number of Deformations your character possesses, taking 1d6 psychic damage on a failed save."
+									]
+								},
+								{
+									"type": "item",
+									"name": "Red Ichor (requires 5th level).",
+									"entries": [
+										"Your unarmed strikes and natural weapons have a +1 bonus to hit and deal an extra 1 Acid damage on a hit. These bonuses increase to +2 to hit and +2 damage at 11th level, and to +3 to hit and +3 damage at 17th level."
 									]
 								},
 								{
@@ -349,13 +349,6 @@
 								},
 								{
 									"type": "item",
-									"name": "Red Ichor.",
-									"entries": [
-										"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
-									]
-								},
-								{
-									"type": "item",
 									"name": "Extended Limbs.",
 									"entries": [
 										"Your reach for melee attacks and object interactions increases by 5 feet."
@@ -370,7 +363,7 @@
 								},
 								{
 									"type": "item",
-									"name": "Claws/Teeth/Horns.",
+									"name": "Aberrant weapons.",
 									"entries": [
 										"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
 									]
@@ -433,6 +426,13 @@
 								},
 								{
 									"type": "item",
+									"name": "Red Ichor (requires 5th level).",
+									"entries": [
+										"Your unarmed strikes and natural weapons have a +1 bonus to hit and deal an extra 1 Acid damage on a hit. These bonuses increase to +2 to hit and +2 damage at 11th level, and to +3 to hit and +3 damage at 17th level."
+									]
+								},
+								{
+									"type": "item",
 									"name": "Insectoid Wings (requires 6th level).",
 									"entries": [
 										"You can cast the {@spell Fly|XPHB} spell a number of times equal to your proficiency bonus, regaining all expended uses when you finish a long rest."
@@ -490,13 +490,6 @@
 						},
 						{
 							"type": "item",
-							"name": "Red Ichor.",
-							"entries": [
-								"Your unarmed strikes and natural weapons deal an extra 1 Acid damage on a hit."
-							]
-						},
-						{
-							"type": "item",
 							"name": "Extended Limbs.",
 							"entries": [
 								"Your reach for melee attacks and object interactions increases by 5 feet."
@@ -511,7 +504,7 @@
 						},
 						{
 							"type": "item",
-							"name": "Claws/Teeth/Horns.",
+							"name": "Aberrant weapons.",
 							"entries": [
 								"You grow a natural weapon (claws, teeth, or horns, your choice). It counts as a Simple Melee weapon that deals 1d4 slashing or piercing damage (your choice) on a hit, and you are proficient with it."
 							]
@@ -570,6 +563,13 @@
 							"name": "Aberrant Mind.",
 							"entries": [
 								"You have advantage on saving throws against being Charmed. Additionally, whenever you must make a Wisdom or Intelligence saving throw to resist a spell (or similar abilities, such as innate spellcasting), its caster takes 1d6 psychic damage if your save succeeds. In addition, whenever you establish a telepathic bond with a creature (such as with the {@spell Message|XPHB} cantrip), that creature must make a Wisdom saving throw with a DC equal to 10 + the number of Deformations your character possesses, taking 1d6 psychic damage on a failed save."
+							]
+						},
+						{
+							"type": "item",
+							"name": "Red Ichor (requires 5th level).",
+							"entries": [
+								"Your unarmed strikes and natural weapons have a +1 bonus to hit and deal an extra 1 Acid damage on a hit. These bonuses increase to +2 to hit and +2 damage at 11th level, and to +3 to hit and +3 damage at 17th level."
 							]
 						},
 						{
