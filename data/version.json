@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-08-30T02:02:00.000Z",
+  "generatedAt": "2026-08-30T13:42:43.496Z",
   "sources": [
     {
       "key": "2024",
@@ -39,10 +39,10 @@
     }
   ],
   "totals": {
-    "entities": 71511,
-    "official": 11153,
+    "entities": 71364,
+    "official": 11189,
     "homebrew": 60175,
-    "external": 215
+    "external": 68
   },
   "homebrew": {
     "classFiles": [

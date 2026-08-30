@@ -10,15 +10,19 @@ Este diretório é gerado automaticamente pelo GitHub Actions.
 
 ## Última atualização
 
-2026-08-28T20:07:12.496Z
+2026-08-30T13:42:43.496Z
 
 ## Entidades
 
-Total: 71296
+Total: 71364
 
-Oficial: 11121
+Oficial: 11189
 
 Homebrew: 60175
 
-Não edite manualmente os arquivos deste diretório.
-Eles serão substituídos na próxima sincronização.
+Externo: 68
+
+Não edite manualmente os arquivos deste diretório — EXCETO raw/external/,
+que é preservado a cada sincronização (ver snapshotExternalContent em
+sync-data.mjs). Qualquer outro arquivo será substituído na próxima
+sincronização.
