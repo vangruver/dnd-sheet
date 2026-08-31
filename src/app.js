@@ -15,7 +15,7 @@ import {
   getSavedSkin, saveSkin, SKINS, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
   getDiscordWebhook, saveDiscordWebhook,
-  getRoomConfig, saveRoomConfig, getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
+  getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
 } from "./storage.js";
 
@@ -2349,81 +2349,97 @@ function renderDiscordSettings() {
 
 // ------------------------------------------------------------
 // Sala de rolagens — chat de rolagem em tempo real compartilhado entre
-// os jogadores da mesma mesa, via Firebase Realtime Database (serviço
-// gratuito de terceiros; continua sem servidor próprio, do mesmo jeito
-// que o Discord). Todo mundo que configurar o MESMO projeto Firebase e
-// o MESMO código de sala vê as rolagens uns dos outros no chat da
-// própria ficha. Rolagens de Cura (marcadas no rolador de dados
-// genérico) ganham um botão "Aplicar cura" que soma o PV direto no
-// personagem de quem clicar — cada jogador aplica só no próprio.
+// os jogadores da mesma mesa, ponto-a-ponto via WebRTC (PeerJS). Nenhum
+// serviço de terceiro guarda ou lê as rolagens — elas trafegam direto
+// de navegador pra navegador; o servidor público do PeerJS só ajuda a
+// "apresentar" os navegadores um ao outro no início da conexão. Um
+// jogador (normalmente o mestre) cria a sala e vira o "anfitrião" —
+// fica no centro, conectado com todo mundo, e repassa a rolagem de
+// cada jogador pro resto do grupo. Os outros só "entram" com o mesmo
+// código. Sem histórico pra quem entra atrasado, e se o anfitrião
+// fechar a aba a sala cai — quem quiser continua criando outra.
+// Rolagens de Cura (marcadas no rolador de dados genérico) ganham um
+// botão "Aplicar cura" que soma o PV direto no personagem de quem
+// clicar — cada jogador aplica só no próprio.
 // ------------------------------------------------------------
-let roomDb = null;
-let roomBaseRef = null;  // ref de escrita (push de novas rolagens)
-let roomQuery = null;    // query de leitura (limitToLast, com o listener)
+let roomPeer = null;
+let roomRole = null;              // "anfitriao" | "jogador" | null
+let roomHostConns = new Map();    // anfitrião: peerId -> DataConnection dos jogadores
+let roomClientConn = null;        // jogador: conexão única com o anfitrião
 let roomRolls = [];
-let roomConnected = false;
 
 function sanitizeRoomCode(code) {
-  return String(code || "").trim().toLowerCase().replace(/[.#$\[\]\s/]+/g, "-").slice(0, 60) || "mesa";
+  return "dndficha-" + String(code || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 50);
 }
-function roomPath(code) { return `salas/${sanitizeRoomCode(code)}/rolagens`; }
-
-function initRoom() {
-  if (roomQuery) { try { roomQuery.off(); } catch { /* ignore */ } }
-  roomDb = null; roomBaseRef = null; roomQuery = null; roomRolls = []; roomConnected = false;
+function roomStatusText() {
+  if (!roomRole) return "Sala não configurada — clique na engrenagem.";
+  if (roomRole === "anfitriao") return `Anfitrião da sala — ${roomHostConns.size} jogador(es) conectado(s).`;
+  return roomClientConn?.open ? "Conectado à sala." : "Conectando à sala…";
+}
+function leaveRoom() {
+  try { roomPeer?.destroy(); } catch { /* ignore */ }
+  roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null;
   renderRoomChat();
-  const cfg = getRoomConfig(), code = getRoomCode();
-  if (!cfg || !code) return;
-  if (typeof firebase === "undefined") { toast("Biblioteca da sala não carregou — confira sua conexão e recarregue a página."); return; }
-  try {
-    const appName = "dnd-ficha-sala";
-    const app = firebase.apps?.find((a) => a.name === appName) || firebase.initializeApp(cfg, appName);
-    roomDb = firebase.database(app);
-    roomBaseRef = roomDb.ref(roomPath(code));
-    roomQuery = roomBaseRef.limitToLast(50);
-    roomConnected = true;
-    roomQuery.on("child_added", (snap) => {
-      roomRolls.push({ id: snap.key, ...snap.val() });
-      roomRolls = roomRolls.slice(-50);
-      renderRoomChat();
-    }, (err) => {
-      console.warn("Sala: leitura recusada", err);
-      roomConnected = false;
-      toast("A sala recusou a leitura — confira as regras do Realtime Database no Firebase.");
-      renderRoomChat();
-    });
-  } catch (err) {
-    console.warn("Sala indisponível:", err);
-    toast("Não deu pra conectar na sala — confira a configuração do Firebase.");
-  }
 }
-
-// Extrai apiKey/databaseURL/etc. do texto colado do console do Firebase
-// (o snippet `const firebaseConfig = {...}` não é JSON válido por causa
-// das chaves sem aspas) sem usar eval/Function sobre o texto colado.
-function parseFirebaseConfigText(text) {
-  const fields = ["apiKey", "authDomain", "databaseURL", "projectId", "storageBucket", "messagingSenderId", "appId", "measurementId"];
-  const cfg = {};
-  for (const f of fields) {
-    const m = String(text || "").match(new RegExp(`${f}\\s*:\\s*["']([^"']+)["']`));
-    if (m) cfg[f] = m[1];
-  }
-  return cfg.apiKey && cfg.databaseURL ? cfg : null;
+function hostRoom(code) {
+  if (typeof Peer === "undefined") { toast("Biblioteca da sala não carregou — confira sua conexão e recarregue a página."); return; }
+  leaveRoom();
+  roomRole = "anfitriao";
+  roomPeer = new Peer(sanitizeRoomCode(code));
+  roomPeer.on("open", () => renderRoomChat());
+  roomPeer.on("connection", (conn) => {
+    roomHostConns.set(conn.peer, conn);
+    conn.on("data", (msg) => { onRoomMessage(msg); relayToOthers(msg, conn.peer); });
+    conn.on("close", () => { roomHostConns.delete(conn.peer); renderRoomChat(); });
+    conn.on("open", () => renderRoomChat());
+  });
+  roomPeer.on("error", (err) => {
+    console.warn("Sala (anfitrião):", err);
+    toast(err?.type === "unavailable-id" ? "Já existe uma sala aberta com esse código — escolha outro ou entre nela em vez de criar." : "A sala teve um problema de conexão — confira sua internet.");
+    renderRoomChat();
+  });
 }
-
+function joinRoom(code) {
+  if (typeof Peer === "undefined") { toast("Biblioteca da sala não carregou — confira sua conexão e recarregue a página."); return; }
+  leaveRoom();
+  roomRole = "jogador";
+  roomPeer = new Peer();
+  roomPeer.on("open", () => {
+    roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true });
+    roomClientConn.on("data", (msg) => onRoomMessage(msg));
+    roomClientConn.on("open", () => { toast("Entrou na sala."); renderRoomChat(); });
+    roomClientConn.on("close", () => { toast("Desconectado da sala — o anfitrião pode ter fechado a aba."); renderRoomChat(); });
+  });
+  roomPeer.on("error", (err) => {
+    console.warn("Sala (jogador):", err);
+    toast(err?.type === "peer-unavailable" ? "Não achei uma sala aberta com esse código — confira com quem criou." : "A sala teve um problema de conexão — confira sua internet.");
+    renderRoomChat();
+  });
+}
+function relayToOthers(msg, exceptPeerId) {
+  roomHostConns.forEach((conn, peerId) => { if (peerId !== exceptPeerId && conn.open) conn.send(msg); });
+}
+function onRoomMessage(msg) {
+  if (!msg?.id || roomRolls.some((r) => r.id === msg.id)) return;
+  roomRolls.push(msg);
+  roomRolls = roomRolls.slice(-50);
+  renderRoomChat();
+}
 function pushRoomRoll(entry) {
-  if (!roomBaseRef) return;
-  try {
-    roomBaseRef.push({
-      name: entry.name || (character?.name || "").trim() || "Personagem sem nome",
-      label: entry.label, detail: entry.detail, total: String(entry.total ?? ""),
-      type: entry.type || "outro", amount: entry.amount ?? null, ts: Date.now(),
-    }).catch((err) => console.warn("Sala: falha ao enviar rolagem", err));
-  } catch { /* sala fora do ar não deve travar a rolagem em si */ }
+  if (!roomRole) return;
+  const msg = {
+    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    name: entry.name || (character?.name || "").trim() || "Personagem sem nome",
+    label: entry.label, detail: entry.detail, total: String(entry.total ?? ""),
+    type: entry.type || "outro", amount: entry.amount ?? null, ts: Date.now(),
+  };
+  onRoomMessage(msg); // já aparece no próprio chat, sem depender de round-trip
+  if (roomRole === "anfitriao") relayToOthers(msg, null);
+  else if (roomClientConn?.open) roomClientConn.send(msg);
 }
 // Substitui os antigos sendToDiscord(discordMessage(...)) nos pontos de
 // rolagem do personagem: manda pro Discord (se configurado) E pra sala
-// (se configurada), sem duplicar a lógica de formatação em cada lugar.
+// (se conectado), sem duplicar a lógica de formatação em cada lugar.
 function broadcastRoll(label, detail, total, opts = {}) {
   const note = opts.note || "";
   sendToDiscord(discordMessage(label, detail, total) + note);
@@ -2438,9 +2454,8 @@ function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
 function renderRoomChat() {
   const box = $("room-chat-list");
   if (!box) return;
-  const cfg = getRoomConfig(), code = getRoomCode();
   const status = $("room-chat-status");
-  if (status) status.textContent = !cfg || !code ? "Sala não configurada — clique na engrenagem." : roomConnected ? `Conectado à sala "${code}"` : "Conectando…";
+  if (status) status.textContent = roomStatusText();
   if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma rolagem na sala ainda.</div>`; return; }
   const applied = getAppliedHeals();
   box.innerHTML = roomRolls.slice().reverse().map((r) => {
@@ -2477,48 +2492,39 @@ function toggleRoomChat(force) {
   if (show) renderRoomChat();
 }
 function renderRoomSettings() {
-  const cfg = getRoomConfig(), code = getRoomCode();
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Todo mundo da mesma mesa que colar o MESMO projeto do Firebase e digitar o MESMO código de sala abaixo passa a ver, em tempo real, as rolagens uns dos outros no chat da própria ficha (botão "💬" no canto da tela). Rolagens marcadas como <b>Cura</b> no rolador de dados genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar. Isso fica salvo neste navegador, não no personagem — cada jogador configura o próprio.</p></div></div>
+  const code = getRoomCode();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Conecta os navegadores da mesa direto um no outro por WebRTC — sem conta, sem token, sem nenhum serviço de terceiro guardando as rolagens. Um jogador (normalmente o mestre) <b>cria</b> a sala com um código; os outros <b>entram</b> com o mesmo código. Rolagens marcadas como <b>Cura</b> no rolador de dados genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar. Isso fica salvo neste navegador, não no personagem.</p></div></div>
     <div class="modal-body">
-      <h3>Como criar a sala (gratuito, uns 5 minutos)</h3>
-      <ol>
-        <li>Abra o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console do Firebase</a> e crie um projeto novo (qualquer nome — só o mestre ou um jogador precisa fazer isso, uma vez só pela mesa toda).</li>
-        <li>No menu à esquerda, abra <strong>Compilação → Realtime Database</strong> → <strong>Criar banco de dados</strong>, e comece em modo de teste.</li>
-        <li>Na visão geral do projeto (ícone de casinha), clique no ícone <strong>&lt;/&gt;</strong> (Web) pra registrar um app e copie o bloco <code>firebaseConfig</code> que aparece.</li>
-        <li>Cole esse bloco inteiro (do jeito que o Firebase mostra, com <code>const firebaseConfig = {"{"}...{"}"}</code> e tudo) no campo abaixo.</li>
-        <li>Combine com o grupo um <strong>código de sala</strong> (ex.: o nome da campanha) e cada jogador digita o mesmo código no campo abaixo, no próprio navegador.</li>
-      </ol>
-      <p class="muted">⚠️ Em modo de teste, qualquer pessoa com essa configuração consegue ler/escrever nesse banco — use um projeto dedicado só pra isso, sem dados sensíveis, e não espalhe a configuração fora do grupo.</p>
-      <label>Configuração do Firebase (bloco <code>firebaseConfig</code>)<br>
-        <textarea id="room-config-input" rows="7" style="width:100%;font-family:monospace;font-size:11px" placeholder="const firebaseConfig = {&#10;  apiKey: &quot;...&quot;,&#10;  authDomain: &quot;...&quot;,&#10;  databaseURL: &quot;https://SEU-PROJETO-default-rtdb.firebaseio.com&quot;,&#10;  projectId: &quot;...&quot;,&#10;  ...&#10;};">${esc(cfg ? JSON.stringify(cfg, null, 2) : "")}</textarea>
-      </label>
+      <p class="muted">Combine um código com o grupo (ex.: o nome da campanha). <strong>Só uma pessoa cria a sala</strong> — as outras entram com o mesmo código, no próprio navegador.</p>
       <label>Código da sala<br><input id="room-code-input" placeholder="ex.: mesa-de-sexta" value="${esc(code)}" style="width:100%"></label>
       <div class="condition-duration-row" style="margin-top:12px">
-        <button type="button" class="add-btn" id="room-config-save">Salvar</button>
-        <button type="button" id="room-config-test">Enviar teste</button>
-        ${cfg ? `<button type="button" id="room-config-remove">Remover</button>` : ""}
+        <button type="button" class="add-btn" id="room-host-btn">Criar sala (virar anfitrião)</button>
+        <button type="button" id="room-join-btn">Entrar na sala</button>
+        ${roomRole ? `<button type="button" id="room-leave-btn">Sair da sala</button>` : ""}
       </div>
+      <p class="muted" style="margin-top:10px">⚠️ Quem tiver o código consegue entrar na sala — combine algo que não seja óbvio se quiser evitar visitantes. O anfitrião precisa manter a aba da ficha aberta durante a sessão; se ele fechar ou recarregar a página, a sala cai e alguém precisa criar de novo.</p>
+      <p class="muted" style="margin-top:6px">${esc(roomStatusText())}</p>
     </div>`;
   $("modal").classList.remove("hidden");
-  $("room-config-save")?.addEventListener("click", () => {
-    const parsed = parseFirebaseConfigText($("room-config-input").value);
-    if (!parsed) { toast("Não achei apiKey/databaseURL válidos nesse texto — confira o que foi colado."); return; }
-    saveRoomConfig(parsed);
-    saveRoomCode($("room-code-input").value.trim());
-    initRoom();
-    if (roomBaseRef) toast("Sala configurada."); // se falhou, initRoom() já mostrou o toast do motivo
+  $("room-host-btn")?.addEventListener("click", () => {
+    const v = $("room-code-input").value.trim();
+    if (!v) { toast("Digite um código de sala primeiro."); return; }
+    saveRoomCode(v);
+    hostRoom(v);
+    toast("Criando sala…");
     renderRoomSettings();
   });
-  $("room-config-test")?.addEventListener("click", () => {
-    if (!getRoomConfig() || !getRoomCode()) { toast("Salve a configuração e o código da sala primeiro."); return; }
-    broadcastRoll("um teste", "🎉", "funcionou!", { type: "outro" });
-    toast("Mensagem de teste enviada pra sala.");
+  $("room-join-btn")?.addEventListener("click", () => {
+    const v = $("room-code-input").value.trim();
+    if (!v) { toast("Digite um código de sala primeiro."); return; }
+    saveRoomCode(v);
+    joinRoom(v);
+    toast("Entrando na sala…");
+    renderRoomSettings();
   });
-  $("room-config-remove")?.addEventListener("click", () => {
-    saveRoomConfig(null);
-    saveRoomCode("");
-    initRoom();
-    toast("Sala removida.");
+  $("room-leave-btn")?.addEventListener("click", () => {
+    leaveRoom();
+    toast("Saiu da sala.");
     renderRoomSettings();
   });
 }
@@ -5386,7 +5392,7 @@ async function start() {
   character = loadCharacter() || fresh();
   if (!loadCharacterById(getActiveCharacterId())) saveCharacter(character); // slot novo: já aparece em "Meus Personagens" mesmo sem editar nada
   setup();
-  initRoom();
+  renderRoomChat(); // sem estado de sala pra restaurar (WebRTC não sobrevive a um recarregamento) — só mostra o painel vazio
   // O modo "livre" (padrão) não depende do banco pra aparecer; o modo
   // "guiado" precisa de ensureCatalog(), então só liga a UI do assistente
   // depois que o banco terminar de carregar, abaixo.

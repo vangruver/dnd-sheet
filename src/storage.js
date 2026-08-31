@@ -149,23 +149,13 @@ export function saveDiscordWebhook(url) {
 }
 
 // Sala de rolagens — chat de rolagem em tempo real compartilhado entre
-// os jogadores da mesma mesa, via Firebase Realtime Database (serviço
-// gratuito de terceiros; a ficha continua sem servidor próprio, do
-// mesmo jeito que a integração com o Discord). Configuração do projeto
-// Firebase e código da sala ficam neste navegador — cada jogador cola a
-// MESMA configuração e o MESMO código pra entrar na mesma mesa. Ver
-// initRoom()/broadcastRoll() em app.js.
-const ROOM_CONFIG_KEY = "dnd-ficha-auto-room-firebase-config";
+// os jogadores da mesma mesa, ponto-a-ponto via WebRTC (PeerJS): sem
+// servidor próprio nem serviço de terceiro guardando as rolagens, só um
+// código de sala combinado entre o grupo. Ver hostRoom()/joinRoom()/
+// broadcastRoll() em app.js.
 const ROOM_CODE_KEY = "dnd-ficha-auto-room-code";
 const ROOM_APPLIED_HEALS_KEY = "dnd-ficha-auto-room-applied-heals";
 
-export function getRoomConfig() {
-  try { const v = localStorage.getItem(ROOM_CONFIG_KEY); return v ? JSON.parse(v) : null; } catch { return null; }
-}
-export function saveRoomConfig(cfg) {
-  try { cfg ? localStorage.setItem(ROOM_CONFIG_KEY, JSON.stringify(cfg)) : localStorage.removeItem(ROOM_CONFIG_KEY); }
-  catch { /* modo privado */ }
-}
 export function getRoomCode() { try { return localStorage.getItem(ROOM_CODE_KEY) || ""; } catch { return ""; } }
 export function saveRoomCode(code) {
   try { code ? localStorage.setItem(ROOM_CODE_KEY, code) : localStorage.removeItem(ROOM_CODE_KEY); }
