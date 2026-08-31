@@ -60,7 +60,7 @@ const fresh = () => ({
   alignment: "", languages: "", appearance: "", backstory: "",
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
-  conditions: [], journal: [], buffs: [], extraFeats: [],
+  conditions: [], journal: [], buffs: [], extraFeats: [], companions: [],
   turnActions: { action: false, bonus: false, reaction: false }, concentration: null,
   rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
@@ -2367,6 +2367,13 @@ let roomRole = null;              // "anfitriao" | "jogador" | null
 let roomHostConns = new Map();    // anfitrião: peerId -> DataConnection dos jogadores
 let roomClientConn = null;        // jogador: conexão única com o anfitrião
 let roomRolls = [];
+let myPeerId = null;
+// Rastreador de iniciativa compartilhado da sala — o anfitrião (mestre) é a
+// fonte da verdade: qualquer ação (entrar na iniciativa, avançar turno...)
+// vira uma mensagem kind:"combat-action" enviada pro anfitrião, que aplica,
+// recalcula e redistribui o estado inteiro (kind:"combat-state") pra todo
+// mundo, inclusive quem enviou. Um jogador nunca aplica a ação localmente.
+let roomCombat = { round: 1, currentId: null, list: [] };
 
 function sanitizeRoomCode(code) {
   return "dndficha-" + String(code || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 50);
@@ -2378,7 +2385,8 @@ function roomStatusText() {
 }
 function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
-  roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null;
+  roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
+  roomCombat = { round: 1, currentId: null, list: [] };
   renderRoomChat();
 }
 function hostRoom(code) {
@@ -2386,11 +2394,18 @@ function hostRoom(code) {
   leaveRoom();
   roomRole = "anfitriao";
   roomPeer = new Peer(sanitizeRoomCode(code));
-  roomPeer.on("open", () => renderRoomChat());
+  roomPeer.on("open", (id) => { myPeerId = id; renderRoomChat(); });
   roomPeer.on("connection", (conn) => {
     roomHostConns.set(conn.peer, conn);
-    conn.on("data", (msg) => { onRoomMessage(msg); relayToOthers(msg, conn.peer); });
-    conn.on("close", () => { roomHostConns.delete(conn.peer); renderRoomChat(); });
+    conn.on("data", (msg) => {
+      if (msg?.kind === "combat-action") { applyCombatAction(msg.action, msg.payload); return; }
+      onRoomMessage(msg); relayToOthers(msg, conn.peer);
+    });
+    conn.on("close", () => {
+      roomHostConns.delete(conn.peer);
+      applyCombatAction("remove", { id: conn.peer }); // tira quem desconectou da iniciativa
+      renderRoomChat();
+    });
     conn.on("open", () => renderRoomChat());
   });
   roomPeer.on("error", (err) => {
@@ -2405,6 +2420,7 @@ function joinRoom(code) {
   roomRole = "jogador";
   roomPeer = new Peer();
   roomPeer.on("open", () => {
+    myPeerId = roomPeer.id;
     roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true });
     roomClientConn.on("data", (msg) => onRoomMessage(msg));
     roomClientConn.on("open", () => { toast("Entrou na sala."); renderRoomChat(); });
@@ -2420,6 +2436,7 @@ function relayToOthers(msg, exceptPeerId) {
   roomHostConns.forEach((conn, peerId) => { if (peerId !== exceptPeerId && conn.open) conn.send(msg); });
 }
 function onRoomMessage(msg) {
+  if (msg?.kind === "combat-state") { roomCombat = msg.combat || roomCombat; renderCombatTracker(); return; }
   if (!msg?.id || roomRolls.some((r) => r.id === msg.id)) return;
   roomRolls.push(msg);
   roomRolls = roomRolls.slice(-50);
@@ -2456,6 +2473,7 @@ function renderRoomChat() {
   if (!box) return;
   const status = $("room-chat-status");
   if (status) status.textContent = roomStatusText();
+  renderCombatTracker();
   if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma rolagem na sala ainda.</div>`; return; }
   const applied = getAppliedHeals();
   box.innerHTML = roomRolls.slice().reverse().map((r) => {
@@ -2490,6 +2508,165 @@ function toggleRoomChat(force) {
   const show = force != null ? force : panel.classList.contains("hidden");
   panel.classList.toggle("hidden", !show);
   if (show) renderRoomChat();
+}
+
+// ------------------------------------------------------------
+// Rastreador de iniciativa da sala — mesma sala WebRTC do chat de
+// rolagem, aba "Iniciativa". O anfitrião é sempre a autoridade: um
+// jogador nunca aplica a própria ação, só a envia (kind:"combat-action")
+// e espera o estado recalculado voltar (kind:"combat-state").
+// ------------------------------------------------------------
+function sortedCombatants() {
+  return roomCombat.list.slice().sort((a, b) => (Number(b.init) || 0) - (Number(a.init) || 0) || String(a.name).localeCompare(String(b.name), "pt-BR"));
+}
+function broadcastCombatState() {
+  const msg = { kind: "combat-state", combat: roomCombat };
+  roomHostConns.forEach((conn) => { if (conn.open) conn.send(msg); });
+  renderCombatTracker();
+}
+// Só o anfitrião chama isto (direto, pra própria ação, ou ao receber uma
+// combat-action de algum jogador conectado).
+function applyCombatAction(action, payload = {}) {
+  if (roomRole !== "anfitriao") return;
+  const list = roomCombat.list;
+  if (action === "join" || action === "update") {
+    if (!payload.id) return;
+    const entry = {
+      id: payload.id,
+      name: String(payload.name || "").trim() || "Sem nome",
+      init: Number(payload.init) || 0,
+      ac: Number(payload.ac) || 0,
+      hpMax: Math.max(0, Number(payload.hpMax) || 0),
+      hpCur: Number.isFinite(Number(payload.hpCur)) ? Number(payload.hpCur) : (Number(payload.hpMax) || 0),
+      hpTemp: Math.max(0, Number(payload.hpTemp) || 0),
+    };
+    const idx = list.findIndex((c) => c.id === payload.id);
+    if (idx >= 0) list[idx] = entry; else list.push(entry);
+  } else if (action === "addManual") {
+    list.push({
+      id: `m-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+      name: String(payload.name || "").trim() || "Monstro",
+      init: Number(payload.init) || 0, ac: Number(payload.ac) || 0,
+      hpMax: Math.max(0, Number(payload.hpMax) || 0), hpCur: Math.max(0, Number(payload.hpMax) || 0), hpTemp: 0,
+    });
+  } else if (action === "remove") {
+    const i = list.findIndex((c) => c.id === payload.id);
+    if (i >= 0) list.splice(i, 1);
+    if (roomCombat.currentId === payload.id) roomCombat.currentId = null;
+  } else if (action === "start") {
+    roomCombat.round = 1;
+    roomCombat.currentId = sortedCombatants()[0]?.id ?? null;
+  } else if (action === "next") {
+    const sorted = sortedCombatants();
+    if (sorted.length) {
+      const idx = sorted.findIndex((c) => c.id === roomCombat.currentId);
+      const nextIdx = idx < 0 ? 0 : (idx + 1) % sorted.length;
+      if (idx >= 0 && nextIdx === 0) roomCombat.round += 1;
+      roomCombat.currentId = sorted[nextIdx].id;
+    }
+  } else if (action === "prev") {
+    const sorted = sortedCombatants();
+    if (sorted.length) {
+      const idx = sorted.findIndex((c) => c.id === roomCombat.currentId);
+      const prevIdx = idx <= 0 ? sorted.length - 1 : idx - 1;
+      if (idx === 0 && roomCombat.round > 1) roomCombat.round -= 1;
+      roomCombat.currentId = sorted[prevIdx].id;
+    }
+  } else if (action === "clear") {
+    roomCombat = { round: 1, currentId: null, list: [] };
+  } else { return; }
+  broadcastCombatState();
+}
+function sendCombatAction(action, payload) {
+  if (!roomRole) { toast("Entre numa sala primeiro (⚙️)."); return; }
+  if (roomRole === "anfitriao") applyCombatAction(action, payload);
+  else if (roomClientConn?.open) roomClientConn.send({ kind: "combat-action", action, payload });
+  else toast("Ainda conectando à sala…");
+}
+function renderCombatTracker() {
+  const controls = $("room-combat-controls"), list = $("room-combat-list");
+  if (!controls || !list) return;
+  if (!roomRole) {
+    controls.innerHTML = `<p class="muted">Entre numa sala (⚙️) pra usar o rastreador de iniciativa com o grupo.</p>`;
+    list.innerHTML = "";
+    return;
+  }
+  const isHost = roomRole === "anfitriao";
+  const mine = roomCombat.list.find((c) => c.id === myPeerId);
+  controls.innerHTML = `
+    <div class="room-combat-self">
+      <input id="combat-self-name" placeholder="Nome" value="${esc(mine?.name ?? (character?.name || ""))}">
+      <div class="room-combat-self-row">
+        <label>Inic.<input id="combat-self-init" type="number" value="${mine?.init ?? ""}"></label>
+        <button type="button" id="combat-self-roll-init" title="Rolar iniciativa (d20 + Destreza)">🎲</button>
+        <label>CA<input id="combat-self-ac" type="number" value="${mine?.ac ?? (character ? calc().ac : "")}"></label>
+      </div>
+      <div class="room-combat-self-row">
+        <label>PV atual<input id="combat-self-hpcur" type="number" value="${mine?.hpCur ?? (character ? (character.hpCurrent ?? calc().hp) : "")}"></label>
+        <label>PV máx<input id="combat-self-hpmax" type="number" value="${mine?.hpMax ?? (character ? calc().hp : "")}"></label>
+      </div>
+      <div class="room-combat-self-row">
+        <button type="button" class="add-btn" id="combat-self-join">${mine ? "Atualizar" : "Entrar na iniciativa"}</button>
+        ${mine ? `<button type="button" id="combat-self-leave">Sair</button>` : ""}
+      </div>
+    </div>
+    ${isHost ? `
+    <div class="room-combat-add">
+      <input id="combat-add-name" placeholder="Nome (ex.: Goblin 1)">
+      <input id="combat-add-init" type="number" placeholder="Inic.">
+      <input id="combat-add-ac" type="number" placeholder="CA">
+      <input id="combat-add-hp" type="number" placeholder="PV máx">
+      <button type="button" class="add-btn" id="combat-add-btn">+ Adicionar</button>
+    </div>
+    <div class="room-combat-master">
+      <button type="button" id="combat-start-btn">▶ Iniciar</button>
+      <button type="button" id="combat-prev-btn">⏮</button>
+      <button type="button" id="combat-next-btn">⏭ Próximo</button>
+      <button type="button" id="combat-clear-btn">🗑 Encerrar</button>
+      <b>Rodada ${roomCombat.round}</b>
+    </div>` : `<p class="room-combat-round muted">Rodada ${roomCombat.round}</p>`}
+  `;
+  const sorted = sortedCombatants();
+  list.innerHTML = sorted.length ? sorted.map((c) => {
+    const pct = c.hpMax > 0 ? Math.max(0, Math.min(100, (c.hpCur / c.hpMax) * 100)) : 0;
+    const isTurn = c.id === roomCombat.currentId;
+    const canRemove = isHost || c.id === myPeerId;
+    return `<div class="room-combat-row${isTurn ? " room-combat-turn" : ""}">
+      <div class="room-combat-row-top"><b>${esc(c.name)}</b><span class="room-combat-init" title="Iniciativa">${c.init}</span>${canRemove ? `<button type="button" class="remove-btn" data-combat-remove="${esc(c.id)}" title="Remover">×</button>` : ""}</div>
+      <div class="room-combat-row-bottom">
+        <span>CA ${c.ac}</span>
+        <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(c.hpCur, c.hpMax)}" style="width:${pct}%"></div><div class="dash-hp-label">${c.hpCur} / ${c.hpMax}${c.hpTemp ? ` (+${c.hpTemp})` : ""}</div></div>
+      </div>
+    </div>`;
+  }).join("") : `<div class="empty">Ninguém na iniciativa ainda.</div>`;
+
+  $("combat-self-roll-init")?.addEventListener("click", () => {
+    const dex = character ? mod(effScore("dex")) : 0;
+    $("combat-self-init").value = rollDie(20) + dex;
+  });
+  $("combat-self-join")?.addEventListener("click", () => {
+    sendCombatAction(mine ? "update" : "join", {
+      id: myPeerId,
+      name: $("combat-self-name").value,
+      init: $("combat-self-init").value,
+      ac: $("combat-self-ac").value,
+      hpCur: $("combat-self-hpcur").value,
+      hpMax: $("combat-self-hpmax").value,
+      hpTemp: mine?.hpTemp || 0,
+    });
+  });
+  $("combat-self-leave")?.addEventListener("click", () => sendCombatAction("remove", { id: myPeerId }));
+  $("combat-add-btn")?.addEventListener("click", () => {
+    const name = $("combat-add-name").value.trim();
+    if (!name) { toast("Digite um nome primeiro."); return; }
+    sendCombatAction("addManual", { name, init: $("combat-add-init").value, ac: $("combat-add-ac").value, hpMax: $("combat-add-hp").value });
+    $("combat-add-name").value = ""; $("combat-add-init").value = ""; $("combat-add-ac").value = ""; $("combat-add-hp").value = "";
+  });
+  $("combat-start-btn")?.addEventListener("click", () => sendCombatAction("start", {}));
+  $("combat-prev-btn")?.addEventListener("click", () => sendCombatAction("prev", {}));
+  $("combat-next-btn")?.addEventListener("click", () => sendCombatAction("next", {}));
+  $("combat-clear-btn")?.addEventListener("click", () => { if (confirm("Encerrar o combate e limpar a lista de iniciativa?")) sendCombatAction("clear", {}); });
+  list.querySelectorAll("[data-combat-remove]").forEach((b) => b.addEventListener("click", () => sendCombatAction("remove", { id: b.dataset.combatRemove })));
 }
 function renderRoomSettings() {
   const code = getRoomCode();
@@ -3959,6 +4136,144 @@ function exportJournalText() {
 }
 
 // ------------------------------------------------------------
+// Companheiros e familiares — fichas curtas à parte (familiar de
+// Bruxo/Feiticeiro/Mago, companheiro animal de Patrulheiro, montaria...):
+// CA/PV/deslocamento próprios, ataques com rolagem (vão pra sala/Discord
+// como os do personagem) e um campo de traços/notas livre. Não tenta
+// detectar automaticamente qual classe dá qual companheiro — o jogador
+// preenche à mão, porque a criatura em si varia (bicho escolhido, forma
+// do familiar etc.).
+// ------------------------------------------------------------
+function companionDiscordMessage(comp, label, detail, total) {
+  const name = (comp?.name || "Companheiro").trim();
+  return `🐾 **${name}** (companheiro) rolou **${label}**: ${detail} = **${total}**`;
+}
+function broadcastCompanionRoll(comp, label, detail, total, opts = {}) {
+  const note = opts.note || "";
+  sendToDiscord(companionDiscordMessage(comp, label, detail, total) + note);
+  pushRoomRoll({ name: `${(comp?.name || "Companheiro").trim()} (companheiro)`, label, detail: detail + note, total, type: opts.type || "outro" });
+}
+function renderCompanions() {
+  const box = $("companion-list");
+  if (!box) return;
+  const list = character.companions || [];
+  box.innerHTML = list.length ? list.map((comp) => {
+    const hpMax = Math.max(0, Number(comp.hpMax) || 0);
+    const hpCur = Number.isFinite(Number(comp.hpCur)) ? Number(comp.hpCur) : hpMax;
+    const pct = hpMax > 0 ? Math.max(0, Math.min(100, (hpCur / hpMax) * 100)) : 0;
+    const attacks = comp.attacks || [];
+    return `<div class="companion-card" data-companion-id="${esc(comp.id)}">
+      <div class="companion-card-top">
+        <input data-c="name" data-id="${esc(comp.id)}" value="${esc(comp.name || "")}" placeholder="Nome (ex.: Coruja)">
+        <input data-c="type" data-id="${esc(comp.id)}" value="${esc(comp.type || "")}" placeholder="Tipo (Familiar, Companheiro Animal, Montaria…)">
+        <button type="button" class="remove-btn no-print" data-remove-companion="${esc(comp.id)}" title="Remover companheiro">×</button>
+      </div>
+      <div class="companion-card-stats">
+        <label>CA<input type="number" data-c="ac" data-id="${esc(comp.id)}" value="${Number(comp.ac) || 0}"></label>
+        <label>Deslocamento<input data-c="speed" data-id="${esc(comp.id)}" value="${esc(comp.speed || "")}" placeholder="9m, voo 18m"></label>
+        <label>Fonte<input data-c="source" data-id="${esc(comp.id)}" value="${esc(comp.source || "")}" placeholder="ex.: Encontrar Familiar"></label>
+      </div>
+      <div class="companion-hp-row">
+        <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(hpCur, hpMax)}" style="width:${pct}%"></div><div class="dash-hp-label">${hpCur} / ${hpMax}${comp.hpTemp ? ` (+${comp.hpTemp} temp)` : ""}</div></div>
+        <label>PV<input type="number" data-c="hpCur" data-id="${esc(comp.id)}" value="${hpCur}"></label>
+        <label>/ Máx<input type="number" data-c="hpMax" data-id="${esc(comp.id)}" value="${hpMax}"></label>
+        <label>Temp<input type="number" data-c="hpTemp" data-id="${esc(comp.id)}" value="${Number(comp.hpTemp) || 0}"></label>
+      </div>
+      <div class="companion-attacks">
+        ${attacks.map((a, ai) => `<div class="companion-attack-row">
+          <input data-ca="name" data-id="${esc(comp.id)}" data-ai="${ai}" value="${esc(a.name || "")}" placeholder="Ataque (ex.: Bicada)">
+          <input data-ca="bonus" data-id="${esc(comp.id)}" data-ai="${ai}" value="${esc(a.bonus || "")}" placeholder="+5">
+          <input data-ca="damage" data-id="${esc(comp.id)}" data-ai="${ai}" value="${esc(a.damage || "")}" placeholder="1d4 perfurante">
+          <button type="button" data-roll-companion-attack="${ai}" data-id="${esc(comp.id)}" title="${D20_MODE_TITLE}">🎲 Ataque</button>
+          <button type="button" data-roll-companion-damage="${ai}" data-id="${esc(comp.id)}" title="${DAMAGE_MODE_TITLE}">🎲 Dano</button>
+          <button type="button" class="remove-btn no-print" data-remove-companion-attack="${ai}" data-id="${esc(comp.id)}" title="Remover ataque">×</button>
+        </div>`).join("")}
+        <div class="companion-attack-actions no-print"><button type="button" class="add-btn" data-add-companion-attack="${esc(comp.id)}">+ Ataque</button><span class="companion-attack-result" id="companion-attack-result-${esc(comp.id)}"></span></div>
+      </div>
+      <textarea data-c="notes" data-id="${esc(comp.id)}" placeholder="Traços, habilidades especiais, personalidade…">${esc(comp.notes || "")}</textarea>
+    </div>`;
+  }).join("") : `<div class="empty">Nenhum companheiro ainda. Clique em "+ Novo companheiro" pra adicionar um familiar, companheiro animal ou montaria.</div>`;
+
+  const findComp = (id) => (character.companions || []).find((c) => c.id === id);
+  // Só a barra de PV precisa refletir mudanças dos campos numéricos de PV —
+  // atualiza direto no DOM em vez de re-renderizar tudo, senão o campo que
+  // está sendo digitado perde o foco a cada tecla (mesmo problema do
+  // renderAttacks, ver comentário lá).
+  const updateCompanionHp = (comp) => {
+    const card = box.querySelector(`[data-companion-id="${CSS.escape(comp.id)}"]`);
+    if (!card) return;
+    const hpMax = Math.max(0, Number(comp.hpMax) || 0);
+    const hpCur = Number(comp.hpCur) || 0;
+    const pct = hpMax > 0 ? Math.max(0, Math.min(100, (hpCur / hpMax) * 100)) : 0;
+    const fill = card.querySelector(".dash-hp-fill");
+    if (fill) { fill.className = `dash-hp-fill ${hpBarClass(hpCur, hpMax)}`; fill.style.width = `${pct}%`; }
+    const label = card.querySelector(".dash-hp-label");
+    if (label) label.textContent = `${hpCur} / ${hpMax}${comp.hpTemp ? ` (+${comp.hpTemp} temp)` : ""}`;
+  };
+  box.querySelectorAll("[data-c]").forEach((el) => el.addEventListener("input", () => {
+    const comp = findComp(el.dataset.id);
+    if (!comp) return;
+    const field = el.dataset.c;
+    const numeric = ["ac", "hpCur", "hpMax", "hpTemp"].includes(field);
+    comp[field] = numeric ? Number(el.value) || 0 : el.value;
+    saveCharacter(character);
+    if (["hpCur", "hpMax", "hpTemp"].includes(field)) updateCompanionHp(comp);
+  }));
+  box.querySelectorAll("[data-remove-companion]").forEach((b) => b.addEventListener("click", () => {
+    if (!confirm("Remover este companheiro?")) return;
+    character.companions = (character.companions || []).filter((c) => c.id !== b.dataset.removeCompanion);
+    saveCharacter(character); renderCompanions();
+  }));
+  box.querySelectorAll("[data-ca]").forEach((el) => el.addEventListener("input", () => {
+    const comp = findComp(el.dataset.id);
+    if (!comp) return;
+    const a = (comp.attacks || [])[Number(el.dataset.ai)];
+    if (!a) return;
+    a[el.dataset.ca] = el.value;
+    saveCharacter(character);
+  }));
+  box.querySelectorAll("[data-add-companion-attack]").forEach((b) => b.addEventListener("click", () => {
+    const comp = findComp(b.dataset.addCompanionAttack);
+    if (!comp) return;
+    comp.attacks = comp.attacks || [];
+    comp.attacks.push({ name: "", bonus: "", damage: "" });
+    saveCharacter(character); renderCompanions();
+  }));
+  box.querySelectorAll("[data-remove-companion-attack]").forEach((b) => b.addEventListener("click", () => {
+    const comp = findComp(b.dataset.id);
+    if (!comp) return;
+    comp.attacks.splice(Number(b.dataset.removeCompanionAttack), 1);
+    saveCharacter(character); renderCompanions();
+  }));
+  box.querySelectorAll("[data-roll-companion-attack]").forEach((b) => b.addEventListener("click", (e) => {
+    const comp = findComp(b.dataset.id), a = (comp?.attacks || [])[Number(b.dataset.rollCompanionAttack)];
+    if (!comp || !a) return;
+    const { rolls, roll, mode } = d20WithMode(e);
+    const bonus = parseBonusText(a.bonus), total = roll + bonus;
+    const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
+    const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
+    $(`companion-attack-result-${comp.id}`).innerHTML = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
+    broadcastCompanionRoll(comp, `Ataque — ${a.name || "sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
+  }));
+  box.querySelectorAll("[data-roll-companion-damage]").forEach((b) => b.addEventListener("click", (e) => {
+    const comp = findComp(b.dataset.id), a = (comp?.attacks || [])[Number(b.dataset.rollCompanionDamage)];
+    if (!comp || !a) return;
+    const parsed = parseDiceExpr(a.damage || "1d4");
+    if (!parsed) { toast('Escreva o dano como "1d6" ou "2d4+1".'); return; }
+    const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
+    const total = diceTotal + (parsed.bonus || 0);
+    $(`companion-attack-result-${comp.id}`).innerHTML = `${crit ? "💥 crítico " : ""}[${rolls.join(", ")}]${parsed.bonus ? ` ${fmt(parsed.bonus)}` : ""} = <b>${total}</b>`;
+    broadcastCompanionRoll(comp, `Dano — ${a.name || "sem nome"}`, `${crit ? "crítico " : ""}[${rolls.join(", ")}]${parsed.bonus ? ` ${fmt(parsed.bonus)}` : ""}`, total, { type: "dano" });
+  }));
+}
+function addCompanion() {
+  character.companions = character.companions || [];
+  character.companions.push({ id: `comp-${Date.now()}`, name: "", type: "", source: "", ac: 10, speed: "9m", hpMax: 4, hpCur: 4, hpTemp: 0, attacks: [], notes: "" });
+  saveCharacter(character);
+  renderCompanions();
+}
+
+// ------------------------------------------------------------
 // Modificadores temporários (buffs/debuffs) em massa
 // ------------------------------------------------------------
 function renderBuffs() {
@@ -4449,6 +4764,7 @@ function applyLoaded(c) {
     pactSlotsUsed: Number(c?.pactSlotsUsed) || 0,
     conditions: Array.isArray(c?.conditions) ? c.conditions : [],
     journal: Array.isArray(c?.journal) ? c.journal : [],
+    companions: Array.isArray(c?.companions) ? c.companions : [],
     buffs: Array.isArray(c?.buffs) ? c.buffs : [],
     extraFeats: Array.isArray(c?.extraFeats) ? c.extraFeats : [],
     rolledSet: Array.isArray(c?.rolledSet) ? c.rolledSet : null,
@@ -5192,7 +5508,7 @@ function setup() {
     if (b.dataset.tab === "equipment") await equipmentTab();
     if (b.dataset.tab === "spells") await renderSpells();
     if (b.dataset.tab === "features") await renderFeatures();
-    if (b.dataset.tab === "notes") renderJournal();
+    if (b.dataset.tab === "notes") { renderJournal(); renderCompanions(); }
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
   }));
@@ -5274,6 +5590,7 @@ function setup() {
   $("add-extra-feat")?.addEventListener("click", openExtraFeatPicker);
   $("add-journal")?.addEventListener("click", () => openJournalModal(null));
   $("export-journal")?.addEventListener("click", exportJournalText);
+  $("add-companion")?.addEventListener("click", addCompanion);
   $("templates-btn")?.addEventListener("click", openTemplatesModal);
   $("feature-search")?.addEventListener("input", () => {
     const q = $("feature-search").value.trim().toLowerCase();
@@ -5307,6 +5624,14 @@ function setup() {
   $("room-chat-fab")?.addEventListener("click", () => toggleRoomChat());
   $("room-chat-close")?.addEventListener("click", () => toggleRoomChat(false));
   $("room-chat-settings-btn")?.addEventListener("click", renderRoomSettings);
+  document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active");
+    const combat = b.dataset.roomtab === "combat";
+    $("room-chat-list").classList.toggle("hidden", combat);
+    $("room-combat-panel").classList.toggle("hidden", !combat);
+    if (combat) renderCombatTracker();
+  }));
   const refresh = $("refresh-data");
   if (refresh) refresh.addEventListener("click", async () => {
     if (!confirm("Baixar novamente os dados do 5etools? O cache local será limpo.")) return;
