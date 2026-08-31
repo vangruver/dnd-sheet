@@ -1,27 +1,27 @@
 {
   "schema": 3,
-  "generatedAt": "2026-08-30T13:42:43.496Z",
+  "generatedAt": "2026-08-31T16:01:15.590Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "a1ea635e83ee86b40e106014b4ff8e8e2d8a5e42"
+      "commit": "3f7bc439e6050bb9ba8f72cf8fa1a0fadbe56abb"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "544b3d2a032189e389e6b64bd94077992a51589f"
+      "commit": "50fe7eb80dadfb9d7bafec5d12471570872fa567"
     },
     {
       "key": "homebrew",
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "28b6741f541de1a1f782a1730bcd7aa3b16459ce"
+      "commit": "94c23de7a2a2a94433cfdcb7ec874b9cda6af44f"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 71364,
+    "entities": 71440,
     "official": 11189,
-    "homebrew": 60175,
+    "homebrew": 60251,
     "external": 68
   },
   "homebrew": {
@@ -398,6 +398,7 @@
       "raw/homebrew/collection/Storyteller; World of Collabris.json",
       "raw/homebrew/collection/Team Brievary; An Introduction to the Seishin Isles.json",
       "raw/homebrew/collection/Tercept; knerd.json",
+      "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "raw/homebrew/collection/The Parchment Architect; World of Archeria.json",
       "raw/homebrew/collection/Tony Casper; Caliya's Chronicle of Runes.json",
       "raw/homebrew/collection/Tyler Stokes; Belzor's Magical Manifesto.json",
@@ -673,7 +674,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 626,
+    "classFileCount": 627,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -1380,6 +1381,7 @@
         "raw/homebrew/collection/Spaghetti0; Summoner - 2024.json",
         "raw/homebrew/collection/Sterling Vermin Adventuring Co.; The Ultimate Adventurer's Handbook.json",
         "raw/homebrew/collection/Storyteller; World of Collabris.json",
+        "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
         "raw/homebrew/collection/Tony Casper; Caliya's Chronicle of Runes.json",
         "raw/homebrew/collection/Tyler Stokes; Belzor's Magical Manifesto.json",
         "raw/homebrew/collection/Vall Syrene; Circle of the Honk.json",
@@ -1983,6 +1985,7 @@
         "raw/homebrew/collection/Spaghetti0; Artificer Expansion Pack - 2024.json",
         "raw/homebrew/collection/Spaghetti0; Summoner - 2024.json",
         "raw/homebrew/collection/Sterling Vermin Adventuring Co.; The Ultimate Adventurer's Handbook.json",
+        "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
         "raw/homebrew/collection/Tyler Stokes; Belzor's Magical Manifesto.json",
         "raw/homebrew/collection/Ujio21; Gunslinger.json",
         "raw/homebrew/collection/Vorpal Dice Press; Variant Fighter.json",
