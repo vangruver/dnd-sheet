@@ -15,6 +15,7 @@ import {
   getSavedSkin, saveSkin, SKINS, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
   getDiscordWebhook, saveDiscordWebhook,
+  getRoomConfig, saveRoomConfig, getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
 } from "./storage.js";
 
@@ -1624,7 +1625,7 @@ function renderSaves(c) {
     const a = b.dataset.saveRoll, ok = character.saveProficiencies.includes(a), bonus = mod(effScore(a)) + (ok ? c.pb : 0);
     const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
     toast(`Resistência de ${ABILITY_NAMES[a]}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
-    sendToDiscord(discordMessage(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+    broadcastRoll(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "resistencia" });
   }); });
 }
 function renderSkills(c) {
@@ -1647,7 +1648,7 @@ function renderSkills(c) {
     const bonus = mod(effScore(a)) + c.pb * (ex ? 2 : p ? 1 : 0);
     const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
     toast(`${n}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
-    sendToDiscord(discordMessage(n, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+    broadcastRoll(n, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "pericia" });
   }); });
 }
 function profLabel(x) {
@@ -1816,7 +1817,7 @@ function renderAttacks() {
     const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
     attackRollMessages[i] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    sendToDiscord(discordMessage(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total) + note);
+    broadcastRoll(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
   }));
   $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", (e) => {
     const i = Number(b.dataset.rollDamage), a = character.attacks[i];
@@ -1829,7 +1830,7 @@ function renderAttacks() {
     const note = crit ? " — CRÍTICO" : "";
     attackRollMessages[i] = `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    sendToDiscord(discordMessage(`Dano — ${a.name || "arma sem nome"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total) + note);
+    broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total, { type: "dano", note });
   }));
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
@@ -2118,7 +2119,7 @@ function renderHitDiceTracker() {
     const maxHp = calc().hp;
     character.hpCurrent = Math.min(maxHp, (character.hpCurrent == null ? maxHp : character.hpCurrent) + healed);
     hdRollMessages[key] = `Rolou d${die}: <b>${roll}</b> + CON ${fmt(conMod)} = <b>${healed} PV recuperados</b> (repouso curto obrigatório).`;
-    sendToDiscord(discordMessage("Dado de Vida", `d${die} (${roll}) + CON ${fmt(conMod)}`, `${healed} PV recuperados`));
+    broadcastRoll("Dado de Vida", `d${die} (${roll}) + CON ${fmt(conMod)}`, `${healed} PV recuperados`, { type: "outro" });
     saveCharacter(character);
     recalc();
   }));
@@ -2347,12 +2348,188 @@ function renderDiscordSettings() {
 }
 
 // ------------------------------------------------------------
+// Sala de rolagens — chat de rolagem em tempo real compartilhado entre
+// os jogadores da mesma mesa, via Firebase Realtime Database (serviço
+// gratuito de terceiros; continua sem servidor próprio, do mesmo jeito
+// que o Discord). Todo mundo que configurar o MESMO projeto Firebase e
+// o MESMO código de sala vê as rolagens uns dos outros no chat da
+// própria ficha. Rolagens de Cura (marcadas no rolador de dados
+// genérico) ganham um botão "Aplicar cura" que soma o PV direto no
+// personagem de quem clicar — cada jogador aplica só no próprio.
+// ------------------------------------------------------------
+let roomDb = null;
+let roomBaseRef = null;  // ref de escrita (push de novas rolagens)
+let roomQuery = null;    // query de leitura (limitToLast, com o listener)
+let roomRolls = [];
+let roomConnected = false;
+
+function sanitizeRoomCode(code) {
+  return String(code || "").trim().toLowerCase().replace(/[.#$\[\]\s/]+/g, "-").slice(0, 60) || "mesa";
+}
+function roomPath(code) { return `salas/${sanitizeRoomCode(code)}/rolagens`; }
+
+function initRoom() {
+  if (roomQuery) { try { roomQuery.off(); } catch { /* ignore */ } }
+  roomDb = null; roomBaseRef = null; roomQuery = null; roomRolls = []; roomConnected = false;
+  renderRoomChat();
+  const cfg = getRoomConfig(), code = getRoomCode();
+  if (!cfg || !code) return;
+  if (typeof firebase === "undefined") { toast("Biblioteca da sala não carregou — confira sua conexão e recarregue a página."); return; }
+  try {
+    const appName = "dnd-ficha-sala";
+    const app = firebase.apps?.find((a) => a.name === appName) || firebase.initializeApp(cfg, appName);
+    roomDb = firebase.database(app);
+    roomBaseRef = roomDb.ref(roomPath(code));
+    roomQuery = roomBaseRef.limitToLast(50);
+    roomConnected = true;
+    roomQuery.on("child_added", (snap) => {
+      roomRolls.push({ id: snap.key, ...snap.val() });
+      roomRolls = roomRolls.slice(-50);
+      renderRoomChat();
+    }, (err) => {
+      console.warn("Sala: leitura recusada", err);
+      roomConnected = false;
+      toast("A sala recusou a leitura — confira as regras do Realtime Database no Firebase.");
+      renderRoomChat();
+    });
+  } catch (err) {
+    console.warn("Sala indisponível:", err);
+    toast("Não deu pra conectar na sala — confira a configuração do Firebase.");
+  }
+}
+
+// Extrai apiKey/databaseURL/etc. do texto colado do console do Firebase
+// (o snippet `const firebaseConfig = {...}` não é JSON válido por causa
+// das chaves sem aspas) sem usar eval/Function sobre o texto colado.
+function parseFirebaseConfigText(text) {
+  const fields = ["apiKey", "authDomain", "databaseURL", "projectId", "storageBucket", "messagingSenderId", "appId", "measurementId"];
+  const cfg = {};
+  for (const f of fields) {
+    const m = String(text || "").match(new RegExp(`${f}\\s*:\\s*["']([^"']+)["']`));
+    if (m) cfg[f] = m[1];
+  }
+  return cfg.apiKey && cfg.databaseURL ? cfg : null;
+}
+
+function pushRoomRoll(entry) {
+  if (!roomBaseRef) return;
+  try {
+    roomBaseRef.push({
+      name: entry.name || (character?.name || "").trim() || "Personagem sem nome",
+      label: entry.label, detail: entry.detail, total: String(entry.total ?? ""),
+      type: entry.type || "outro", amount: entry.amount ?? null, ts: Date.now(),
+    }).catch((err) => console.warn("Sala: falha ao enviar rolagem", err));
+  } catch { /* sala fora do ar não deve travar a rolagem em si */ }
+}
+// Substitui os antigos sendToDiscord(discordMessage(...)) nos pontos de
+// rolagem do personagem: manda pro Discord (se configurado) E pra sala
+// (se configurada), sem duplicar a lógica de formatação em cada lugar.
+function broadcastRoll(label, detail, total, opts = {}) {
+  const note = opts.note || "";
+  sendToDiscord(discordMessage(label, detail, total) + note);
+  pushRoomRoll({ label, detail: detail + note, total, type: opts.type, amount: opts.amount ?? null });
+}
+function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
+  const note = opts.note || "";
+  sendToDiscord(monsterDiscordMessage(m, label, detail, total) + note);
+  pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: "mestre" });
+}
+
+function renderRoomChat() {
+  const box = $("room-chat-list");
+  if (!box) return;
+  const cfg = getRoomConfig(), code = getRoomCode();
+  const status = $("room-chat-status");
+  if (status) status.textContent = !cfg || !code ? "Sala não configurada — clique na engrenagem." : roomConnected ? `Conectado à sala "${code}"` : "Conectando…";
+  if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma rolagem na sala ainda.</div>`; return; }
+  const applied = getAppliedHeals();
+  box.innerHTML = roomRolls.slice().reverse().map((r) => {
+    const canHeal = r.type === "cura" && r.amount != null;
+    const done = canHeal && applied.includes(r.id);
+    const time = r.ts ? new Date(r.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+    return `<div class="room-chat-row${canHeal ? " room-chat-heal" : ""}">
+      <div class="room-chat-meta"><b>${esc(r.name || "?")}</b><span>${esc(r.label || "")}</span><small>${time}</small></div>
+      <div class="room-chat-body"><span class="room-chat-detail">${esc(r.detail || "")}</span><b class="room-chat-total">${esc(String(r.total ?? ""))}</b></div>
+      ${canHeal ? `<button type="button" class="room-chat-heal-btn" data-heal-roll="${esc(r.id)}" ${done ? "disabled" : ""}>${done ? "✓ Cura aplicada" : `+ Aplicar cura (${esc(String(r.amount))} PV)`}</button>` : ""}
+    </div>`;
+  }).join("");
+  box.querySelectorAll("[data-heal-roll]").forEach((b) => b.addEventListener("click", () => applyHealFromRoom(b.dataset.healRoll)));
+}
+function applyHealFromRoom(rollId) {
+  const roll = roomRolls.find((r) => r.id === rollId);
+  if (!roll || roll.amount == null || getAppliedHeals().includes(rollId)) return;
+  if (!character) { toast("Abra um personagem primeiro."); return; }
+  const maxHp = calc().hp;
+  const before = character.hpCurrent == null ? maxHp : character.hpCurrent;
+  const amount = Number(roll.amount) || 0;
+  character.hpCurrent = Math.min(maxHp, before + amount);
+  markHealApplied(rollId);
+  saveCharacter(character);
+  recalc();
+  renderRoomChat();
+  toast(`+${amount} PV de "${roll.label}" (${roll.name}) aplicado em ${character.name || "seu personagem"}.`);
+}
+function toggleRoomChat(force) {
+  const panel = $("room-chat-panel");
+  if (!panel) return;
+  const show = force != null ? force : panel.classList.contains("hidden");
+  panel.classList.toggle("hidden", !show);
+  if (show) renderRoomChat();
+}
+function renderRoomSettings() {
+  const cfg = getRoomConfig(), code = getRoomCode();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Todo mundo da mesma mesa que colar o MESMO projeto do Firebase e digitar o MESMO código de sala abaixo passa a ver, em tempo real, as rolagens uns dos outros no chat da própria ficha (botão "💬" no canto da tela). Rolagens marcadas como <b>Cura</b> no rolador de dados genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar. Isso fica salvo neste navegador, não no personagem — cada jogador configura o próprio.</p></div></div>
+    <div class="modal-body">
+      <h3>Como criar a sala (gratuito, uns 5 minutos)</h3>
+      <ol>
+        <li>Abra o <a href="https://console.firebase.google.com/" target="_blank" rel="noopener">console do Firebase</a> e crie um projeto novo (qualquer nome — só o mestre ou um jogador precisa fazer isso, uma vez só pela mesa toda).</li>
+        <li>No menu à esquerda, abra <strong>Compilação → Realtime Database</strong> → <strong>Criar banco de dados</strong>, e comece em modo de teste.</li>
+        <li>Na visão geral do projeto (ícone de casinha), clique no ícone <strong>&lt;/&gt;</strong> (Web) pra registrar um app e copie o bloco <code>firebaseConfig</code> que aparece.</li>
+        <li>Cole esse bloco inteiro (do jeito que o Firebase mostra, com <code>const firebaseConfig = {"{"}...{"}"}</code> e tudo) no campo abaixo.</li>
+        <li>Combine com o grupo um <strong>código de sala</strong> (ex.: o nome da campanha) e cada jogador digita o mesmo código no campo abaixo, no próprio navegador.</li>
+      </ol>
+      <p class="muted">⚠️ Em modo de teste, qualquer pessoa com essa configuração consegue ler/escrever nesse banco — use um projeto dedicado só pra isso, sem dados sensíveis, e não espalhe a configuração fora do grupo.</p>
+      <label>Configuração do Firebase (bloco <code>firebaseConfig</code>)<br>
+        <textarea id="room-config-input" rows="7" style="width:100%;font-family:monospace;font-size:11px" placeholder="const firebaseConfig = {&#10;  apiKey: &quot;...&quot;,&#10;  authDomain: &quot;...&quot;,&#10;  databaseURL: &quot;https://SEU-PROJETO-default-rtdb.firebaseio.com&quot;,&#10;  projectId: &quot;...&quot;,&#10;  ...&#10;};">${esc(cfg ? JSON.stringify(cfg, null, 2) : "")}</textarea>
+      </label>
+      <label>Código da sala<br><input id="room-code-input" placeholder="ex.: mesa-de-sexta" value="${esc(code)}" style="width:100%"></label>
+      <div class="condition-duration-row" style="margin-top:12px">
+        <button type="button" class="add-btn" id="room-config-save">Salvar</button>
+        <button type="button" id="room-config-test">Enviar teste</button>
+        ${cfg ? `<button type="button" id="room-config-remove">Remover</button>` : ""}
+      </div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("room-config-save")?.addEventListener("click", () => {
+    const parsed = parseFirebaseConfigText($("room-config-input").value);
+    if (!parsed) { toast("Não achei apiKey/databaseURL válidos nesse texto — confira o que foi colado."); return; }
+    saveRoomConfig(parsed);
+    saveRoomCode($("room-code-input").value.trim());
+    initRoom();
+    if (roomBaseRef) toast("Sala configurada."); // se falhou, initRoom() já mostrou o toast do motivo
+    renderRoomSettings();
+  });
+  $("room-config-test")?.addEventListener("click", () => {
+    if (!getRoomConfig() || !getRoomCode()) { toast("Salve a configuração e o código da sala primeiro."); return; }
+    broadcastRoll("um teste", "🎉", "funcionou!", { type: "outro" });
+    toast("Mensagem de teste enviada pra sala.");
+  });
+  $("room-config-remove")?.addEventListener("click", () => {
+    saveRoomConfig(null);
+    saveRoomCode("");
+    initRoom();
+    toast("Sala removida.");
+    renderRoomSettings();
+  });
+}
+
+// ------------------------------------------------------------
 // Rolador de dados genérico — expressão tipo "2d6+3" sempre à mão
 // (botão flutuante), útil além dos rolamentos de ataque/dano/morte.
 // Histórico é só da sessão atual (não é salvo com o personagem).
 // ------------------------------------------------------------
 let diceHistory = [];
-function rollExpression(expr) {
+function rollExpression(expr, type) {
   const parsed = parseDiceExpr(expr);
   if (!parsed || !parsed.faces) { toast("Expressão inválida. Use algo como 2d6+3, 1d20 ou d8."); return null; }
   const { n, faces, bonus } = parsed;
@@ -2361,7 +2538,8 @@ function rollExpression(expr) {
   diceHistory.unshift({ n, faces, bonus, rolls, result });
   diceHistory = diceHistory.slice(0, 12);
   renderDiceHistory();
-  sendToDiscord(discordMessage(`${n}d${faces}${bonus ? fmt(bonus) : ""}`, `[${rolls.join(", ")}]${bonus ? ` ${fmt(bonus)}` : ""}`, result));
+  const t = type || $("dice-roll-type")?.value || "outro";
+  broadcastRoll(`${n}d${faces}${bonus ? fmt(bonus) : ""}`, `[${rolls.join(", ")}]${bonus ? ` ${fmt(bonus)}` : ""}`, result, { type: t, amount: t === "cura" ? result : null });
   return result;
 }
 function renderDiceHistory() {
@@ -3032,7 +3210,7 @@ function renderDeath(c) {
     else if (roll >= 10) { d.success = Math.min(3, d.success + 1); toast(`Rolou ${roll} — sucesso (CD 10).`); outcome = "sucesso (CD 10)"; }
     else { d.failure = Math.min(3, d.failure + 1); toast(`Rolou ${roll} — falha (CD 10).`); outcome = "falha (CD 10)"; }
     character.deathSaves = d; saveCharacter(character); recalc();
-    sendToDiscord(discordMessage("Teste de Resistência contra a Morte", `d20 (${roll})`, outcome));
+    broadcastRoll("Teste de Resistência contra a Morte", `d20 (${roll})`, outcome, { type: "morte" });
   });
   $("death-reset")?.addEventListener("click", () => {
     character.deathSaves = { success: 0, failure: 0 };
@@ -3358,7 +3536,7 @@ function wireMonsterModalRolls() {
     const { rolls, roll, mode } = d20WithMode(e), total = roll + toHit;
     const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
     toast(`${a.name || "Ataque"}: ${d20RollPlain(rolls, roll, mode)} ${fmt(toHit)} = ${total}${note}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Ataque — ${a.name || "ação"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(toHit)}`, total) + note);
+    broadcastMonsterRoll(currentModalMonster, `Ataque — ${a.name || "ação"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(toHit)}`, total, { note });
   }); });
   box.querySelectorAll("[data-mon-damage]").forEach((b) => { b.title = DAMAGE_MODE_TITLE; b.addEventListener("click", (e) => {
     const a = currentModalMonsterGroups[b.dataset.monKind]?.[Number(b.dataset.monDamage)];
@@ -3369,13 +3547,13 @@ function wireMonsterModalRolls() {
     const total = diceTotal + (parsed.bonus || 0);
     const note = crit ? " — CRÍTICO" : "";
     toast(`${a.name || "Dano"}: ${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}${note}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, `Dano — ${a.name || "ação"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total) + note);
+    broadcastMonsterRoll(currentModalMonster, `Dano — ${a.name || "ação"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total, { note });
   }); });
   box.querySelectorAll("[data-mon-bonus-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const bonus = Number(b.dataset.monBonusRoll) || 0, label = b.dataset.monBonusLabel || "Teste";
     const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
     toast(`${label}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, label, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total));
+    broadcastMonsterRoll(currentModalMonster, label, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total);
   }); });
   box.querySelector("[data-mon-hp-roll]")?.addEventListener("click", () => {
     const parsed = parseDiceExpr(currentModalMonster.hp?.formula || "");
@@ -3383,7 +3561,7 @@ function wireMonsterModalRolls() {
     const { rolls, total: diceTotal } = rollDice(parsed.n, parsed.faces);
     const total = diceTotal + (parsed.bonus || 0);
     toast(`PV: ${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}`);
-    sendToDiscord(monsterDiscordMessage(currentModalMonster, "Pontos de Vida", `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total));
+    broadcastMonsterRoll(currentModalMonster, "Pontos de Vida", `${parsed.n}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total);
   });
 }
 function monsterDiscordMessage(m, label, detail, total) {
@@ -5119,6 +5297,10 @@ function setup() {
   $("modal-close").addEventListener("click", () => $("modal").classList.add("hidden"));
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) $("modal").classList.add("hidden"); });
   $("discord-settings")?.addEventListener("click", renderDiscordSettings);
+  $("room-settings")?.addEventListener("click", renderRoomSettings);
+  $("room-chat-fab")?.addEventListener("click", () => toggleRoomChat());
+  $("room-chat-close")?.addEventListener("click", () => toggleRoomChat(false));
+  $("room-chat-settings-btn")?.addEventListener("click", renderRoomSettings);
   const refresh = $("refresh-data");
   if (refresh) refresh.addEventListener("click", async () => {
     if (!confirm("Baixar novamente os dados do 5etools? O cache local será limpo.")) return;
@@ -5204,6 +5386,7 @@ async function start() {
   character = loadCharacter() || fresh();
   if (!loadCharacterById(getActiveCharacterId())) saveCharacter(character); // slot novo: já aparece em "Meus Personagens" mesmo sem editar nada
   setup();
+  initRoom();
   // O modo "livre" (padrão) não depende do banco pra aparecer; o modo
   // "guiado" precisa de ensureCatalog(), então só liga a UI do assistente
   // depois que o banco terminar de carregar, abaixo.
