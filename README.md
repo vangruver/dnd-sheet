@@ -68,6 +68,15 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 - **Modificadores temporários (buffs/debuffs)**: aplique um ajuste a um ou mais atributos com
   duração em rodadas ou permanente — recalcula modificador, perícias, salvamentos e CD na hora.
 - **Notas de sessão**: anotações datadas por sessão, com editar/apagar e exportação em texto.
+- **Companheiros & familiares**: fichas curtas à parte pra familiar, companheiro animal, montaria
+  ou qualquer criatura ligada ao personagem — CA, PV com barra própria e ataques com rolagem (que
+  também aparecem na sala de rolagens/Discord como os do personagem principal).
+- **Sala de rolagens** (⚙️/💬 no canto): navegadores da mesa conectados ponto-a-ponto por WebRTC
+  (PeerJS, sem servidor próprio) — rolagens de todo mundo aparecem num chat compartilhado, com
+  botão pra aplicar cura direto no PV de quem clicar. A mesma sala tem uma aba de
+  **rastreador de iniciativa**: cada jogador entra com nome/iniciativa/CA/PV (ou rola a iniciativa
+  ali mesmo), o anfitrião pode adicionar monstros/NPCs à mão e controlar rodada/turno — todo mundo
+  vê a ordem e o turno atual em tempo real.
 - **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
   atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.

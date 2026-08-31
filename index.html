@@ -253,6 +253,10 @@
     <div class="page-title"><h2>Notas de Sessão</h2><p>Anotações rápidas por sessão — salvas junto com o personagem (localStorage e no arquivo exportado).</p></div>
     <section class="paper-card no-print journal-toolbar"><button class="add-btn" id="add-journal">+ Nova sessão</button><button class="add-btn" id="export-journal">Exportar notas (texto)</button></section>
     <div id="journal-list" class="journal-list"></div>
+
+    <div class="page-title companion-title"><h2>Companheiros & Familiares</h2><p>Familiar, companheiro animal, montaria ou qualquer outra criatura ligada ao personagem — CA, PV e ataques próprios, com rolagem que também aparece na sala/Discord.</p></div>
+    <section class="paper-card no-print companion-toolbar"><button class="add-btn" id="add-companion">+ Novo companheiro</button></section>
+    <div id="companion-list" class="companion-list"></div>
   </section>
 
   <section class="tab-page" id="tab-codex">
@@ -343,7 +347,15 @@
 <div id="room-chat-panel" class="dice-roller-panel room-chat-panel hidden no-print" role="dialog" aria-label="Chat de rolagem da sala">
   <div class="dice-roller-head"><span>💬 Sala de rolagens</span><span class="room-chat-head-actions"><button type="button" id="room-chat-settings-btn" title="Configurar sala" aria-label="Configurar sala">⚙️</button><button type="button" id="room-chat-close" aria-label="Fechar">×</button></span></div>
   <div id="room-chat-status" class="room-chat-status muted">Sala não configurada.</div>
+  <div class="segmented room-chat-tabs" id="room-chat-tabs">
+    <button class="active" data-roomtab="rolls">💬 Rolagens</button>
+    <button data-roomtab="combat">⚔️ Iniciativa</button>
+  </div>
   <div id="room-chat-list" class="room-chat-list"></div>
+  <div id="room-combat-panel" class="room-combat-panel hidden">
+    <div id="room-combat-controls" class="room-combat-controls"></div>
+    <div id="room-combat-list" class="room-combat-list"></div>
+  </div>
 </div>
 <div id="official-sheet" class="official-sheet" aria-hidden="true"></div>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>

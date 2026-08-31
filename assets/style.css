@@ -726,6 +726,32 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-heal-btn{margin-top:6px;width:100%;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .room-chat-heal-btn:hover{filter:brightness(1.1)}
 .room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
+.room-chat-tabs{margin-bottom:8px}
+.room-chat-tabs button{flex:1;padding:6px 8px;font-size:9px}
+
+/* ---------- Rastreador de iniciativa da sala ---------- */
+.room-combat-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border-2)}
+.room-combat-self,.room-combat-add{display:flex;flex-direction:column;gap:6px}
+.room-combat-self>input,.room-combat-add>input{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 8px;font-size:11px;width:100%}
+.room-combat-self-row{display:flex;gap:6px;align-items:end}
+.room-combat-self-row label{display:flex;flex-direction:column;gap:2px;font-size:8px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mut);flex:1}
+.room-combat-self-row label input{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:5px 7px;font-size:11px;width:100%}
+.room-combat-self-row button,.room-combat-self>div button,.room-combat-add button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 9px;font-size:10px;font-weight:600;white-space:nowrap}
+.room-combat-self-row button:hover,.room-combat-add button:hover{border-color:var(--red)}
+.room-combat-master{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:2px}
+.room-combat-master button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 9px;font-size:10px;font-weight:600}
+.room-combat-master button:hover{border-color:var(--red)}
+.room-combat-master b{margin-left:auto;font:700 11px var(--font-head);color:var(--text)}
+.room-combat-round{margin-top:2px}
+.room-combat-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.room-combat-row{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 10px}
+.room-combat-row.room-combat-turn{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold)}
+.room-combat-row-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.room-combat-row-top b{font-size:12px;color:var(--text)}
+.room-combat-init{font:700 11px var(--font-head);color:var(--red-hi);background:var(--surface-2);border-radius:20px;padding:2px 8px}
+.room-combat-row-top .remove-btn{margin-left:auto;width:22px;height:22px;line-height:1;font-size:13px}
+.room-combat-row-bottom{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-mut)}
+.room-combat-row-bottom .dash-hp-bar{flex:1;height:16px}
 
 /* ---------- Banner de atualização de dados ---------- */
 .data-update-banner{
@@ -989,6 +1015,27 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .journal-edit input{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:7px 9px;margin-bottom:8px}
 
 /* ============================================================
+   Companheiros & familiares
+   ============================================================ */
+.companion-title{margin-top:22px}
+.companion-toolbar{display:flex;gap:10px}
+.companion-list{display:flex;flex-direction:column;gap:12px}
+.companion-card{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--radius-sm);padding:14px 16px;box-shadow:var(--shadow-sm)}
+.companion-card-top{display:grid;grid-template-columns:1.3fr 1fr 26px;gap:8px;align-items:center;margin-bottom:8px}
+.companion-card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.companion-card-stats label,.companion-hp-row label{display:flex;flex-direction:column;gap:3px;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-mut)}
+.companion-card input,.companion-card select,.companion-card textarea{border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 8px;font-size:11px;width:100%}
+.companion-hp-row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px;align-items:end;margin-bottom:10px}
+.companion-hp-row .dash-hp-bar{grid-column:1/-1;height:18px}
+.companion-attacks{border-top:1px dashed var(--border-2);padding-top:9px;margin-bottom:9px}
+.companion-attack-row{display:grid;grid-template-columns:1.2fr .7fr 1fr auto auto 24px;gap:6px;align-items:center;margin-bottom:6px}
+.companion-attack-row button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 9px;font-size:10px;font-weight:600;white-space:nowrap}
+.companion-attack-row button:hover{border-color:var(--red)}
+.companion-attack-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.companion-attack-result{font-size:11px;color:var(--text-mut)}
+.companion-card textarea{min-height:56px;resize:vertical}
+
+/* ============================================================
    Templates
    ============================================================ */
 .template-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:14px 0}
@@ -1036,6 +1083,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   .attack-card-top{grid-template-columns:1.4fr 1fr 1fr 26px}
   .attack-card-controls{grid-template-columns:repeat(2,1fr)}
   .template-grid,.condition-picker{grid-template-columns:1fr}
+  .companion-card-stats{grid-template-columns:1fr 1fr}
+  .companion-attack-row{grid-template-columns:1fr 1fr}
 }
 @media(max-width:720px){
   body{font-size:13px}
