@@ -148,6 +148,42 @@ export function saveDiscordWebhook(url) {
   catch { /* modo privado */ }
 }
 
+// Sala de rolagens — chat de rolagem em tempo real compartilhado entre
+// os jogadores da mesma mesa, via Firebase Realtime Database (serviço
+// gratuito de terceiros; a ficha continua sem servidor próprio, do
+// mesmo jeito que a integração com o Discord). Configuração do projeto
+// Firebase e código da sala ficam neste navegador — cada jogador cola a
+// MESMA configuração e o MESMO código pra entrar na mesma mesa. Ver
+// initRoom()/broadcastRoll() em app.js.
+const ROOM_CONFIG_KEY = "dnd-ficha-auto-room-firebase-config";
+const ROOM_CODE_KEY = "dnd-ficha-auto-room-code";
+const ROOM_APPLIED_HEALS_KEY = "dnd-ficha-auto-room-applied-heals";
+
+export function getRoomConfig() {
+  try { const v = localStorage.getItem(ROOM_CONFIG_KEY); return v ? JSON.parse(v) : null; } catch { return null; }
+}
+export function saveRoomConfig(cfg) {
+  try { cfg ? localStorage.setItem(ROOM_CONFIG_KEY, JSON.stringify(cfg)) : localStorage.removeItem(ROOM_CONFIG_KEY); }
+  catch { /* modo privado */ }
+}
+export function getRoomCode() { try { return localStorage.getItem(ROOM_CODE_KEY) || ""; } catch { return ""; } }
+export function saveRoomCode(code) {
+  try { code ? localStorage.setItem(ROOM_CODE_KEY, code) : localStorage.removeItem(ROOM_CODE_KEY); }
+  catch { /* modo privado */ }
+}
+// IDs das rolagens de cura já aplicadas neste navegador — clicar de novo
+// em "Aplicar cura" na mesma rolagem não cura duas vezes. Cada jogador
+// só marca a própria aplicação (não afeta os outros na sala).
+export function getAppliedHeals() {
+  try { const v = localStorage.getItem(ROOM_APPLIED_HEALS_KEY); const arr = v ? JSON.parse(v) : []; return Array.isArray(arr) ? arr : []; }
+  catch { return []; }
+}
+export function markHealApplied(rollId) {
+  const arr = getAppliedHeals();
+  if (arr.includes(rollId)) return;
+  try { localStorage.setItem(ROOM_APPLIED_HEALS_KEY, JSON.stringify([...arr, rollId].slice(-300))); } catch { /* modo privado */ }
+}
+
 // Listas de monstros do mestre — à parte de qualquer personagem salvo
 // neste navegador. Várias listas nomeadas (ex.: "Curse of Strahd",
 // "Encontros aleatórios"), cada uma com sua própria coleção de

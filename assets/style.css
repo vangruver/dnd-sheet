@@ -700,6 +700,32 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .dice-history-expr{font-weight:700;color:var(--text);min-width:44px}
 .dice-history-rolls{color:var(--text-mut);flex:1}
 .dice-history-total{font:800 15px var(--font-head);color:var(--red-hi)}
+.dice-type-row{display:block;font-size:11px;color:var(--text-mut);margin-bottom:10px}
+.dice-type-row select{display:block;width:100%;margin-top:4px;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:7px 9px;font-size:11px}
+
+/* ---------- Sala de rolagens (chat compartilhado) ---------- */
+#room-chat-fab{
+  position:fixed;bottom:24px;left:86px;z-index:150;width:52px;height:52px;border-radius:50%;
+  border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);font-size:22px;
+  box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center
+}
+#room-chat-fab:hover{border-color:var(--red);transform:translateY(-1px)}
+.room-chat-panel{left:86px;width:320px}
+.room-chat-head-actions{display:flex;align-items:center;gap:10px}
+.room-chat-status{font-size:11px;margin-bottom:8px}
+.room-chat-list{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.room-chat-row{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 10px;font-size:11px}
+.room-chat-row.room-chat-heal{border-color:var(--red)}
+.room-chat-meta{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;flex-wrap:wrap}
+.room-chat-meta b{color:var(--text);font-size:12px}
+.room-chat-meta span{color:var(--text-mut)}
+.room-chat-meta small{margin-left:auto;color:var(--text-mut)}
+.room-chat-body{display:flex;align-items:center;gap:8px}
+.room-chat-detail{color:var(--text-mut);flex:1}
+.room-chat-total{font:800 14px var(--font-head);color:var(--red-hi)}
+.room-chat-heal-btn{margin-top:6px;width:100%;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.room-chat-heal-btn:hover{filter:brightness(1.1)}
+.room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
 
 /* ---------- Banner de atualização de dados ---------- */
 .data-update-banner{

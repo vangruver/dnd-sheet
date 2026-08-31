@@ -49,6 +49,7 @@
       <summary>Ferramentas</summary>
       <div class="menu-body">
         <button id="discord-settings" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
+        <button id="room-settings" title="Configurar a sala de rolagens compartilhada em tempo real com o grupo">💬 Sala de rolagens</button>
         <button id="mestre-mode-btn" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Ambiente do Mestre</button>
         <button id="refresh-data">Atualizar dados do 5etools</button>
       </div>
@@ -330,9 +331,23 @@
     <button type="button" data-dice-quick="100">d100</button>
   </div>
   <div class="dice-expr-row"><input id="dice-expr-input" placeholder="2d6+3" autocomplete="off"><button type="button" id="dice-roll-btn" class="add-btn">Rolar</button></div>
+  <label class="dice-type-row">Tipo (aparece na sala)<select id="dice-roll-type">
+    <option value="outro">Genérico</option>
+    <option value="ataque">Ataque</option>
+    <option value="dano">Dano</option>
+    <option value="cura">Cura — deixa clicável pros outros aplicarem o PV</option>
+  </select></label>
   <div id="dice-history" class="dice-history"></div>
 </div>
+<button id="room-chat-fab" class="no-print" type="button" title="Chat de rolagem da sala" aria-label="Chat de rolagem da sala">💬</button>
+<div id="room-chat-panel" class="dice-roller-panel room-chat-panel hidden no-print" role="dialog" aria-label="Chat de rolagem da sala">
+  <div class="dice-roller-head"><span>💬 Sala de rolagens</span><span class="room-chat-head-actions"><button type="button" id="room-chat-settings-btn" title="Configurar sala" aria-label="Configurar sala">⚙️</button><button type="button" id="room-chat-close" aria-label="Fechar">×</button></span></div>
+  <div id="room-chat-status" class="room-chat-status muted">Sala não configurada.</div>
+  <div id="room-chat-list" class="room-chat-list"></div>
+</div>
 <div id="official-sheet" class="official-sheet" aria-hidden="true"></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <script type="module" src="src/app.js"></script>
 <script>
   // Casca do app instalável offline (PWA) — os dados do 5etools têm seu
