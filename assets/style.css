@@ -265,7 +265,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 
 /* ---------- Construção do personagem ---------- */
 .creator{
-  margin-top:14px;background:var(--surface);border:1px solid var(--border);
+  background:var(--surface);border:1px solid var(--border);
   border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow-sm)
 }
 .creator-title{display:flex;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:14px}
@@ -299,8 +299,6 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .dot.official{background:var(--blue)}
 .dot.brew{background:var(--gold)}
 .dot.prerelease{background:#a87ce0}
-.creator.collapsed .choice-grid,.creator.collapsed .db-legend{display:none}
-.creator.collapsed .creator-title{border-bottom:0;margin-bottom:0;padding-bottom:0}
 
 /* ---------- Multiclasse ---------- */
 .multiclass-section{margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
@@ -313,7 +311,6 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .multiclass-row select,.multiclass-row input{width:100%;background:var(--inset);border:1px solid var(--border-2);border-radius:var(--radius-xs);color:var(--text);padding:7px 8px;font-size:11px;min-width:0}
 .multiclass-row input{text-align:center}
 .multiclass-warn{grid-column:1/-1;font-size:10px;color:var(--red-hi);margin-top:-2px}
-.creator.collapsed .multiclass-section{display:none}
 
 /* ---------- Painel de automação ---------- */
 .auto-panel{margin-top:14px;padding:16px 18px}

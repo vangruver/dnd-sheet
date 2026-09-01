@@ -138,7 +138,7 @@ async function decodeShareHash(hash) {
 // só busca/filtro (não mexem no personagem) e navegação entre abas.
 const VIEW_ONLY_SAFE_IDS = new Set([
   "skin-select", "equipment-search", "weapon-filter", "compendium-search", "compendium-type",
-  "codex-search", "preview-pdf", "print-character", "dashboard-toggle", "collapse-creator", "view-only-copy",
+  "codex-search", "preview-pdf", "print-character", "dashboard-toggle", "view-only-copy",
 ]);
 // Trava tudo que existe no DOM agora — chamada de novo a cada troca de aba
 // (ver setup()) porque várias abas só renderizam seu conteúdo (com
@@ -154,6 +154,7 @@ function lockViewOnlyControls() {
 function enterViewOnlyMode() {
   viewOnlyMode = true;
   document.body.classList.add("view-only");
+  document.querySelector('.tab[data-tab="build"]')?.classList.add("hidden");
   $("creator")?.classList.add("hidden");
   $("auto-panel")?.classList.add("hidden");
   ["characters-btn", "new-character", "save-character", "templates-btn", "random-character", "import-character", "edition", "content", "share-link-btn"]
@@ -5285,6 +5286,12 @@ function applyLoaded(c) {
   $("backstory").value = character.backstory || "";
   $("inspiration").checked = !!character.inspiration;
   for (const k of ["cp", "pp", "pe", "po", "pl"]) $(`coin-${k}`).value = character.coins[k] || 0;
+  // Personagem em branco (slot novo, ou nada escolhido ainda): abre direto
+  // na aba "Construção" em vez da "Ficha" vazia. Um personagem já montado
+  // não força troca de aba — respeita onde a pessoa estava navegando.
+  if (!viewOnlyMode && !character.classId && !character.raceId && !character.backgroundId && !(character.multiclasses || []).length) {
+    document.querySelector('.tab[data-tab="build"]')?.click();
+  }
   refreshChoices();
 }
 // ------------------------------------------------------------
@@ -5612,7 +5619,7 @@ function setCreationMode(mode) {
   document.querySelectorAll("#creation-mode-toggle [data-mode]").forEach((b) => b.classList.toggle("active", b.dataset.mode === creationMode));
   $("wizard")?.classList.toggle("hidden", creationMode !== "guided");
   $("free-mode-content")?.classList.toggle("hidden", creationMode === "guided");
-  if (creationMode === "guided") { $("creator")?.classList.remove("collapsed"); renderWizardStep(); }
+  if (creationMode === "guided") renderWizardStep();
   else restoreAutoPanelPosition();
 }
 function renderWizardSteps() {
@@ -5716,13 +5723,14 @@ function renderWizardAbilitiesStep(step) {
 }
 // O painel "AUTOMAÇÃO DA FICHA" (#auto-panel) é o único lugar que
 // concentra escolhas de talento/perícia/ASI/opções de classe — vive fora
-// do wizard (visível também no modo livre). Em vez de duplicar toda a
-// lógica de renderAutoChoices() dentro do passo do wizard, reaproveita o
-// próprio elemento: move-o pra dentro do corpo do wizard nesse passo e
-// devolve pro lugar original (antes de #tabs) em qualquer outro passo.
+// do wizard (visível também no modo livre, dentro da aba "Construção").
+// Em vez de duplicar toda a lógica de renderAutoChoices() dentro do passo
+// do wizard, reaproveita o próprio elemento: move-o pra dentro do corpo
+// do wizard nesse passo e devolve pro lugar original (logo após #creator,
+// dentro de #tab-build) em qualquer outro passo.
 function restoreAutoPanelPosition() {
-  const panel = $("auto-panel"), tabs = $("tabs");
-  if (panel && tabs && panel.nextElementSibling !== tabs) tabs.parentNode.insertBefore(panel, tabs);
+  const panel = $("auto-panel"), creator = $("creator");
+  if (panel && creator && panel.previousElementSibling !== creator) creator.parentNode.insertBefore(panel, creator.nextSibling);
 }
 function renderWizardTalentsStep(step) {
   const body = $("wizard-body");
@@ -5772,8 +5780,6 @@ async function renderWizardStep() {
 }
 function finishWizard() {
   setCreationMode("free");
-  $("creator")?.classList.add("collapsed");
-  if ($("collapse-creator")) $("collapse-creator").textContent = "Expandir";
   toast("Personagem pronto! Ajuste os detalhes na ficha abaixo.");
   document.querySelector('.tab[data-tab="sheet"]')?.click();
   $("tabs")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -6090,10 +6096,6 @@ function setup() {
     const file = e.target.files[0];
     e.target.value = "";
     if (file) await importMonsterSublistFile(file);
-  });
-  $("collapse-creator").addEventListener("click", () => {
-    $("creator").classList.toggle("collapsed");
-    $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";
   });
   $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }); saveCharacter(character); renderAttacks(); });
   $("add-custom-feature").addEventListener("click", () => {

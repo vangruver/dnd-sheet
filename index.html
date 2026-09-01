@@ -103,69 +103,8 @@
     </div>
   </div>
 
-  <section class="creator no-print" id="creator">
-    <div class="creator-title">
-      <span>CONSTRUÇÃO DO PERSONAGEM</span>
-      <div>
-        <div class="creation-mode-toggle" id="creation-mode-toggle" role="group" aria-label="Modo de criação do personagem">
-          <button type="button" data-mode="guided">Assistente guiado</button>
-          <button type="button" data-mode="free" class="active">Modo livre</button>
-        </div>
-        <small>Escolha uma opção. Os dados vêm direto do 5etools.</small>
-        <button id="collapse-creator" class="link-btn">Recolher</button>
-      </div>
-    </div>
-
-    <div class="wizard hidden" id="wizard">
-      <div class="wizard-steps" id="wizard-steps"></div>
-      <div class="wizard-body" id="wizard-body"></div>
-      <div class="wizard-nav">
-        <button type="button" id="wizard-back">← Voltar</button>
-        <span class="wizard-progress" id="wizard-progress"></span>
-        <button type="button" class="primary" id="wizard-next">Próximo →</button>
-      </div>
-    </div>
-
-    <div id="free-mode-content">
-      <div class="choice-grid">
-        <article class="choice-card" id="choice-race">
-          <div class="choice-label">Espécie / Raça <button class="tiny-info" data-info="race">ⓘ</button></div>
-          <div class="choice-value" id="choice-race-value">Escolher…</div><div class="choice-meta" id="choice-race-meta">Nenhuma opção selecionada</div>
-          <p id="race-preview" class="choice-desc">Escolha uma espécie para começar.</p><button class="change-choice" data-pick="race">Escolher espécie</button>
-        </article>
-        <article class="choice-card" id="choice-class">
-          <div class="choice-label">Classe <button class="tiny-info" data-info="class">ⓘ</button></div>
-          <div class="choice-value" id="choice-class-value">Escolher…</div><div class="choice-meta" id="choice-class-meta">Nenhuma opção selecionada</div>
-          <p id="class-preview" class="choice-desc">Escolha uma classe para começar.</p><button class="change-choice" data-pick="class">Escolher classe</button>
-        </article>
-        <article class="choice-card" id="choice-subclass">
-          <div class="choice-label">Subclasse <button class="tiny-info" data-info="subclass">ⓘ</button></div>
-          <div class="choice-value" id="choice-subclass-value">Escolha a classe primeiro</div><div class="choice-meta" id="choice-subclass-meta">—</div>
-          <p id="subclass-preview" class="choice-desc">A lista será filtrada pela classe escolhida.</p><button class="change-choice" data-pick="subclass">Escolher subclasse</button>
-        </article>
-        <article class="choice-card" id="choice-background">
-          <div class="choice-label">Background <button class="tiny-info" data-info="background">ⓘ</button></div>
-          <div class="choice-value" id="choice-background-value">Escolher…</div><div class="choice-meta" id="choice-background-meta">Nenhuma opção selecionada</div>
-          <p id="background-preview" class="choice-desc">Escolha um background.</p><button class="change-choice" data-pick="background">Escolher background</button>
-        </article>
-      </div>
-      <div class="multiclass-section" id="multiclass-section">
-        <div class="multiclass-head">
-          <div><span>Multiclasse <button class="tiny-info" data-info="multiclass">ⓘ</button></span><small>Adicione outras classes para um personagem multiclasse. Nível e subclasse são independentes por classe.</small></div>
-          <button class="add-btn" id="add-multiclass" type="button">+ Adicionar classe</button>
-        </div>
-        <div id="multiclass-list" class="multiclass-list"></div>
-      </div>
-      <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span><i class="dot prerelease"></i> Pré-lançamento</span><span id="db-count">—</span></div>
-    </div>
-  </section>
-
-  <section class="auto-panel paper-card no-print" id="auto-panel">
-    <div class="auto-panel-title"><div><span>AUTOMAÇÃO DA FICHA</span><small>As opções abaixo vêm diretamente do banco e são aplicadas à ficha automaticamente.</small></div><span id="auto-status" class="auto-status">Aguardando seleção</span></div>
-    <div id="auto-choices" class="auto-choices"><div class="auto-empty">Escolha uma classe e um background para ver as escolhas disponíveis.</div></div>
-  </section>
-
   <nav class="tabs no-print" id="tabs">
+    <button class="tab" data-tab="build">Construção</button>
     <button class="tab active" data-tab="sheet">Ficha</button>
     <button class="tab" data-tab="actions">Ações</button>
     <button class="tab" data-tab="abilities">Atributos & Talentos</button>
@@ -176,6 +115,70 @@
     <button class="tab" data-tab="codex">Raças & Classes</button>
     <button class="tab" data-tab="compendium">Compêndio</button>
   </nav>
+
+  <section class="tab-page" id="tab-build">
+    <div class="page-title"><h2>Construção do Personagem</h2><p>Espécie, classe, subclasse, background, multiclasse e a automação que o banco preenche sozinho a partir dessas escolhas. Depois de montado, o dia a dia de jogo mora na aba Ficha.</p></div>
+    <section class="creator" id="creator">
+      <div class="creator-title">
+        <span>ESCOLHAS</span>
+        <div>
+          <div class="creation-mode-toggle" id="creation-mode-toggle" role="group" aria-label="Modo de criação do personagem">
+            <button type="button" data-mode="guided">Assistente guiado</button>
+            <button type="button" data-mode="free" class="active">Modo livre</button>
+          </div>
+          <small>Escolha uma opção. Os dados vêm direto do 5etools.</small>
+        </div>
+      </div>
+
+      <div class="wizard hidden" id="wizard">
+        <div class="wizard-steps" id="wizard-steps"></div>
+        <div class="wizard-body" id="wizard-body"></div>
+        <div class="wizard-nav">
+          <button type="button" id="wizard-back">← Voltar</button>
+          <span class="wizard-progress" id="wizard-progress"></span>
+          <button type="button" class="primary" id="wizard-next">Próximo →</button>
+        </div>
+      </div>
+
+      <div id="free-mode-content">
+        <div class="choice-grid">
+          <article class="choice-card" id="choice-race">
+            <div class="choice-label">Espécie / Raça <button class="tiny-info" data-info="race">ⓘ</button></div>
+            <div class="choice-value" id="choice-race-value">Escolher…</div><div class="choice-meta" id="choice-race-meta">Nenhuma opção selecionada</div>
+            <p id="race-preview" class="choice-desc">Escolha uma espécie para começar.</p><button class="change-choice" data-pick="race">Escolher espécie</button>
+          </article>
+          <article class="choice-card" id="choice-class">
+            <div class="choice-label">Classe <button class="tiny-info" data-info="class">ⓘ</button></div>
+            <div class="choice-value" id="choice-class-value">Escolher…</div><div class="choice-meta" id="choice-class-meta">Nenhuma opção selecionada</div>
+            <p id="class-preview" class="choice-desc">Escolha uma classe para começar.</p><button class="change-choice" data-pick="class">Escolher classe</button>
+          </article>
+          <article class="choice-card" id="choice-subclass">
+            <div class="choice-label">Subclasse <button class="tiny-info" data-info="subclass">ⓘ</button></div>
+            <div class="choice-value" id="choice-subclass-value">Escolha a classe primeiro</div><div class="choice-meta" id="choice-subclass-meta">—</div>
+            <p id="subclass-preview" class="choice-desc">A lista será filtrada pela classe escolhida.</p><button class="change-choice" data-pick="subclass">Escolher subclasse</button>
+          </article>
+          <article class="choice-card" id="choice-background">
+            <div class="choice-label">Background <button class="tiny-info" data-info="background">ⓘ</button></div>
+            <div class="choice-value" id="choice-background-value">Escolher…</div><div class="choice-meta" id="choice-background-meta">Nenhuma opção selecionada</div>
+            <p id="background-preview" class="choice-desc">Escolha um background.</p><button class="change-choice" data-pick="background">Escolher background</button>
+          </article>
+        </div>
+        <div class="multiclass-section" id="multiclass-section">
+          <div class="multiclass-head">
+            <div><span>Multiclasse <button class="tiny-info" data-info="multiclass">ⓘ</button></span><small>Adicione outras classes para um personagem multiclasse. Nível e subclasse são independentes por classe.</small></div>
+            <button class="add-btn" id="add-multiclass" type="button">+ Adicionar classe</button>
+          </div>
+          <div id="multiclass-list" class="multiclass-list"></div>
+        </div>
+        <div class="db-legend"><span><i class="dot official"></i> Oficial</span><span><i class="dot brew"></i> Homebrew</span><span><i class="dot prerelease"></i> Pré-lançamento</span><span id="db-count">—</span></div>
+      </div>
+    </section>
+
+    <section class="auto-panel paper-card" id="auto-panel">
+      <div class="auto-panel-title"><div><span>AUTOMAÇÃO DA FICHA</span><small>As opções abaixo vêm diretamente do banco e são aplicadas à ficha automaticamente.</small></div><span id="auto-status" class="auto-status">Aguardando seleção</span></div>
+      <div id="auto-choices" class="auto-choices"><div class="auto-empty">Escolha uma classe e um background para ver as escolhas disponíveis.</div></div>
+    </section>
+  </section>
 
   <!--
     A aba "Ficha" reúne tudo que se usa DURANTE o jogo (atributos, defesa,
