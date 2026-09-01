@@ -57,10 +57,10 @@ const fresh = () => ({
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, udChoice: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
-  alignment: "", languages: "", appearance: "", backstory: "",
+  alignment: "", languages: "", appearance: "", backstory: "", toolProficienciesManual: "", hpModifier: 0,
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
-  conditions: [], journal: [], buffs: [], extraFeats: [], companions: [],
+  conditions: [], journal: [], buffs: [], extraFeats: [], companions: [], customFeatures: [],
   turnActions: { action: false, bonus: false, reaction: false }, concentration: null,
   rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
@@ -594,11 +594,28 @@ function paintAbilityEditor(ns) {
   const lo = free ? 1 : 8, hi = free ? 30 : 15;
   // Mostra o valor EFETIVO (base do point buy/array/rolagem + aumentos de espécie/background/talentos).
   if (grid) {
+    // Botão de resistência dentro do próprio box do atributo (só na ficha de
+    // jogo, não no passo do assistente) — evita ter que rolar até o card
+    // separado "Testes de Resistência" só pra rolar um salvamento comum.
+    // A caixa de resistências continua existindo pra marcar proficiência.
+    const pb = proficiency(totalLevel());
     grid.innerHTML = ABILITIES.map((a) => {
       const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
       const info = bonus ? `<button type="button" class="ability-info-btn" data-ability-detail="${a}" title="Ver de onde vêm esses pontos">ⓘ</button>` : "";
-      return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em>${info}</div>`;
+      let saveBtn = "";
+      if (!ns) {
+        const ok = character.saveProficiencies.includes(a), sv = mod(eff) + (ok ? pb : 0);
+        const formula = `Resistência de ${ABILITY_NAMES[a]}: ${fmt(mod(eff))}${ok ? ` + proficiência ${fmt(pb)}` : ""} = ${fmt(sv)} · ${D20_MODE_TITLE}`;
+        saveBtn = `<button type="button" class="ability-save-btn no-print${ok ? " prof" : ""}" data-save-roll-quick="${a}" title="${esc(formula)}">🛡 ${fmt(sv)}</button>`;
+      }
+      return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em>${info}${saveBtn}</div>`;
     }).join("");
+    if (!ns) grid.querySelectorAll("[data-save-roll-quick]").forEach((b) => b.addEventListener("click", (e) => {
+      const a = b.dataset.saveRollQuick, ok = character.saveProficiencies.includes(a), bonus = mod(effScore(a)) + (ok ? proficiency(totalLevel()) : 0);
+      const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+      toast(`Resistência de ${ABILITY_NAMES[a]}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
+      broadcastRoll(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "resistencia" });
+    }));
   }
   if (!editor) return;
   const spent = pointBuyTotal(), remaining = 27 - spent;
@@ -1458,6 +1475,11 @@ function inferHP() {
     const hd = Number(hitDiceFrom(m.classRec) || 8) || 8;
     for (let i = 0; i < Math.max(0, Number(m.level) || 0); i++) hp += hpAverage(hd) + conMod;
   }
+  // Modificador manual de PV máximo — pra talentos/traços que dão PV extra
+  // fora da conta padrão de dado de vida + CON (ex.: Robusto/Tough, que dá
+  // +2 por nível; o jogador mantém esse total, já que o "por nível" varia
+  // por fonte e homebrew demais pra automatizar aqui).
+  hp += Number(character.hpModifier) || 0;
   return Math.max(1, hp);
 }
 // ------------------------------------------------------------
@@ -1561,6 +1583,9 @@ async function recalc() {
   $("head-class").textContent = [primaryLabel, ...mcLabels].filter(Boolean).join(" / ") || "—";
   $("head-background").textContent = refs.background ? titleOf(refs.background) : "—";
   $("head-race").textContent = refs.race ? titleOf(refs.race) : "—";
+  // Mantém o campo de nível do cabeçalho sincronizado mesmo quando o nível
+  // muda por outro controle (ex.: o seletor rápido no painel/dashboard).
+  if (document.activeElement !== $("level")) $("level").value = character.level;
   const c = calc();
   renderAbilities();
   const acTitle = acAutoTitle(c);
@@ -1569,6 +1594,7 @@ async function recalc() {
   $("v-hp-max").textContent = c.hp;
   $("hp-current").value = character.hpCurrent == null ? c.hp : character.hpCurrent;
   $("hp-temp").value = character.hpTemp || 0;
+  $("hp-modifier-input").value = character.hpModifier || "";
   $("ac-input").value = character.ac ?? "";
   $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense · ${ABILITY_NAMES[c.ud]}${c.udInfo?.label ? ` — ${c.udInfo.label}` : ""})` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
@@ -1576,7 +1602,7 @@ async function recalc() {
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
   renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
   const active = document.querySelector(".tab.active")?.dataset.tab;
-  if (active === "features") renderFeatures();
+  if (active === "features") { renderCustomFeatures(); renderFeatures(); }
   if (active === "spells") renderSpells();
   if (active === "equipment" && eqCat === "inventory") renderStartingEquipment();
 }
@@ -1676,6 +1702,11 @@ function computeProficiencySummary() {
     tools = [...tools, ...toLabels(g.tools)];
     armorRaw = [...armorRaw, ...(g.armor || []).map((x) => String(x).toLowerCase())];
   }
+  // Ferramentas/instrumentos que o banco não resolve sozinho (ex.: "um
+  // instrumento musical à sua escolha") — o jogador preenche à mão e elas
+  // entram na mesma lista exibida como Ferramentas.
+  const manualTools = String(character.toolProficienciesManual || "").split(/[,;]/).map((s) => s.trim()).filter(Boolean);
+  tools = [...tools, ...manualTools];
   armor = [...new Set(armor)]; weapons = [...new Set(weapons)]; tools = [...new Set(tools)]; armorRaw = [...new Set(armorRaw)];
   return { armor, weapons, tools, armorRaw, saves: character.auto?.classSaves || [] };
 }
@@ -1686,7 +1717,12 @@ function renderProficiencies() {
     <div class="identity-row"><span>Armas</span><strong>${weapons.length ? esc(weapons.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Ferramentas</span><strong>${tools.length ? esc(tools.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Resistências</span><strong>${saves.map((a) => ABILITY_NAMES[a]).join(", ") || "—"}</strong></div>
+    <div class="identity-row no-print"><span>+ Ferramenta/instrumento</span><input id="tools-manual" value="${esc(character.toolProficienciesManual || "")}" placeholder="Ex.: Ferramentas de ferreiro, Alaúde" title="Proficiências de ferramenta/instrumento que o banco não preenche sozinho (ex.: escolha livre de instrumento musical) — some à lista de Ferramentas acima"></div>
     <p class="muted">As perícias com proficiência automática aparecem marcadas na aba Ficha e não podem ser desmarcadas.</p>`;
+  // Só re-renderiza no "change" (ao sair do campo) pra recalcular a linha
+  // "Ferramentas" acima sem perder o foco/cursor a cada letra digitada.
+  $("tools-manual").addEventListener("input", (e) => { character.toolProficienciesManual = e.target.value; saveCharacter(character); });
+  $("tools-manual").addEventListener("change", () => renderProficiencies());
 }
 function renderIdentity() {
   const rows = [["Espécie", refs.race], ["Classe", refs.class], ["Subclasse", refs.subclass], ["Background", refs.background]];
@@ -1737,7 +1773,42 @@ const DAMAGE_MODE_TITLE = "Clique: normal · Shift: dano crítico (dobra os dado
 // Ataques — cálculo automático (atributo + proficiência + item)
 // ------------------------------------------------------------
 const ATTACK_ABILITY_LABEL = { str: "Força (corpo a corpo)", dex: "Destreza (à distância/leve)", spell: "Conjuração", manual: "Manual" };
+// Tipos de dano padrão do 5e (regra 2014/2024), pra virar dropdown em vez de
+// texto livre digitado junto com a rolagem de dano.
+const DAMAGE_TYPES = ["Ácido", "Contundente", "Cortante", "Fogo", "Força", "Frio", "Necrótico", "Perfurante", "Psíquico", "Radiante", "Relâmpago", "Trovejante", "Veneno"];
 function parseBonusText(s) { const n = parseInt(String(s ?? "").replace(/[^\d-]/g, ""), 10); return Number.isFinite(n) ? n : 0; }
+// Ataques antigos guardavam o dano como um texto livre único (ex.: "1d8+1
+// esmagamento"). Agora cada ataque tem uma lista de "partes" de dano
+// (dado + bônus + tipo em campos separados, como no Foundry) — útil pra
+// armas/magias com mais de um tipo de dano na mesma rolagem (ex.: espada
+// flamejante: 1d8 cortante + 1d6 fogo). attackDamageParts() devolve sempre
+// pelo menos uma parte (migrando o texto livre antigo na primeira leitura,
+// já persistido por normalizeCharacter — ver ali) pra a UI ter o que
+// desenhar mesmo num ataque recém-criado.
+function attackDamageParts(a) {
+  if (Array.isArray(a.damageParts) && a.damageParts.length) return a.damageParts;
+  return [{ dice: "", bonus: 0, type: "" }];
+}
+function migrateDamageParts(a) {
+  if (Array.isArray(a?.damageParts) && a.damageParts.length) return a.damageParts;
+  const text = String(a?.damage ?? "").trim();
+  if (!text) return [{ dice: "", bonus: 0, type: "" }];
+  const parsed = parseDiceExpr(text);
+  const stripDiacritics = (s) => s.normalize("NFD").replace(/\p{M}/gu, "");
+  const plainText = stripDiacritics(text);
+  const type = DAMAGE_TYPES.find((t) => new RegExp(stripDiacritics(t), "i").test(plainText));
+  return [{ dice: parsed ? `${parsed.n}d${parsed.faces}` : "", bonus: parsed ? parsed.bonus : 0, type: type || "" }];
+}
+function damagePartText(p) {
+  const dice = String(p?.dice || "").trim();
+  const bonus = Number(p?.bonus) || 0;
+  const txt = `${dice}${bonus ? fmt(bonus) : ""}`.trim();
+  if (!txt) return "";
+  return `${txt}${p?.type ? " " + p.type.toLowerCase() : ""}`;
+}
+function attackDamageSummary(a) {
+  return attackDamageParts(a).map(damagePartText).filter(Boolean).join(" + ") || "—";
+}
 function attackAbilityMod(a) {
   const m = a.abilityMode || "str";
   if (m === "dex") return mod(effScore("dex"));
@@ -1750,29 +1821,50 @@ function computeAttackBonus(a) {
   return (attackAbilityMod(a) || 0) + (a.proficient ? proficiency(totalLevel()) : 0) + (Number(a.itemBonus) || 0);
 }
 let attackRollMessages = {};
+function damageTypeSelectHtml(attr, current) {
+  return `<select ${attr} title="Tipo de dano"><option value=""${current ? "" : " selected"}>Tipo de dano —</option>${DAMAGE_TYPES.map((t) =>
+    `<option value="${esc(t)}"${t === current ? " selected" : ""}>${esc(t)}</option>`).join("")}</select>`;
+}
+function attackDamagePartsHtml(i, parts) {
+  return `<div class="attack-damage-parts no-print">
+    ${parts.map((p, pi) => `<div class="dmg-part-row">
+      <input data-dmg-dice="${i}:${pi}" value="${esc(p.dice || "")}" placeholder="Dado (ex.: 1d8)" title="Expressão de dado, ex.: 1d8 ou 2d6">
+      <input type="number" data-dmg-bonus="${i}:${pi}" value="${Number(p.bonus) || 0}" title="Bônus fixo somado a esta parte do dano (além do atributo/item, que já entram na 1ª parte)">
+      ${damageTypeSelectHtml(`data-dmg-type="${i}:${pi}"`, p.type || "")}
+      ${parts.length > 1 ? `<button type="button" class="remove-btn" data-dmg-remove="${i}:${pi}" title="Remover esta parte do dano">×</button>` : `<span></span>`}
+    </div>`).join("")}
+    <button type="button" class="add-dmg-part" data-add-dmg="${i}">+ Tipo de dano extra (ex.: arma flamejante)</button>
+  </div>`;
+}
 function renderAttacks() {
   const arr = character.attacks || [];
   $("attacks").innerHTML = arr.length ? arr.map((a, i) => {
     const manual = (a.abilityMode || "str") === "manual";
     const total = computeAttackBonus(a);
-    return `<div class="attack-card" data-attack-idx="${i}">
+    // Ataque já configurado não precisa mostrar os campos de edição toda
+    // vez — "fechar edição" esconde tudo que não é preciso durante o jogo
+    // (fica só nome/dano/bônus/notas/rolagem), sem apagar nada.
+    const collapsed = !!a.collapsed;
+    return `<div class="attack-card${collapsed ? " collapsed" : ""}" data-attack-idx="${i}">
       <div class="attack-card-top">
         <input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome (ex.: Espada Longa)">
-        <input data-a="damage" data-i="${i}" value="${esc(a.damage || "")}" placeholder="Dano (ex.: 1d8 cortante)">
-        <div class="attack-total" data-attack-total="${i}" title="Bônus de ataque calculado">${fmt(total)}</div>
+        <div class="attack-total dmg-summary" data-attack-dmg-summary="${i}" title="Dano — edite as partes abaixo">${esc(attackDamageSummary(a))}</div>
+        <div class="attack-total" data-attack-total="${i}" title="Bônus de ataque calculado (atributo + proficiência + bônus de item)">${fmt(total)}</div>
         <input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas">
         <button class="remove-btn no-print" data-remove-attack="${i}" title="Remover ataque">×</button>
       </div>
       <div class="attack-card-controls no-print">
-        <select data-a-mode="${i}">${Object.entries(ATTACK_ABILITY_LABEL).map(([k, l]) => `<option value="${k}"${(a.abilityMode || "str") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
-        <label><input type="checkbox" data-a-prof="${i}" ${a.proficient ? "checked" : ""}> Proficiente</label>
-        <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item">
-        <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus manual" ${manual ? "" : "disabled"}>
-        <input data-a="range" data-i="${i}" value="${esc(a.range || "")}" placeholder="Distância (ex.: 9m/18m)">
+        <select data-a-mode="${i}" title="Atributo usado no bônus de ataque e na 1ª parte do dano">${Object.entries(ATTACK_ABILITY_LABEL).map(([k, l]) => `<option value="${k}"${(a.abilityMode || "str") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+        <label title="Soma a proficiência (metade dos ataques costuma ser proficiente)"><input type="checkbox" data-a-prof="${i}" ${a.proficient ? "checked" : ""}> Proficiente</label>
+        <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item" title="Bônus de item mágico (ex.: +1), somado no ataque e na 1ª parte do dano">
+        <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus manual" title="${manual ? "Bônus de ataque digitado à mão (modo Manual)" : "Só é usado no modo Manual — escolha \"Manual\" no campo de atributo ao lado pra habilitar"}" ${manual ? "" : "disabled"}>
+        <input data-a="range" data-i="${i}" value="${esc(a.range || "")}" placeholder="Distância (ex.: 9m/18m)" title="Alcance da arma/magia (curto/longo, se houver)">
       </div>
+      ${attackDamagePartsHtml(i, attackDamageParts(a))}
       <div class="attack-roll-row no-print">
         <button type="button" data-roll-attack="${i}" title="${D20_MODE_TITLE}">🎲 Rolar Ataque</button>
         <button type="button" data-roll-damage="${i}" title="${DAMAGE_MODE_TITLE}">🎲 Rolar Dano</button>
+        <button type="button" class="toggle-edit-btn" data-toggle-edit="${i}" title="${collapsed ? "Reabrir os campos de edição deste ataque" : "Esconder os campos de edição — os dados continuam salvos"}">${collapsed ? "✎ Editar" : "✓ Concluir edição"}</button>
         <span class="attack-roll-result" id="attack-result-${i}">${attackRollMessages[i] || ""}</span>
       </div>
     </div>`;
@@ -1786,6 +1878,10 @@ function renderAttacks() {
   const updateAttackTotal = (idx) => {
     const el = $("attacks").querySelector(`[data-attack-total="${idx}"]`);
     if (el) el.textContent = fmt(computeAttackBonus(character.attacks[idx]));
+  };
+  const updateDamageSummary = (idx) => {
+    const el = $("attacks").querySelector(`[data-attack-dmg-summary="${idx}"]`);
+    if (el) el.textContent = attackDamageSummary(character.attacks[idx]);
   };
   $("attacks").querySelectorAll("[data-a]").forEach((i) => i.addEventListener("input", () => {
     const idx = Number(i.dataset.i);
@@ -1809,6 +1905,46 @@ function renderAttacks() {
     delete attackRollMessages[Number(b.dataset.removeAttack)];
     character.attacks.splice(Number(b.dataset.removeAttack), 1); saveCharacter(character); renderAttacks();
   }));
+  $("attacks").querySelectorAll("[data-toggle-edit]").forEach((b) => b.addEventListener("click", () => {
+    const idx = Number(b.dataset.toggleEdit);
+    character.attacks[idx].collapsed = !character.attacks[idx].collapsed;
+    saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-dmg-dice]").forEach((n) => n.addEventListener("input", () => {
+    const [i, pi] = n.dataset.dmgDice.split(":").map(Number);
+    attackDamageParts(character.attacks[i])[pi].dice = n.value;
+    character.attacks[i].damageParts = attackDamageParts(character.attacks[i]);
+    saveCharacter(character);
+    updateDamageSummary(i);
+  }));
+  $("attacks").querySelectorAll("[data-dmg-bonus]").forEach((n) => n.addEventListener("input", () => {
+    const [i, pi] = n.dataset.dmgBonus.split(":").map(Number);
+    attackDamageParts(character.attacks[i])[pi].bonus = Number(n.value) || 0;
+    character.attacks[i].damageParts = attackDamageParts(character.attacks[i]);
+    saveCharacter(character);
+    updateDamageSummary(i);
+  }));
+  $("attacks").querySelectorAll("[data-dmg-type]").forEach((s) => s.addEventListener("change", () => {
+    const [i, pi] = s.dataset.dmgType.split(":").map(Number);
+    attackDamageParts(character.attacks[i])[pi].type = s.value;
+    character.attacks[i].damageParts = attackDamageParts(character.attacks[i]);
+    saveCharacter(character);
+    updateDamageSummary(i);
+  }));
+  $("attacks").querySelectorAll("[data-dmg-remove]").forEach((b) => b.addEventListener("click", () => {
+    const [i, pi] = b.dataset.dmgRemove.split(":").map(Number);
+    const parts = attackDamageParts(character.attacks[i]);
+    parts.splice(pi, 1);
+    character.attacks[i].damageParts = parts.length ? parts : [{ dice: "", bonus: 0, type: "" }];
+    saveCharacter(character); renderAttacks();
+  }));
+  $("attacks").querySelectorAll("[data-add-dmg]").forEach((b) => b.addEventListener("click", () => {
+    const i = Number(b.dataset.addDmg);
+    const parts = attackDamageParts(character.attacks[i]);
+    parts.push({ dice: "", bonus: 0, type: "" });
+    character.attacks[i].damageParts = parts;
+    saveCharacter(character); renderAttacks();
+  }));
   $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", (e) => {
     const i = Number(b.dataset.rollAttack), a = character.attacks[i];
     const { rolls, roll, mode } = d20WithMode(e);
@@ -1821,16 +1957,23 @@ function renderAttacks() {
   }));
   $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", (e) => {
     const i = Number(b.dataset.rollDamage), a = character.attacks[i];
-    const parsed = parseDiceExpr(a.damage || "1d6");
-    if (!parsed) { toast('Escreva o dano como "1d8" ou "2d6+1".'); return; }
-    const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
-    let extra = parsed.bonus || 0;
-    if ((a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
-    const total = diceTotal + extra;
+    const parts = attackDamageParts(a).filter((p) => parseDiceExpr(p.dice));
+    if (!parts.length) { toast('Preencha um dado de dano, ex.: "1d8".'); return; }
+    const crit = !!e.shiftKey;
+    let total = 0;
+    const segs = parts.map((p, pi) => {
+      const parsed = parseDiceExpr(p.dice);
+      const { rolls, total: diceTotal } = rollDice(crit ? parsed.n * 2 : parsed.n, parsed.faces);
+      let extra = (Number(p.bonus) || 0) + (parsed.bonus || 0);
+      if (pi === 0 && (a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
+      const segTotal = diceTotal + extra;
+      total += segTotal;
+      return `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)}${p.type ? " " + esc(p.type.toLowerCase()) : ""} = ${segTotal}`;
+    });
     const note = crit ? " — CRÍTICO" : "";
-    attackRollMessages[i] = `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)} = <b>${total}</b>${note}`;
+    attackRollMessages[i] = `${segs.join(" + ")} = <b>${total}</b>${note}`;
     $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(extra)}`, total, { type: "dano", note });
+    broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, segs.join(" + "), total, { type: "dano", note });
   }));
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
@@ -1851,6 +1994,21 @@ function findEntryList(entries) {
   return null;
 }
 function traitPickKey(sourceId, traitName) { return `${sourceId || ""}::${traitName}`; }
+// As opções de uma trait-pick-list vêm direto do texto da fonte (ver
+// findEntryList acima), sem id estável — só o nome mesmo. Toda vez que o
+// banco é resincronizado (sync-data.mjs) ou alguém edita um homebrew à mão,
+// pequenos ajustes de texto (pontuação, "(requires Xº nível)", maiúsculas)
+// mudam o nome exato e desmarcam escolhas que já estavam salvas na ficha.
+// Comparar por um nome normalizado (sem parênteses/pontuação/caixa) deixa
+// esses reajustes cosméticos não quebrarem fichas existentes.
+function normalizeTraitPickName(name) {
+  return String(name || "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/[.,;:!?]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
 // A maior parte das listas de escolha narrativa (ver findEntryList acima)
 // fica só de olho — texto pra lembrete, sem efeito mecânico, do mesmo jeito
 // que o app trata escolhas oficiais equivalentes (ex.: as opções de
@@ -1867,6 +2025,9 @@ const LEFOU_DEFORMATION_BONUSES = {
   "Membranous Hands.": { speedTypes: ["natação"] },
   "Rigid Fingers.": { speedTypes: ["escalada"] },
 };
+const LEFOU_DEFORMATION_BONUSES_BY_NORM = Object.fromEntries(
+  Object.entries(LEFOU_DEFORMATION_BONUSES).map(([name, b]) => [normalizeTraitPickName(name), b])
+);
 function isLefouRace(rr) { return !!rr && String(rr.source || "").toLowerCase() === "lefou" && String(rr.name || "").toLowerCase() === "lefou"; }
 function lefouDeformationPicks(rr) {
   if (!isLefouRace(rr)) return [];
@@ -1878,7 +2039,7 @@ function lefouDeformationBonuses(rr) {
   const skills = [], speedTypes = [];
   let ac = 0;
   for (const name of picks) {
-    const b = LEFOU_DEFORMATION_BONUSES[name];
+    const b = LEFOU_DEFORMATION_BONUSES[name] || LEFOU_DEFORMATION_BONUSES_BY_NORM[normalizeTraitPickName(name)];
     if (!b) continue;
     if (b.skills) skills.push(...b.skills);
     if (b.speedTypes) speedTypes.push(...b.speedTypes);
@@ -1889,16 +2050,35 @@ function lefouDeformationBonuses(rr) {
 function traitPickListHtml(sourceId, traitName, list) {
   const key = traitPickKey(sourceId, traitName);
   const picked = character.choiceSelections?.traitPicks?.[key] || [];
+  const pickedNorm = picked.map(normalizeTraitPickName);
   const items = list.items.filter((it) => it && typeof it === "object" && it.name);
   return `<div class="trait-pick-list" data-trait-pick-key="${esc(key)}">
     <p class="muted">Marque quais você já escolheu — dá pra marcar mais depois, conforme o personagem evolui (o texto acima diz o máximo permitido).</p>
     ${items.map((it) => {
-      const on = picked.includes(it.name);
+      const on = pickedNorm.includes(normalizeTraitPickName(it.name));
       const desc = esc(inlineTags(plainOf(it.entry || it.entries || "")));
       return `<label class="trait-pick-option${on ? " on" : ""}"><input type="checkbox" data-trait-pick="${esc(key)}" data-trait-pick-value="${esc(it.name)}" ${on ? "checked" : ""}><span><strong>${esc(inlineTags(it.name))}</strong>${desc ? ` ${desc}` : ""}</span></label>`;
     }).join("")}
     ${picked.length ? `<div class="trait-pick-count">${picked.length} escolhida(s)</div>` : ""}
   </div>`;
+}
+// Traço/item homebrew cadastrado à mão — pra quando o mestre/jogador tem
+// algo de casa que não está (ainda) no banco sincronizado. Fica só nesta
+// ficha (não editando o banco), mas aparece junto das outras
+// características (ver grupo "HOMEBREW / CASA" em renderFeatures) e sai
+// também na ficha em PDF.
+function renderCustomFeatures() {
+  const box = $("custom-feature-list");
+  if (!box) return;
+  const list = character.customFeatures || [];
+  box.innerHTML = list.length ? list.map((f) => `<article class="custom-feature-row" data-custom-feature-id="${esc(f.id)}">
+      <div><b>${esc(f.name || "Sem nome")}</b>${(f.entries || []).map((t) => `<p>${esc(t)}</p>`).join("")}</div>
+      <button type="button" class="remove-btn" data-remove-custom-feature="${esc(f.id)}" title="Remover">×</button>
+    </article>`).join("") : `<p class="muted">Nenhum item homebrew cadastrado ainda.</p>`;
+  box.querySelectorAll("[data-remove-custom-feature]").forEach((b) => b.addEventListener("click", () => {
+    character.customFeatures = (character.customFeatures || []).filter((f) => f.id !== b.dataset.removeCustomFeature);
+    saveCharacter(character); renderCustomFeatures(); renderFeatures();
+  }));
 }
 async function renderFeatures() {
   const box = $("feature-list");
@@ -1936,6 +2116,11 @@ async function renderFeatures() {
       return { name: e.name, level: tl || "—", entries: r.entries };
     })]);
   }
+  // Traços/itens homebrew cadastrados à mão (não vêm do banco sincronizado)
+  // — mesma vitrine das características oficiais, só num grupo à parte.
+  if (character.customFeatures?.length) {
+    groups.push(["HOMEBREW / CASA", character.customFeatures.map((f) => ({ name: f.name, level: "Casa", entries: f.entries }))]);
+  }
   const lvlLabel = (v) => (v == null || v === "") ? "—" : (typeof v === "number" || /^\d/.test(String(v))) ? `Nível ${esc(v)}` : esc(v);
   box.innerHTML = groups.filter((g) => g[1]?.length).map(([name, arr]) =>
     `<section class="feature-group"><h3>${name}</h3>${arr.map((f) => {
@@ -1948,7 +2133,14 @@ async function renderFeatures() {
     const key = i.dataset.traitPick, v = i.dataset.traitPickValue;
     character.choiceSelections.traitPicks = character.choiceSelections.traitPicks || {};
     const cur = character.choiceSelections.traitPicks[key] || [];
-    toggleIn(cur, v, i.checked);
+    // Remove qualquer entrada equivalente pelo nome normalizado (ex.: uma
+    // versão antiga do nome salva antes de um reajuste de texto na fonte)
+    // antes de aplicar a marcação atual, pra não duplicar nem deixar lixo.
+    const norm = normalizeTraitPickName(v);
+    for (let idx = cur.length - 1; idx >= 0; idx--) {
+      if (normalizeTraitPickName(cur[idx]) === norm) cur.splice(idx, 1);
+    }
+    if (i.checked) cur.push(v);
     character.choiceSelections.traitPicks[key] = cur;
     saveCharacter(character);
     // recalc() (não só renderFeatures()) porque algumas escolhas têm efeito
@@ -2772,9 +2964,19 @@ function renderDashboard() {
     ? (character.conditions || []).map((cd) => { const def = CONDITIONS.find((x) => x.key === cd.key); return `<span class="condition-chip" title="${esc(def?.effect || "")}"><b>${esc(def?.label || cd.key)}</b>${cd.rounds != null ? `<span class="cond-duration">${cd.rounds}r</span>` : ""}</span>`; }).join("")
     : `<span class="dash-empty">Nenhuma condição ativa.</span>`;
   const classLabel = refs.class ? `${titleOf(refs.class)}${refs.subclass ? ` (${titleOf(refs.subclass)})` : ""}` : "Sem classe";
+  const primaryHd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
   box.innerHTML = `
     <div class="dash-top">
-      <div class="dash-name">${esc(character.name || "Personagem sem nome")}<small>${esc(classLabel)} · nível ${totalLevel()} · ${refs.race ? esc(titleOf(refs.race)) : "sem espécie"}</small></div>
+      <div class="dash-name">${esc(character.name || "Personagem sem nome")}<small>${esc(classLabel)} · ${refs.race ? esc(titleOf(refs.race)) : "sem espécie"}</small>
+        <div class="dash-level-row no-print">
+          <span class="dash-level-stepper" title="Nível da classe principal (multiclasses têm nível próprio — use o assistente)">
+            <button type="button" id="dash-level-dec" ${Number(character.level) <= 1 ? "disabled" : ""} title="Baixar nível">−</button>
+            <b>nível ${totalLevel()}</b>
+            <button type="button" id="dash-level-inc" ${totalLevel() >= 20 ? "disabled" : ""} title="Subir de nível">+</button>
+          </span>
+          ${refs.class && Number(character.level) > 1 ? `<button type="button" id="dash-roll-hd" title="Rola 1d${primaryHd} pro dado de vida do nível mais recente (o 1º nível já usa o máximo do dado, sem rolagem) e ajusta o PV máximo pela diferença em relação à média já usada — pra quem prefere rolar em vez de pegar a média ao subir de nível">🎲 Rolar dado de vida</button>` : ""}
+        </div>
+      </div>
       <div class="dash-stats">
         <div class="dash-stat"><span>CA</span><b>${c.ac}</b></div>
         <div class="dash-stat"><span>Iniciativa</span><b>${fmt(c.init)}</b></div>
@@ -2799,6 +3001,30 @@ function renderDashboard() {
   $("dash-hp-input")?.addEventListener("change", () => {
     character.hpCurrent = Number($("dash-hp-input").value) || 0;
     saveCharacter(character); recalc();
+  });
+  // Nível direto no painel — antes só dava pra subir de nível passando pelo
+  // assistente guiado, e no celular o campo de nível do cabeçalho some
+  // (.small-box{display:none} no responsivo), então não tinha jeito rápido.
+  // Só mexe no nível da classe principal (character.level); multiclasses
+  // continuam geridas pelo passo próprio do assistente.
+  $("dash-level-dec")?.addEventListener("click", () => {
+    character.level = Math.max(1, (Number(character.level) || 1) - 1);
+    saveCharacter(character); recalc();
+  });
+  $("dash-level-inc")?.addEventListener("click", () => {
+    if (totalLevel() >= 20) { toast("O personagem já está no nível 20."); return; }
+    character.level = Math.max(1, Math.min(20, (Number(character.level) || 1) + 1));
+    saveCharacter(character); recalc();
+    toast(`Nível ${totalLevel()}! Confira "Características" e o assistente pra escolhas novas (talento, magias etc.).`);
+  });
+  $("dash-roll-hd")?.addEventListener("click", () => {
+    const hd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
+    const roll = rollDie(hd), avg = hpAverage(hd), delta = roll - avg;
+    character.hpModifier = (Number(character.hpModifier) || 0) + delta;
+    saveCharacter(character); recalc();
+    const msg = `Dado de vida: d${hd} (${roll}) — média seria ${avg} → PV máximo ${delta >= 0 ? "+" : ""}${delta}`;
+    toast(msg);
+    broadcastRoll("Dado de vida (nível)", `d${hd} (${roll}) vs média ${avg}`, roll, { type: "outro", note: ` — PV máx ${delta >= 0 ? "+" : ""}${delta}` });
   });
   renderTurnActions(); renderConcentration();
 }
@@ -4750,7 +4976,9 @@ function applyLoaded(c) {
     // Ataques salvos antes do cálculo automático (só bônus/dano em texto
     // livre) continuam mostrando o texto digitado — viram modo "manual"
     // em vez de recalcular do zero e perder o que a pessoa já tinha escrito.
-    attacks: Array.isArray(c?.attacks) ? c.attacks.map((a) => ({ abilityMode: a?.bonus && !a?.abilityMode ? "manual" : "str", proficient: false, itemBonus: 0, ...a })) : [],
+    // damageParts migra o texto livre de dano ("1d8+1 cortante") pros campos
+    // separados (dado/bônus/tipo) na primeira vez que a ficha é aberta.
+    attacks: Array.isArray(c?.attacks) ? c.attacks.map((a) => { const base = { abilityMode: a?.bonus && !a?.abilityMode ? "manual" : "str", proficient: false, itemBonus: 0, ...a }; base.damageParts = migrateDamageParts(base); return base; }) : [],
     multiclasses: Array.isArray(c?.multiclasses)
       ? c.multiclasses.map((m) => ({ classId: m?.classId || "", subclassId: m?.subclassId || "", level: Math.max(1, Math.min(19, Number(m?.level) || 1)) }))
       : [],
@@ -4767,6 +4995,7 @@ function applyLoaded(c) {
     companions: Array.isArray(c?.companions) ? c.companions : [],
     buffs: Array.isArray(c?.buffs) ? c.buffs : [],
     extraFeats: Array.isArray(c?.extraFeats) ? c.extraFeats : [],
+    customFeatures: Array.isArray(c?.customFeatures) ? c.customFeatures : [],
     rolledSet: Array.isArray(c?.rolledSet) ? c.rolledSet : null,
     arrayAssignment: { ...(c?.arrayAssignment || {}) },
     turnActions: { ...f.turnActions, ...(c?.turnActions || {}) },
@@ -4926,7 +5155,7 @@ async function buildOfficialSheet() {
           <div class="off-oval"><span>Tamanho</span><b>${esc(offSizeLabel())}</b></div>
           <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
         </div>
-        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.damage || "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
+        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.name ? attackDamageSummary(a) : "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
         ${offBox("Características de Classe", offFeatureNames([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]) + `<p class="off-muted off-feature-note">Texto completo na próxima página.</p>`)}
       </div>
     </div>
@@ -4934,6 +5163,7 @@ async function buildOfficialSheet() {
     <div class="off-row3">
       ${offBox("Características Raciais", offFeatureLines(raceTraits, 500))}
       ${offBox("Talentos", offFeatureLines(feats, 500))}
+      ${character.customFeatures?.length ? offBox("Homebrew / Casa", offFeatureLines(character.customFeatures, 500)) : ""}
     </div>
   </div>`;
 
@@ -5347,7 +5577,8 @@ function foundryWeaponAbility(a) {
   return "str";
 }
 function foundryWeaponItem(a) {
-  const descLines = [a.damage ? `Dano: ${esc(a.damage)}` : "", a.range ? `Distância: ${esc(a.range)}` : ""].filter(Boolean);
+  const dmgSummary = attackDamageSummary(a);
+  const descLines = [dmgSummary && dmgSummary !== "—" ? `Dano: ${esc(dmgSummary)}` : "", a.range ? `Distância: ${esc(a.range)}` : ""].filter(Boolean);
   return {
     name: a.name || "Ataque", type: "weapon", img: "icons/svg/sword.svg",
     system: {
@@ -5490,6 +5721,7 @@ function setup() {
   }
   $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); renderDeath(calc()); renderDashboard(); });
   $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); renderDashboard(); });
+  $("hp-modifier-input").addEventListener("input", () => { character.hpModifier = Number($("hp-modifier-input").value) || 0; saveCharacter(character); recalc(); });
   $("ac-input").addEventListener("input", () => { character.ac = Number($("ac-input").value) || null; character.manualAc = $("ac-input").value !== ""; recalc(); });
   $("speed-input").addEventListener("input", () => { character.speed = $("speed-input").value || "30 ft"; character.manualSpeed = true; recalc(); });
   $("spell-ability-override")?.addEventListener("change", () => {
@@ -5507,7 +5739,7 @@ function setup() {
     $(`tab-${b.dataset.tab}`).classList.add("active");
     if (b.dataset.tab === "equipment") await equipmentTab();
     if (b.dataset.tab === "spells") await renderSpells();
-    if (b.dataset.tab === "features") await renderFeatures();
+    if (b.dataset.tab === "features") { renderCustomFeatures(); await renderFeatures(); }
     if (b.dataset.tab === "notes") { renderJournal(); renderCompanions(); }
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
@@ -5573,7 +5805,17 @@ function setup() {
     $("creator").classList.toggle("collapsed");
     $("collapse-creator").textContent = $("creator").classList.contains("collapsed") ? "Expandir" : "Recolher";
   });
-  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", damage: "", range: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0 }); saveCharacter(character); renderAttacks(); });
+  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }); saveCharacter(character); renderAttacks(); });
+  $("add-custom-feature").addEventListener("click", () => {
+    const name = $("custom-feature-name").value.trim();
+    const text = $("custom-feature-text").value.trim();
+    if (!name) { toast("Dê um nome pro item/traço."); return; }
+    character.customFeatures = character.customFeatures || [];
+    character.customFeatures.push({ id: `cf-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`, name, entries: text ? [text] : [] });
+    $("custom-feature-name").value = ""; $("custom-feature-text").value = "";
+    saveCharacter(character); renderCustomFeatures(); renderFeatures();
+    toast("Item homebrew adicionado.");
+  });
   $("add-condition")?.addEventListener("click", openConditionPicker);
   $("next-round")?.addEventListener("click", advanceRound);
   $("short-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso curto? Restaura os recursos que recuperam em descanso curto (e espaços de Pacto, se houver).")) shortRest(); });

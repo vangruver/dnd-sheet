@@ -324,10 +324,16 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .asi-modes{display:flex;gap:6px;margin:8px 0}
 .asi-mode{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text-dim);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:600}
 .asi-mode.active{border-color:var(--red);background:var(--red-soft);color:#fff}
-.asi-picks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.asi-pick{display:flex;align-items:center;gap:6px;font-size:11px}
+.asi-picks{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;max-width:100%}
+.asi-pick{display:flex;align-items:center;gap:6px;font-size:11px;max-width:100%;min-width:0}
 .asi-pick>span{color:var(--red-hi);font-weight:700}
 .asi-pick select{background:var(--surface-3);border:1px solid var(--border-2);color:var(--text);border-radius:var(--radius-xs);padding:5px 7px}
+/* O <select> de talento (featSelect) fica solto dentro de .asi-picks, sem o
+   wrapper .asi-pick — como o nome do talento mais longo pode ser bem
+   comprido, o <select> fechado tende a ficar mais largo que o card e estourar
+   a margem em telas de celular. min-width:0 permite encolher dentro do flex
+   e max-width trava no tamanho do container. */
+.asi-picks>select{flex:1 1 220px;min-width:0;max-width:100%;background:var(--surface-3);border:1px solid var(--border-2);color:var(--text);border-radius:var(--radius-xs);padding:5px 7px}
 
 /* ---------- Abas ---------- */
 .tabs{display:flex;gap:5px;margin:16px 0;flex-wrap:wrap}
@@ -368,6 +374,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .ability-box em{order:2;font-style:normal;font:800 24px/1 var(--font-head);color:var(--text)}
 .ability-box b{order:3;display:inline-flex;align-items:center;gap:4px;font:700 11px var(--font-head);color:var(--text-dim);background:var(--surface-3);border:1px solid var(--border);border-radius:20px;padding:1px 9px;min-width:34px;justify-content:center}
 .ability-box b i{font-style:normal;font-size:9px;font-weight:700;color:var(--red-hi)}
+/* Botão de resistência dentro do box do atributo — order:4 pra ficar sempre
+   por último (nome → modificador → valor → resistência), já que ele entra
+   no mesmo flex column dos outros itens (que usam order pra reordenar). */
+.ability-save-btn{order:4;margin-top:1px;font:700 9px var(--font-head);color:var(--text-dim);background:var(--surface-3);border:1px solid var(--border-2);border-radius:20px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.ability-save-btn:hover{border-color:var(--red);color:var(--red-hi)}
+.ability-save-btn.prof{border-color:var(--red);color:var(--red-hi);background:var(--red-soft)}
 
 /* ---------- Defesa & movimento ---------- */
 .defense-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -423,6 +435,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .identity-row{display:grid;grid-template-columns:96px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
 .identity-row:last-child{border-bottom:0}
 .identity-row>span{color:var(--text-mut);font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.identity-row input{width:100%;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 8px;font-size:12px}
 
 /* ---------- Detalhes do personagem ---------- */
 .full-span{grid-column:1/-1}
@@ -575,6 +588,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .feature table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}
 .feature th,.feature td{border:1px solid var(--border);padding:5px 7px;text-align:left}
 .feature th{background:var(--surface-2)}
+.custom-feature-form{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.custom-feature-form input,.custom-feature-form textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 9px;font:inherit;resize:vertical}
+.custom-feature-row{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;border-top:1px solid var(--border);padding:9px 0;font-size:12px}
+.custom-feature-row:first-child{border-top:0}
+.custom-feature-row b{font:600 12px var(--font-head)}
+.custom-feature-row p{margin:4px 0 0;color:var(--text-dim)}
 .trait-pick-list{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 .trait-pick-option{display:flex;align-items:flex-start;gap:7px;background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;cursor:pointer;transition:.13s;margin-bottom:5px}
 .trait-pick-option:hover{border-color:var(--red-dim)}
@@ -854,6 +873,13 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .dash-top{display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between}
 .dash-name{font:700 16px var(--font-head);color:var(--text)}
 .dash-name small{display:block;font:400 11px var(--font);color:var(--text-mut);margin-top:2px}
+.dash-level-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px}
+.dash-level-stepper{display:inline-flex;align-items:center;gap:7px;font:700 11px var(--font-head);color:var(--text);background:var(--surface-3);border:1px solid var(--border-2);border-radius:20px;padding:3px 4px 3px 12px}
+.dash-level-stepper button{width:22px;height:22px;line-height:1;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:50%;font-size:14px;font-weight:700;padding:0}
+.dash-level-stepper button:hover:not(:disabled){border-color:var(--red);color:var(--red-hi)}
+.dash-level-stepper button:disabled{opacity:.4}
+#dash-roll-hd{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:5px 10px;font-size:11px;font-weight:600}
+#dash-roll-hd:hover{border-color:var(--red)}
 .dash-stats{display:flex;gap:8px;flex-wrap:wrap}
 .dash-stat{background:var(--surface-3);border:1px solid var(--border-2);border-radius:var(--radius-xs);padding:7px 12px;text-align:center;min-width:64px}
 .dash-stat span{display:block;font-size:7.5px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.06em}
@@ -952,10 +978,24 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .attack-card-top{display:grid;grid-template-columns:1.6fr .9fr .9fr 1fr 26px;gap:6px;align-items:center}
 .attack-card-controls{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:7px;align-items:center}
 .attack-card-controls select,.attack-card-controls input{width:100%;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 7px;font-size:11px}
-.attack-total{font:800 15px var(--font-head);color:var(--red-hi);text-align:center;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px}
+.attack-total{font:800 15px var(--font-head);color:var(--red-hi);text-align:center;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px;min-width:0;overflow-wrap:break-word}
+/* O resumo de dano ("1d8+3 cortante + 1d6 fogo") pode ficar bem mais
+   comprido que o bônus de ataque (só um número) — fonte menor e quebra de
+   linha pra não estourar a coluna estreita do grid em telas pequenas. */
+.attack-total.dmg-summary{font:700 11px var(--font-head);line-height:1.3}
+.attack-damage-parts{margin-top:7px;display:flex;flex-direction:column;gap:6px}
+.dmg-part-row{display:grid;grid-template-columns:1fr .7fr 1.3fr 24px;gap:6px;align-items:center}
+.dmg-part-row input,.dmg-part-row select{width:100%;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 7px;font-size:11px}
+.dmg-part-row .remove-btn{width:24px;height:24px;padding:0}
+.add-dmg-part{align-self:flex-start;border:1px dashed var(--border-2);background:transparent;color:var(--text-dim);border-radius:var(--radius-xs);padding:5px 9px;font-size:10px;font-weight:600}
+.add-dmg-part:hover{border-color:var(--red);color:var(--text)}
 .attack-roll-row{display:flex;gap:6px;margin-top:7px;align-items:center;flex-wrap:wrap}
 .attack-roll-row button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:6px 11px;font-size:11px;font-weight:600}
 .attack-roll-row button:hover{border-color:var(--red)}
+.toggle-edit-btn{color:var(--text-dim)!important}
+/* Ataque "com edição fechada" some com os campos de configurar (ataque já
+   pronto, só falta rolar) — os dados continuam intactos, só escondidos. */
+.attack-card.collapsed .attack-card-controls,.attack-card.collapsed .attack-damage-parts{display:none}
 .attack-roll-result{font-size:12px;color:var(--text-dim)}
 .attack-roll-result b{color:var(--text);font:800 15px var(--font-head)}
 .attack-roll-result .crit{color:var(--green)}
@@ -1080,8 +1120,23 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   .catalog-grid,.picker-grid{grid-template-columns:repeat(2,1fr)}
   .auto-choices{grid-template-columns:1fr}
   .ability-editor{grid-template-columns:repeat(2,1fr)}
-  .attack-card-top{grid-template-columns:1.4fr 1fr 1fr 26px}
+  /* O grid original só declarava 4 colunas pros 5 campos do topo do card
+     (nome, resumo de dano, bônus, notas, remover) — o 5º item (remover)
+     transbordava pra uma linha própria ocupando quase a largura toda, e
+     "notas" ficava espremido na coluna de 26px. Usa áreas nomeadas pra
+     cada campo cair no lugar certo em vez de depender só da ordem. */
+  .attack-card-top{grid-template-columns:1fr 1fr 26px;grid-template-areas:"aname aname aremove" "adamage atotal atotal" "anotes anotes anotes"}
+  .attack-card-top input[data-a="name"]{grid-area:aname}
+  .attack-card-top .attack-total.dmg-summary{grid-area:adamage}
+  .attack-card-top .attack-total:not(.dmg-summary){grid-area:atotal}
+  .attack-card-top input[data-a="notes"]{grid-area:anotes}
+  .attack-card-top .remove-btn{grid-area:aremove}
   .attack-card-controls{grid-template-columns:repeat(2,1fr)}
+  .dmg-part-row{grid-template-columns:1fr 1fr 26px;grid-template-areas:"ddice dtype dremove" "dbonus dtype dremove"}
+  .dmg-part-row input[data-dmg-dice]{grid-area:ddice}
+  .dmg-part-row input[data-dmg-bonus]{grid-area:dbonus}
+  .dmg-part-row select[data-dmg-type]{grid-area:dtype}
+  .dmg-part-row .remove-btn,.dmg-part-row span{grid-area:dremove}
   .template-grid,.condition-picker{grid-template-columns:1fr}
   .companion-card-stats{grid-template-columns:1fr 1fr}
   .companion-attack-row{grid-template-columns:1fr 1fr}

@@ -180,7 +180,7 @@
       </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div>
       <div id="ud-note" class="ud-note hidden"></div>
       <div class="two-input manual-override no-print"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section>
-      <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div id="death-panel"></div></section>
+      <section class="paper-card hp-card"><h2>Pontos de Vida</h2><div class="hp-max"><strong id="v-hp-max">8</strong><span>PV máximos</span></div><div class="two-input"><label>Atuais<input id="hp-current" type="number"></label><label>Temporários<input id="hp-temp" type="number" value="0"></label></div><div class="two-input manual-override no-print"><label>Modificador de PV máx.<input id="hp-modifier-input" type="number" placeholder="0" title="Soma direto no PV máximo — pra talentos/traços fora da conta padrão de dado de vida + CON, ex.: Robusto (Tough): +2 por nível, então o total sobe conforme o personagem avança"></label></div><div id="death-panel"></div></section>
       <section class="paper-card saves-card"><h2>Testes de Resistência</h2><div id="save-list" class="check-list"></div></section>
       <section class="paper-card skills-card"><h2>Perícias</h2><div id="skill-list" class="skill-grid"></div></section>
       <section class="paper-card identity-card"><h2>Identidade & Fontes</h2><div id="identity"></div></section>
@@ -230,6 +230,16 @@
 
   <section class="tab-page" id="tab-features"><div class="page-title"><h2>Características</h2><p>Características da classe, subclasse, espécie e background disponíveis até o nível atual.</p></div>
     <section class="paper-card no-print"><input id="feature-search" placeholder="🔍 Buscar característica…"></section>
+    <section class="paper-card no-print" id="custom-feature-card">
+      <h2>+ Homebrew / traço da casa</h2>
+      <p class="muted">Não achou no banco? Cadastre aqui — item, traço racial, regra variante, o que for — e ele aparece junto das outras características, só na sua ficha.</p>
+      <div class="custom-feature-form">
+        <input id="custom-feature-name" placeholder="Nome (ex.: Bênção do Mestre)">
+        <textarea id="custom-feature-text" placeholder="Descrição / efeito…" rows="2"></textarea>
+        <button type="button" class="add-btn" id="add-custom-feature">+ Adicionar</button>
+      </div>
+      <div id="custom-feature-list"></div>
+    </section>
     <div id="feature-list" class="feature-columns"></div></section>
 
   <section class="tab-page" id="tab-equipment"><div class="page-title"><h2>Equipamento & Inventário</h2><p>Catálogo completo de itens do 5etools, separado por tipo. Adicione itens ao inventário e use os filtros.</p></div>
