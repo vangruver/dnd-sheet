@@ -2989,8 +2989,16 @@ function renderDashboard() {
       <div class="concentration-badge" data-concentration-slot></div>
     </div>
     <div class="dash-hp">
+      <div class="dash-hp-delta no-print" title="Dano — escreva um valor e confirme (Enter ou ✓) pra tirar dos PV atuais">
+        <input type="number" min="0" inputmode="numeric" id="dash-hp-dmg" placeholder="dano">
+        <button type="button" id="dash-hp-dmg-btn" title="Aplicar dano">✓</button>
+      </div>
       <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(curHp, maxHp)}" style="width:${pct}%"></div><div class="dash-hp-label">${curHp} / ${maxHp}${character.hpTemp ? ` (+${character.hpTemp} temp)` : ""}</div></div>
-      <input id="dash-hp-input" type="number" value="${curHp}" title="Editar PV atual">
+      <div class="dash-hp-delta no-print" title="Cura — escreva um valor e confirme (Enter ou ✓) pra somar aos PV atuais (não passa do máximo)">
+        <input type="number" min="0" inputmode="numeric" id="dash-hp-heal" placeholder="cura">
+        <button type="button" id="dash-hp-heal-btn" title="Aplicar cura">✓</button>
+      </div>
+      <input id="dash-hp-input" type="number" value="${curHp}" title="Editar PV atual diretamente (define o valor exato)">
     </div>
     ${(slotsHtml || hdHtml || resHtml) ? `<div class="dash-row">
       ${hdHtml ? `<div class="dash-group"><div class="dash-group-title">Dados de vida</div><div class="dash-pips">${hdHtml}</div></div>` : ""}
@@ -3002,6 +3010,23 @@ function renderDashboard() {
     character.hpCurrent = Number($("dash-hp-input").value) || 0;
     saveCharacter(character); recalc();
   });
+  // Caixinhas de dano/cura ao lado da barra de PV — escreve um valor e
+  // confirma (Enter ou o botão ✓) pra somar/subtrair dos PV atuais, sem
+  // precisar calcular a conta na cabeça. Não mexe em PV temporário.
+  const applyHpDelta = (inputId, sign) => {
+    const input = $(inputId);
+    const delta = Number(input.value);
+    if (!input.value || !Number.isFinite(delta) || delta <= 0) { input.value = ""; return; }
+    const max = calc().hp;
+    const cur = character.hpCurrent == null ? max : Number(character.hpCurrent) || 0;
+    character.hpCurrent = Math.max(0, Math.min(max, cur + sign * delta));
+    input.value = "";
+    saveCharacter(character); recalc();
+  };
+  $("dash-hp-dmg")?.addEventListener("keydown", (e) => { if (e.key === "Enter") applyHpDelta("dash-hp-dmg", -1); });
+  $("dash-hp-dmg-btn")?.addEventListener("click", () => applyHpDelta("dash-hp-dmg", -1));
+  $("dash-hp-heal")?.addEventListener("keydown", (e) => { if (e.key === "Enter") applyHpDelta("dash-hp-heal", 1); });
+  $("dash-hp-heal-btn")?.addEventListener("click", () => applyHpDelta("dash-hp-heal", 1));
   // Nível direto no painel — antes só dava pra subir de nível passando pelo
   // assistente guiado, e no celular o campo de nível do cabeçalho some
   // (.small-box{display:none} no responsivo), então não tinha jeito rápido.
