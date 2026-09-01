@@ -41,6 +41,7 @@
       <div class="menu-body">
         <button id="export-character">Exportar JSON</button>
         <label class="file-button">Importar JSON<input id="import-character" type="file" accept=".json,application/json"></label>
+        <button id="share-link-btn" title="Gera um link somente-leitura com o personagem inteiro codificado nele — sem servidor, sem conta. Quem abrir vê a ficha (sem poder editar); o retrato e as notas de sessão não entram no link.">🔗 Link somente-leitura</button>
         <button id="export-foundry" title="Baixa um Actor (Personagem) compatível com o sistema dnd5e do Foundry VTT — importe pela aba de Atores do seu mundo">⇩ Exportar pro Foundry VTT</button>
         <button id="print-character">Imprimir direto</button>
       </div>
@@ -67,7 +68,17 @@
 </header>
 
 <main class="sheet-shell">
+  <div id="view-only-banner" class="view-only-banner hidden" role="status">
+    <span id="view-only-text"></span>
+    <button type="button" id="view-only-copy" class="link-btn">💾 Salvar uma cópia editável</button>
+  </div>
   <section class="sheet-head">
+    <div class="avatar-block" id="avatar-block" title="Clique para adicionar/trocar o retrato">
+      <img id="avatar-img" class="avatar-img hidden" alt="Retrato do personagem">
+      <div class="avatar-placeholder no-print" id="avatar-placeholder">＋<span>Retrato</span></div>
+      <button type="button" id="avatar-remove" class="avatar-remove hidden no-print" title="Remover retrato">×</button>
+      <input type="file" id="avatar-input" accept="image/*" class="hidden">
+    </div>
     <div class="name-block"><input id="name" class="character-name" placeholder="NOME DO PERSONAGEM" aria-label="Nome do personagem"><span>Nome do personagem</span></div>
     <div class="head-box"><span>Classe e nível</span><strong id="head-class">—</strong></div>
     <div class="head-box"><span>Background</span><strong id="head-background">—</strong></div>
@@ -156,6 +167,7 @@
 
   <nav class="tabs no-print" id="tabs">
     <button class="tab active" data-tab="sheet">Ficha</button>
+    <button class="tab" data-tab="actions">Ações</button>
     <button class="tab" data-tab="abilities">Atributos & Talentos</button>
     <button class="tab" data-tab="spells">Magias</button>
     <button class="tab" data-tab="features">Características</button>
@@ -208,6 +220,12 @@
     </div>
   </section>
 
+  <section class="tab-page" id="tab-actions">
+    <div class="page-title"><h2>Ações</h2><p>Tudo que você pode fazer num turno, agrupado por Ação / Ação Bônus / Reação — ataques, magias preparadas com tempo de conjuração instantâneo, recursos de classe e características. Edite cada item na aba de origem (Ficha, Magias, Características).</p></div>
+    <section class="paper-card no-print"><h2>Turno Atual</h2><div class="turn-actions" data-turn-actions-slot></div></section>
+    <div id="actions-board" class="actions-board"><div class="empty">Escolha uma classe pra ver as ações disponíveis.</div></div>
+  </section>
+
   <section class="tab-page" id="tab-abilities"><div class="page-title"><h2>Atributos & Talentos</h2><p>Valores editáveis. A ficha recalcula os modificadores e bônus.</p></div><div class="wide-grid"><section class="paper-card"><h2>Seis atributos</h2><div class="pointbuy-bar" id="pointbuy-bar"><label class="ability-mode-label">Modo<select id="ability-mode">
       <option value="pointbuy">Point buy (27 pontos)</option>
       <option value="standard">Array Padrão (15,14,13,12,10,8)</option>
@@ -255,6 +273,7 @@
         <label>PO<input id="coin-po" type="number" min="0" value="0"></label>
         <label>PL<input id="coin-pl" type="number" min="0" value="0"></label>
       </div>
+      <div id="carry-summary" class="carry-summary"></div>
       <div id="inventory-list"></div></section>
     <section id="equipment-catalog" class="paper-card hidden"><h2>Catálogo</h2><div id="equipment-list" class="catalog-grid"></div></section>
   </section>

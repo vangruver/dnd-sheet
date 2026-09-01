@@ -106,16 +106,20 @@ export function parseDiceExpr(expr) {
 // Superioridade, Forma Selvagem etc. sem precisar de dados por classe
 // escritos à mão: qualquer classe (oficial ou homebrew) cuja tabela
 // tenha uma coluna com um desses nomes ganha o rastreador automaticamente.
+// turnAction: o que esse recurso custa pra usar num turno de combate — usado
+// pela aba "Ações" pra agrupar por Ação/Ação Bônus/Reação. "special" cobre o
+// que não é um gasto de ação padrão (parte de outra ação, ou só fora de
+// combate, como a Recuperação Arcana no descanso curto).
 export const CLASS_RESOURCE_COLUMNS = [
-  { key: "rage", re: /^rage/i, label: "Fúria", rest: "long", die: null },
-  { key: "ki", re: /^(ki|focus) points?/i, label: "Pontos de Ki / Foco", rest: "short", die: null },
-  { key: "sorcery", re: /^sorcery points?/i, label: "Pontos de Feitiçaria", rest: "long", die: null },
-  { key: "bardic", re: /^bardic inspiration/i, label: "Inspiração de Bardo", rest: "long", die: null },
-  { key: "channelDivinity", re: /^channel divinity/i, label: "Canalizar Divindade", rest: "short", die: null },
-  { key: "superiority", re: /^superiority dice/i, label: "Dados de Superioridade", rest: "short", die: null },
-  { key: "wildShape", re: /^wild shape/i, label: "Forma Selvagem", rest: "short", die: null },
-  { key: "arcaneRecovery", re: /^arcane recovery/i, label: "Recuperação Arcana", rest: "long", die: null },
-  { key: "secondWind", re: /^second wind/i, label: "Retomar o Fôlego", rest: "short", die: null },
+  { key: "rage", re: /^rage/i, label: "Fúria", rest: "long", die: null, turnAction: "bonus" },
+  { key: "ki", re: /^(ki|focus) points?/i, label: "Pontos de Ki / Foco", rest: "short", die: null, turnAction: "bonus" },
+  { key: "sorcery", re: /^sorcery points?/i, label: "Pontos de Feitiçaria", rest: "long", die: null, turnAction: "bonus" },
+  { key: "bardic", re: /^bardic inspiration/i, label: "Inspiração de Bardo", rest: "long", die: null, turnAction: "bonus" },
+  { key: "channelDivinity", re: /^channel divinity/i, label: "Canalizar Divindade", rest: "short", die: null, turnAction: "action" },
+  { key: "superiority", re: /^superiority dice/i, label: "Dados de Superioridade", rest: "short", die: null, turnAction: "special" },
+  { key: "wildShape", re: /^wild shape/i, label: "Forma Selvagem", rest: "short", die: null, turnAction: "action" },
+  { key: "arcaneRecovery", re: /^arcane recovery/i, label: "Recuperação Arcana", rest: "long", die: null, turnAction: "special" },
+  { key: "secondWind", re: /^second wind/i, label: "Retomar o Fôlego", rest: "short", die: null, turnAction: "bonus" },
 ];
 
 // ------------------------------------------------------------
