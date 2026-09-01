@@ -51,7 +51,7 @@ let wizardIndex = 0;
 let creationMode = getSavedCreationMode();
 
 const fresh = () => ({
-  schema: 1, name: "", level: 1, xp: 0, inspiration: 0, edition: "2024", content: "all", abilityMode: "pointbuy",
+  schema: 1, name: "", avatar: null, level: 1, xp: 0, inspiration: 0, edition: "2024", content: "all", abilityMode: "pointbuy",
   classId: "", subclassId: "", raceId: "", backgroundId: "",
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
@@ -79,6 +79,92 @@ const labelMeta = (x) => `${contentLabel(x)} · ${editionLabel(x)}${x?.source ? 
 const sourceTag = (x) => `<span class="tag ${ext(x) ? "external" : hb(x) ? "brew" : pre(x) ? "prerelease" : "official"}">${contentLabel(x).toUpperCase()}${x?.source ? ` · ${esc(x.source)}` : ""}</span>`;
 const titleOf = (x) => String(x?.name || "Sem nome");
 const typeLabel = (t) => ({ class: "Classe", subclass: "Subclasse", race: "Espécie/Raça", background: "Background", spell: "Magia", item: "Item", feat: "Talento", optionalfeature: "Opção", classFeature: "Característica", subclassFeature: "Característica" }[normType(t)] || t);
+
+// ------------------------------------------------------------
+// Link somente-leitura compartilhável — comprime o personagem (gzip
+// nativo do navegador, com um modo sem compressão de reserva pros poucos
+// navegadores sem CompressionStream) em base64url no hash da URL
+// (#share=gz:<dados>). Sem servidor: quem abre roda o MESMO app, e como a
+// automação (classe/raça/magias) já vem do 5etools ao vivo, o link só
+// precisa guardar as escolhas — nada calculado embutido. O retrato (imagem
+// pesada em base64) e as notas de sessão (privadas, podem ser longas)
+// ficam de fora de propósito.
+// ------------------------------------------------------------
+let viewOnlyMode = false;
+function base64UrlEncode(bytes) {
+  let bin = "";
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+function base64UrlDecode(str) {
+  const b64 = str.replace(/-/g, "+").replace(/_/g, "/");
+  const bin = atob(b64 + (b64.length % 4 ? "=".repeat(4 - (b64.length % 4)) : ""));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+async function gzipEncode(text) {
+  const bytes = new TextEncoder().encode(text);
+  if (typeof CompressionStream === "undefined") return `raw:${base64UrlEncode(bytes)}`;
+  const stream = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
+  return `gz:${base64UrlEncode(new Uint8Array(await new Response(stream).arrayBuffer()))}`;
+}
+async function gzipDecode(payload) {
+  const sep = payload.indexOf(":");
+  const mode = payload.slice(0, sep), bytes = base64UrlDecode(payload.slice(sep + 1));
+  if (mode === "raw") return new TextDecoder().decode(bytes);
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+  return new TextDecoder().decode(await new Response(stream).arrayBuffer());
+}
+const SHARE_EXCLUDE_KEYS = ["avatar", "journal"];
+function shareSnapshot(c) {
+  const out = { ...c };
+  for (const k of SHARE_EXCLUDE_KEYS) delete out[k];
+  return out;
+}
+async function buildShareUrl() {
+  const payload = await gzipEncode(JSON.stringify(shareSnapshot(character)));
+  const url = new URL(location.href);
+  url.hash = `share=${payload}`;
+  return url.toString();
+}
+async function decodeShareHash(hash) {
+  const m = /^#?share=(.+)$/.exec(hash);
+  if (!m) return null;
+  try { return JSON.parse(await gzipDecode(decodeURIComponent(m[1]))); }
+  catch (err) { console.error("Link somente-leitura inválido ou corrompido:", err); return null; }
+}
+// Lista branca de controles que continuam ativos em modo visualização —
+// só busca/filtro (não mexem no personagem) e navegação entre abas.
+const VIEW_ONLY_SAFE_IDS = new Set([
+  "skin-select", "equipment-search", "weapon-filter", "compendium-search", "compendium-type",
+  "codex-search", "preview-pdf", "print-character", "dashboard-toggle", "collapse-creator", "view-only-copy",
+]);
+// Trava tudo que existe no DOM agora — chamada de novo a cada troca de aba
+// (ver setup()) porque várias abas só renderizam seu conteúdo (com
+// checkboxes/botões novos) na hora do clique, depois do bloqueio inicial.
+function lockViewOnlyControls() {
+  if (!viewOnlyMode) return;
+  document.querySelectorAll("main input, main textarea, main select").forEach((el) => { if (!VIEW_ONLY_SAFE_IDS.has(el.id)) el.disabled = true; });
+  document.querySelectorAll("main button").forEach((el) => {
+    if (el.classList.contains("tab") || VIEW_ONLY_SAFE_IDS.has(el.id) || el.hasAttribute("data-codextype") || el.hasAttribute("data-codexcontent")) return;
+    el.disabled = true;
+  });
+}
+function enterViewOnlyMode() {
+  viewOnlyMode = true;
+  document.body.classList.add("view-only");
+  $("creator")?.classList.add("hidden");
+  $("auto-panel")?.classList.add("hidden");
+  ["characters-btn", "new-character", "save-character", "templates-btn", "random-character", "import-character", "edition", "content", "share-link-btn"]
+    .forEach((id) => { const el = $(id); if (el) el.disabled = true; });
+  lockViewOnlyControls();
+  const banner = $("view-only-banner");
+  if (banner) {
+    banner.classList.remove("hidden");
+    $("view-only-text").textContent = `📖 Modo visualização — esta é a ficha de ${character.name || "um personagem"}, aberta por um link somente-leitura. Nada é salvo neste navegador enquanto estiver assim.`;
+  }
+}
 
 // ------------------------------------------------------------
 // Renderização de texto do formato 5etools
@@ -1604,7 +1690,7 @@ async function recalc() {
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") { renderCustomFeatures(); renderFeatures(); }
   if (active === "spells") renderSpells();
-  if (active === "equipment" && eqCat === "inventory") renderStartingEquipment();
+  if (active === "equipment" && eqCat === "inventory") { renderStartingEquipment(); renderCarryCapacity(); }
 }
 // Quando o personagem tem mais de uma Defesa sem Armadura (clássico
 // Monge/Bárbaro), mostra qual está valendo e deixa trocar na mão — a
@@ -1709,6 +1795,37 @@ function computeProficiencySummary() {
   tools = [...tools, ...manualTools];
   armor = [...new Set(armor)]; weapons = [...new Set(weapons)]; tools = [...new Set(tools)]; armorRaw = [...new Set(armorRaw)];
   return { armor, weapons, tools, armorRaw, saves: character.auto?.classSaves || [] };
+}
+// Redimensiona/comprime a imagem escolhida (câmera do celular facilmente
+// manda 4000×3000+) pra um quadrado de até 320px em JPEG, evitando inchar o
+// localStorage — o personagem inteiro, com o retrato, precisa caber lá.
+function resizeAvatar(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("invalid image"));
+      img.onload = () => {
+        const size = 320;
+        const side = Math.min(img.naturalWidth, img.naturalHeight) || 1;
+        const sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        canvas.getContext("2d").drawImage(img, sx, sy, side, side, 0, 0, size, size);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function renderAvatar() {
+  const has = !!character.avatar;
+  $("avatar-img").src = character.avatar || "";
+  $("avatar-img").classList.toggle("hidden", !has);
+  $("avatar-placeholder").classList.toggle("hidden", has);
+  $("avatar-remove").classList.toggle("hidden", !has);
 }
 function renderProficiencies() {
   const { armor, weapons, tools, saves } = computeProficiencySummary();
@@ -2200,7 +2317,7 @@ function computeClassResources() {
       const id = `${src.key}:${def.key}`;
       if (seen.has(id)) continue;
       seen.add(id);
-      out.push({ id, key: def.key, label: def.label, classLabel: src.label, rest: def.rest, max });
+      out.push({ id, key: def.key, label: def.label, classLabel: src.label, rest: def.rest, max, turnAction: def.turnAction });
     }
   }
   return out;
@@ -2425,6 +2542,103 @@ function renderTurnActions() {
       saveCharacter(character); renderTurnActions();
     }));
   });
+}
+
+// ------------------------------------------------------------
+// Aba "Ações" — junta ataques, recursos de classe, magias preparadas e
+// características de classe/subclasse/talento num painel só, agrupado por
+// Ação/Ação Bônus/Reação (como a aba "Actions" do D&D Beyond). Não introduz
+// dado novo: cada item já existe em outra aba, isso é só uma lente por
+// economia de ação sobre o que já está na ficha.
+// ------------------------------------------------------------
+function spellActionType(sp) {
+  const u = String(sp?.time?.[0]?.unit || "").toLowerCase();
+  return u === "action" || u === "bonus" || u === "reaction" ? u : null;
+}
+// Sem dado estruturado de economia de ação em características/talentos —
+// procura o gatilho no próprio texto da regra (em inglês, como vem do
+// 5etools). Heurística: cobre a maioria dos casos oficiais, mas não é
+// garantida pra homebrew com fraseado diferente.
+function featureActionType(text) {
+  if (/\bas a reaction\b|\breaction to\b/i.test(text)) return "reaction";
+  if (/\bas a bonus action\b|\bbonus action to\b/i.test(text)) return "bonus";
+  if (/\bas an action\b/i.test(text)) return "action";
+  return null;
+}
+async function computeActionsBoard() {
+  const items = { action: [], bonus: [], reaction: [], special: [] };
+  const push = (type, kind, name, detail) => (items[type] || items.special).push({ kind, name, detail });
+
+  for (const a of character.attacks || []) {
+    if (!a.name) continue;
+    push("action", "attack", a.name, `${fmt(computeAttackBonus(a))} para acertar · ${attackDamageSummary(a)}${a.range ? ` · ${a.range}` : ""}`);
+  }
+
+  for (const r of computeClassResources()) {
+    const avail = r.max - resourceUsed(r.id);
+    push(r.turnAction || "special", "resource", r.label, `${r.classLabel} · ${avail}/${r.max} disponível(is)`);
+  }
+
+  const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
+  const seenSpell = new Set();
+  for (const caster of casters) {
+    const spellEd = editionOf(caster.classEntry) === "both" ? character.edition : editionOf(caster.classEntry);
+    try {
+      const all = await spellsForClass(caster.classEntry, caster.subclassEntry, spellEd);
+      for (const sp of all) {
+        const key = `${sp.name}|${sp.source || ""}`;
+        if (seenSpell.has(key) || !character.preparedSpells.includes(key)) continue;
+        const at = spellActionType(sp);
+        if (!at) continue;
+        seenSpell.add(key);
+        push(at, "spell", sp.name, `Magia · Nv. ${spellLevel(sp) === 0 ? "Truque" : spellLevel(sp)}`);
+      }
+    } catch (err) { console.error(err); }
+  }
+  for (const ex of extraSpellRecords()) {
+    const key = `${ex.name}|${ex.source || ""}`;
+    if (seenSpell.has(key) || !character.preparedSpells.includes(key)) continue;
+    const at = spellActionType(ex);
+    if (!at) continue;
+    seenSpell.add(key);
+    push(at, "spell", ex.name, `Magia (avulsa) · Nv. ${spellLevel(ex) === 0 ? "Truque" : spellLevel(ex)}`);
+  }
+
+  const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
+  const subFeats = refs.subclass ? await findSubclassFeatures(refs.subclass, Number(character.level)).catch(() => []) : [];
+  const mcClassFeats = (await Promise.all((details.multiclasses || []).map((m) => m.classEntry ? findClassFeatures(m.classEntry, Number(m.level)).catch(() => []) : Promise.resolve([])))).flat();
+  const mcSubFeats = (await Promise.all((details.multiclasses || []).map((m) => m.subclassEntry ? findSubclassFeatures(m.subclassEntry, Number(m.level)).catch(() => []) : Promise.resolve([])))).flat();
+  const feats = chosenFeatEntities().map((e) => ({ name: e.name, entries: featRec(e).entries }));
+  const seenFeat = new Set();
+  for (const f of [...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats, ...feats]) {
+    if (!f?.name || seenFeat.has(f.name)) continue;
+    const text = plain(f.entries || "");
+    const at = featureActionType(text);
+    if (!at) continue;
+    seenFeat.add(f.name);
+    push(at, "feature", f.name, text.length > 130 ? text.slice(0, 130) + "…" : text);
+  }
+
+  return items;
+}
+const ACTION_TAG_ICON = { attack: "⚔", resource: "●", spell: "✦", feature: "★" };
+const ACTION_TAG_LABEL = { attack: "Ataque", resource: "Recurso", spell: "Magia", feature: "Característica" };
+function actionsColumnHtml(title, hint, list) {
+  return `<div class="actions-col"><div class="actions-col-head"><h3>${esc(title)}</h3><small>${esc(hint)}</small></div>${
+    list.length
+      ? list.map((it) => `<div class="action-item"><span class="action-item-icon" title="${esc(ACTION_TAG_LABEL[it.kind] || "")}">${ACTION_TAG_ICON[it.kind] || "•"}</span><div class="action-item-body"><b>${esc(it.name)}</b><small>${esc(it.detail)}</small></div></div>`).join("")
+      : `<p class="muted action-empty">Nada aqui.</p>`
+  }</div>`;
+}
+async function renderActionsBoard() {
+  const box = $("actions-board");
+  if (!box) return;
+  const items = await computeActionsBoard();
+  box.innerHTML =
+    actionsColumnHtml("Ação", "Ataques, magias e características que consomem sua ação.", items.action) +
+    actionsColumnHtml("Ação Bônus", "Recursos e magias rápidas — só uma por turno.", items.bonus) +
+    actionsColumnHtml("Reação", "O que você pode fazer fora do seu turno.", items.reaction) +
+    actionsColumnHtml("Especial / Fora de combate", "Não consome uma ação padrão — parte de outra ação, ou só vale em descanso.", items.special);
 }
 
 // ------------------------------------------------------------
@@ -3409,17 +3623,50 @@ function weaponFamily(name) {
   if (/dagger|adaga/.test(s)) return "dagger";
   return "";
 }
+// Peso do item: usa o valor manual salvo (x.weight, em libras) quando a
+// pessoa digitou um; senão cai pro peso do registro do compêndio (quando o
+// item veio de lá, via x.id) — itens digitados à mão sem id ficam 0 até
+// alguém preencher.
+function itemWeight(x) {
+  if (x.weight != null && x.weight !== "") { const w = Number(x.weight); if (!Number.isNaN(w)) return w; }
+  return Number(invItemRecord(x)?.weight) || 0;
+}
+// Regra de carga do PHB: capacidade máxima = Força × 15; as faixas de
+// sobrecarga (variante "Encumbrance") a Força × 5/× 10 já dão um aviso útil
+// à mesa mesmo pra quem não usa a variante — moedas contam 50 por libra.
+function carryingCapacity() {
+  const str = Number(effScore("str")) || 10;
+  const itemsWeight = (character.inventory || []).reduce((sum, x) => sum + itemWeight(x) * (Number(x.qty) || 1), 0);
+  const coinsWeight = Object.values(character.coins || {}).reduce((s, n) => s + (Number(n) || 0), 0) / 50;
+  const total = itemsWeight + coinsWeight;
+  return { total, max: str * 15, encumbered: str * 5, heavily: str * 10, str };
+}
+function renderCarryCapacity() {
+  const box = $("carry-summary");
+  if (!box) return;
+  const cc = carryingCapacity();
+  const pct = cc.max > 0 ? Math.min(100, (cc.total / cc.max) * 100) : 0;
+  let cls = "ok", label = "Carga normal";
+  if (cc.total > cc.max) { cls = "critical"; label = "Acima da capacidade! Sem se mover (exceto arrastando)"; }
+  else if (cc.total >= cc.heavily) { cls = "critical"; label = "Muito sobrecarregado (-20 pés, desvantagem em FOR/DES/CON)"; }
+  else if (cc.total >= cc.encumbered) { cls = "warn"; label = "Sobrecarregado (-10 pés de deslocamento)"; }
+  box.innerHTML = `
+    <div class="carry-bar-row"><div class="dash-hp-bar"><div class="dash-hp-fill ${cls}" style="width:${pct}%"></div><div class="dash-hp-label">${cc.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} / ${cc.max} lb</div></div></div>
+    <p class="carry-note muted">${label} · capacidade = Força (${cc.str}) × 15. Sobrecarregado a partir de ${cc.encumbered} lb, muito sobrecarregado a partir de ${cc.heavily} lb (regra opcional de carga do PHB).</p>`;
+}
 async function renderInventory() {
   const arr = character.inventory || [];
   if (arr.some((x) => x.id)) { try { await ensureCatalog("item"); } catch (err) { console.warn("Catálogo de itens indisponível:", err); } }
   $("inventory-list").innerHTML = arr.length ? arr.map((x, i) => {
     const at = armorTypeOf(invItemRecord(x));
     const equipBtn = at ? `<button type="button" class="equip-btn${x.equipped ? " on" : ""}" data-equip-inv="${i}" title="${at === "shield" ? "Escudo" : `Armadura ${{ light: "leve", medium: "média", heavy: "pesada" }[at]}`}">${x.equipped ? "✓ Equipada" : "Equipar"}</button>` : "";
-    return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
+    return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><input type="number" min="0" step="0.1" value="${itemWeight(x) || ""}" placeholder="lb" title="Peso unitário (libras)" data-weight="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
   }).join("") : `<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
-  $("inventory-list").querySelectorAll("[data-qty]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.qty)].qty = Number(i.value) || 0; saveCharacter(character); }));
+  $("inventory-list").querySelectorAll("[data-qty]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.qty)].qty = Number(i.value) || 0; saveCharacter(character); renderCarryCapacity(); }));
+  $("inventory-list").querySelectorAll("[data-weight]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.weight)].weight = i.value === "" ? null : Number(i.value) || 0; saveCharacter(character); renderCarryCapacity(); }));
   $("inventory-list").querySelectorAll("[data-remove-inv]").forEach((b) => b.addEventListener("click", () => { character.inventory.splice(Number(b.dataset.removeInv), 1); saveCharacter(character); renderInventory(); recalc(); }));
   $("inventory-list").querySelectorAll("[data-equip-inv]").forEach((b) => b.addEventListener("click", () => toggleEquip(Number(b.dataset.equipInv))));
+  renderCarryCapacity();
 }
 // Equipar uma armadura de corpo/escudo desequipa automaticamente outro
 // item do mesmo grupo (só dá pra vestir uma armadura e usar um escudo
@@ -5029,6 +5276,7 @@ function applyLoaded(c) {
   $("edition").value = character.edition;
   $("content").value = character.content;
   $("name").value = character.name;
+  renderAvatar();
   $("level").value = character.level;
   $("xp").value = character.xp;
   $("alignment").value = character.alignment || "";
@@ -5235,6 +5483,7 @@ async function buildOfficialSheet() {
     return { label: titleOf(caster.classEntry), level: caster.level, info };
   }).filter((x) => x.info);
   const inv = character.inventory || [];
+  const cc = carryingCapacity();
   const pactInfo = (msi?.perClass || []).find((x) => x.pact)?.pact || null;
   const pactBoxHtml = pactInfo
     ? `<div class="off-slot off-slot-pact"><span>Pacto ${pactInfo.level}º</span><b>${pactInfo.count}</b><div class="off-slot-pips">${Array.from({ length: pactInfo.count }, (_, k) => `<i class="${k < Math.min(pactInfo.count, Number(character.pactSlotsUsed) || 0) ? "on" : ""}"></i>`).join("")}</div></div>`
@@ -5263,6 +5512,7 @@ async function buildOfficialSheet() {
   const page2 = `<div class="off-page off-page-detail">
     <div class="off-page-title"><h2>${esc(character.name || "Personagem")}</h2><span>Detalhes do personagem</span></div>
     <div class="off-detail-grid">
+      ${character.avatar ? offBox("Retrato", `<img class="off-avatar" src="${character.avatar}" alt="Retrato de ${esc(character.name || "personagem")}">`, "off-tall") : ""}
       ${offBox("Aparência", `<p>${esc(character.appearance || "")}</p>`, "off-tall")}
       ${offBox("História &amp; Personalidade", `<p>${esc(character.backstory || "")}</p><div class="off-align"><b>Alinhamento</b> ${esc(character.alignment || "—")}</div>`, "off-tall")}
       ${offBox("Idiomas", `<p>${esc(character.languages || "—")}</p>`)}
@@ -5272,7 +5522,7 @@ async function buildOfficialSheet() {
         <div class="off-training"><b>Armas</b> ${esc(weapons.join(", ") || "—")}</div>
         <div class="off-training"><b>Ferramentas</b> ${esc(tools.join(", ") || "—")}</div>
       `, "off-span2")}
-      ${offBox("Equipamento", inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}${i.equipped ? " (equipado)" : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`, "off-tall off-span2")}
+      ${offBox("Equipamento", (inv.length ? `<ul class="off-list">${inv.map((i) => `<li>${esc(i.name)}${i.qty > 1 ? ` ×${i.qty}` : ""}${i.equipped ? " (equipado)" : ""}</li>`).join("")}</ul>` : `<p class="off-muted">Inventário vazio.</p>`) + `<p class="off-muted off-carry">Peso total: ${cc.total.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} lb · Capacidade: ${cc.max} lb (Força × 15)</p>`, "off-tall off-span2")}
     </div>
   </div>`;
 
@@ -5719,6 +5969,19 @@ function setup() {
   });
   $("content").addEventListener("change", () => { character.content = $("content").value; saveCharacter(character); refreshChoices(); });
   $("name").addEventListener("input", () => { character.name = $("name").value; saveCharacter(character); });
+  $("avatar-block").addEventListener("click", (e) => { if (e.target.id !== "avatar-remove") $("avatar-input").click(); });
+  $("avatar-input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try { character.avatar = await resizeAvatar(file); saveCharacter(character); renderAvatar(); }
+    catch { toast("Não deu pra ler essa imagem."); }
+  });
+  $("avatar-remove").addEventListener("click", (e) => {
+    e.stopPropagation();
+    character.avatar = null;
+    saveCharacter(character); renderAvatar();
+  });
   $("level").addEventListener("input", async () => {
     const extra = (character.multiclasses || []).reduce((n, m) => n + (Number(m.level) || 0), 0);
     const oldLevel = Math.max(1, Number(character.level) || 1);
@@ -5742,7 +6005,7 @@ function setup() {
   $("backstory").addEventListener("input", () => { character.backstory = $("backstory").value; saveCharacter(character); });
   $("inspiration").addEventListener("change", () => { character.inspiration = $("inspiration").checked ? 1 : 0; saveCharacter(character); });
   for (const k of ["cp", "pp", "pe", "po", "pl"]) {
-    $(`coin-${k}`).addEventListener("input", () => { character.coins[k] = Math.max(0, Number($(`coin-${k}`).value) || 0); saveCharacter(character); });
+    $(`coin-${k}`).addEventListener("input", () => { character.coins[k] = Math.max(0, Number($(`coin-${k}`).value) || 0); saveCharacter(character); renderCarryCapacity(); });
   }
   $("hp-current").addEventListener("input", () => { character.hpCurrent = Number($("hp-current").value) || 0; saveCharacter(character); renderDeath(calc()); renderDashboard(); });
   $("hp-temp").addEventListener("input", () => { character.hpTemp = Number($("hp-temp").value) || 0; saveCharacter(character); renderDashboard(); });
@@ -5762,12 +6025,14 @@ function setup() {
     b.classList.add("active");
     document.querySelectorAll(".tab-page").forEach((x) => x.classList.remove("active"));
     $(`tab-${b.dataset.tab}`).classList.add("active");
+    if (b.dataset.tab === "actions") await renderActionsBoard();
     if (b.dataset.tab === "equipment") await equipmentTab();
     if (b.dataset.tab === "spells") await renderSpells();
     if (b.dataset.tab === "features") { renderCustomFeatures(); await renderFeatures(); }
     if (b.dataset.tab === "notes") { renderJournal(); renderCompanions(); }
     if (b.dataset.tab === "codex") await renderCodex();
     if (b.dataset.tab === "compendium") await renderCompendium();
+    lockViewOnlyControls();
   }));
   $("mestre-mode-btn")?.addEventListener("click", async () => {
     document.querySelector(".sheet-shell").classList.add("hidden");
@@ -5874,6 +6139,24 @@ function setup() {
   });
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
+  $("share-link-btn")?.addEventListener("click", async () => {
+    try {
+      const url = await buildShareUrl();
+      await navigator.clipboard.writeText(url);
+      const big = url.length > 6000 ? " Ficou um link grande — pode não passar em apps de mensagem com limite de caracteres (ex.: Discord)." : "";
+      toast(`Link somente-leitura copiado!${big}`);
+    } catch (err) {
+      console.error(err);
+      toast("Não deu pra gerar o link — seu navegador pode não suportar compressão nativa.");
+    }
+  });
+  $("view-only-copy")?.addEventListener("click", () => {
+    const id = createCharacterSlot();
+    saveCharacterAs(id, character);
+    setActiveCharacterId(id);
+    location.hash = "";
+    location.reload();
+  });
   $("export-foundry")?.addEventListener("click", async () => {
     try { downloadJson(await buildFoundryActor(), `${(character.name || "personagem").replace(/[^a-z0-9-_]+/gi, "_")}_foundry.json`); }
     catch (err) { console.error(err); toast("Não foi possível gerar o arquivo pro Foundry."); }
@@ -5978,7 +6261,41 @@ async function checkDataUpdateNotice() {
     `. Clique em "Atualizar agora" para recarregar com os dados novos.`;
   banner.classList.remove("hidden");
 }
+async function loadDatabaseAndApply() {
+  try {
+    await initDatabase((label, done, total) => {
+      $("db-status").textContent = `${label}… ${done}/${total}`;
+    });
+    const s = stats();
+    $("db-status").textContent = `Pronto · ${s.entities.toLocaleString("pt-BR")} registros carregados`;
+    $("db-count").textContent = `${s.entities.toLocaleString("pt-BR")} registros · dados do 5etools (${character.edition})`;
+    applyLoaded(character);
+    return true;
+  } catch (e) {
+    console.error(e);
+    $("db-status").textContent = "Erro ao carregar dados do 5etools";
+    $("db-count").textContent = "Verifique sua conexão e tente “Atualizar dados”.";
+    applyLoaded(character);
+    return false;
+  }
+}
 async function start() {
+  // Link somente-leitura (#share=...): não toca no localStorage nem em
+  // slot nenhum — carrega o personagem embutido no link, direto na
+  // memória, e trava a edição depois que a ficha terminar de montar.
+  const sharedData = location.hash.startsWith("#share=")
+    ? await decodeShareHash(location.hash).catch((err) => { console.error("Link somente-leitura inválido:", err); return null; })
+    : null;
+  if (sharedData) {
+    character = { ...fresh(), ...shareSnapshot(sharedData) };
+    setup();
+    renderRoomChat();
+    setCreationMode("free");
+    await loadDatabaseAndApply();
+    renderCompendium();
+    enterViewOnlyMode();
+    return;
+  }
   migrateLegacyCharacter();
   if (!getActiveCharacterId()) setActiveCharacterId(createCharacterSlot());
   character = loadCharacter() || fresh();
@@ -5989,22 +6306,11 @@ async function start() {
   // "guiado" precisa de ensureCatalog(), então só liga a UI do assistente
   // depois que o banco terminar de carregar, abaixo.
   if (creationMode !== "guided") setCreationMode("free");
-  try {
-    await initDatabase((label, done, total) => {
-      $("db-status").textContent = `${label}… ${done}/${total}`;
-    });
-    const s = stats();
-    $("db-status").textContent = `Pronto · ${s.entities.toLocaleString("pt-BR")} registros carregados`;
-    $("db-count").textContent = `${s.entities.toLocaleString("pt-BR")} registros · dados do 5etools (${character.edition})`;
-    applyLoaded(character);
+  const ok = await loadDatabaseAndApply();
+  if (ok) {
     if (creationMode === "guided") setCreationMode("guided");
     renderCompendium();
     checkDataUpdateNotice().catch((err) => console.warn("Aviso de atualização indisponível:", err));
-  } catch (e) {
-    console.error(e);
-    $("db-status").textContent = "Erro ao carregar dados do 5etools";
-    $("db-count").textContent = "Verifique sua conexão e tente “Atualizar dados”.";
-    applyLoaded(character);
   }
 }
 start();

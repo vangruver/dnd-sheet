@@ -31,6 +31,10 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   lista de subclasses/subespécies. Quando o registro não tem lore estruturada, mostra os traços
   mecânicos com um aviso.
 - **Múltiplos personagens salvos**: botão **"Meus Personagens"** lista todas as fichas salvas neste navegador — cria, alterna, duplica e apaga cada uma independente, sem perder o progresso das outras.
+- **Retrato do personagem**: clique no quadro ao lado do nome pra subir uma foto (redimensionada/comprimida no navegador antes de salvar) — aparece no topo da ficha e na página de detalhes do PDF.
+- **Aba "Ações"**: reúne ataques, magias preparadas com tempo de conjuração instantâneo, recursos de classe (Fúria, Ki, Canalizar Divindade...) e características de classe/talento com gatilho de ação, agrupados por **Ação / Ação Bônus / Reação / Especial** — a visão de "o que eu posso fazer agora" na mesa, sem ficar trocando de aba.
+- **Capacidade de carga**: peso por item de inventário (puxado do compêndio, editável) somado às moedas, com barra colorida contra a capacidade máxima (Força × 15) e aviso de sobrecarga — aparece na aba Equipamento e na ficha em PDF.
+- **Link somente-leitura**: menu **Arquivo → 🔗 Link somente-leitura** comprime o personagem inteiro (gzip nativo do navegador) no próprio link — sem servidor, sem conta. Quem abre vê a ficha travada pra edição, com a opção de salvar uma cópia editável no próprio navegador. O retrato e as notas de sessão ficam de fora pra não inchar o link.
 - **Quatro temas visuais** (barra do topo → **Ajustes → Tema**), salvos no navegador:
   **Noite** (escuro, padrão), **Papel Branco** (claro e silencioso), **Pergaminho**
   (o mesmo papel da ficha impressa — a tela fica igual ao PDF) e **Mesa** (denso, pra
