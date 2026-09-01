@@ -892,6 +892,10 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .dash-hp-fill.critical{background:linear-gradient(90deg,var(--red),var(--red-dim))}
 .dash-hp-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:700 11px var(--font-head);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .dash-hp input{width:56px;text-align:center;background:var(--inset);border:1px solid var(--border-2);color:var(--text);border-radius:var(--radius-xs);padding:5px}
+.dash-hp-delta{display:flex;align-items:center;gap:4px}
+.dash-hp-delta input{width:52px;min-width:0;text-align:center;background:var(--inset);border:1px solid var(--border-2);color:var(--text);border-radius:var(--radius-xs);padding:5px 4px}
+.dash-hp-delta button{width:24px;height:24px;line-height:1;border:1px solid var(--border-2);background:var(--surface-3);color:var(--text-dim);border-radius:50%;font-size:11px;font-weight:700;padding:0}
+.dash-hp-delta button:hover{border-color:var(--red);color:var(--red-hi)}
 .dash-row{display:flex;flex-wrap:wrap;gap:18px}
 .dash-group{flex:1;min-width:160px}
 .dash-group-title{font-size:8px;text-transform:uppercase;color:var(--text-mut);letter-spacing:.07em;margin-bottom:6px}
@@ -1159,6 +1163,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   .attack-row{grid-template-columns:1fr 66px 90px 1fr 26px}
   .details-textareas{grid-template-columns:1fr}
   .dash-top,.dash-row{flex-direction:column;align-items:stretch}
+  /* dano/vida/cura/edição direta não cabem numa linha só em telas
+     estreitas — deixa quebrar em vez de estourar a largura do card
+     (a barra de PV é o item mais largo, então ela decide a quebra). */
+  .dash-hp{flex-wrap:wrap;row-gap:8px}
+  .dash-hp-bar{min-width:140px}
   .buff-row{grid-template-columns:1fr;gap:4px}
   .journal-toolbar{flex-direction:column}
   .modal{padding:0}
