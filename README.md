@@ -51,6 +51,9 @@ Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
   algo no próprio servidor dele, então isso não manda rolagens ao vivo — só o retrato do personagem.
 - **Assistente guiado completo**: espécie → classe → subclasse → nível → background → multiclasse
   (opcional) → atributos → equipamento inicial → revisão, com "voltar" e passos opcionais puláveis.
+- **Aba "Construção"** própria pras escolhas de espécie/classe/subclasse/background/multiclasse e o
+  painel de automação — fica fora da aba "Ficha" pra não poluir a tela de quem já montou o
+  personagem e só quer jogar. Um personagem em branco abre direto nela; um já montado abre na Ficha.
 - **Assistente de "Subir de Nível"**: ao aumentar o nível da classe primária, um resumo mostra o que
   apareceu de novo naquele nível específico — características de classe/subclasse, se abriu uma
   melhoria de atributo/talento (ASI) e se os espaços de magia mudaram — com atalho pras abas
