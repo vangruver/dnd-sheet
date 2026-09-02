@@ -4968,7 +4968,7 @@ async function openLevelUpModal(oldLevel, newLevel) {
     <div class="modal-body">
       <div class="levelup-summary">
         <span class="levelup-chip">+${newLevel - oldLevel} dado(s) de vida</span>
-        ${gotAsi ? `<button type="button" class="levelup-chip action" data-levelup-goto="abilities">⬆ Melhoria de atributo/talento disponível</button>` : ""}
+        ${gotAsi ? `<button type="button" class="levelup-chip action" data-levelup-goto="build">⬆ Melhoria de atributo/talento disponível</button>` : ""}
         ${slotsChanged ? `<button type="button" class="levelup-chip action" data-levelup-goto="spells">✨ Espaços de magia mudaram</button>` : ""}
       </div>
       <h3 class="codex-divider">Novas características</h3>
