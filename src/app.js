@@ -1073,8 +1073,16 @@ function eligibleFeats(categories) {
     return true;
   }).sort((a, b) => Number(hb(a)) - Number(hb(b)) || a.name.localeCompare(b.name, "pt-BR"));
 }
+// Alguns rascunhos de Unearthed Arcana (2022/2023) e classes homebrew não
+// nomeiam a característica "Ability Score Improvement" — chamam-na só de
+// "Feat" ("You gain the Ability Score Improvement Feat or another Feat of
+// your choice"), mas o efeito é o mesmo slot de melhoria/talento.
+function isAsiFeatureName(name) {
+  const n = String(name || "").trim();
+  return /ability score improvement/i.test(n) || /^feat$/i.test(n);
+}
 function asiSlotCount(classFeatures) {
-  return (classFeatures || []).filter((f) => /ability score improvement/i.test(String(f.name || ""))).length;
+  return (classFeatures || []).filter((f) => isAsiFeatureName(f.name)).length;
 }
 function chosenFeatEntities() {
   const out = [];
@@ -4951,7 +4959,7 @@ async function openLevelUpModal(oldLevel, newLevel) {
   }
   newFeats.sort((a, b) => a.level - b.level);
 
-  const gotAsi = newFeats.some((f) => /ability score improvement/i.test(f.name || ""));
+  const gotAsi = newFeats.some((f) => isAsiFeatureName(f.name));
   const infoNew = spellcastingInfoFor(details.classRec, details.subclassRec, newLevel);
   const infoOld = spellcastingInfoFor(details.classRec, details.subclassRec, oldLevel);
   const slotsChanged = !!infoNew && (
