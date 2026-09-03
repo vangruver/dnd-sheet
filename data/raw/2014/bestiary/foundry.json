@@ -125,11 +125,6 @@
 							"value": "+(5 * @srd5e.userchar.classes.ranger.levels)"
 						},
 						{
-							"key": "system.attributes.ac.formula",
-							"mode": "ADD",
-							"value": "+ @srd5e.userchar.pb"
-						},
-						{
 							"key": "system.abilities.dex.bonuses.save",
 							"mode": "ADD",
 							"value": "+ @prof"

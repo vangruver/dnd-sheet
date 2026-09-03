@@ -8857,6 +8857,7 @@
 				"forest",
 				"hill"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/baboon.opus"
@@ -8930,6 +8931,7 @@
 			"environment": [
 				"forest"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/badger.opus"
@@ -18405,6 +18407,7 @@
 				"grassland",
 				"forest"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/deer.opus"
@@ -21867,6 +21870,7 @@
 				"hill",
 				"coastal"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/eagle.opus"
@@ -27800,6 +27804,7 @@
 			"environment": [
 				"underdark"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/giant-fire-beetle.opus"
@@ -31076,6 +31081,7 @@
 				"hill",
 				"urban"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/goat.opus"
@@ -32005,7 +32011,7 @@
 					"type": "variant",
 					"name": "Psychic Gray Ooze",
 					"entries": [
-						"A gray ooze that lives a long time can evolve to become more intelligent and develop limited psionic ability. Such occurrences are more common in gray oozes that live near psioncic creatures such as {@creature mind flayer||mind flayers}, suggesting that the ooze can sense and mimic psionic ability.",
+						"A gray ooze that lives a long time can evolve to become more intelligent and develop limited psionic ability. Such occurrences are more common in gray oozes that live near psionic creatures such as {@creature mind flayer||mind flayers}, suggesting that the ooze can sense and mimic psionic ability.",
 						"A psionic gray ooze has an intelligence score of 6 (-2), as well as the following additional action.",
 						{
 							"type": "entries",
@@ -36377,6 +36383,7 @@
 				"hill",
 				"desert"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/hyena.opus"
@@ -37619,6 +37626,7 @@
 				"grassland",
 				"desert"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/jackal.opus"
@@ -44192,7 +44200,7 @@
 							"type": "entries",
 							"name": "Infestation Spores (1/Day)",
 							"entries": [
-								"The myconid releases spores that burst out in a cloud that fills a 10-foot-radius sphere centered on it, and the cloud lingers for 1 minute. Any flesh-and-blood creature in the cloud when it appears, or that enters it later, must make a {@dc 11} Constitution saving throw. The save DC is 8 + the myconid's Constitution modifier + the myconid's proficiency bonus. On a successful save, the creature can't be infected by these spores for 24 hours. On a failed save, the creature is infected with a disease called the spores of Zuggtmoy) and also gains a random form of indefinite madness (determined by rolling on the Madness of {@creature Zuggtmoy|MTF} table) that lasts until the creature is cured of the disease or dies. While infected in this way, the creature can't be reinfected, and it must repeat the saving throw at the end of every 24 hours, ending the infection on a success. On a failure, the infected creature's body is slowly taken over by fungal growth, and after three such failed saves, the creature dies and is reanimated as a spore servant if it's a humanoid or a Large or smaller beast."
+								"The myconid releases spores that burst out in a cloud that fills a 10-foot-radius sphere centered on it, and the cloud lingers for 1 minute. Any flesh-and-blood creature in the cloud when it appears, or that enters it later, must make a {@dc 11} Constitution saving throw. The save DC is 8 + the myconid's Constitution modifier + the myconid's proficiency bonus. On a successful save, the creature can't be infected by these spores for 24 hours. On a failed save, the creature is infected with a disease called the spores of Zuggtmoy and also gains a random form of indefinite madness (determined by rolling on the Madness of {@creature Zuggtmoy|MTF} table) that lasts until the creature is cured of the disease or dies. While infected in this way, the creature can't be reinfected, and it must repeat the saving throw at the end of every 24 hours, ending the infection on a success. On a failure, the infected creature's body is slowly taken over by fungal growth, and after three such failed saves, the creature dies and is reanimated as a spore servant if it's a humanoid or a Large or smaller beast."
 							]
 						},
 						{
@@ -44360,7 +44368,7 @@
 							"type": "entries",
 							"name": "Infestation Spores (1/Day)",
 							"entries": [
-								"The myconid releases spores that burst out in a cloud that fills a 10-foot-radius sphere centered on it, and the cloud lingers for 1 minute. Any flesh-and-blood creature in the cloud when it appears, or that enters it later, must make a {@dc 12} Constitution saving throw. The save DC is 8 + the myconid's Constitution modifier + the myconid's proficiency bonus. On a successful save, the creature can't be infected by these spores for 24 hours. On a failed save, the creature is infected with a disease called the spores of Zuggtmoy) and also gains a random form of indefinite madness (determined by rolling on the Madness of {@creature Zuggtmoy|MTF} table) that lasts until the creature is cured of the disease or dies. While infected in this way, the creature can't be reinfected, and it must repeat the saving throw at the end of every 24 hours, ending the infection on a success. On a failure, the infected creature's body is slowly taken over by fungal growth, and after three such failed saves, the creature dies and is reanimated as a spore servant if it's a humanoid or a Large or smaller beast."
+								"The myconid releases spores that burst out in a cloud that fills a 10-foot-radius sphere centered on it, and the cloud lingers for 1 minute. Any flesh-and-blood creature in the cloud when it appears, or that enters it later, must make a {@dc 12} Constitution saving throw. The save DC is 8 + the myconid's Constitution modifier + the myconid's proficiency bonus. On a successful save, the creature can't be infected by these spores for 24 hours. On a failed save, the creature is infected with a disease called the spores of Zuggtmoy and also gains a random form of indefinite madness (determined by rolling on the Madness of {@creature Zuggtmoy|MTF} table) that lasts until the creature is cured of the disease or dies. While infected in this way, the creature can't be reinfected, and it must repeat the saving throw at the end of every 24 hours, ending the infection on a success. On a failure, the infected creature's body is slowly taken over by fungal growth, and after three such failed saves, the creature dies and is reanimated as a spore servant if it's a humanoid or a Large or smaller beast."
 							]
 						},
 						{
@@ -53131,6 +53139,7 @@
 			"environment": [
 				"desert"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/scorpion.opus"
@@ -62319,6 +62328,7 @@
 				"hill",
 				"desert"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/vulture.opus"

@@ -6271,7 +6271,7 @@
 							"type": "item",
 							"name": "Pyres",
 							"entries": [
-								"Once every 60 feet within 1 mile of the lair, 10-foot-high gouts of flame rise from the ground. Any creature or object that touches the flame takes 7 ({@damage 2d6} fire damage, though it can take this damage no more than once per round."
+								"Once every 60 feet within 1 mile of the lair, 10-foot-high gouts of flame rise from the ground. Any creature or object that touches the flame takes 7 ({@damage 2d6}) fire damage, though it can take this damage no more than once per round."
 							]
 						},
 						{

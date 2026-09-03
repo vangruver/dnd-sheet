@@ -5158,6 +5158,7 @@
 				"underdark",
 				"urban"
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/cranium-rat.opus"
@@ -5811,12 +5812,6 @@
 			],
 			"source": "VGM",
 			"page": 139,
-			"otherSources": [
-				{
-					"source": "PSX",
-					"page": 30
-				}
-			],
 			"referenceSources": [
 				"ToA",
 				"XMtS"
@@ -10042,12 +10037,6 @@
 			],
 			"source": "VGM",
 			"page": 140,
-			"otherSources": [
-				{
-					"source": "PSX",
-					"page": 29
-				}
-			],
 			"referenceSources": [
 				"ToA"
 			],
@@ -12366,7 +12355,7 @@
 			"otherSources": [
 				{
 					"source": "IMR",
-					"page": 216
+					"page": 54
 				}
 			],
 			"referenceSources": [
@@ -18491,12 +18480,6 @@
 			],
 			"source": "VGM",
 			"page": 140,
-			"otherSources": [
-				{
-					"source": "PSX",
-					"page": 30
-				}
-			],
 			"referenceSources": [
 				"ToA",
 				"XMtS"

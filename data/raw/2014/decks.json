@@ -1242,7 +1242,7 @@
 						"For the simplest reading, draw a single card from the deck. The card presents a message about the day to come, or provides quick guidance concerning an immediate problem."
 					],
 					"seeAlsoBookHeader": [
-						"One-Card Spread|DMTCRG|1|One-Card Spread"
+						"one-card spread|dmtcrg|1|one-card spread"
 					],
 					"positions": [
 						{
@@ -1261,7 +1261,7 @@
 						"The most common form interprets the cards as past, present, and future. Alternatively they might represent a problem, an obstacle, and the solution; or the questioner, another individual, and the relationship between the two."
 					],
 					"seeAlsoBookHeader": [
-						"Three-Card Spread|DMTCRG|1|Three-Card Spread"
+						"three-card spread|dmtcrg|1|three-card spread"
 					],
 					"positions": [
 						{
@@ -1292,7 +1292,7 @@
 						"A five-card spread allows a question to be answered with great complexity and nuance, as the cards show multiple perspectives and weave an interconnected story."
 					],
 					"seeAlsoBookHeader": [
-						"Five-Card Spread|DMTCRG|1|Five-Card Spread"
+						"five-card spread|dmtcrg|1|five-card spread"
 					],
 					"positions": [
 						{
@@ -3362,7 +3362,7 @@
 						"{@note Madam Eva's reading determines the location of three treasures, the identity of an ally, and the location of Strahd himself.}"
 					],
 					"seeAlsoAdventureHeader": [
-						"Fortunes of Ravenloft|CoS|2|Fortunes of Ravenloft"
+						"fortunes of ravenloft|cos|2|fortunes of ravenloft"
 					],
 					"positions": [
 						{
@@ -3681,7 +3681,7 @@
 						"A one-card reading is good for a quick check-in. It can be used to obtain clarity on a choice that you need to make or to keep a message in the forefront of your mind for the day."
 					],
 					"seeAlsoBookHeader": [
-						"One-Card Spread|TD|0|One-Card Spread"
+						"one-card spread|td|0|one-card spread"
 					],
 					"positions": [
 						{
@@ -3699,7 +3699,7 @@
 						"Three-card readings are most usually used to explain the past, present, and future, but they can also mean \"Problem, Obstacle, Solution\" or \"Thoughts, Feelings, Action.\""
 					],
 					"seeAlsoBookHeader": [
-						"Three-Card Spread|TD|0|Three-Card Spread"
+						"three-card spread|td|0|three-card spread"
 					],
 					"positions": [
 						{
@@ -3730,7 +3730,7 @@
 						"A five-card spread allows the reading to unfold fully and gives a deeper message with more complexity and nuance."
 					],
 					"seeAlsoBookHeader": [
-						"Five-Card Spread|TD|0|Five-Card Spread"
+						"five-card spread|td|0|five-card spread"
 					],
 					"positions": [
 						{

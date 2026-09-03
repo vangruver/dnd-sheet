@@ -2121,7 +2121,7 @@
 				"Magic Item Table I"
 			],
 			"seeAlsoVehicle": [
-				"Apparatus of Kwalish|DMG"
+				"apparatus of kwalish|dmg"
 			],
 			"hasFluffImages": true
 		},
@@ -5702,7 +5702,7 @@
 				"A bombard can float and sail on water, but it can't land safely on the ground (its keel would cause it to roll on its side)."
 			],
 			"seeAlsoVehicle": [
-				"Bombard|AAG"
+				"bombard|aag"
 			]
 		},
 		{
@@ -9632,7 +9632,7 @@
 				"Damselfly ship owners are a proud lot, fond of painting their ships in colorful patterns as well as customizing their vessels with special equipment. Large, private gatherings of damselfly ship owners are not uncommon; they use these get-togethers to show off their ships and to race one another through asteroid belts and other obstacle courses, either for rewards or bragging rights."
 			],
 			"seeAlsoVehicle": [
-				"Damselfly Ship|AAG"
+				"damselfly ship|aag"
 			]
 		},
 		{
@@ -10418,7 +10418,7 @@
 				"Magic Item Table F"
 			],
 			"seeAlsoDeck": [
-				"Deck of Illusions"
+				"deck of illusions"
 			]
 		},
 		{
@@ -11046,8 +11046,8 @@
 				"true resurrection"
 			],
 			"seeAlsoDeck": [
-				"Deck of Many More Things|BMT",
-				"Deck of Many More Things|DMTCRG"
+				"deck of many more things|bmt",
+				"deck of many more things|dmtcrg"
 			],
 			"hasFluffImages": true
 		},
@@ -11119,7 +11119,7 @@
 				"Void Card|BMT"
 			],
 			"seeAlsoDeck": [
-				"Deck of Many Things|BMT"
+				"deck of many things|bmt"
 			]
 		},
 		{
@@ -11557,8 +11557,8 @@
 				"Magic Item Table I"
 			],
 			"seeAlsoDeck": [
-				"Deck of Many Things",
-				"Deck of Many Things (13 Cards)"
+				"deck of many things",
+				"deck of many things (13 cards)"
 			],
 			"hasFluffImages": true
 		},
@@ -12348,7 +12348,7 @@
 				}
 			],
 			"seeAlsoDeck": [
-				"Deck of Several Things|LLK"
+				"deck of several things|llk"
 			]
 		},
 		{
@@ -12818,7 +12818,7 @@
 				"knock"
 			],
 			"seeAlsoDeck": [
-				"Deck of Wonder|BMT"
+				"deck of wonder|bmt"
 			],
 			"hasFluffImages": true
 		},
@@ -14125,7 +14125,7 @@
 			"grantsLanguage": true,
 			"bonusWeapon": "+1",
 			"entries": [
-				"A steel trident decorated with bronze barnacles along the upper part of its haft, Drown has a sea-green jewel just below the tines and a silver shell at the end of its haft. It floats on the surface if dropped onto water, and it floats in place if it is released underwater. The trident is always cool to the touch, and it is immune to any damage due to exposure to water. Drown contains a spark of {@creature Olhydra|pota}, the Princess of Evil Water.",
+				"A steel trident decorated with bronze barnacles along the upper part of its haft, Drown has a sea-green jewel just below the tines and a silver shell at the end of its haft. It floats on the surface if dropped onto water, and it floats in place if it is released underwater. The trident is always cool to the touch, and it is immune to any damage due to exposure to water. Drown contains a spark of {@creature Olhydra|PotA}, the Princess of Evil Water.",
 				"You gain a +1 bonus to attack and damage rolls made with this magic weapon. When you hit with it, the targets take an extra {@damage 1d8} cold damage.",
 				{
 					"name": "Water Mastery",
@@ -17387,7 +17387,7 @@
 				"Typical weapons on a flying fish ship include a forward-mounted mangonel and an aft-mounted ballista."
 			],
 			"seeAlsoVehicle": [
-				"Flying Fish Ship|AAG"
+				"flying fish ship|aag"
 			]
 		},
 		{
@@ -17711,7 +17711,7 @@
 			"vehSpeed": 4,
 			"capCargo": 150,
 			"seeAlsoVehicle": [
-				"Galley"
+				"galley"
 			]
 		},
 		{
@@ -19448,7 +19448,7 @@
 				"Hammerhead ships are popular craft, especially among pirates and merchants carrying heavy cargo. They can float on water and sail across it, but they aren't built to land on the ground (their keels would cause them to tip to one side). Standard weapons on a hammerhead ship include fore and aft mangonels, a ballista, and a reinforced bow for ramming."
 			],
 			"seeAlsoVehicle": [
-				"Hammerhead Ship|AAG"
+				"hammerhead ship|aag"
 			]
 		},
 		{
@@ -21096,6 +21096,8 @@
 				"ToA",
 				"WBtW"
 			],
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "major",
 			"rarity": "rare",
 			"wondrous": true,
@@ -21116,6 +21118,8 @@
 			"name": "Horn of Silent Alarm",
 			"source": "XGE",
 			"page": 137,
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "minor",
 			"rarity": "common",
 			"wondrous": true,
@@ -21147,6 +21151,8 @@
 			"source": "DMG",
 			"page": 175,
 			"srd": true,
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "major",
 			"rarity": "rare",
 			"wondrous": true,
@@ -21165,6 +21171,8 @@
 			"source": "DMG",
 			"page": 175,
 			"srd": true,
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "major",
 			"rarity": "very rare",
 			"wondrous": true,
@@ -21186,6 +21194,8 @@
 			"referenceSources": [
 				"CoA"
 			],
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "major",
 			"rarity": "legendary",
 			"wondrous": true,
@@ -21209,6 +21219,8 @@
 				"KftGV",
 				"ToFW"
 			],
+			"baseItem": "horn|phb",
+			"type": "INS",
 			"tier": "major",
 			"rarity": "rare",
 			"wondrous": true,
@@ -22637,6 +22649,7 @@
 				"GoS",
 				"KftGV"
 			],
+			"baseItem": "lyre|phb",
 			"type": "INS",
 			"tier": "major",
 			"rarity": "rare",
@@ -22681,6 +22694,7 @@
 				"CoS",
 				"NRH-CoI"
 			],
+			"baseItem": "lute|phb",
 			"type": "INS",
 			"tier": "major",
 			"rarity": "uncommon",
@@ -23547,7 +23561,7 @@
 			"rechargeAmount": "{@dice 1d3}",
 			"charges": 3,
 			"entries": [
-				"A {@item war pick|phb} forged from a single piece of iron, Ironfang has a fang-like head inscribed with ancient runes. The pick is heavy in the hand, but when the wielder swings the pick in anger, the weapon seems almost weightless. This weapon is immune to any form of rust, acid, or corrosion\u2014nothing seems to mark it. Ironfang contains a spark of {@creature Ogrémoch|pota}, the Prince of Evil Earth.",
+				"A {@item war pick|phb} forged from a single piece of iron, Ironfang has a fang-like head inscribed with ancient runes. The pick is heavy in the hand, but when the wielder swings the pick in anger, the weapon seems almost weightless. This weapon is immune to any form of rust, acid, or corrosion\u2014nothing seems to mark it. Ironfang contains a spark of {@creature Ogrémoch|PotA}, the Prince of Evil Earth.",
 				"You gain a +2 bonus to attack and damage rolls made with this magic weapon. When you hit with it, the target takes an extra {@damage 1d8} thunder damage.",
 				{
 					"type": "entries",
@@ -24173,7 +24187,7 @@
 				"Keelboats and rowboats are used on lakes and rivers. If going downstream, add the speed of the current (typically 3 miles per hour) to the speed of the vehicle. These vehicles can't be rowed against any significant current, but they can be pulled upstream by draft animals on the shores."
 			],
 			"seeAlsoVehicle": [
-				"Keelboat"
+				"keelboat"
 			]
 		},
 		{
@@ -24746,7 +24760,7 @@
 				"A lamprey can float on water, though it can't land safely on the ground. Lamprey ships that land on the ground have the distressing habit of rolling over, as more than a few crews have discovered to their dismay."
 			],
 			"seeAlsoVehicle": [
-				"Lamprey Ship|AAG"
+				"lamprey ship|aag"
 			]
 		},
 		{
@@ -25558,7 +25572,7 @@
 				"A living ship can float on water and sail across it, but it can't land safely on the ground (its keel would cause it to roll on its side). Its standard weaponry is an aft-mounted ballista."
 			],
 			"seeAlsoVehicle": [
-				"Living Ship|AAG"
+				"living ship|aag"
 			]
 		},
 		{
@@ -25707,7 +25721,7 @@
 			"capPassenger": 150,
 			"capCargo": 10,
 			"seeAlsoVehicle": [
-				"Longship"
+				"longship"
 			]
 		},
 		{
@@ -28342,7 +28356,7 @@
 				"As an action, a creature attuned to a nautiloid's spelljamming helm and in physical contact with the ship can transport the nautiloid and all creatures and objects aboard it to a different plane of existence, at or near a destination envisioned by the spelljammer (or to a random location on the plane if no destination is envisioned). This property is a feature of the ship, not the spelljamming helm. Each time this property is used, roll a {@dice d6}. On a 5\u20136, the property recharges after 1 minute; otherwise, it can't be used again for 24 hours."
 			],
 			"seeAlsoVehicle": [
-				"Nautiloid|AAG"
+				"nautiloid|aag"
 			]
 		},
 		{
@@ -28882,7 +28896,7 @@
 				"Nightspiders are designed for space travel alone and can't float on water or land safely on the ground (the weight of the ship would snap its spindly legs, destroying its weblike rigging in the process). Standard weaponry on a nightspider includes four ballistae (two forward-facing and two aft-facing) and a forward-facing mangonel."
 			],
 			"seeAlsoVehicle": [
-				"Nightspider|AAG"
+				"nightspider|aag"
 			]
 		},
 		{
@@ -36615,7 +36629,7 @@
 				"Keelboats and rowboats are used on lakes and rivers, If going downstream, add the speed of the current (typically 3 miles per hour) to the speed of the vehicle. These vehicles can't be rowed against any significant current, but they can be pulled upstream by draft animals on the shores. A rowboat weighs 100 pounds, in case adventurers carry it over land."
 			],
 			"seeAlsoVehicle": [
-				"Rowboat"
+				"rowboat"
 			]
 		},
 		{
@@ -37378,7 +37392,7 @@
 			"capPassenger": 20,
 			"capCargo": 100,
 			"seeAlsoVehicle": [
-				"Sailing Ship"
+				"sailing ship"
 			]
 		},
 		{
@@ -37713,7 +37727,7 @@
 				"Scorpion ships are archaic metal warships that have never lost their popularity, largely because of their versatility. Articulated legs enable a scorpion ship to land safely on the ground and move across a solid surface at a walking speed of 30 feet. The ship can't float on water, however. A ballista is mounted on the top deck, and a mangonel is perched on the end of the tail. The ship's two claws are relatively inefficient in combat, but a claw that grabs a creature can quickly take it out of action."
 			],
 			"seeAlsoVehicle": [
-				"Scorpion Ship|AAG"
+				"scorpion ship|aag"
 			]
 		},
 		{
@@ -39165,7 +39179,7 @@
 				"Standard weaponry on a shrike ship includes three ballistae\u2014one on the forecastle, one in the middle of the top deck, and one on the sterncastle. In a desperate situation, the ship's reinforced bow can be used as a piercing ram."
 			],
 			"seeAlsoVehicle": [
-				"Shrike Ship|AAG"
+				"shrike ship|aag"
 			]
 		},
 		{
@@ -40261,7 +40275,7 @@
 				"The space galleon is a mainstay among the host of vessels that ply Wildspace and the Astral Sea. Space galleons can easily pass for ordinary seafaring galleons. Because they can land on water and move across it like their namesakes, they can sail into ports on terrestrial worlds without attracting undue attention. Like an ordinary galleon, a space galleon isn't built to land on the ground (its keel would cause it to roll on its side). The ship's standard weaponry includes two forward-mounted ballistae and an aft-mounted mangonel."
 			],
 			"seeAlsoVehicle": [
-				"Space Galleon|AAG"
+				"space galleon|aag"
 			]
 		},
 		{
@@ -41535,7 +41549,7 @@
 				"Squid ships can float and sail on water, and they can land on the ground."
 			],
 			"seeAlsoVehicle": [
-				"Squid Ship|AAG"
+				"squid ship|aag"
 			]
 		},
 		{
@@ -42177,7 +42191,7 @@
 			"dmg2": "1d8",
 			"staff": true,
 			"entries": [
-				"An ornate carving of a serpent adorned with a coursing river spirals down the length of this redand-gold staff. While you're holding it, you can use an action to produce one of the following effects. Once the staff has produced an effect, it can't produce that effect again until the next dawn.",
+				"An ornate carving of a serpent adorned with a coursing river spirals down the length of this red-and-gold staff. While you're holding it, you can use an action to produce one of the following effects. Once the staff has produced an effect, it can't produce that effect again until the next dawn.",
 				{
 					"type": "entries",
 					"name": "Orb of Lightning",
@@ -42884,7 +42898,7 @@
 				"A star moth's hull is fashioned from a grown and sculpted organic substance, and its enormous, decorative wings are made of shimmering crystal. The vessel is built for space travel, but its design does enable it to float on water or land safely on the ground. Standard weaponry includes two ballistae nestled in the star moth's eye holes and a mangonel mounted above the bridge."
 			],
 			"seeAlsoVehicle": [
-				"Star Moth|AAG"
+				"star moth|aag"
 			]
 		},
 		{
@@ -44762,7 +44776,7 @@
 				"The boat can transport up to 1,000 pounds without hindrance. It can carry up to twice this weight, but it moves at half speed if it carries more than its normal capacity."
 			],
 			"seeAlsoVehicle": [
-				"Tasha's Creeping Keelboat|DitLCoT"
+				"tasha's creeping keelboat|ditlcot"
 			],
 			"hasFluffImages": true
 		},
@@ -48500,7 +48514,7 @@
 				"Standard weaponry on a turtle ship includes three forward-mounted ballistae and a rear-facing mangonel. These weapons can't be used while the ship is underwater."
 			],
 			"seeAlsoVehicle": [
-				"Turtle Ship|AAG"
+				"turtle ship|aag"
 			]
 		},
 		{
@@ -48560,7 +48574,7 @@
 				"A tyrant ship can't float on water, but it can safely land on the ground."
 			],
 			"seeAlsoVehicle": [
-				"Tyrant Ship|AAG"
+				"tyrant ship|aag"
 			]
 		},
 		{
@@ -50122,7 +50136,7 @@
 				"The ship's raised back provides high ground for a weapon emplacement, which is typically equipped with a ballista."
 			],
 			"seeAlsoVehicle": [
-				"Wasp Ship|AAG"
+				"wasp ship|aag"
 			]
 		},
 		{

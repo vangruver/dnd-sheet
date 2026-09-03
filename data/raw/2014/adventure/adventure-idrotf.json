@@ -30336,7 +30336,7 @@
 																{
 																	"type": "item",
 																	"name": "First Layer",
-																		"entry": "Under the first layer of ice are 72 gp, 181 sp, 352 cp, and two {@item Pearl||pearls} (100 gp each)."
+																	"entry": "Under the first layer of ice are 72 gp, 181 sp, 352 cp, and two {@item Pearl||pearls} (100 gp each)."
 																}
 															]
 														}
@@ -33833,7 +33833,7 @@
 																{
 																	"type": "item",
 																	"name": "Room and Door Heights",
-																	"entry": "All rooms and passageways are 12 feet high, with flat ceilings and floors unless the text says otherwise. All doorways are 8 feet high and arched; being upside down turns them into concave, 4-foot-high barriers that must be surmounted to get from one room to another)."
+																	"entry": "All rooms and passageways are 12 feet high, with flat ceilings and floors unless the text says otherwise. All doorways are 8 feet high and arched; being upside down turns them into concave, 4-foot-high barriers that must be surmounted to get from one room to another."
 																},
 																{
 																	"type": "item",

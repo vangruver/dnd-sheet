@@ -696,7 +696,8 @@
 												"bludgeoning"
 											]
 										}
-									]
+									],
+									"includeBase": false
 								}
 							}
 						]
@@ -3224,9 +3225,14 @@
 					"transfer": true,
 					"changes": [
 						{
-							"key": "flags.dnd5e.remarkableAthlete",
-							"mode": "OVERRIDE",
-							"value": true
+							"key": "system.skills.ath.roll.mode",
+							"mode": "ADD",
+							"value": 1
+						},
+						{
+							"key": "system.attributes.init.roll.mode",
+							"mode": "ADD",
+							"value": 1
 						}
 					]
 				}
@@ -5800,19 +5806,31 @@
 			"level": 3,
 			"activities": [
 				{
-					"type": "damage",
-					"damage": {
-						"parts": [
+					"type": "heal",
+					"activation": {
+						"type": "bonus"
+					},
+					"consumption": {
+						"targets": [
 							{
-								"custom": {
-									"enabled": true,
-									"formula": "@classes.artificer.levels"
-								},
-								"types": [
-									"temphp"
-								]
+								"type": "itemUses",
+								"value": "1"
 							}
 						]
+					},
+					"target": {
+						"affects": {
+							"type": "self"
+						}
+					},
+					"healing": {
+						"types": [
+							"temphp"
+						],
+						"custom": {
+							"enabled": true,
+							"formula": "@classes.artificer.levels"
+						}
 					}
 				}
 			],

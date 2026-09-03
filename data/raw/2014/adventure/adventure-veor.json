@@ -19366,8 +19366,8 @@
 													"type": "list",
 													"items": [
 														"110 gp and 60 sp in a pouch made of human skin",
-															"Three pieces of cut {@item jade} (worth 100 gp each) in a folded piece of black cloth",
-															"A black leather eye patch with a {@item peridot} (worth 500 gp) sewn into it",
+														"Three pieces of cut {@item jade} (worth 100 gp each) in a folded piece of black cloth",
+														"A black leather eye patch with a {@item peridot} (worth 500 gp) sewn into it",
 														"A chess set with pieces made of obsidian and chalcedony (worth 250 gp)",
 														"A {@item +2 Shortsword}"
 													]
@@ -32086,7 +32086,7 @@
 														"479 sp, 342 gp, and 179 pp",
 														"Jade game board with platinum playing pieces, worth 7,500 gp in total",
 														"Set of ruby earrings worth 500 gp",
-															"Three {@item Fire Opal||fire opals} worth 1,000 gp each"
+														"Three {@item Fire Opal||fire opals} worth 1,000 gp each"
 													]
 												}
 											]
