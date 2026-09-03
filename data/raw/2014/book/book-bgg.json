@@ -581,7 +581,7 @@
 						},
 						{
 							"type": "statblock",
-							"prop": "subclass",
+							"tag": "subclass",
 							"source": "BGG",
 							"name": "Path of the Giant",
 							"shortName": "Giant",

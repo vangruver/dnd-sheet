@@ -5585,9 +5585,9 @@
 				}
 			],
 			"seeAlsoItem": [
-				"Eye and Hand of Vecna|DMG",
-				"Hand of Vecna|DMG",
-				"Eye of Vecna|DMG"
+				"eye and hand of vecna|dmg",
+				"hand of vecna|dmg",
+				"eye of vecna|dmg"
 			],
 			"hasFluff": true,
 			"hasFluffImages": true
@@ -16171,7 +16171,7 @@
 				}
 			],
 			"seeAlsoItem": [
-				"soul coin|BGDIA"
+				"soul coin|bgdia"
 			],
 			"hasFluff": true,
 			"hasFluffImages": true

@@ -10941,7 +10941,7 @@
 							"id": "1bc",
 							"entries": [
 								"While Zariel's attention is focused on the Blood War, power-hungry warlords of the Avernian wastes cobble together heavily armed gangs and lead packs of infernal war machines in brutal combat, carving out vicious fiefdoms for themselves. {@creature Mad Maggie|BGDIA} is one such warlord.",
-								"{@creature Mad Maggie|BGDIA} is a {@creature night hag} with the demeanor of a kindly grandmother, but her warm smile masks a cruel cunning. In addition to her {@i heartstone}, the hag carries a black {@i soul bag} (see the \"Night Hag\" entry in the {@book Monster Manual|MM} for more information on this magic items. The bag contains nine {@item Soul Coin|BGDIA|soul coins}, which {@creature Mad Maggie|BGDIA} uses to power her infernal war machines.",
+								"{@creature Mad Maggie|BGDIA} is a {@creature night hag} with the demeanor of a kindly grandmother, but her warm smile masks a cruel cunning. In addition to her {@i heartstone}, the hag carries a black {@i soul bag} (see the \"Night Hag\" entry in the {@book Monster Manual|MM} for more information on this magic item). The bag contains nine {@item Soul Coin|BGDIA|soul coins}, which {@creature Mad Maggie|BGDIA} uses to power her infernal war machines.",
 								"Years ago, a thirst to experience the ultimate misery brought the night hag to the first layer of the Nine Hells. Followed to Avernus by scores of bloodthirsty redcaps, Maggie found pieces of a beautiful tapestry that chronicled the fall of Zariel. It recounted the angel's descent into Avernus, her betrayal at the hands of the Hellriders, and her submission to Asmodeus, which led to her becoming an archdevil worthy to rule Avernus. {@creature Mad Maggie|BGDIA} is obsessed with Zariel's cataclysmic saga and scours the wastelands of Avernus for more such relics. In the crucible of the Avernian wastelands, {@creature Mad Maggie|BGDIA} has risen to become a respected warlord.",
 								{
 									"type": "image",
@@ -21973,7 +21973,7 @@
 								],
 								[
 									"6",
-									"Falaster Fisk (see \"{@adventure Falaster Fisk|BGDIA|1|Falaster Fisk}\""
+									"Falaster Fisk (see \"{@adventure Falaster Fisk|BGDIA|1|Falaster Fisk}\")"
 								],
 								[
 									"7",

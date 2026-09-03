@@ -330,7 +330,7 @@
 						},
 						{
 							"type": "statblock",
-							"prop": "subclass",
+							"tag": "subclass",
 							"source": "FTD",
 							"name": "Way of the Ascendant Dragon",
 							"shortName": "Ascendant Dragon",
@@ -339,7 +339,7 @@
 						},
 						{
 							"type": "statblock",
-							"prop": "subclass",
+							"tag": "subclass",
 							"source": "FTD",
 							"name": "Drakewarden",
 							"shortName": "Drakewarden",

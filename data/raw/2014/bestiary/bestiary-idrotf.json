@@ -4640,6 +4640,7 @@
 					]
 				}
 			],
+			"familiar": true,
 			"traitTags": [
 				"Hold Breath"
 			],
@@ -4749,6 +4750,7 @@
 					]
 				}
 			],
+			"familiar": true,
 			"traitTags": [
 				"Water Breathing"
 			],
@@ -5928,6 +5930,7 @@
 					]
 				}
 			],
+			"familiar": true,
 			"traitTags": [
 				"Hold Breath",
 				"Keen Senses"

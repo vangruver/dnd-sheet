@@ -301,7 +301,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSK",
 									"name": "Pyromancer (PSK)",
 									"shortName": "Pyromancer (PSK)",

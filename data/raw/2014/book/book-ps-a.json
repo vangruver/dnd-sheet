@@ -344,7 +344,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSA",
 									"name": "Solidarity Domain (PSA)",
 									"shortName": "Solidarity (PSA)",
@@ -353,7 +353,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSA",
 									"name": "Knowledge Domain (PSA)",
 									"shortName": "Knowledge (PSA)",
@@ -362,7 +362,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSA",
 									"name": "Strength Domain (PSA)",
 									"shortName": "Strength (PSA)",
@@ -371,7 +371,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSA",
 									"name": "Ambition Domain (PSA)",
 									"shortName": "Ambition (PSA)",
@@ -380,7 +380,7 @@
 								},
 								{
 									"type": "statblock",
-									"prop": "subclass",
+									"tag": "subclass",
 									"source": "PSA",
 									"name": "Zeal Domain (PSA)",
 									"shortName": "Zeal (PSA)",

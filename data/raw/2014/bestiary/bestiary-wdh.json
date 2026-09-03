@@ -442,6 +442,7 @@
 					]
 				}
 			],
+			"familiar": true,
 			"soundClip": {
 				"type": "internal",
 				"path": "bestiary/rat.opus"
@@ -7111,6 +7112,7 @@
 					]
 				}
 			],
+			"familiar": true,
 			"traitTags": [
 				"Water Breathing"
 			],
