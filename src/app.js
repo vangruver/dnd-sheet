@@ -1948,6 +1948,17 @@ function computeAttackBonus(a) {
   if ((a.abilityMode || "str") === "manual") return parseBonusText(a.bonus);
   return (attackAbilityMod(a) || 0) + (a.proficient ? proficiency(totalLevel()) : 0) + (Number(a.itemBonus) || 0);
 }
+// CD de resistência do ataque, pra armas/magias que exigem um teste de
+// resistência do alvo em vez de uma rolagem de ataque (ex.: sopro de
+// dragão, algumas magias de dano). No modo manual o campo de bônus já
+// guarda a CD final digitada à mão, em vez de um bônus somado a 8.
+function attackDc(a) {
+  if ((a.abilityMode || "str") === "manual") return parseBonusText(a.bonus);
+  return 8 + computeAttackBonus(a);
+}
+function attackTotalLabel(a) {
+  return a.rollType === "save" ? `CD ${attackDc(a)}` : fmt(computeAttackBonus(a));
+}
 let attackRollMessages = {};
 function damageTypeSelectHtml(attr, current) {
   return `<select ${attr} title="Tipo de dano"><option value=""${current ? "" : " selected"}>Tipo de dano —</option>${DAMAGE_TYPES.map((t) =>
@@ -1968,7 +1979,7 @@ function renderAttacks() {
   const arr = character.attacks || [];
   $("attacks").innerHTML = arr.length ? arr.map((a, i) => {
     const manual = (a.abilityMode || "str") === "manual";
-    const total = computeAttackBonus(a);
+    const isSave = a.rollType === "save";
     // Ataque já configurado não precisa mostrar os campos de edição toda
     // vez — "fechar edição" esconde tudo que não é preciso durante o jogo
     // (fica só nome/dano/bônus/notas/rolagem), sem apagar nada.
@@ -1977,20 +1988,24 @@ function renderAttacks() {
       <div class="attack-card-top">
         <input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome (ex.: Espada Longa)">
         <div class="attack-total dmg-summary" data-attack-dmg-summary="${i}" title="Dano — edite as partes abaixo">${esc(attackDamageSummary(a))}</div>
-        <div class="attack-total" data-attack-total="${i}" title="Bônus de ataque calculado (atributo + proficiência + bônus de item)">${fmt(total)}</div>
+        <div class="attack-total" data-attack-total="${i}" title="${isSave ? "CD de resistência calculada (8 + atributo + proficiência + bônus de item)" : "Bônus de ataque calculado (atributo + proficiência + bônus de item)"}">${esc(attackTotalLabel(a))}</div>
         <input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas">
         <button class="remove-btn no-print" data-remove-attack="${i}" title="Remover ataque">×</button>
       </div>
       <div class="attack-card-controls no-print">
-        <select data-a-mode="${i}" title="Atributo usado no bônus de ataque e na 1ª parte do dano">${Object.entries(ATTACK_ABILITY_LABEL).map(([k, l]) => `<option value="${k}"${(a.abilityMode || "str") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
+        <select data-a-rolltype="${i}" title="Ataque: rolagem de d20 contra a CA. CD de Resistência: o alvo é quem rola (ex.: sopro de dragão, magias de dano com resistência)">
+          <option value="attack"${isSave ? "" : " selected"}>🎯 Ataque</option>
+          <option value="save"${isSave ? " selected" : ""}>🛡 CD de Resistência</option>
+        </select>
+        <select data-a-mode="${i}" title="Atributo usado no bônus/CD e na 1ª parte do dano">${Object.entries(ATTACK_ABILITY_LABEL).map(([k, l]) => `<option value="${k}"${(a.abilityMode || "str") === k ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>
         <label title="Soma a proficiência (metade dos ataques costuma ser proficiente)"><input type="checkbox" data-a-prof="${i}" ${a.proficient ? "checked" : ""}> Proficiente</label>
-        <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item" title="Bônus de item mágico (ex.: +1), somado no ataque e na 1ª parte do dano">
-        <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="Bônus manual" title="${manual ? "Bônus de ataque digitado à mão (modo Manual)" : "Só é usado no modo Manual — escolha \"Manual\" no campo de atributo ao lado pra habilitar"}" ${manual ? "" : "disabled"}>
+        <input type="number" data-a-item="${i}" value="${Number(a.itemBonus) || 0}" placeholder="Bônus item" title="Bônus de item mágico (ex.: +1), somado no ataque/CD e na 1ª parte do dano">
+        <input data-a="bonus" data-i="${i}" value="${esc(a.bonus || "")}" placeholder="${manual && isSave ? "CD manual" : "Bônus manual"}" title="${manual ? (isSave ? "CD final digitada à mão (modo Manual)" : "Bônus de ataque digitado à mão (modo Manual)") : "Só é usado no modo Manual — escolha \"Manual\" no campo de atributo ao lado pra habilitar"}" ${manual ? "" : "disabled"}>
         <input data-a="range" data-i="${i}" value="${esc(a.range || "")}" placeholder="Distância (ex.: 9m/18m)" title="Alcance da arma/magia (curto/longo, se houver)">
       </div>
       ${attackDamagePartsHtml(i, attackDamageParts(a))}
       <div class="attack-roll-row no-print">
-        <button type="button" data-roll-attack="${i}" title="${D20_MODE_TITLE}">🎲 Rolar Ataque</button>
+        ${isSave ? "" : `<button type="button" data-roll-attack="${i}" title="${D20_MODE_TITLE}">🎲 Rolar Ataque</button>`}
         <button type="button" data-roll-damage="${i}" title="${DAMAGE_MODE_TITLE}">🎲 Rolar Dano</button>
         <button type="button" class="toggle-edit-btn" data-toggle-edit="${i}" title="${collapsed ? "Reabrir os campos de edição deste ataque" : "Esconder os campos de edição — os dados continuam salvos"}">${collapsed ? "✎ Editar" : "✓ Concluir edição"}</button>
         <span class="attack-roll-result" id="attack-result-${i}">${attackRollMessages[i] || ""}</span>
@@ -2005,7 +2020,7 @@ function renderAttacks() {
   // atualiza só o <div class="attack-total">, sem re-renderizar a lista.
   const updateAttackTotal = (idx) => {
     const el = $("attacks").querySelector(`[data-attack-total="${idx}"]`);
-    if (el) el.textContent = fmt(computeAttackBonus(character.attacks[idx]));
+    if (el) el.textContent = attackTotalLabel(character.attacks[idx]);
   };
   const updateDamageSummary = (idx) => {
     const el = $("attacks").querySelector(`[data-attack-dmg-summary="${idx}"]`);
@@ -2016,6 +2031,9 @@ function renderAttacks() {
     character.attacks[idx][i.dataset.a] = i.value;
     saveCharacter(character);
     if (i.dataset.a === "bonus") updateAttackTotal(idx);
+  }));
+  $("attacks").querySelectorAll("[data-a-rolltype]").forEach((s) => s.addEventListener("change", () => {
+    character.attacks[Number(s.dataset.aRolltype)].rollType = s.value; saveCharacter(character); renderAttacks();
   }));
   $("attacks").querySelectorAll("[data-a-mode]").forEach((s) => s.addEventListener("change", () => {
     character.attacks[Number(s.dataset.aMode)].abilityMode = s.value; saveCharacter(character); renderAttacks();
@@ -2582,7 +2600,7 @@ async function computeActionsBoard() {
 
   for (const a of character.attacks || []) {
     if (!a.name) continue;
-    push("action", "attack", a.name, `${fmt(computeAttackBonus(a))} para acertar · ${attackDamageSummary(a)}${a.range ? ` · ${a.range}` : ""}`);
+    push("action", "attack", a.name, `${a.rollType === "save" ? `${attackTotalLabel(a)} de resistência` : `${attackTotalLabel(a)} para acertar`} · ${attackDamageSummary(a)}${a.range ? ` · ${a.range}` : ""}`);
   }
 
   for (const r of computeClassResources()) {
@@ -5320,6 +5338,15 @@ function hitDiceLabel() {
   }
   return parts.join(" + ");
 }
+// Resumo "Classe N" da classe primária + cada multiclasse — o campo
+// "Classe" da ficha oficial só mostrava a classe primária, sem os
+// níveis de multiclasse (o nível total do oval "Nível" já soma tudo
+// via totalLevel(), mas sem isto não dava pra ver de onde vinha).
+function classLevelSummary() {
+  const primary = refs.class ? `${titleOf(refs.class)} ${Math.max(1, Number(character.level) || 1)}` : null;
+  const mc = (details.multiclasses || []).filter((m) => m.classEntry).map((m) => `${titleOf(m.classEntry)} ${Math.max(1, Number(m.level) || 1)}`);
+  return [primary, ...mc].filter(Boolean).join(" + ") || "—";
+}
 const OFF_SIZE = { T: "Minúsculo", S: "Pequeno", M: "Médio", L: "Grande", H: "Enorme", G: "Imenso" };
 function effectiveSizeCode() {
   if (character.sizeOverride) return character.sizeOverride;
@@ -5413,11 +5440,11 @@ async function buildOfficialSheet() {
           <div class="off-field"><b>${refs.race ? esc(titleOf(refs.race)) : "—"}</b><span>Espécie</span></div>
         </div>
         <div class="off-field-row">
-          <div class="off-field"><b>${refs.class ? esc(titleOf(refs.class)) : "—"}</b><span>Classe</span></div>
+          <div class="off-field"><b>${esc(classLevelSummary())}</b><span>Classe${(details.multiclasses || []).some((m) => m.classEntry) ? " (multiclasse)" : ""}</span></div>
           <div class="off-field"><b>${refs.subclass ? esc(titleOf(refs.subclass)) : "—"}</b><span>Subclasse</span></div>
         </div>
       </div>
-      <div class="off-oval off-oval-level"><b>${character.level}</b><span>Nível</span><small>${character.xp || 0} PX</small></div>
+      <div class="off-oval off-oval-level"><b>${totalLevel()}</b><span>Nível</span><small>${character.xp || 0} PX</small></div>
       <div class="off-shield"><span>Classe de Armadura</span><b>${c.ac}</b></div>
       <div class="off-box off-hp">
         <div class="off-box-title">Pontos de Vida</div>
@@ -5450,7 +5477,7 @@ async function buildOfficialSheet() {
           <div class="off-oval"><span>Tamanho</span><b>${esc(offSizeLabel())}</b></div>
           <div class="off-oval"><span>Perc. Passiva</span><b>${c.passive}</b></div>
         </div>
-        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? fmt(computeAttackBonus(a)) : "")}</td><td>${esc(a.name ? attackDamageSummary(a) : "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
+        ${offBox("Armas & Truques de Dano", `<table class="off-table"><thead><tr><th>Nome</th><th>Bônus/CD</th><th>Dano &amp; Tipo</th><th>Distância</th><th>Anotações</th></tr></thead><tbody>${attacks.map((a) => `<tr><td>${esc(a.name || "")}</td><td>${esc(a.name ? attackTotalLabel(a) : "")}</td><td>${esc(a.name ? attackDamageSummary(a) : "")}</td><td>${esc(a.range || "")}</td><td>${esc(a.notes || "")}</td></tr>`).join("")}</tbody></table>`)}
         ${offBox("Características de Classe", offFeatureNames([...classFeats, ...subFeats, ...mcClassFeats, ...mcSubFeats]) + `<p class="off-muted off-feature-note">Texto completo na próxima página.</p>`)}
       </div>
     </div>
@@ -6113,7 +6140,7 @@ function setup() {
     e.target.value = "";
     if (file) await importMonsterSublistFile(file);
   });
-  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }); saveCharacter(character); renderAttacks(); });
+  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", rollType: "attack", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }); saveCharacter(character); renderAttacks(); });
   $("add-custom-feature").addEventListener("click", () => {
     const name = $("custom-feature-name").value.trim();
     const text = $("custom-feature-text").value.trim();
