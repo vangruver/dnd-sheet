@@ -1020,7 +1020,7 @@ body.view-only button:disabled{opacity:.4;cursor:not-allowed}
    ============================================================ */
 .attack-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 12px;margin-bottom:8px}
 .attack-card-top{display:grid;grid-template-columns:1.6fr .9fr .9fr 1fr 26px;gap:6px;align-items:center}
-.attack-card-controls{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:7px;align-items:center}
+.attack-card-controls{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-top:7px;align-items:center}
 .attack-card-controls select,.attack-card-controls input{width:100%;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:6px 7px;font-size:11px}
 .attack-total{font:800 15px var(--font-head);color:var(--red-hi);text-align:center;background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:6px;min-width:0;overflow-wrap:break-word}
 /* O resumo de dano ("1d8+3 cortante + 1d6 fogo") pode ficar bem mais
