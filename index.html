@@ -191,7 +191,7 @@
     <div class="page-grid">
       <section class="paper-card abilities-card"><h2>Atributos</h2><div id="ability-grid" class="ability-grid"></div></section>
       <section class="paper-card defense-card"><h2>Defesa & Movimento</h2><div class="defense-grid">
-        <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div>
+        <div class="oval"><span>CA</span><strong id="v-ac">10</strong></div><div class="oval"><span>Iniciativa</span><strong id="v-init">+0</strong></div><div class="oval"><span>Desloc.</span><strong id="v-speed">30 ft</strong></div><div class="oval"><span>Prof.</span><strong id="v-pb">+2</strong></div><div class="oval"><span>Tamanho</span><strong id="v-size">—</strong></div>
       </div><div class="mini-stats"><div><span>Percepção passiva</span><b id="v-passive">10</b></div><div><span>CD de magia</span><b id="v-spell-dc">—</b></div><div><span>Ataque mágico</span><b id="v-spell-atk">—</b></div></div>
       <div id="ud-note" class="ud-note hidden"></div>
       <div class="two-input manual-override no-print"><label>CA manual<input id="ac-input" type="number" min="0"></label><label>Deslocamento<input id="speed-input" type="text" placeholder="30 ft"></label></div></section>
@@ -211,6 +211,11 @@
             <option>Leal e Bom</option><option>Neutro e Bom</option><option>Caótico e Bom</option>
             <option>Leal e Neutro</option><option>Neutro</option><option>Caótico e Neutro</option>
             <option>Leal e Mau</option><option>Neutro e Mau</option><option>Caótico e Mau</option>
+          </select></label>
+          <label>Tamanho<select id="size-override" title="Padrão é o tamanho da espécie escolhida — troque aqui pra casos especiais (metamorfose, itens, variação de tamanho etc.)">
+            <option value="">Automático (espécie)</option>
+            <option value="T">Minúsculo</option><option value="S">Pequeno</option><option value="M">Médio</option>
+            <option value="L">Grande</option><option value="H">Enorme</option><option value="G">Imenso</option>
           </select></label>
           <label>Idiomas<input id="languages" placeholder="Comum, Élfico…"></label>
           <label class="inspiration-toggle"><input id="inspiration" type="checkbox"> Inspiração heróica</label>

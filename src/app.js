@@ -58,6 +58,7 @@ const fresh = () => ({
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
   hpCurrent: null, hpTemp: 0, ac: null, udChoice: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   alignment: "", languages: "", appearance: "", backstory: "", toolProficienciesManual: "", hpModifier: 0,
+  sizeOverride: "", // "" = usa o tamanho da espécie escolhida; senão T/S/M/L/H/G
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
   hitDiceUsed: {}, resourceUsage: {}, spellSlotsUsed: Array(9).fill(0), pactSlotsUsed: 0,
   conditions: [], journal: [], buffs: [], extraFeats: [], companions: [], customFeatures: [],
@@ -1685,6 +1686,7 @@ async function recalc() {
   renderAbilities();
   const acTitle = acAutoTitle(c);
   $("v-ac").textContent = c.ac; $("v-ac").title = acTitle; $("v-init").textContent = fmt(c.init); $("v-speed").textContent = c.speed; $("v-pb").textContent = fmt(c.pb);
+  $("v-size").textContent = offSizeLabel();
   $("v-passive").textContent = c.passive; $("v-spell-dc").textContent = c.dc ?? "—"; $("v-spell-atk").textContent = c.atk != null ? fmt(c.atk) : "—";
   $("v-hp-max").textContent = c.hp;
   $("hp-current").value = character.hpCurrent == null ? c.hp : character.hpCurrent;
@@ -5289,6 +5291,7 @@ function applyLoaded(c) {
   $("level").value = character.level;
   $("xp").value = character.xp;
   $("alignment").value = character.alignment || "";
+  $("size-override").value = character.sizeOverride || "";
   $("languages").value = character.languages || "";
   $("appearance").value = character.appearance || "";
   $("backstory").value = character.backstory || "";
@@ -5318,9 +5321,13 @@ function hitDiceLabel() {
   return parts.join(" + ");
 }
 const OFF_SIZE = { T: "Minúsculo", S: "Pequeno", M: "Médio", L: "Grande", H: "Enorme", G: "Imenso" };
-function offSizeLabel() {
+function effectiveSizeCode() {
+  if (character.sizeOverride) return character.sizeOverride;
   const rec = details.raceRec || {};
-  const s = Array.isArray(rec.size) ? rec.size[0] : rec.size;
+  return Array.isArray(rec.size) ? rec.size[0] : rec.size;
+}
+function offSizeLabel() {
+  const s = effectiveSizeCode();
   return OFF_SIZE[s] || s || "—";
 }
 function offDistance(d) {
@@ -5881,7 +5888,7 @@ async function buildFoundryActor() {
   const c = calc();
   const level = totalLevel();
   const raceRec = details.raceRec || {};
-  const sizeCode = Array.isArray(raceRec.size) ? raceRec.size[0] : raceRec.size;
+  const sizeCode = effectiveSizeCode();
 
   const abilities = {};
   for (const a of ABILITIES) abilities[a] = { value: effScore(a), proficient: character.saveProficiencies.includes(a) ? 1 : 0 };
@@ -6014,6 +6021,7 @@ function setup() {
   });
   $("xp").addEventListener("input", () => { character.xp = Number($("xp").value) || 0; saveCharacter(character); });
   $("alignment").addEventListener("change", () => { character.alignment = $("alignment").value; saveCharacter(character); });
+  $("size-override").addEventListener("change", () => { character.sizeOverride = $("size-override").value; saveCharacter(character); recalc(); });
   $("languages").addEventListener("input", () => { character.languages = $("languages").value; saveCharacter(character); });
   $("appearance").addEventListener("input", () => { character.appearance = $("appearance").value; saveCharacter(character); });
   $("backstory").addEventListener("input", () => { character.backstory = $("backstory").value; saveCharacter(character); });
