@@ -5351,7 +5351,10 @@ const OFF_SIZE = { T: "Minúsculo", S: "Pequeno", M: "Médio", L: "Grande", H: "
 function effectiveSizeCode() {
   if (character.sizeOverride) return character.sizeOverride;
   const rec = details.raceRec || {};
-  return Array.isArray(rec.size) ? rec.size[0] : rec.size;
+  // Raças com opção de tamanho (ex.: Lefou, "Small or Medium") vinham sempre
+  // no primeiro código do array — que é "S" na maioria das fontes — mesmo
+  // quando o padrão da raça é Médio. Preferimos "M" quando ele é uma opção.
+  return Array.isArray(rec.size) ? (rec.size.includes("M") ? "M" : rec.size[0]) : rec.size;
 }
 function offSizeLabel() {
   const s = effectiveSizeCode();
