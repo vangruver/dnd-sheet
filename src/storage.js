@@ -165,6 +165,7 @@ export function saveDiscordWebhook(url) {
 // broadcastRoll() em app.js.
 const ROOM_CODE_KEY = "dnd-ficha-auto-room-code";
 const ROOM_APPLIED_HEALS_KEY = "dnd-ficha-auto-room-applied-heals";
+const ROOM_APPLIED_DAMAGES_KEY = "dnd-ficha-auto-room-applied-damages";
 
 export function getRoomCode() { try { return localStorage.getItem(ROOM_CODE_KEY) || ""; } catch { return ""; } }
 export function saveRoomCode(code) {
@@ -182,6 +183,17 @@ export function markHealApplied(rollId) {
   const arr = getAppliedHeals();
   if (arr.includes(rollId)) return;
   try { localStorage.setItem(ROOM_APPLIED_HEALS_KEY, JSON.stringify([...arr, rollId].slice(-300))); } catch { /* modo privado */ }
+}
+// Mesma ideia, pro botão "Aplicar dano" (rolagens de dano do mestre ou de
+// outro jogador na sala, aplicadas direto no PV de quem clicar).
+export function getAppliedDamages() {
+  try { const v = localStorage.getItem(ROOM_APPLIED_DAMAGES_KEY); const arr = v ? JSON.parse(v) : []; return Array.isArray(arr) ? arr : []; }
+  catch { return []; }
+}
+export function markDamageApplied(rollId) {
+  const arr = getAppliedDamages();
+  if (arr.includes(rollId)) return;
+  try { localStorage.setItem(ROOM_APPLIED_DAMAGES_KEY, JSON.stringify([...arr, rollId].slice(-300))); } catch { /* modo privado */ }
 }
 
 // Listas de monstros do mestre — à parte de qualquer personagem salvo

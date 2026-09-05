@@ -763,6 +763,10 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-heal-btn{margin-top:6px;width:100%;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .room-chat-heal-btn:hover{filter:brightness(1.1)}
 .room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
+.room-chat-row.room-chat-damage{border-color:var(--red-dim)}
+.room-chat-damage-btn{margin-top:6px;width:100%;border:1px solid var(--red);background:transparent;color:var(--red-hi);border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
+.room-chat-damage-btn:hover{background:var(--red-soft)}
+.room-chat-damage-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
 .room-chat-row.room-chat-system{background:transparent;border:none;padding:2px 4px;display:flex;justify-content:center;align-items:baseline;gap:6px;text-align:center}
 .room-chat-row.room-chat-system span{color:var(--text-mut);font-style:italic}
 .room-chat-row.room-chat-system small{color:var(--text-mut)}
@@ -835,6 +839,14 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-combat-row-top .remove-btn{margin-left:auto;width:22px;height:22px;line-height:1;font-size:13px}
 .room-combat-row-bottom{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text-mut)}
 .room-combat-row-bottom .dash-hp-bar{flex:1;height:16px}
+.room-combat-hidden-check{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--text-mut);cursor:pointer}
+.room-combat-hidden-check input{width:auto}
+.room-combat-hidden-badge{font-size:9px;color:var(--gold);white-space:nowrap;font-style:italic}
+.room-combat-hide-toggle{width:24px;height:22px;line-height:1;font-size:12px;flex:0 0 auto}
+.room-combat-row.room-combat-mystery{border-style:dashed;border-color:var(--border-2)}
+.room-combat-row.room-combat-mystery .room-combat-row-top b{font-style:italic;color:var(--text-mut);font-weight:600}
+.mystery-hp-bar{position:relative;background:repeating-linear-gradient(135deg,var(--surface-2) 0 8px,var(--inset) 8px 16px);background-size:200% 200%;animation:mystery-shimmer 3.5s linear infinite}
+@keyframes mystery-shimmer{0%{background-position:0 0}100%{background-position:32px 32px}}
 
 /* ---------- Banner de atualização de dados ---------- */
 .data-update-banner{
@@ -1067,6 +1079,13 @@ body.view-only button:disabled{opacity:.4;cursor:not-allowed}
 .action-item-body{min-width:0}
 .action-item-body b{display:block;font-size:12px}
 .action-item-body small{display:block;color:var(--text-mut);font-size:10px;margin-top:2px;line-height:1.35}
+.action-item-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.action-item-btns button,.action-item-use-btn{border:1px solid var(--red-dim);background:var(--red-soft);color:var(--red-hi);border-radius:var(--radius-xs);padding:5px 10px;font-size:10px;font-weight:600;cursor:pointer}
+.action-item-btns button:hover,.action-item-use-btn:hover{background:linear-gradient(160deg,var(--red),var(--red-dim));color:#fff}
+.action-item-use-btn{margin-top:6px}
+.action-item-dc{align-self:center;font-size:10px;font-weight:700;color:var(--gold)}
+.action-item-result{display:block;margin-top:4px;font-size:10.5px;color:var(--text-dim)}
+.action-item-result:empty{display:none}
 .action-empty{font-size:11px;padding:4px 0}
 
 /* ============================================================

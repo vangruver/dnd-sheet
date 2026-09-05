@@ -43,7 +43,7 @@ uma Issue neste repositório se você é detentor de direitos e quer pedir a rem
   mecânicos com um aviso.
 - **Múltiplos personagens salvos**: botão **"Meus Personagens"** lista todas as fichas salvas neste navegador — cria, alterna, duplica e apaga cada uma independente, sem perder o progresso das outras.
 - **Retrato do personagem**: clique no quadro ao lado do nome pra subir uma foto (redimensionada/comprimida no navegador antes de salvar) — aparece no topo da ficha e na página de detalhes do PDF.
-- **Aba "Ações"**: reúne ataques, magias preparadas com tempo de conjuração instantâneo, recursos de classe (Fúria, Ki, Canalizar Divindade...) e características de classe/talento com gatilho de ação, agrupados por **Ação / Ação Bônus / Reação / Especial** — a visão de "o que eu posso fazer agora" na mesa, sem ficar trocando de aba.
+- **Aba "Ações"**: reúne ataques, magias preparadas com tempo de conjuração instantâneo, recursos de classe (Fúria, Ki, Canalizar Divindade...) e características de classe/talento com gatilho de ação, agrupados por **Ação / Ação Bônus / Reação / Especial** — a visão de "o que eu posso fazer agora" na mesa, sem ficar trocando de aba. Ataques rolam ataque/dano direto dali (mesmo botão da aba Ataques), magias com ataque ou dano no texto ganham botão de rolagem própria (usando o bônus/CD de conjuração já calculado) e recursos de classe têm um "− Usar" rápido — tudo sem sair da aba.
 - **Capacidade de carga**: peso por item de inventário (puxado do compêndio, editável) somado às moedas, com barra colorida contra a capacidade máxima (Força × 15) e aviso de sobrecarga — aparece na aba Equipamento e na ficha em PDF.
 - **Link somente-leitura**: menu **Arquivo → 🔗 Link somente-leitura** comprime o personagem inteiro (gzip nativo do navegador) no próprio link — sem servidor, sem conta. Quem abre vê a ficha travada pra edição, com a opção de salvar uma cópia editável no próprio navegador. O retrato e as notas de sessão ficam de fora pra não inchar o link.
 - **Quatro temas visuais** (barra do topo → **Ajustes → Tema**), salvos no navegador:
@@ -91,10 +91,15 @@ uma Issue neste repositório se você é detentor de direitos e quer pedir a rem
   também aparecem na sala de rolagens/Discord como os do personagem principal).
 - **Sala de rolagens** (⚙️/💬 no canto): navegadores da mesa conectados ponto-a-ponto por WebRTC
   (PeerJS, sem servidor próprio) — rolagens de todo mundo aparecem num chat compartilhado, com
-  botão pra aplicar cura direto no PV de quem clicar. A mesma sala tem uma aba de
-  **rastreador de iniciativa**: cada jogador entra com nome/iniciativa/CA/PV (ou rola a iniciativa
-  ali mesmo), o anfitrião pode adicionar monstros/NPCs à mão e controlar rodada/turno — todo mundo
-  vê a ordem e o turno atual em tempo real.
+  botão pra aplicar **cura** direto no PV de quem clicar, e o mesmo botão pra **dano** (dos seus
+  próprios ataques, das criaturas que o mestre rola no bestiário/monstro criado, ou marcado assim
+  no rolador de dados genérico) — cada jogador aplica só no próprio personagem. A mesma sala tem
+  uma aba de **rastreador de iniciativa**: cada jogador entra com nome/iniciativa/CA/PV (ou rola a
+  iniciativa ali mesmo), o anfitrião pode adicionar monstros/NPCs à mão e controlar rodada/turno —
+  todo mundo vê a ordem e o turno atual em tempo real. Ao adicionar uma criatura, o mestre pode
+  marcá-la como **misteriosa** (🎭): ela aparece na ordem de iniciativa normalmente, mas nome e PV
+  ficam trocados por um enigma pros jogadores até o mestre revelar (👁) — os dados reais nem saem
+  do navegador do anfitrião enquanto isso.
 - **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
   atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
