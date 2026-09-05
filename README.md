@@ -4,6 +4,17 @@ Ficha de personagem que **lê os dados oficiais do 5etools direto do GitHub**, e
 execução, e preenche sozinha o máximo possível a partir de **classe + espécie + background + nível**.
 Roda 100% no navegador — publicável no **GitHub Pages** sem back-end.
 
+## Aviso legal
+
+Projeto de fã, não-oficial e sem fins lucrativos (sem anúncios, cobrança ou assinatura). **Dungeons
+& Dragons**, seus logos, nomes de raças, classes, magias, monstros e demais elementos de regra são
+marcas e propriedade da **Wizards of the Coast LLC**. Este projeto não é afiliado, endossado ou
+patrocinado pela Wizards of the Coast/Hasbro. Nenhum arquivo de conteúdo oficial é distribuído
+neste repositório — a ficha só lê esse conteúdo em tempo de execução, direto do navegador de quem
+usa. Homebrew pertence aos respectivos autores, creditados junto de cada item. Veja o aviso
+completo pelo botão **"🐛 Relatar bug"**/**"Aviso legal completo"** dentro da própria ficha, ou abra
+uma Issue neste repositório se você é detentor de direitos e quer pedir a remoção de algo.
+
 ## O que ela faz
 
 - **Duas edições**: alterne entre **2014** e **2024**. As listas de classes, subclasses,

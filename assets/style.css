@@ -680,6 +680,9 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .modal-body th,.modal-body td{border:1px solid var(--border);padding:7px 9px;text-align:left}
 .modal-body th{background:var(--surface-2);color:var(--text)}
 .modal-body strong{color:var(--text)}
+.changelog-entry{margin-bottom:18px}
+.changelog-entry:last-child{margin-bottom:0}
+.changelog-date{font:700 11px var(--font-head);letter-spacing:.06em;text-transform:uppercase;color:var(--red-hi);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:6px}
 
 .lore-features{display:flex;flex-direction:column;gap:12px;margin-top:6px}
 .lore-feature{background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red-dim);border-radius:var(--radius-xs);padding:12px 14px}
@@ -857,6 +860,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .view-only-banner #view-only-copy{margin-left:0;border:1px solid rgba(90,140,220,.6);border-radius:var(--radius-xs);padding:6px 12px;color:var(--text);font-size:11px;font-weight:700;background:rgba(90,140,220,.18)}
 body.view-only input:disabled,body.view-only textarea:disabled,body.view-only select:disabled{opacity:.7;cursor:not-allowed}
 body.view-only button:disabled{opacity:.4;cursor:not-allowed}
+
+/* ---------- Rodapé / aviso legal ---------- */
+.site-footer{max-width:1440px;margin:0 auto 26px;padding:14px 18px 0}
+.site-footer p{margin:0;padding-top:14px;border-top:1px solid var(--border);color:var(--text-mut);font-size:10.5px;line-height:1.6}
+.site-footer .link-btn{font-size:10.5px;white-space:nowrap}
 
 /* ============================================================
    Codex — aba "Raças & Classes"
