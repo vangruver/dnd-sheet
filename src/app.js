@@ -3705,7 +3705,7 @@ function renderRoomSettings() {
 // quebrar nada.
 // ------------------------------------------------------------
 const SUPPORT_PIX = { key: "", name: "", city: "" };
-const SUPPORT_INTL = { label: "", url: "" };
+const SUPPORT_INTL = { label: "Ko-fi", url: "https://ko-fi.com/autofilldnd" };
 // CRC16-CCITT (poly 0x1021, init 0xFFFF) — checksum exigido no fim do
 // código Pix "copia e cola". Implementação padrão, sem dependências.
 function pixCrc16(payload) {
