@@ -2863,6 +2863,13 @@ let myPeerId = null;
 // recalcula e redistribui o estado inteiro (kind:"combat-state") pra todo
 // mundo, inclusive quem enviou. Um jogador nunca aplica a ação localmente.
 let roomCombat = { round: 1, currentId: null, list: [] };
+// Música da sala (YouTube) — mesma lógica de autoridade da iniciativa: o
+// anfitrião é quem manda tocar/pausar/trocar, os jogadores só recebem o
+// estado (kind:"music-state") e refletem no próprio player embutido.
+let roomMusic = { videoId: null, playing: false, seekTime: 0 };
+let ytPlayer = null;
+let ytLoadedVideoId = null;
+let ytApiPromise = null;
 
 function sanitizeRoomCode(code) {
   return "dndficha-" + String(code || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 50);
@@ -2876,6 +2883,9 @@ function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
+  roomMusic = { videoId: null, playing: false, seekTime: 0 };
+  try { ytPlayer?.destroy?.(); } catch { /* ignore */ }
+  ytPlayer = null; ytLoadedVideoId = null;
   renderRoomChat();
 }
 function hostRoom(code) {
@@ -2888,6 +2898,7 @@ function hostRoom(code) {
     roomHostConns.set(conn.peer, conn);
     conn.on("data", (msg) => {
       if (msg?.kind === "combat-action") { applyCombatAction(msg.action, msg.payload); return; }
+      if (msg?.kind === "music-action") { applyMusicAction(msg.action, msg.payload); return; }
       onRoomMessage(msg); relayToOthers(msg, conn.peer);
     });
     conn.on("close", () => {
@@ -2895,7 +2906,13 @@ function hostRoom(code) {
       applyCombatAction("remove", { id: conn.peer }); // tira quem desconectou da iniciativa
       renderRoomChat();
     });
-    conn.on("open", () => renderRoomChat());
+    conn.on("open", () => {
+      renderRoomChat();
+      // Manda o estado atual pra quem acabou de entrar — sem isso, quem
+      // entra no meio da sessão só vê iniciativa/música na próxima ação.
+      conn.send({ kind: "combat-state", combat: roomCombat });
+      conn.send({ kind: "music-state", music: roomMusic });
+    });
   });
   roomPeer.on("error", (err) => {
     console.warn("Sala (anfitrião):", err);
@@ -2926,6 +2943,7 @@ function relayToOthers(msg, exceptPeerId) {
 }
 function onRoomMessage(msg) {
   if (msg?.kind === "combat-state") { roomCombat = msg.combat || roomCombat; renderCombatTracker(); return; }
+  if (msg?.kind === "music-state") { roomMusic = msg.music || roomMusic; renderMusicPanel(); syncYtPlayer(); return; }
   if (!msg?.id || roomRolls.some((r) => r.id === msg.id)) return;
   roomRolls.push(msg);
   roomRolls = roomRolls.slice(-50);
@@ -3158,6 +3176,122 @@ function sendCombatAction(action, payload) {
   else if (roomClientConn?.open) roomClientConn.send({ kind: "combat-action", action, payload });
   else toast("Ainda conectando à sala…");
 }
+
+// ------------------------------------------------------------
+// Música da sala — YouTube embutido, tocado sincronizado pro grupo. Só o
+// anfitrião carrega/controla; a API do IFrame do YouTube só é carregada na
+// hora em que alguém abre a aba "Música" (sem isso, todo mundo baixaria o
+// script à toa). Sem chave de API nem busca — cola o link, o app extrai o
+// ID do vídeo/playlist.
+// ------------------------------------------------------------
+function parseYouTubeId(url) {
+  const s = String(url || "").trim();
+  const m = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/);
+  if (m) return m[1];
+  return /^[\w-]{11}$/.test(s) ? s : null;
+}
+function ensureYouTubeApi() {
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    if (window.YT && window.YT.Player) { resolve(); return; }
+    window.onYouTubeIframeAPIReady = () => resolve();
+    const s = document.createElement("script");
+    s.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(s);
+  });
+  return ytApiPromise;
+}
+function sendMusicAction(action, payload) {
+  if (!roomRole) { toast("Entre numa sala primeiro (⚙️)."); return; }
+  if (roomRole === "anfitriao") applyMusicAction(action, payload);
+  else if (roomClientConn?.open) roomClientConn.send({ kind: "music-action", action, payload });
+  else toast("Ainda conectando à sala…");
+}
+function applyMusicAction(action, payload = {}) {
+  if (roomRole !== "anfitriao") return;
+  if (action === "load") roomMusic = { videoId: payload.videoId, playing: true, seekTime: 0 };
+  else if (action === "play") roomMusic = { ...roomMusic, playing: true, seekTime: Number(payload.seekTime) || 0 };
+  else if (action === "pause") roomMusic = { ...roomMusic, playing: false, seekTime: Number(payload.seekTime) || 0 };
+  else if (action === "stop") roomMusic = { videoId: null, playing: false, seekTime: 0 };
+  else return;
+  broadcastMusicState();
+}
+function broadcastMusicState() {
+  const msg = { kind: "music-state", music: roomMusic };
+  roomHostConns.forEach((conn) => { if (conn.open) conn.send(msg); });
+  renderMusicPanel();
+  syncYtPlayer();
+}
+function renderMusicPanel() {
+  const box = $("room-music-controls");
+  if (!box) return;
+  const status = $("room-music-status");
+  if (status) {
+    status.textContent = !roomRole ? "Sala não configurada — clique na engrenagem."
+      : !roomMusic.videoId ? (roomRole === "anfitriao" ? "Cole um link do YouTube abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
+      : roomMusic.playing ? "▶️ Tocando na sala." : "⏸ Pausado.";
+  }
+  if (roomRole !== "anfitriao") {
+    box.innerHTML = roomMusic.videoId ? `<button type="button" id="room-music-unmute-btn">🔊 Ativar som</button>` : "";
+    $("room-music-unmute-btn")?.addEventListener("click", () => { try { ytPlayer?.unMute(); ytPlayer?.setVolume(100); } catch { /* ignore */ } });
+    return;
+  }
+  box.innerHTML = `
+    <div class="room-music-load"><input type="text" id="room-music-url" placeholder="Link do YouTube (vídeo ou playlist)"><button type="button" class="add-btn" id="room-music-load-btn">Carregar</button></div>
+    <div class="room-music-buttons">
+      <button type="button" id="room-music-play-btn" ${roomMusic.videoId ? "" : "disabled"}>${roomMusic.playing ? "⏸ Pausar" : "▶️ Tocar"}</button>
+      <button type="button" id="room-music-resync-btn" ${roomMusic.videoId ? "" : "disabled"}>🔄 Ressincronizar</button>
+      <button type="button" id="room-music-stop-btn" ${roomMusic.videoId ? "" : "disabled"}>⏹ Parar</button>
+    </div>`;
+  $("room-music-load-btn").addEventListener("click", () => {
+    const id = parseYouTubeId($("room-music-url").value);
+    if (!id) { toast("Cole um link válido do YouTube."); return; }
+    sendMusicAction("load", { videoId: id });
+  });
+  $("room-music-play-btn").addEventListener("click", () => {
+    const seekTime = ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime;
+    sendMusicAction(roomMusic.playing ? "pause" : "play", { seekTime });
+  });
+  $("room-music-resync-btn").addEventListener("click", () => {
+    sendMusicAction(roomMusic.playing ? "play" : "pause", { seekTime: ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime });
+  });
+  $("room-music-stop-btn").addEventListener("click", () => sendMusicAction("stop", {}));
+}
+async function syncYtPlayer() {
+  if (!$("room-music-player")) return;
+  if (!roomMusic.videoId) {
+    try { ytPlayer?.stopVideo(); } catch { /* ignore */ }
+    ytLoadedVideoId = null;
+    return;
+  }
+  await ensureYouTubeApi();
+  if (!$("room-music-player")) return; // painel pode ter fechado enquanto a API carregava
+  if (!ytPlayer) {
+    await new Promise((resolve) => {
+      ytPlayer = new YT.Player("room-music-player", {
+        width: "100%", height: "100%",
+        videoId: roomMusic.videoId,
+        playerVars: { autoplay: 1, playsinline: 1 },
+        events: { onReady: () => resolve() },
+      });
+    });
+    ytLoadedVideoId = roomMusic.videoId;
+    if (roomRole !== "anfitriao") { try { ytPlayer.mute(); } catch { /* autoplay sem som — o jogador ativa depois */ } }
+    if (roomMusic.seekTime) ytPlayer.seekTo(roomMusic.seekTime, true);
+    if (!roomMusic.playing) ytPlayer.pauseVideo();
+    return;
+  }
+  if (ytLoadedVideoId !== roomMusic.videoId) {
+    ytLoadedVideoId = roomMusic.videoId;
+    ytPlayer.loadVideoById(roomMusic.videoId, roomMusic.seekTime || 0);
+    if (!roomMusic.playing) setTimeout(() => { try { ytPlayer.pauseVideo(); } catch { /* ignore */ } }, 300);
+    return;
+  }
+  const cur = ytPlayer.getCurrentTime?.() || 0;
+  if (Math.abs(cur - (roomMusic.seekTime || 0)) > 2.5) ytPlayer.seekTo(roomMusic.seekTime || 0, true);
+  try { roomMusic.playing ? ytPlayer.playVideo() : ytPlayer.pauseVideo(); } catch { /* ignore */ }
+}
+
 function renderCombatTracker() {
   const controls = $("room-combat-controls"), list = $("room-combat-list");
   if (!controls || !list) return;
@@ -6367,11 +6501,13 @@ function setup() {
   document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
-    const combat = b.dataset.roomtab === "combat";
-    $("room-chat-list").classList.toggle("hidden", combat);
-    $("room-chat-compose").classList.toggle("hidden", combat);
-    $("room-combat-panel").classList.toggle("hidden", !combat);
-    if (combat) renderCombatTracker();
+    const tab = b.dataset.roomtab; // "rolls" | "combat" | "music"
+    $("room-chat-list").classList.toggle("hidden", tab !== "rolls");
+    $("room-chat-compose").classList.toggle("hidden", tab !== "rolls");
+    $("room-combat-panel").classList.toggle("hidden", tab !== "combat");
+    $("room-music-panel").classList.toggle("hidden", tab !== "music");
+    if (tab === "combat") renderCombatTracker();
+    if (tab === "music") { renderMusicPanel(); syncYtPlayer(); }
   }));
   $("room-chat-send-btn")?.addEventListener("click", sendRoomChatText);
   $("room-chat-text-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendRoomChatText(); });
