@@ -766,6 +766,9 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-heal-btn{margin-top:6px;width:100%;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:var(--radius-xs);padding:6px 9px;font-size:11px;font-weight:700;cursor:pointer}
 .room-chat-heal-btn:hover{filter:brightness(1.1)}
 .room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
+.room-chat-row.room-chat-system{background:transparent;border:none;padding:2px 4px;display:flex;justify-content:center;align-items:baseline;gap:6px;text-align:center}
+.room-chat-row.room-chat-system span{color:var(--text-mut);font-style:italic}
+.room-chat-row.room-chat-system small{color:var(--text-mut)}
 .room-chat-tabs{margin-bottom:8px}
 .room-chat-tabs button{flex:1;padding:6px 8px;font-size:9px}
 .room-chat-body-msg{display:block}
@@ -787,6 +790,14 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-music-controls button{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:7px 10px;font-size:11px;font-weight:600}
 .room-music-controls button:hover:not(:disabled){border-color:var(--red)}
 .room-music-controls button:disabled{opacity:.4;cursor:not-allowed}
+.room-music-volume-row{display:flex;align-items:center;gap:8px}
+.room-music-volume-row input[type="range"]{flex:1;accent-color:var(--red)}
+.room-music-playlist{display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto}
+.room-music-playlist.hidden{display:none}
+.room-music-track{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;width:60px;border:1px solid var(--border-2);background:var(--surface-3);border-radius:var(--radius-xs);font-size:10px;font-weight:600}
+.room-music-track img{width:100%;border-radius:2px;display:block}
+.room-music-track.active{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.room-music-track:disabled{cursor:default;opacity:.85}
 
 /* Com a sala aberta numa tela larga, o chat vira um painel fixo colado à
    esquerda (fica "no fundo", sempre visível) e a ficha desloca pra direita
