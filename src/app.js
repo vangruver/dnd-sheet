@@ -3126,7 +3126,7 @@ function toggleRoomChat(force) {
   const show = force != null ? force : panel.classList.contains("hidden");
   panel.classList.toggle("hidden", !show);
   document.body.classList.toggle("room-chat-docked", show);
-  if (show) renderRoomChat();
+  if (show) { renderRoomChat(); renderDiceHistory(); }
 }
 
 // ------------------------------------------------------------
@@ -3936,14 +3936,6 @@ function renderDiceHistory() {
   box.innerHTML = diceHistory.length ? diceHistory.map((h) => `<div class="dice-history-row"><span class="dice-history-expr">${h.n}d${h.faces}${h.bonus ? fmt(h.bonus) : ""}</span><span class="dice-history-rolls">[${h.rolls.join(", ")}]</span><b class="dice-history-total">${h.result}</b></div>`).join("")
     : `<div class="empty">Nenhuma rolagem ainda.</div>`;
 }
-function toggleDiceRoller(force) {
-  const panel = $("dice-roller-panel");
-  if (!panel) return;
-  const show = force != null ? force : panel.classList.contains("hidden");
-  panel.classList.toggle("hidden", !show);
-  if (show) { renderDiceHistory(); $("dice-expr-input")?.focus(); }
-}
-
 // ------------------------------------------------------------
 // Dashboard / Quick View — resumo de combate fixo no topo da ficha
 // ------------------------------------------------------------
@@ -6928,8 +6920,6 @@ function setup() {
   $("next-round")?.addEventListener("click", advanceRound);
   $("short-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso curto? Restaura os recursos que recuperam em descanso curto (e espaços de Pacto, se houver).")) shortRest(); });
   $("long-rest-btn")?.addEventListener("click", () => { if (confirm("Fazer um descanso longo? Restaura PV, metade dos dados de vida, espaços de magia/pacto e todos os recursos de classe.")) longRest(); });
-  $("dice-roller-fab")?.addEventListener("click", () => toggleDiceRoller());
-  $("dice-roller-close")?.addEventListener("click", () => toggleDiceRoller(false));
   $("dice-roll-btn")?.addEventListener("click", () => rollExpression($("dice-expr-input").value.trim() || "1d20"));
   $("dice-expr-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") rollExpression(e.target.value.trim() || "1d20"); });
   document.querySelectorAll("[data-dice-quick]").forEach((b) => b.addEventListener("click", () => {

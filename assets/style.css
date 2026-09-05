@@ -718,13 +718,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 }
 .toast.show{opacity:1;transform:none}
 
-/* ---------- Rolador de dados genérico ---------- */
-#dice-roller-fab{
-  position:fixed;bottom:24px;left:24px;z-index:150;width:52px;height:52px;border-radius:50%;
-  border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);font-size:24px;
-  box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center
-}
-#dice-roller-fab:hover{border-color:var(--red);transform:translateY(-1px)}
+/* ---------- Rolador de dados genérico (agora embutido no chat da sala) ---------- */
 .dice-roller-panel{
   position:fixed;bottom:86px;left:24px;z-index:150;width:290px;max-width:calc(100vw - 32px);
   background:var(--surface-2);border:1px solid var(--border-2);border-radius:var(--radius-sm);
@@ -748,12 +742,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 
 /* ---------- Sala de rolagens (chat compartilhado) ---------- */
 #room-chat-fab{
-  position:fixed;bottom:24px;left:86px;z-index:150;width:52px;height:52px;border-radius:50%;
+  position:fixed;bottom:24px;left:24px;z-index:150;width:52px;height:52px;border-radius:50%;
   border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);font-size:22px;
   box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center
 }
 #room-chat-fab:hover{border-color:var(--red);transform:translateY(-1px)}
-.room-chat-panel{left:86px;width:320px}
+.room-chat-panel{left:24px;width:320px}
 .room-chat-head-actions{display:flex;align-items:center;gap:10px}
 .room-chat-status{font-size:11px;margin-bottom:8px}
 .room-chat-list{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
@@ -778,10 +772,12 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-text{white-space:pre-wrap;word-break:break-word;color:var(--text)}
 .room-chat-text a{color:var(--red-hi);word-break:break-all}
 .room-chat-image{display:block;max-width:100%;max-height:220px;border-radius:var(--radius-xs);margin-top:4px}
-.room-chat-compose{display:flex;gap:6px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
-.room-chat-compose input[type="text"]{flex:1;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:12px}
-.room-chat-compose button{flex:0 0 auto;border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:13px}
-.room-chat-compose button:hover{border-color:var(--red)}
+.room-chat-compose{display:flex;flex-direction:column;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.room-chat-compose .dice-quick-row,.room-chat-compose .dice-expr-row,.room-chat-compose .dice-type-row{margin-bottom:0}
+.room-chat-message-row{display:flex;gap:6px;align-items:center}
+.room-chat-message-row input[type="text"]{flex:1;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:12px}
+.room-chat-message-row button{flex:0 0 auto;border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:13px}
+.room-chat-message-row button:hover{border-color:var(--red)}
 
 /* ---------- Música da sala (YouTube sincronizado pelo anfitrião) ---------- */
 .room-music-player-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-xs);overflow:hidden;margin-bottom:10px}
