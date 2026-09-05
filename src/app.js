@@ -17,6 +17,7 @@ import {
   getDiscordWebhook, saveDiscordWebhook,
   getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
+  isDisclaimerDismissed, dismissDisclaimer,
 } from "./storage.js";
 import { applyI18n, setLang, getLang, t } from "./i18n.js";
 
@@ -3695,6 +3696,62 @@ function renderRoomSettings() {
 }
 
 // ------------------------------------------------------------
+// Apoio ao projeto — totalmente opcional, nenhum recurso da ficha fica
+// trancado atrás de doação (exigência da Fan Content Policy da Wizards
+// of the Coast pra conteúdo de fã gratuito). Preencher com os dados reais
+// antes de publicar: SUPPORT_PIX (chave, nome e cidade do recebedor) e/ou
+// SUPPORT_INTL (link de fora do Brasil — Ko-fi, PayPal, Buy Me a Coffee…).
+// Com os dois vazios o modal só mostra "ainda não configurado", sem
+// quebrar nada.
+// ------------------------------------------------------------
+const SUPPORT_PIX = { key: "", name: "", city: "" };
+const SUPPORT_INTL = { label: "", url: "" };
+// CRC16-CCITT (poly 0x1021, init 0xFFFF) — checksum exigido no fim do
+// código Pix "copia e cola". Implementação padrão, sem dependências.
+function pixCrc16(payload) {
+  let crc = 0xffff;
+  for (let i = 0; i < payload.length; i++) {
+    crc ^= payload.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+  }
+  return crc.toString(16).toUpperCase().padStart(4, "0");
+}
+// Monta o payload EMV do Pix (o mesmo formato que vira QR Code) na mão —
+// sem chamar nenhuma API, então funciona offline igual ao resto da sala.
+function buildPixPayload({ key, name, city }) {
+  const tlv = (id, value) => `${id}${String(value.length).padStart(2, "0")}${value}`;
+  const merchantAccount = tlv("00", "br.gov.bcb.pix") + tlv("01", key);
+  let payload = tlv("00", "01") + tlv("26", merchantAccount) + tlv("52", "0000") + tlv("53", "986")
+    + tlv("58", "BR") + tlv("59", name.toUpperCase().slice(0, 25)) + tlv("60", city.toUpperCase().slice(0, 15))
+    + tlv("62", tlv("05", "***"));
+  payload += "6304";
+  return payload + pixCrc16(payload);
+}
+function renderSupportModal() {
+  const pixReady = !!(SUPPORT_PIX.key && SUPPORT_PIX.name && SUPPORT_PIX.city);
+  const intlReady = !!SUPPORT_INTL.url;
+  const pixCode = pixReady ? buildPixPayload(SUPPORT_PIX) : "";
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">APOIO</span><h2>Apoiar o projeto</h2><p class="muted">Totalmente opcional — a ficha é gratuita e continua assim pra sempre, com ou sem apoio. Nenhuma função fica trancada atrás de doação; isso aqui é só uma forma de quem quiser ajudar a manter o projeto.</p></div></div>
+    <div class="modal-body">
+      <h3>🇧🇷 Pix</h3>
+      ${pixReady ? `
+        <p class="muted">Chave no nome de <strong>${esc(SUPPORT_PIX.name)}</strong>.</p>
+        <label>Código Pix Copia e Cola<br><input id="support-pix-code" readonly value="${esc(pixCode)}" style="width:100%"></label>
+        <button type="button" class="add-btn" id="support-pix-copy" style="margin-top:8px">📋 Copiar código Pix</button>
+      ` : `<p class="muted">Chave Pix ainda não configurada.</p>`}
+      <h3 style="margin-top:16px">🌍 Fora do Brasil</h3>
+      ${intlReady
+        ? `<p><a href="${esc(SUPPORT_INTL.url)}" target="_blank" rel="noopener noreferrer" class="add-btn" style="display:inline-block;text-decoration:none">${esc(SUPPORT_INTL.label || "Apoiar")}</a></p>`
+        : `<p class="muted">Link internacional (Ko-fi, PayPal, Buy Me a Coffee…) ainda não configurado.</p>`}
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("support-pix-copy")?.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(pixCode); toast("Código Pix copiado — cole no \"Pix Copia e Cola\" do seu banco."); }
+    catch { $("support-pix-code")?.select(); toast("Não deu pra copiar sozinho — selecione o código e copie manualmente."); }
+  });
+}
+
+// ------------------------------------------------------------
 // Guia de ajuda — texto único explicando cada botão/aba da ficha, pra quem
 // tá chegando agora não precisar adivinhar o que cada coisa faz. Só
 // conteúdo estático (sem dependência de estado), aberto pelo botão
@@ -3783,6 +3840,9 @@ function renderHelpModal() {
 
       <h3>🎲 Rolador de dados (bolha flutuante)</h3>
       <p>Sempre à mão, além dos botões de ataque/dano/morte: digite uma expressão como "2d6+3" e role. O histórico é só da sessão atual (não é salvo com o personagem). Marcar o tipo como <strong>Cura</strong> antes de rolar é o que habilita o botão de aplicar PV no chat da sala.</p>
+
+      <h3>💛 Sobre ser gratuito</h3>
+      <p>A ficha é 100% gratuita e sempre vai continuar assim — é conteúdo de fã, não afiliado nem endossado pela Wizards of the Coast, feito e distribuído sob a Fan Content Policy deles. Quem quiser apoiar o projeto pode clicar em "💛 Apoiar o projeto" no aviso do topo (Pix pra quem está no Brasil, ou o link internacional) — isso é opcional e nunca destrava nada, todas as funções continuam livres pra qualquer um.</p>
     </div>`;
   $("modal").classList.remove("hidden");
 }
@@ -6866,6 +6926,12 @@ function setup() {
   $("discord-settings")?.addEventListener("click", renderDiscordSettings);
   $("room-settings")?.addEventListener("click", renderRoomSettings);
   $("help-btn")?.addEventListener("click", renderHelpModal);
+  $("support-btn")?.addEventListener("click", renderSupportModal);
+  if (!isDisclaimerDismissed()) $("fan-disclaimer-banner")?.classList.remove("hidden");
+  $("fan-disclaimer-dismiss")?.addEventListener("click", () => {
+    dismissDisclaimer();
+    $("fan-disclaimer-banner")?.classList.add("hidden");
+  });
   $("room-chat-fab")?.addEventListener("click", () => toggleRoomChat());
   $("room-chat-close")?.addEventListener("click", () => toggleRoomChat(false));
   $("room-chat-settings-btn")?.addEventListener("click", renderRoomSettings);
