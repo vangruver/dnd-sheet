@@ -794,8 +794,9 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-music-volume-row input[type="range"]{flex:1;accent-color:var(--red)}
 .room-music-playlist{display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto}
 .room-music-playlist.hidden{display:none}
-.room-music-track{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;width:60px;border:1px solid var(--border-2);background:var(--surface-3);border-radius:var(--radius-xs);font-size:10px;font-weight:600}
-.room-music-track img{width:100%;border-radius:2px;display:block}
+.room-music-track{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;width:76px;border:1px solid var(--border-2);background:var(--surface-3);border-radius:var(--radius-xs);font-size:10px;font-weight:600}
+.room-music-track img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:2px;display:block}
+.room-music-track span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room-music-track.active{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
 .room-music-track:disabled{cursor:default;opacity:.85}
 
