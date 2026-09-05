@@ -311,6 +311,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .multiclass-row select,.multiclass-row input{width:100%;background:var(--inset);border:1px solid var(--border-2);border-radius:var(--radius-xs);color:var(--text);padding:7px 8px;font-size:11px;min-width:0}
 .multiclass-row input{text-align:center}
 .multiclass-warn{grid-column:1/-1;font-size:10px;color:var(--red-hi);margin-top:-2px}
+.mc-field{display:flex;gap:4px;align-items:center;min-width:0}
+.mc-field select{flex:1;min-width:0}
+.mc-field button{flex:0 0 auto;width:28px;height:28px;padding:0;font-size:12px;line-height:1;background:var(--inset);border:1px solid var(--border-2);border-radius:var(--radius-xs);color:var(--text)}
+.mc-field button:hover{border-color:var(--red)}
+.mc-field button:disabled{opacity:.4;cursor:not-allowed}
 
 /* ---------- Painel de automação ---------- */
 .auto-panel{margin-top:14px;padding:16px 18px}
@@ -763,6 +768,19 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
 .room-chat-tabs{margin-bottom:8px}
 .room-chat-tabs button{flex:1;padding:6px 8px;font-size:9px}
+
+/* Com a sala aberta numa tela larga, o chat vira um painel fixo colado à
+   esquerda (fica "no fundo", sempre visível) e a ficha desloca pra direita
+   em vez do chat flutuar por cima do conteúdo. Em telas estreitas continua
+   como popup flutuante de sempre. */
+@media (min-width:1180px){
+  body.room-chat-docked .appbar,body.room-chat-docked .sheet-shell,body.room-chat-docked .mestre-shell{margin-left:360px}
+  body.room-chat-docked #room-chat-panel{
+    left:0;top:0;bottom:0;width:336px;max-width:336px;border-radius:0;border-width:0 1px 0 0;
+    display:flex;flex-direction:column;padding:16px 16px 96px;box-shadow:4px 0 30px rgba(0,0,0,.35)
+  }
+  body.room-chat-docked #room-chat-panel .room-chat-list{flex:1;max-height:none}
+}
 
 /* ---------- Rastreador de iniciativa da sala ---------- */
 .room-combat-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--border-2)}

@@ -73,10 +73,22 @@ export function rollDice(n, faces) {
   const rolls = Array.from({ length: n }, () => rollDie(faces));
   return { rolls, total: rolls.reduce((a, b) => a + b, 0) };
 }
-// Método clássico de rolagem de atributo: 4d6, descarta o menor.
-export function rollAbilityScore() {
-  const rolls = [rollDie(6), rollDie(6), rollDie(6), rollDie(6)].sort((a, b) => b - a);
-  return rolls[0] + rolls[1] + rolls[2];
+// Fórmulas de rolagem de atributo — o padrão é 4d6 descartando o menor,
+// mas cada mesa pode preferir outra variante (mais direta, mais heroica...).
+export const ABILITY_ROLL_FORMULAS = {
+  "4d6dl1": {
+    label: "4d6, descarta o menor (clássico)",
+    roll: () => { const r = [rollDie(6), rollDie(6), rollDie(6), rollDie(6)].sort((a, b) => b - a); return r[0] + r[1] + r[2]; },
+  },
+  "3d6": { label: "3d6, direto (sem descarte, mais arriscado)", roll: () => rollDice(3, 6).total },
+  "2d6+6": { label: "2d6+6 (mais equilibrado, sem valores baixos)", roll: () => rollDice(2, 6).total + 6 },
+  "5d6dl2": {
+    label: "5d6, descarta os dois menores (heroico)",
+    roll: () => { const r = [rollDie(6), rollDie(6), rollDie(6), rollDie(6), rollDie(6)].sort((a, b) => b - a); return r[0] + r[1] + r[2]; },
+  },
+};
+export function rollAbilityScore(formula) {
+  return (ABILITY_ROLL_FORMULAS[formula] || ABILITY_ROLL_FORMULAS["4d6dl1"]).roll();
 }
 
 // ------------------------------------------------------------
