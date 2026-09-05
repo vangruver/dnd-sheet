@@ -768,6 +768,14 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-chat-heal-btn:disabled{background:var(--surface-3);color:var(--text-mut);border-color:var(--border-2);cursor:default;filter:none}
 .room-chat-tabs{margin-bottom:8px}
 .room-chat-tabs button{flex:1;padding:6px 8px;font-size:9px}
+.room-chat-body-msg{display:block}
+.room-chat-text{white-space:pre-wrap;word-break:break-word;color:var(--text)}
+.room-chat-text a{color:var(--red-hi);word-break:break-all}
+.room-chat-image{display:block;max-width:100%;max-height:220px;border-radius:var(--radius-xs);margin-top:4px}
+.room-chat-compose{display:flex;gap:6px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.room-chat-compose input[type="text"]{flex:1;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:12px}
+.room-chat-compose button{flex:0 0 auto;border:1px solid var(--border-2);background:var(--surface-3);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:13px}
+.room-chat-compose button:hover{border-color:var(--red)}
 
 /* Com a sala aberta numa tela larga, o chat vira um painel fixo colado à
    esquerda (fica "no fundo", sempre visível) e a ficha desloca pra direita

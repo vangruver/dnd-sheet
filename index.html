@@ -380,18 +380,24 @@
   </select></label>
   <div id="dice-history" class="dice-history"></div>
 </div>
-<button id="room-chat-fab" class="no-print" type="button" title="Chat de rolagem da sala" aria-label="Chat de rolagem da sala">💬</button>
-<div id="room-chat-panel" class="dice-roller-panel room-chat-panel hidden no-print" role="dialog" aria-label="Chat de rolagem da sala">
-  <div class="dice-roller-head"><span>💬 Sala de rolagens</span><span class="room-chat-head-actions"><button type="button" id="room-chat-settings-btn" title="Configurar sala" aria-label="Configurar sala">⚙️</button><button type="button" id="room-chat-close" aria-label="Fechar">×</button></span></div>
+<button id="room-chat-fab" class="no-print" type="button" title="Chat da sala" aria-label="Chat da sala">💬</button>
+<div id="room-chat-panel" class="dice-roller-panel room-chat-panel hidden no-print" role="dialog" aria-label="Chat da sala">
+  <div class="dice-roller-head"><span>💬 Sala</span><span class="room-chat-head-actions"><button type="button" id="room-chat-settings-btn" title="Configurar sala" aria-label="Configurar sala">⚙️</button><button type="button" id="room-chat-close" aria-label="Fechar">×</button></span></div>
   <div id="room-chat-status" class="room-chat-status muted">Sala não configurada.</div>
   <div class="segmented room-chat-tabs" id="room-chat-tabs">
-    <button class="active" data-roomtab="rolls">💬 Rolagens</button>
+    <button class="active" data-roomtab="rolls">💬 Chat</button>
     <button data-roomtab="combat">⚔️ Iniciativa</button>
   </div>
   <div id="room-chat-list" class="room-chat-list"></div>
   <div id="room-combat-panel" class="room-combat-panel hidden">
     <div id="room-combat-controls" class="room-combat-controls"></div>
     <div id="room-combat-list" class="room-combat-list"></div>
+  </div>
+  <div id="room-chat-compose" class="room-chat-compose">
+    <input type="file" id="room-chat-image-input" accept="image/*" class="hidden">
+    <button type="button" id="room-chat-image-btn" title="Enviar imagem ou GIF">🖼️</button>
+    <input type="text" id="room-chat-text-input" placeholder="Mensagem… (cole um link de imagem/GIF pra mandar)" autocomplete="off" maxlength="500">
+    <button type="button" id="room-chat-send-btn" class="add-btn">Enviar</button>
   </div>
 </div>
 <div id="official-sheet" class="official-sheet" aria-hidden="true"></div>
