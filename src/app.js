@@ -8,7 +8,7 @@ import {
 import { clearCache } from "./store.js";
 import {
   ABILITIES, ABILITY_NAMES, SKILLS, mod, fmt, proficiency, hpAverage, abilityKey, spellDc, spellAttack, casterSlots, pactSlots,
-  rollDie, rollDice, parseDiceExpr, rollAbilityScore, ABILITY_ARRAYS, ABILITY_MODE_LABELS, CLASS_RESOURCE_COLUMNS, CONDITIONS,
+  rollDie, rollDice, parseDiceExpr, rollAbilityScore, ABILITY_ARRAYS, ABILITY_MODE_LABELS, ABILITY_ROLL_FORMULAS, CLASS_RESOURCE_COLUMNS, CONDITIONS,
 } from "./rules.js";
 import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
@@ -51,7 +51,7 @@ let wizardIndex = 0;
 let creationMode = getSavedCreationMode();
 
 const fresh = () => ({
-  schema: 1, name: "", avatar: null, level: 1, xp: 0, inspiration: 0, edition: "2024", content: "all", abilityMode: "pointbuy",
+  schema: 1, name: "", avatar: null, level: 1, xp: 0, inspiration: 0, edition: "2024", content: "all", abilityMode: "pointbuy", abilityRollFormula: "4d6dl1",
   classId: "", subclassId: "", raceId: "", backgroundId: "",
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
@@ -478,22 +478,64 @@ function groupedEntryOptions(arr, selectedId) {
     return `<optgroup label="${esc(label)} (${items.length})">${opts}</optgroup>`;
   }).join("");
 }
-function classSelectOptions(selectedId, excludeIndex) {
+function multiclassClassCandidates(excludeIndex, selectedId) {
   const used = usedMulticlassNames(excludeIndex);
-  const arr = manifest().filter((x) =>
+  return manifest().filter((x) =>
     normType(x.type) === "class" && matchesEdition(x, character.edition, true) && pickerContentOk(x) &&
-    (x.id === selectedId || !used.has(String(x.name || "").toLowerCase())))
-    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR") || String(a.source || "").localeCompare(String(b.source || "")));
-  return `<option value="">Selecionar classe…</option>` + groupedEntryOptions(arr, selectedId);
+    (x.id === selectedId || !used.has(String(x.name || "").toLowerCase())));
+}
+function multiclassSubclassCandidates(classEntry) {
+  if (!classEntry) return [];
+  const cn = String(classEntry.name).toLowerCase();
+  return manifest().filter((x) =>
+    normType(x.type) === "subclass" && matchesEdition(x, character.edition, true) &&
+    String(x.className || "").toLowerCase() === cn && pickerContentOk(x));
+}
+const sortEntries = (arr) => arr.slice().sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR") || String(a.source || "").localeCompare(String(b.source || "")));
+function classSelectOptions(selectedId, excludeIndex) {
+  return `<option value="">Selecionar classe…</option>` + groupedEntryOptions(sortEntries(multiclassClassCandidates(excludeIndex, selectedId)), selectedId);
 }
 function subclassSelectOptions(classEntry, selectedId) {
   if (!classEntry) return `<option value="">Escolha a classe primeiro</option>`;
-  const cn = String(classEntry.name).toLowerCase();
-  const arr = manifest().filter((x) =>
-    normType(x.type) === "subclass" && matchesEdition(x, character.edition, true) &&
-    String(x.className || "").toLowerCase() === cn && pickerContentOk(x))
-    .sort((a, b) => Number(hb(a)) - Number(hb(b)) || String(a.name).localeCompare(String(b.name), "pt-BR") || String(a.source || "").localeCompare(String(b.source || "")));
-  return `<option value="">Sem subclasse ainda</option>` + groupedEntryOptions(arr, selectedId);
+  return `<option value="">Sem subclasse ainda</option>` + groupedEntryOptions(sortEntries(multiclassSubclassCandidates(classEntry)), selectedId);
+}
+// Popup com busca + filtro Oficial/Homebrew pra escolher classe/subclasse de
+// multiclasse — o mesmo padrão da tela de criação (openPicker), útil quando
+// o banco tem muitas opções e o <select> nativo vira uma lista enorme pra rolar.
+async function openMulticlassPicker(kind, i) {
+  const row = character.multiclasses?.[i];
+  if (!row) return;
+  const classEntry = manifest().find((x) => x.id === row.classId) || null;
+  if (kind === "subclass" && !classEntry) { toast("Escolha a classe primeiro."); return; }
+  const modal = $("modal"), content = $("modal-content");
+  const title = kind === "class" ? "Classe adicional" : "Subclasse adicional";
+  content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">MULTICLASSE</span><h2>${esc(title)}</h2></div></div><div class="loading">Carregando catálogo…</div>`;
+  modal.classList.remove("hidden");
+  try { await ensureCatalog(kind); } catch (err) { console.error(err); }
+  content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">MULTICLASSE</span><h2>${esc(title)}</h2></div></div>
+  <div class="picker-controls"><input id="picker-search" placeholder="Pesquisar ${esc(title.toLowerCase())}…"><div class="filter-pills"><button class="active" data-pfilter="all">Todos</button><button data-pfilter="official">Oficial</button><button data-pfilter="homebrew">Homebrew</button></div></div>
+  <div id="picker-results" class="picker-grid"></div>`;
+  const render = () => {
+    const q = $("picker-search").value.trim().toLowerCase();
+    let arr = kind === "class" ? multiclassClassCandidates(i, row.classId) : multiclassSubclassCandidates(classEntry);
+    if (q) arr = arr.filter((x) => titleOf(x).toLowerCase().includes(q));
+    const pf = content.querySelector(".filter-pills .active")?.dataset.pfilter || "all";
+    if (pf === "official") arr = arr.filter((x) => !hb(x));
+    if (pf === "homebrew") arr = arr.filter((x) => hb(x));
+    paintPickResults($("picker-results"), sortEntries(arr).slice(0, 300), async (e) => {
+      if (kind === "class") { row.classId = e.id; row.subclassId = ""; } else { row.subclassId = e.id; }
+      saveCharacter(character);
+      await refreshChoices();
+      modal.classList.add("hidden");
+    });
+  };
+  $("picker-search").addEventListener("input", render);
+  content.querySelectorAll("[data-pfilter]").forEach((b) => b.addEventListener("click", () => {
+    content.querySelectorAll("[data-pfilter]").forEach((x) => x.classList.remove("active"));
+    b.classList.add("active"); render();
+  }));
+  render();
+  setTimeout(() => $("picker-search")?.focus(), 50);
 }
 function renderMulticlasses(boxId) {
   const box = $(boxId || "multiclass-list");
@@ -505,13 +547,15 @@ function renderMulticlasses(boxId) {
     const rec = classEntry ? recordsForEntity(classEntry)[0] : null;
     const warn = classEntry && !meetsMulticlassRequirement(rec) ? `<div class="multiclass-warn">Requer ${esc(multiclassRequirementText(rec))} para multiclassar.</div>` : "";
     return `<div class="multiclass-row" data-mc-row="${i}">
-      <select data-mc-class="${i}" aria-label="Classe adicional">${classSelectOptions(m.classId, i)}</select>
-      <select data-mc-subclass="${i}" aria-label="Subclasse adicional" ${classEntry ? "" : "disabled"}>${subclassSelectOptions(classEntry, m.subclassId)}</select>
+      <div class="mc-field"><select data-mc-class="${i}" aria-label="Classe adicional">${classSelectOptions(m.classId, i)}</select><button type="button" class="no-print" data-mc-class-search="${i}" title="Pesquisar e filtrar classe">🔍</button></div>
+      <div class="mc-field"><select data-mc-subclass="${i}" aria-label="Subclasse adicional" ${classEntry ? "" : "disabled"}>${subclassSelectOptions(classEntry, m.subclassId)}</select><button type="button" class="no-print" data-mc-subclass-search="${i}" title="Pesquisar e filtrar subclasse" ${classEntry ? "" : "disabled"}>🔍</button></div>
       <input type="number" min="1" max="19" value="${Number(m.level) || 1}" data-mc-level="${i}" aria-label="Nível">
       <button type="button" class="remove-btn no-print" data-mc-remove="${i}" title="Remover classe">×</button>
       ${warn}
     </div>`;
   }).join("");
+  box.querySelectorAll("[data-mc-class-search]").forEach((b) => b.addEventListener("click", () => openMulticlassPicker("class", Number(b.dataset.mcClassSearch))));
+  box.querySelectorAll("[data-mc-subclass-search]").forEach((b) => b.addEventListener("click", () => openMulticlassPicker("subclass", Number(b.dataset.mcSubclassSearch))));
   box.querySelectorAll("[data-mc-class]").forEach((s) => s.addEventListener("change", async () => {
     const i = Number(s.dataset.mcClass);
     character.multiclasses[i].classId = s.value;
@@ -720,13 +764,20 @@ function paintAbilityEditor(ns) {
       extraBox.innerHTML = `<span class="array-hint">Valores: <b>${preset.join(", ")}</b></span>`;
     } else if (isRoll) {
       const rolled = character.rolledSet;
-      extraBox.innerHTML = `<span class="array-hint">${rolled ? `Rolado: <b>${rolled.join(", ")}</b>` : "Ainda não rolado."}</span><button type="button" class="no-print" id="${ns}roll-abilities">🎲 ${rolled ? "Rolar de novo" : "Rolar atributos"}</button>`;
+      const formula = character.abilityRollFormula || "4d6dl1";
+      const formulaOpts = Object.entries(ABILITY_ROLL_FORMULAS).map(([k, f]) => `<option value="${k}"${k === formula ? " selected" : ""}>${esc(f.label)}</option>`).join("");
+      extraBox.innerHTML = `<label class="ability-mode-label">Fórmula<select id="${ns}roll-formula">${formulaOpts}</select></label>
+        <span class="array-hint">${rolled ? `Rolado: <b>${rolled.join(", ")}</b>` : "Ainda não rolado."}</span><button type="button" class="no-print" id="${ns}roll-abilities">🎲 ${rolled ? "Rolar de novo" : "Rolar atributos"}</button>`;
+      el("roll-formula")?.addEventListener("change", (e) => {
+        character.abilityRollFormula = e.target.value in ABILITY_ROLL_FORMULAS ? e.target.value : "4d6dl1";
+        saveCharacter(character);
+      });
       el("roll-abilities")?.addEventListener("click", () => {
-        character.rolledSet = Array.from({ length: 6 }, () => rollAbilityScore());
+        character.rolledSet = Array.from({ length: 6 }, () => rollAbilityScore(character.abilityRollFormula));
         character.arrayAssignment = {};
         ABILITIES.forEach((a) => (character.scores[a] = 10));
         saveCharacter(character); recalc();
-        toast(`Rolado: ${character.rolledSet.join(", ")}`);
+        toast(`Rolado (${ABILITY_ROLL_FORMULAS[character.abilityRollFormula]?.label || ""}): ${character.rolledSet.join(", ")}`);
       });
     } else {
       extraBox.innerHTML = "";
@@ -2725,6 +2776,9 @@ function discordMessage(label, detail, total) {
   const name = (character?.name || "").trim() || "Personagem sem nome";
   return `🎲 **${name}** rolou **${label}**: ${detail} = **${total}**`;
 }
+function discordTurnMessage(name, round) {
+  return `⚔️ Rodada **${round}** — é a vez de **${name}**!`;
+}
 async function sendToDiscord(text) {
   const url = getDiscordWebhook();
   if (!url) return;
@@ -2942,6 +2996,7 @@ function toggleRoomChat(force) {
   if (!panel) return;
   const show = force != null ? force : panel.classList.contains("hidden");
   panel.classList.toggle("hidden", !show);
+  document.body.classList.toggle("room-chat-docked", show);
   if (show) renderRoomChat();
 }
 
@@ -2953,6 +3008,10 @@ function toggleRoomChat(force) {
 // ------------------------------------------------------------
 function sortedCombatants() {
   return roomCombat.list.slice().sort((a, b) => (Number(b.init) || 0) - (Number(a.init) || 0) || String(a.name).localeCompare(String(b.name), "pt-BR"));
+}
+function announceRoomTurn() {
+  const c = sortedCombatants().find((x) => x.id === roomCombat.currentId);
+  if (c) sendToDiscord(discordTurnMessage(c.name, roomCombat.round));
 }
 function broadcastCombatState() {
   const msg = { kind: "combat-state", combat: roomCombat };
@@ -2991,6 +3050,7 @@ function applyCombatAction(action, payload = {}) {
   } else if (action === "start") {
     roomCombat.round = 1;
     roomCombat.currentId = sortedCombatants()[0]?.id ?? null;
+    announceRoomTurn();
   } else if (action === "next") {
     const sorted = sortedCombatants();
     if (sorted.length) {
@@ -2998,6 +3058,7 @@ function applyCombatAction(action, payload = {}) {
       const nextIdx = idx < 0 ? 0 : (idx + 1) % sorted.length;
       if (idx >= 0 && nextIdx === 0) roomCombat.round += 1;
       roomCombat.currentId = sorted[nextIdx].id;
+      announceRoomTurn();
     }
   } else if (action === "prev") {
     const sorted = sortedCombatants();
@@ -3125,6 +3186,7 @@ function renderRoomSettings() {
     hostRoom(v);
     toast("Criando sala…");
     renderRoomSettings();
+    toggleRoomChat(true);
   });
   $("room-join-btn")?.addEventListener("click", () => {
     const v = $("room-code-input").value.trim();
@@ -3133,6 +3195,7 @@ function renderRoomSettings() {
     joinRoom(v);
     toast("Entrando na sala…");
     renderRoomSettings();
+    toggleRoomChat(true);
   });
   $("room-leave-btn")?.addEventListener("click", () => {
     leaveRoom();
