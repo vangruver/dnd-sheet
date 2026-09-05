@@ -681,22 +681,55 @@ async function loadItemCatalog(onProgress) {
 // spells/index.json, carregado sob demanda por fonte.
 // ------------------------------------------------------------
 let bestiaryIndex = null;          // { MM: "bestiary-mm.json", CoS: "bestiary-cos.json", ... }
-const bestiaryFileCache = new Map(); // fonte -> monster[]
+const bestiaryRawCache = new Map();  // fonte -> monster[] cru, como está no arquivo (com _copy ainda por resolver)
+const bestiaryFileCache = new Map(); // fonte -> monster[] já com _copy resolvido (o que a aba do mestre usa)
 let legendaryGroupList = null;      // [{ name, source, action?, legendary?, lairActions?, ... }]
 
 export async function loadBestiaryIndex() {
   bestiaryIndex = bestiaryIndex || await getJson("bestiary/index.json");
   return bestiaryIndex;
 }
-export async function loadBestiarySource(src) {
-  if (bestiaryFileCache.has(src)) return bestiaryFileCache.get(src);
+async function loadBestiaryRaw(src) {
+  if (bestiaryRawCache.has(src)) return bestiaryRawCache.get(src);
   await loadBestiaryIndex();
   const fname = bestiaryIndex[src];
-  if (!fname) { bestiaryFileCache.set(src, []); return []; }
+  if (!fname) { bestiaryRawCache.set(src, []); return []; }
   const json = await tryJson(`bestiary/${fname}`);
   const arr = (json && json.monster) || [];
-  bestiaryFileCache.set(src, arr);
+  bestiaryRawCache.set(src, arr);
   return arr;
+}
+// Resolve o _copy (herança) de um monstro. Em raças/backgrounds a base
+// costuma estar no mesmo arquivo, mas no bestiário é muito comum apontar
+// pra OUTRA fonte — ex.: um zumbi ou lobo de aventura (CoS, LMoP...) que é
+// só uma cópia do monstro correspondente da Monster Manual, com talvez um
+// traço a mais. Sem seguir essa referência entre arquivos, o monstro ficava
+// só com a "casca" do _copy: CA, PV, atributos, deslocamento etc. vinham
+// tudo ausente/zerado. _mod (inserir/remover traços/ações específicos da
+// variante) continua sem aplicar — o monstro herda os traços da base tal
+// e qual, mesma limitação do resolveCopies() genérico acima.
+async function resolveMonsterCopy(m, seen = new Set()) {
+  if (!m || !m._copy) return m;
+  const srcKey = String(m._copy.source || "");
+  const nameKey = String(m._copy.name || "").toLowerCase();
+  const cycleKey = `${nameKey}|${srcKey.toLowerCase()}`;
+  if (seen.has(cycleKey)) return m; // guarda contra _copy circular
+  seen.add(cycleKey);
+  const baseArr = await loadBestiaryRaw(srcKey);
+  let base = baseArr.find((x) => String(x.name).toLowerCase() === nameKey);
+  if (!base) return m;
+  if (base._copy) base = await resolveMonsterCopy(base, seen);
+  const merged = { ...base, ...m };
+  delete merged._copy;
+  delete merged._mod;
+  return merged;
+}
+export async function loadBestiarySource(src) {
+  if (bestiaryFileCache.has(src)) return bestiaryFileCache.get(src);
+  const raw = await loadBestiaryRaw(src);
+  const resolved = await Promise.all(raw.map((m) => resolveMonsterCopy(m)));
+  bestiaryFileCache.set(src, resolved);
+  return resolved;
 }
 // Baixa TODAS as fontes (mais de 150 arquivos) — usado só quando o
 // mestre pede explicitamente uma busca em todo o bestiário, nunca
