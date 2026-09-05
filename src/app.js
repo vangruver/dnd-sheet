@@ -3159,16 +3159,17 @@ function sendRoomChatText() {
   input.value = "";
 }
 function pushRoomRoll(entry) {
-  if (!roomRole) return;
   const msg = {
     id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
     name: entry.name || (character?.name || "").trim() || "Personagem sem nome",
     label: entry.label, detail: entry.detail, total: String(entry.total ?? ""),
     type: entry.type || "outro", amount: entry.amount ?? null, ts: Date.now(),
   };
-  onRoomMessage(msg); // já aparece no próprio chat, sem depender de round-trip
+  // Aparece no chat mesmo sem sala configurada (rolagem solo) — só espalha
+  // pra rede quando de fato há uma sala com gente conectada.
+  onRoomMessage(msg);
   if (roomRole === "anfitriao") relayToOthers(msg, null);
-  else if (roomClientConn?.open) roomClientConn.send(msg);
+  else if (roomRole === "jogador" && roomClientConn?.open) roomClientConn.send(msg);
 }
 // Substitui os antigos sendToDiscord(discordMessage(...)) nos pontos de
 // rolagem do personagem: manda pro Discord (se configurado) E pra sala
