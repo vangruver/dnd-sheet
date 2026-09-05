@@ -2867,26 +2867,27 @@ let roomCombat = { round: 1, currentId: null, list: [] };
 // Música da sala (YouTube) — mesma lógica de autoridade da iniciativa: o
 // anfitrião é quem manda tocar/pausar/trocar, os jogadores só recebem o
 // estado (kind:"music-state") e refletem no próprio player embutido.
-let roomMusic = { videoId: null, playing: false, seekTime: 0 };
+let roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
 let ytPlayer = null;
 let ytLoadedVideoId = null;
+let ytLoadedPlaylistId = null;
 let ytApiPromise = null;
 
 function sanitizeRoomCode(code) {
   return "dndficha-" + String(code || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 50);
 }
 function roomStatusText() {
-  if (!roomRole) return "Sala não configurada — clique na engrenagem.";
-  if (roomRole === "anfitriao") return `Anfitrião da sala — ${roomHostConns.size} jogador(es) conectado(s).`;
-  return roomClientConn?.open ? "Conectado à sala." : "Conectando à sala…";
+  if (!roomRole) return "⚪ Sala não configurada — clique na engrenagem.";
+  if (roomRole === "anfitriao") return `🟢 Anfitrião da sala — ${roomHostConns.size} jogador(es) conectado(s).`;
+  return roomClientConn?.open ? "🟢 Conectado à sala." : "🟡 Conectando à sala…";
 }
 function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
-  roomMusic = { videoId: null, playing: false, seekTime: 0 };
+  roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
   try { ytPlayer?.destroy?.(); } catch { /* ignore */ }
-  ytPlayer = null; ytLoadedVideoId = null;
+  ytPlayer = null; ytLoadedVideoId = null; ytLoadedPlaylistId = null;
   renderRoomChat();
 }
 function hostRoom(code) {
@@ -2897,6 +2898,7 @@ function hostRoom(code) {
   roomPeer.on("open", (id) => { myPeerId = id; renderRoomChat(); });
   roomPeer.on("connection", (conn) => {
     roomHostConns.set(conn.peer, conn);
+    const joinerName = (conn.metadata?.name || "").trim() || "Um jogador";
     conn.on("data", (msg) => {
       if (msg?.kind === "combat-action") { applyCombatAction(msg.action, msg.payload); return; }
       if (msg?.kind === "music-action") { applyMusicAction(msg.action, msg.payload); return; }
@@ -2905,14 +2907,14 @@ function hostRoom(code) {
     conn.on("close", () => {
       roomHostConns.delete(conn.peer);
       applyCombatAction("remove", { id: conn.peer }); // tira quem desconectou da iniciativa
-      renderRoomChat();
+      pushRoomSystemMessage(`${joinerName} saiu da sala.`);
     });
     conn.on("open", () => {
-      renderRoomChat();
       // Manda o estado atual pra quem acabou de entrar — sem isso, quem
       // entra no meio da sessão só vê iniciativa/música na próxima ação.
       conn.send({ kind: "combat-state", combat: roomCombat });
       conn.send({ kind: "music-state", music: roomMusic });
+      pushRoomSystemMessage(`${joinerName} entrou na sala.`);
     });
   });
   roomPeer.on("error", (err) => {
@@ -2928,9 +2930,10 @@ function joinRoom(code) {
   roomPeer = new Peer();
   roomPeer.on("open", () => {
     myPeerId = roomPeer.id;
-    roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true });
+    const myName = (character?.name || "").trim() || "Um jogador";
+    roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true, metadata: { name: myName } });
     roomClientConn.on("data", (msg) => onRoomMessage(msg));
-    roomClientConn.on("open", () => { toast("Entrou na sala."); renderRoomChat(); });
+    roomClientConn.on("open", () => { toast(`Você entrou na sala como ${myName}.`); renderRoomChat(); });
     roomClientConn.on("close", () => { toast("Desconectado da sala — o anfitrião pode ter fechado a aba."); renderRoomChat(); });
   });
   roomPeer.on("error", (err) => {
@@ -2949,6 +2952,13 @@ function onRoomMessage(msg) {
   roomRolls.push(msg);
   roomRolls = roomRolls.slice(-50);
   renderRoomChat();
+}
+// Avisa a sala inteira (mestre + jogadores) que alguém entrou/saiu — só o
+// anfitrião chama isto, já que só ele sabe de conexões abrindo/fechando.
+function pushRoomSystemMessage(text) {
+  const msg = { id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`, type: "system", text, ts: Date.now() };
+  onRoomMessage(msg);
+  relayToOthers(msg, null);
 }
 // Redimensiona uma foto pro chat da sala (lado maior até 480px, JPEG) —
 // preserva a proporção (ao contrário do retrato, que corta em quadrado).
@@ -3044,6 +3054,13 @@ function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
 }
 
 function renderRoomChat() {
+  // O status do modal de configuração ("Conectando…"/"Conectado…") é
+  // atualizado aqui também — não só no painel de chat — porque a conexão
+  // WebRTC abre de forma assíncrona: se o modal só escrevesse o texto no
+  // momento do clique em "Entrar na sala", ele ficaria preso em
+  // "Conectando à sala…" pra sempre, mesmo depois de já ter conectado.
+  const modalStatus = $("room-modal-status");
+  if (modalStatus) modalStatus.textContent = roomStatusText();
   const box = $("room-chat-list");
   if (!box) return;
   const status = $("room-chat-status");
@@ -3053,6 +3070,9 @@ function renderRoomChat() {
   const applied = getAppliedHeals();
   box.innerHTML = roomRolls.slice().reverse().map((r) => {
     const time = r.ts ? new Date(r.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+    if (r.type === "system") {
+      return `<div class="room-chat-row room-chat-system"><span>${esc(r.text || "")}</span><small>${time}</small></div>`;
+    }
     if (r.type === "chat") {
       const trimmed = (r.text || "").trim();
       const autoImg = !r.image && CHAT_IMAGE_URL_RE.test(trimmed) ? trimmed : null;
@@ -3185,11 +3205,12 @@ function sendCombatAction(action, payload) {
 // script à toa). Sem chave de API nem busca — cola o link, o app extrai o
 // ID do vídeo/playlist.
 // ------------------------------------------------------------
-function parseYouTubeId(url) {
+function parseYouTubeUrl(url) {
   const s = String(url || "").trim();
-  const m = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/);
-  if (m) return m[1];
-  return /^[\w-]{11}$/.test(s) ? s : null;
+  const listMatch = s.match(/[?&]list=([\w-]+)/);
+  const vidMatch = s.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/);
+  const videoId = vidMatch ? vidMatch[1] : (/^[\w-]{11}$/.test(s) ? s : null);
+  return { videoId, listId: listMatch ? listMatch[1] : null };
 }
 function ensureYouTubeApi() {
   if (ytApiPromise) return ytApiPromise;
@@ -3210,11 +3231,26 @@ function sendMusicAction(action, payload) {
 }
 function applyMusicAction(action, payload = {}) {
   if (roomRole !== "anfitriao") return;
-  if (action === "load") roomMusic = { videoId: payload.videoId, playing: true, seekTime: 0 };
-  else if (action === "play") roomMusic = { ...roomMusic, playing: true, seekTime: Number(payload.seekTime) || 0 };
-  else if (action === "pause") roomMusic = { ...roomMusic, playing: false, seekTime: Number(payload.seekTime) || 0 };
-  else if (action === "stop") roomMusic = { videoId: null, playing: false, seekTime: 0 };
+  const updatedAt = Date.now();
+  if (action === "load") {
+    roomMusic = payload.listId
+      ? { videoId: null, playlistId: payload.listId, playlistIndex: 0, playing: true, seekTime: 0, updatedAt }
+      : { videoId: payload.videoId, playlistId: null, playlistIndex: 0, playing: true, seekTime: 0, updatedAt };
+  }
+  else if (action === "play") roomMusic = { ...roomMusic, playing: true, seekTime: Number(payload.seekTime) || 0, updatedAt };
+  else if (action === "pause") roomMusic = { ...roomMusic, playing: false, seekTime: Number(payload.seekTime) || 0, updatedAt };
+  else if (action === "stop") roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt };
+  else if (action === "select") roomMusic = { ...roomMusic, playlistIndex: Number(payload.index) || 0, videoId: null, playing: true, seekTime: 0, updatedAt };
   else return;
+  broadcastMusicState();
+}
+// Chamada só pelo anfitrião quando a PRÓPRIA playlist avança sozinha (fim
+// de faixa) — sem isso, o resto da sala ficaria preso ouvindo a faixa
+// anterior enquanto o anfitrião já ouve a próxima.
+function hostSyncPlaylistIndex(index, videoId) {
+  if (roomRole !== "anfitriao" || !roomMusic.playlistId) return;
+  if (roomMusic.playlistIndex === index && roomMusic.videoId === videoId) return;
+  roomMusic = { ...roomMusic, playlistIndex: index, videoId: videoId || roomMusic.videoId, seekTime: 0, updatedAt: Date.now() };
   broadcastMusicState();
 }
 function broadcastMusicState() {
@@ -3223,31 +3259,86 @@ function broadcastMusicState() {
   renderMusicPanel();
   syncYtPlayer();
 }
+// A posição real "agora" — não só a última registrada. roomMusic.seekTime
+// é uma foto tirada em roomMusic.updatedAt; se o vídeo continua tocando,
+// cada milissegundo que passou desde então precisa ser somado, senão quem
+// entra na sala (ou reabre a aba Música) depois de um tempo cai bem atrás
+// de onde o resto do grupo já está.
+function liveMusicSeek(music) {
+  const base = Number(music.seekTime) || 0;
+  if (!music.playing || !music.updatedAt) return base;
+  return base + Math.max(0, (Date.now() - music.updatedAt) / 1000);
+}
+function updateMusicMuteBtn() {
+  const btn = $("room-music-mute-btn");
+  if (!btn) return;
+  const muted = !!ytPlayer?.isMuted?.();
+  btn.textContent = muted ? "🔇 Sem som" : "🔊 Com som";
+}
+function musicVolumeControlsHtml() {
+  return `<div class="room-music-volume-row">
+    <button type="button" id="room-music-mute-btn">🔊 Com som</button>
+    <input type="range" id="room-music-volume" min="0" max="100" value="100" title="Volume (só neste navegador)">
+  </div>`;
+}
+function wireMusicVolumeControls() {
+  $("room-music-mute-btn")?.addEventListener("click", () => {
+    try { ytPlayer?.isMuted?.() ? ytPlayer.unMute() : ytPlayer?.mute(); } catch { /* ignore */ }
+    updateMusicMuteBtn();
+  });
+  $("room-music-volume")?.addEventListener("input", (e) => {
+    try { ytPlayer?.setVolume?.(Number(e.target.value)); if (Number(e.target.value) > 0) ytPlayer?.unMute?.(); } catch { /* ignore */ }
+    updateMusicMuteBtn();
+  });
+  updateMusicMuteBtn();
+}
+// Miniaturas (sem chave de API — só a imagem pública do YouTube) de cada
+// faixa da playlist carregada, clicáveis pro anfitrião pular direto pra
+// qualquer uma. Pra jogadores é só uma vitrine do que está tocando.
+function renderMusicPlaylist() {
+  const wrap = $("room-music-playlist");
+  if (!wrap) return;
+  const ids = roomMusic.playlistId ? (ytPlayer?.getPlaylist?.() || []) : [];
+  if (!ids.length) { wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
+  wrap.classList.remove("hidden");
+  const canPick = roomRole === "anfitriao";
+  const curIndex = ytPlayer?.getPlaylistIndex?.() ?? roomMusic.playlistIndex;
+  wrap.innerHTML = ids.map((id, i) => `
+    <button type="button" class="room-music-track${i === curIndex ? " active" : ""}" data-track-index="${i}" ${canPick ? "" : "disabled"} title="Faixa ${i + 1}">
+      <img src="https://i.ytimg.com/vi/${esc(id)}/default.jpg" alt="" loading="lazy">
+      <span>${i + 1}</span>
+    </button>`).join("");
+  if (canPick) wrap.querySelectorAll("[data-track-index]").forEach((b) => b.addEventListener("click", () => sendMusicAction("select", { index: Number(b.dataset.trackIndex) })));
+}
 function renderMusicPanel() {
   const box = $("room-music-controls");
   if (!box) return;
+  const hasMedia = !!(roomMusic.videoId || roomMusic.playlistId);
   const status = $("room-music-status");
   if (status) {
     status.textContent = !roomRole ? "Sala não configurada — clique na engrenagem."
-      : !roomMusic.videoId ? (roomRole === "anfitriao" ? "Cole um link do YouTube abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
+      : !hasMedia ? (roomRole === "anfitriao" ? "Cole um link do YouTube abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
       : roomMusic.playing ? "▶️ Tocando na sala." : "⏸ Pausado.";
   }
   if (roomRole !== "anfitriao") {
-    box.innerHTML = roomMusic.videoId ? `<button type="button" id="room-music-unmute-btn">🔊 Ativar som</button>` : "";
-    $("room-music-unmute-btn")?.addEventListener("click", () => { try { ytPlayer?.unMute(); ytPlayer?.setVolume(100); } catch { /* ignore */ } });
+    box.innerHTML = hasMedia ? `${musicVolumeControlsHtml()}<div id="room-music-playlist" class="room-music-playlist hidden"></div>` : "";
+    if (hasMedia) { wireMusicVolumeControls(); renderMusicPlaylist(); }
     return;
   }
   box.innerHTML = `
     <div class="room-music-load"><input type="text" id="room-music-url" placeholder="Link do YouTube (vídeo ou playlist)"><button type="button" class="add-btn" id="room-music-load-btn">Carregar</button></div>
     <div class="room-music-buttons">
-      <button type="button" id="room-music-play-btn" ${roomMusic.videoId ? "" : "disabled"}>${roomMusic.playing ? "⏸ Pausar" : "▶️ Tocar"}</button>
-      <button type="button" id="room-music-resync-btn" ${roomMusic.videoId ? "" : "disabled"}>🔄 Ressincronizar</button>
-      <button type="button" id="room-music-stop-btn" ${roomMusic.videoId ? "" : "disabled"}>⏹ Parar</button>
-    </div>`;
+      <button type="button" id="room-music-play-btn" ${hasMedia ? "" : "disabled"}>${roomMusic.playing ? "⏸ Pausar" : "▶️ Tocar"}</button>
+      <button type="button" id="room-music-resync-btn" ${hasMedia ? "" : "disabled"}>🔄 Ressincronizar</button>
+      <button type="button" id="room-music-stop-btn" ${hasMedia ? "" : "disabled"}>⏹ Parar</button>
+    </div>
+    ${hasMedia ? musicVolumeControlsHtml() : ""}
+    <div id="room-music-playlist" class="room-music-playlist hidden"></div>`;
+  if (hasMedia) wireMusicVolumeControls();
   $("room-music-load-btn").addEventListener("click", () => {
-    const id = parseYouTubeId($("room-music-url").value);
-    if (!id) { toast("Cole um link válido do YouTube."); return; }
-    sendMusicAction("load", { videoId: id });
+    const { videoId, listId } = parseYouTubeUrl($("room-music-url").value);
+    if (!listId && !videoId) { toast("Cole um link válido do YouTube."); return; }
+    sendMusicAction("load", { videoId, listId });
   });
   $("room-music-play-btn").addEventListener("click", () => {
     const seekTime = ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime;
@@ -3257,12 +3348,24 @@ function renderMusicPanel() {
     sendMusicAction(roomMusic.playing ? "play" : "pause", { seekTime: ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime });
   });
   $("room-music-stop-btn").addEventListener("click", () => sendMusicAction("stop", {}));
+  renderMusicPlaylist();
+}
+// Disparado pelo player do YouTube (anfitrião e jogadores) a cada troca de
+// estado — usado tanto pra manter a vitrine de faixas atualizada quanto,
+// só no anfitrião, pra detectar quando a playlist avança sozinha.
+function onYtPlayerStateChange(e) {
+  if (roomMusic.playlistId) renderMusicPlaylist();
+  if (roomRole === "anfitriao" && roomMusic.playlistId && e.data === YT.PlayerState.PLAYING) {
+    const idx = ytPlayer.getPlaylistIndex?.();
+    const vid = ytPlayer.getVideoData?.()?.video_id;
+    if (idx != null && idx >= 0) hostSyncPlaylistIndex(idx, vid);
+  }
 }
 async function syncYtPlayer() {
   if (!$("room-music-player")) return;
-  if (!roomMusic.videoId) {
+  if (!roomMusic.videoId && !roomMusic.playlistId) {
     try { ytPlayer?.stopVideo(); } catch { /* ignore */ }
-    ytLoadedVideoId = null;
+    ytLoadedVideoId = null; ytLoadedPlaylistId = null;
     return;
   }
   await ensureYouTubeApi();
@@ -3271,25 +3374,42 @@ async function syncYtPlayer() {
     await new Promise((resolve) => {
       ytPlayer = new YT.Player("room-music-player", {
         width: "100%", height: "100%",
-        videoId: roomMusic.videoId,
-        playerVars: { autoplay: 1, playsinline: 1 },
-        events: { onReady: () => resolve() },
+        videoId: roomMusic.playlistId ? undefined : roomMusic.videoId,
+        playerVars: roomMusic.playlistId
+          ? { autoplay: 1, playsinline: 1, listType: "playlist", list: roomMusic.playlistId, index: roomMusic.playlistIndex || 0 }
+          : { autoplay: 1, playsinline: 1 },
+        events: { onReady: () => resolve(), onStateChange: onYtPlayerStateChange },
       });
     });
-    ytLoadedVideoId = roomMusic.videoId;
+    ytLoadedVideoId = roomMusic.playlistId ? null : roomMusic.videoId;
+    ytLoadedPlaylistId = roomMusic.playlistId || null;
     if (roomRole !== "anfitriao") { try { ytPlayer.mute(); } catch { /* autoplay sem som — o jogador ativa depois */ } }
-    if (roomMusic.seekTime) ytPlayer.seekTo(roomMusic.seekTime, true);
+    const seek = liveMusicSeek(roomMusic);
+    if (seek) ytPlayer.seekTo(seek, true);
     if (!roomMusic.playing) ytPlayer.pauseVideo();
+    updateMusicMuteBtn();
     return;
   }
-  if (ytLoadedVideoId !== roomMusic.videoId) {
-    ytLoadedVideoId = roomMusic.videoId;
-    ytPlayer.loadVideoById(roomMusic.videoId, roomMusic.seekTime || 0);
+  if (roomMusic.playlistId && ytLoadedPlaylistId !== roomMusic.playlistId) {
+    ytLoadedPlaylistId = roomMusic.playlistId; ytLoadedVideoId = null;
+    ytPlayer.loadPlaylist({ list: roomMusic.playlistId, index: roomMusic.playlistIndex || 0 });
+    if (!roomMusic.playing) setTimeout(() => { try { ytPlayer.pauseVideo(); } catch { /* ignore */ } }, 300);
+    return;
+  }
+  if (!roomMusic.playlistId && ytLoadedVideoId !== roomMusic.videoId) {
+    ytLoadedPlaylistId = null; ytLoadedVideoId = roomMusic.videoId;
+    ytPlayer.loadVideoById(roomMusic.videoId, liveMusicSeek(roomMusic));
+    if (!roomMusic.playing) setTimeout(() => { try { ytPlayer.pauseVideo(); } catch { /* ignore */ } }, 300);
+    return;
+  }
+  if (roomMusic.playlistId && ytPlayer.getPlaylistIndex && ytPlayer.getPlaylistIndex() !== roomMusic.playlistIndex) {
+    ytPlayer.playVideoAt(roomMusic.playlistIndex || 0);
     if (!roomMusic.playing) setTimeout(() => { try { ytPlayer.pauseVideo(); } catch { /* ignore */ } }, 300);
     return;
   }
   const cur = ytPlayer.getCurrentTime?.() || 0;
-  if (Math.abs(cur - (roomMusic.seekTime || 0)) > 2.5) ytPlayer.seekTo(roomMusic.seekTime || 0, true);
+  const target = liveMusicSeek(roomMusic);
+  if (Math.abs(cur - target) > 2.5) ytPlayer.seekTo(target, true);
   try { roomMusic.playing ? ytPlayer.playVideo() : ytPlayer.pauseVideo(); } catch { /* ignore */ }
 }
 
@@ -3390,7 +3510,7 @@ function renderRoomSettings() {
         ${roomRole ? `<button type="button" id="room-leave-btn">Sair da sala</button>` : ""}
       </div>
       <p class="muted" style="margin-top:10px">⚠️ Quem tiver o código consegue entrar na sala — combine algo que não seja óbvio se quiser evitar visitantes. O anfitrião precisa manter a aba da ficha aberta durante a sessão; se ele fechar ou recarregar a página, a sala cai e alguém precisa criar de novo.</p>
-      <p class="muted" style="margin-top:6px">${esc(roomStatusText())}</p>
+      <p class="muted" id="room-modal-status" style="margin-top:6px">${esc(roomStatusText())}</p>
     </div>`;
   $("modal").classList.remove("hidden");
   $("room-host-btn")?.addEventListener("click", () => {
@@ -3416,6 +3536,99 @@ function renderRoomSettings() {
     toast("Saiu da sala.");
     renderRoomSettings();
   });
+}
+
+// ------------------------------------------------------------
+// Guia de ajuda — texto único explicando cada botão/aba da ficha, pra quem
+// tá chegando agora não precisar adivinhar o que cada coisa faz. Só
+// conteúdo estático (sem dependência de estado), aberto pelo botão
+// "❓ Ajuda" no topo.
+// ------------------------------------------------------------
+function renderHelpModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">GUIA</span><h2>Como a ficha funciona</h2><p class="muted">Um resumo de cada aba e botão. Tudo fica salvo neste navegador (não tem conta nem servidor) — veja "Meus Personagens" pra alternar entre fichas salvas, e "Exportar JSON"/"Link somente-leitura" pra levar ou mostrar uma ficha em outro lugar.</p></div></div>
+    <div class="modal-body">
+      <h3>Abas principais (barra logo abaixo do nome)</h3>
+      <ul>
+        <li><strong>Construção</strong> — o assistente passo a passo pra criar/editar o personagem: espécie, classe (e multiclasse), subclasse, background, atributos, perícias, talentos e equipamento inicial. É por aqui que o nível sobe (veja "Subiu de nível" abaixo).</li>
+        <li><strong>Ficha</strong> — a ficha "de jogo" propriamente dita: atributos, CA/deslocamento, testes de resistência, perícias, identidade, ataques, condições ativas, turno atual, dado de vida/recursos de classe, descanso curto/longo e detalhes do personagem. É a aba que fica aberta durante a sessão.</li>
+        <li><strong>Ações</strong> — atalho só com o painel de "Turno Atual" (ações/bônus/reação/movimento gastos na rodada), útil em telas menores.</li>
+        <li><strong>Atributos & Talentos</strong> — os seis atributos com o modo de geração (Point buy 27 pontos, array padrão ou rolagem), talentos extras (além dos automáticos de background/nível) e modificadores temporários (buffs/debuffs de poção, magia, exaustão etc. — afeta tudo que depende do atributo escolhido, recalculado na hora).</li>
+        <li><strong>Magias</strong> — lista completa de magias da classe por nível (filtrada pela edição 2014/2024 escolhida em Ajustes); marque as preparadas/conhecidas nas bolinhas.</li>
+        <li><strong>Características</strong> — características de classe, subclasse, espécie e background já disponíveis no nível atual, com busca; dá pra adicionar características personalizadas também.</li>
+        <li><strong>Equipamento</strong> — catálogo completo de itens do 5etools por categoria (armas, armaduras, itens mágicos etc.) pra adicionar ao inventário, com filtros.</li>
+        <li><strong>Notas</strong> — notas de sessão (uma por sessão jogada, com exportação em texto) e Companheiros & Familiares (familiar, animal de companhia, montaria — CA/PV/ataques próprios, cuja rolagem também vai pra sala/Discord).</li>
+        <li><strong>Raças & Classes</strong> e <strong>Compêndio</strong> — consulta de regras e conteúdo do 5etools (raças, classes, talentos, itens, magias etc.) pra ler sem precisar sair da ficha.</li>
+      </ul>
+
+      <h3>Menu "Personagem"</h3>
+      <ul>
+        <li><strong>Meus Personagens</strong> — troca, duplica ou apaga fichas salvas neste navegador.</li>
+        <li><strong>Novo</strong> — cria uma ficha em branco.</li>
+        <li><strong>Modelos</strong> — salva a construção atual (classe, subclasse, espécie, background, atributos e escolhas — sem nome, PV atual nem inventário) como modelo reaproveitável pra criar personagens parecidos depois.</li>
+        <li><strong>🎲 Personagem aleatório</strong> — sorteia espécie, classe, subclasse, background, perícias, talentos, equipamento inicial e nome; os valores mais altos vão pro atributo principal da classe sorteada.</li>
+      </ul>
+
+      <h3>💾 Salvar / menu "Arquivo"</h3>
+      <ul>
+        <li><strong>💾 Salvar</strong> — grava a ficha atual neste navegador. A ficha também salva sozinha ao trocar de campo, mas o botão garante na hora.</li>
+        <li><strong>Exportar/Importar JSON</strong> — baixa a ficha inteira como arquivo (backup, ou pra levar pra outro navegador/computador) e recarrega a partir de um arquivo assim.</li>
+        <li><strong>🔗 Link somente-leitura</strong> — gera um link com o personagem inteiro codificado nele (sem servidor, sem conta). Quem abre o link vê a ficha mas não edita; retrato e notas de sessão não entram no link. Bom pra mandar a ficha pro mestre só de olhada.</li>
+        <li><strong>⇩ Exportar pro Foundry VTT</strong> — baixa um Actor compatível com o sistema dnd5e do Foundry, pra importar direto na aba de Atores do seu mundo.</li>
+        <li><strong>Imprimir direto</strong> — manda pra impressão sem passar pela pré-visualização.</li>
+      </ul>
+
+      <h3>Menu "Ferramentas"</h3>
+      <ul>
+        <li><strong>🔗 Discord</strong> — cadastra um link de webhook (veja o botão de ajuda dentro dessa própria tela pra criar um) e cada rolagem (ataque, dano, dado de vida, teste de morte, rolador genérico, monstro) vira uma mensagem automática no canal configurado. Fica salvo neste navegador, cada jogador configura o próprio.</li>
+        <li><strong>💬 Sala de rolagens</strong> — ver seção própria abaixo.</li>
+        <li><strong>🐉 Ambiente do Mestre</strong> — kit separado da ficha aberta: puxa qualquer criatura do bestiário oficial (Manual dos Monstros e aventuras completas), importa uma aventura inteira de uma vez, ou cria monstros do zero. Organiza tudo em listas (uma por aventura/campanha) e cada rolagem de monstro também vai pro Discord/sala. Acessível mesmo sem personagem aberto.</li>
+        <li><strong>Atualizar dados do 5etools</strong> — baixa de novo o conteúdo (raças, classes, itens, magias, monstros) caso tenha saído alguma atualização.</li>
+      </ul>
+
+      <h3>Menu "Ajustes"</h3>
+      <ul>
+        <li><strong>Regras</strong> — alterna entre as edições 2014 e 2024 (muda listas de magias, talentos etc.).</li>
+        <li><strong>Conteúdo</strong> — mostra apenas material oficial, apenas homebrew, ou os dois juntos nos catálogos.</li>
+        <li><strong>Tema</strong> — visual da ficha na tela (Noite escuro, Papel branco, Pergaminho igual ao PDF, ou Mesa mais densa). A ficha impressa em PDF sempre sai no papel oficial, independente do tema escolhido aqui.</li>
+        <li><strong>Idioma</strong> — idioma da interface (menus, rótulos). Conteúdo de regras/monstros segue o que o 5etools disponibiliza.</li>
+      </ul>
+
+      <h3>Ficha em PDF</h3>
+      <p>Monta e abre uma pré-visualização da ficha oficial em PDF, pronta pra imprimir ou salvar — separado do "Imprimir direto" do menu Arquivo, que pula a pré-visualização.</p>
+
+      <h3>💬 Sala de rolagens (WebRTC, sem servidor)</h3>
+      <p>Conecta os navegadores da mesa direto um no outro — sem conta, sem serviço de terceiro guardando as rolagens. Configura pelo botão ⚙️ da bolha de chat (canto da tela) ou por "Ferramentas → Sala de rolagens".</p>
+      <ul>
+        <li><strong>Criar sala (virar anfitrião)</strong> — normalmente o mestre; combina um código com o grupo e cria a sala. Só uma pessoa cria; o anfitrião precisa manter a aba aberta durante a sessão — se fechar ou recarregar, a sala cai e alguém precisa criar de novo.</li>
+        <li><strong>Entrar na sala</strong> — os outros jogadores digitam o mesmo código pra entrar, cada um no próprio navegador.</li>
+        <li>O status da sala (conectando/conectado, quantos jogadores) aparece embaixo do botão de configurar, e uma mensagem no chat avisa quando alguém entra ou sai da sala.</li>
+        <li><strong>Aba Chat</strong> — toda rolagem do personagem (ataque, dano, morte, rolador genérico, monstro do mestre) aparece pra todo mundo, além de mensagens de texto e imagens/GIFs. Rolagens marcadas como <strong>Cura</strong> no rolador genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar — isso fica salvo no navegador de cada um, não na ficha compartilhada.</li>
+        <li><strong>Aba Iniciativa</strong> — rastreador de combate compartilhado; o anfitrião é sempre a autoridade (todo mundo vê o mesmo round/turno em tempo real).</li>
+        <li><strong>Aba Música</strong> — ver seção abaixo.</li>
+        <li><strong>⚠️ Segurança</strong> — quem tiver o código consegue entrar; combine algo que não seja óbvio se quiser evitar visitantes indesejados.</li>
+      </ul>
+
+      <h3>🎵 Música da sala</h3>
+      <p>Só o anfitrião carrega/controla — os jogadores recebem o mesmo vídeo sincronizado. Cole um link de vídeo <em>ou de playlist</em> do YouTube em "Carregar".</p>
+      <ul>
+        <li><strong>▶️/⏸ Tocar/Pausar</strong>, <strong>🔄 Ressincronizar</strong> (corrige o ponto do vídeo se alguém ficou pra trás) e <strong>⏹ Parar</strong>.</li>
+        <li>Som e volume são <strong>por navegador</strong> — cada jogador ativa/ajusta o próprio som com os controles abaixo do vídeo; isso não afeta o que os outros ouvem.</li>
+        <li>Quando o link é de uma <strong>playlist</strong>, as faixas aparecem em miniatura logo abaixo dos controles; o anfitrião clica em qualquer uma pra pular direto pra ela, e a troca (inclusive quando a playlist avança sozinha) sincroniza pra sala inteira.</li>
+        <li>Quem entra na sala com a música já rolando, ou depois de um tempo parado numa aba, entra no ponto certo do vídeo — a ficha calcula o tempo decorrido, não só a última posição registrada.</li>
+      </ul>
+
+      <h3>Recursos de combate na aba Ficha</h3>
+      <ul>
+        <li><strong>Condições Ativas</strong> — aplica condições (com duração em rodadas ou permanente) e some sozinha quando a duração zera em "Avançar rodada".</li>
+        <li><strong>Turno Atual</strong> — controla ação/ação bônus/reação/movimento gastos; zera sozinho em "Avançar rodada". O badge de <strong>Concentração</strong> fica ali do lado, como lembrete visual de qual magia está ativa (sofrer dano exige teste de Constituição pra manter).</li>
+        <li><strong>Recursos de Combate</strong> — dado de vida e recursos específicos da classe (ex.: Fúria, Pontos de Ki), com contagem de uso.</li>
+        <li><strong>Descanso Curto/Longo</strong> — restaura de uma vez os recursos que a regra de cada descanso permite, sem precisar zerar um por um.</li>
+      </ul>
+
+      <h3>🎲 Rolador de dados (bolha flutuante)</h3>
+      <p>Sempre à mão, além dos botões de ataque/dano/morte: digite uma expressão como "2d6+3" e role. O histórico é só da sessão atual (não é salvo com o personagem). Marcar o tipo como <strong>Cura</strong> antes de rolar é o que habilita o botão de aplicar PV no chat da sala.</p>
+    </div>`;
+  $("modal").classList.remove("hidden");
 }
 
 // ------------------------------------------------------------
@@ -6496,6 +6709,7 @@ function setup() {
   $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) $("modal").classList.add("hidden"); });
   $("discord-settings")?.addEventListener("click", renderDiscordSettings);
   $("room-settings")?.addEventListener("click", renderRoomSettings);
+  $("help-btn")?.addEventListener("click", renderHelpModal);
   $("room-chat-fab")?.addEventListener("click", () => toggleRoomChat());
   $("room-chat-close")?.addEventListener("click", () => toggleRoomChat(false));
   $("room-chat-settings-btn")?.addEventListener("click", renderRoomSettings);
