@@ -23,47 +23,48 @@
 <header class="appbar no-print">
   <div class="brand">
     <div class="brand-mark">D&D</div>
-    <div><h1>Ficha de Personagem</h1><small id="db-status">Carregando dados do 5etools…</small></div>
+    <div><h1 data-i18n="app.title">Ficha de Personagem</h1><small id="db-status">Carregando dados do 5etools…</small></div>
   </div>
   <div class="toolbar">
     <details class="menu" id="menu-character">
-      <summary>Personagem</summary>
+      <summary data-i18n="menu.character">Personagem</summary>
       <div class="menu-body">
-        <button id="characters-btn">Meus Personagens</button>
-        <button id="new-character">Novo</button>
-        <button id="templates-btn">Modelos</button>
-        <button id="random-character" title="Sorteia espécie, classe, subclasse, background, atributos e nome — pronto pra jogar">🎲 Personagem aleatório</button>
+        <button id="characters-btn" data-i18n="menu.charactersBtn">Meus Personagens</button>
+        <button id="new-character" data-i18n="menu.newCharacter">Novo</button>
+        <button id="templates-btn" data-i18n="menu.templatesBtn">Modelos</button>
+        <button id="random-character" data-i18n="menu.randomCharacter" data-i18n-title="menu.randomCharacter.title" title="Sorteia espécie, classe, subclasse, background, atributos e nome — pronto pra jogar">🎲 Personagem aleatório</button>
       </div>
     </details>
-    <button id="save-character" title="Salvar personagem">💾 Salvar</button>
+    <button id="save-character" data-i18n="save.character" data-i18n-title="save.character.title" title="Salvar personagem">💾 Salvar</button>
     <details class="menu" id="menu-file">
-      <summary>Arquivo</summary>
+      <summary data-i18n="menu.file">Arquivo</summary>
       <div class="menu-body">
-        <button id="export-character">Exportar JSON</button>
-        <label class="file-button">Importar JSON<input id="import-character" type="file" accept=".json,application/json"></label>
-        <button id="share-link-btn" title="Gera um link somente-leitura com o personagem inteiro codificado nele — sem servidor, sem conta. Quem abrir vê a ficha (sem poder editar); o retrato e as notas de sessão não entram no link.">🔗 Link somente-leitura</button>
-        <button id="export-foundry" title="Baixa um Actor (Personagem) compatível com o sistema dnd5e do Foundry VTT — importe pela aba de Atores do seu mundo">⇩ Exportar pro Foundry VTT</button>
-        <button id="print-character">Imprimir direto</button>
+        <button id="export-character" data-i18n="menu.exportJson">Exportar JSON</button>
+        <label class="file-button"><span data-i18n="menu.importJson">Importar JSON</span><input id="import-character" type="file" accept=".json,application/json"></label>
+        <button id="share-link-btn" data-i18n="menu.shareLink" data-i18n-title="menu.shareLink.title" title="Gera um link somente-leitura com o personagem inteiro codificado nele — sem servidor, sem conta. Quem abrir vê a ficha (sem poder editar); o retrato e as notas de sessão não entram no link.">🔗 Link somente-leitura</button>
+        <button id="export-foundry" data-i18n="menu.exportFoundry" data-i18n-title="menu.exportFoundry.title" title="Baixa um Actor (Personagem) compatível com o sistema dnd5e do Foundry VTT — importe pela aba de Atores do seu mundo">⇩ Exportar pro Foundry VTT</button>
+        <button id="print-character" data-i18n="menu.printCharacter">Imprimir direto</button>
       </div>
     </details>
     <details class="menu" id="menu-tools">
-      <summary>Ferramentas</summary>
+      <summary data-i18n="menu.tools">Ferramentas</summary>
       <div class="menu-body">
-        <button id="discord-settings" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
-        <button id="room-settings" title="Configurar a sala de rolagens compartilhada em tempo real com o grupo">💬 Sala de rolagens</button>
-        <button id="mestre-mode-btn" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Ambiente do Mestre</button>
-        <button id="refresh-data">Atualizar dados do 5etools</button>
+        <button id="discord-settings" data-i18n="menu.discordSettings" data-i18n-title="menu.discordSettings.title" title="Enviar as rolagens de dado pro Discord">🔗 Discord</button>
+        <button id="room-settings" data-i18n="menu.roomSettings" data-i18n-title="menu.roomSettings.title" title="Configurar a sala de rolagens compartilhada em tempo real com o grupo">💬 Sala de rolagens</button>
+        <button id="mestre-mode-btn" data-i18n="menu.mestreMode" data-i18n-title="menu.mestreMode.title" title="Ambiente do mestre: listas de monstros por aventura, bestiário oficial completo e criação de monstros — independe do personagem aberto">🐉 Ambiente do Mestre</button>
+        <button id="refresh-data" data-i18n="menu.refreshData">Atualizar dados do 5etools</button>
       </div>
     </details>
     <details class="menu" id="menu-prefs">
-      <summary>Ajustes</summary>
+      <summary data-i18n="menu.prefs">Ajustes</summary>
       <div class="menu-body menu-fields">
-        <label>Regras<select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
-        <label>Conteúdo<select id="content"><option value="official">Apenas oficial</option><option value="all">Oficial + Homebrew</option><option value="homebrew">Apenas Homebrew</option></select></label>
-        <label>Tema<select id="skin-select" title="Visual da ficha na tela — a ficha em PDF sai sempre no papel da ficha oficial"><option value="noite">Noite (escuro)</option><option value="papel">Papel Branco (claro)</option><option value="pergaminho">Pergaminho (igual ao PDF)</option><option value="mesa">Mesa (denso)</option></select></label>
+        <label><span data-i18n="prefs.edition">Regras</span><select id="edition"><option value="2024">2024</option><option value="2014">2014</option></select></label>
+        <label><span data-i18n="prefs.content">Conteúdo</span><select id="content"><option value="official" data-i18n="prefs.content.official">Apenas oficial</option><option value="all" data-i18n="prefs.content.all">Oficial + Homebrew</option><option value="homebrew" data-i18n="prefs.content.homebrew">Apenas Homebrew</option></select></label>
+        <label><span data-i18n="prefs.skin">Tema</span><select id="skin-select" data-i18n-title="prefs.skin.title" title="Visual da ficha na tela — a ficha em PDF sai sempre no papel da ficha oficial"><option value="noite" data-i18n="prefs.skin.noite">Noite (escuro)</option><option value="papel" data-i18n="prefs.skin.papel">Papel Branco (claro)</option><option value="pergaminho" data-i18n="prefs.skin.pergaminho">Pergaminho (igual ao PDF)</option><option value="mesa" data-i18n="prefs.skin.mesa">Mesa (denso)</option></select></label>
+        <label><span data-i18n="prefs.lang">Idioma</span><select id="lang-select"><option value="pt">Português</option><option value="en">English</option></select></label>
       </div>
     </details>
-    <button id="preview-pdf" class="primary">Ficha em PDF</button>
+    <button id="preview-pdf" class="primary" data-i18n="previewPdf">Ficha em PDF</button>
   </div>
 </header>
 
@@ -79,18 +80,18 @@
       <button type="button" id="avatar-remove" class="avatar-remove hidden no-print" title="Remover retrato">×</button>
       <input type="file" id="avatar-input" accept="image/*" class="hidden">
     </div>
-    <div class="name-block"><input id="name" class="character-name" placeholder="NOME DO PERSONAGEM" aria-label="Nome do personagem"><span>Nome do personagem</span></div>
-    <div class="head-box"><span>Classe e nível</span><strong id="head-class">—</strong></div>
-    <div class="head-box"><span>Background</span><strong id="head-background">—</strong></div>
-    <div class="head-box"><span>Espécie</span><strong id="head-race">—</strong></div>
-    <div class="head-box small-box"><span>Nível</span><input id="level" type="number" min="1" max="20" value="1"></div>
-    <div class="head-box small-box"><span>XP</span><input id="xp" type="number" min="0" value="0"></div>
+    <div class="name-block"><input id="name" class="character-name" data-i18n-placeholder="name.placeholder" placeholder="NOME DO PERSONAGEM" aria-label="Nome do personagem"><span data-i18n="name.label">Nome do personagem</span></div>
+    <div class="head-box"><span data-i18n="head.classLevel">Classe e nível</span><strong id="head-class">—</strong></div>
+    <div class="head-box"><span data-i18n="head.background">Background</span><strong id="head-background">—</strong></div>
+    <div class="head-box"><span data-i18n="head.race">Espécie</span><strong id="head-race">—</strong></div>
+    <div class="head-box small-box"><span data-i18n="head.level">Nível</span><input id="level" type="number" min="1" max="20" value="1"></div>
+    <div class="head-box small-box"><span data-i18n="head.xp">XP</span><input id="xp" type="number" min="0" value="0"></div>
   </section>
 
   <section class="dashboard no-print" id="dashboard">
     <div class="dashboard-head">
-      <span>QUICK VIEW · COMBATE</span>
-      <button type="button" id="dashboard-toggle" class="link-btn">Recolher</button>
+      <span data-i18n="dashboard.title">QUICK VIEW · COMBATE</span>
+      <button type="button" id="dashboard-toggle" class="link-btn" data-i18n="dashboard.collapse">Recolher</button>
     </div>
     <div class="dashboard-body" id="dashboard-body"></div>
   </section>
@@ -104,16 +105,16 @@
   </div>
 
   <nav class="tabs no-print" id="tabs">
-    <button class="tab" data-tab="build">Construção</button>
-    <button class="tab active" data-tab="sheet">Ficha</button>
-    <button class="tab" data-tab="actions">Ações</button>
-    <button class="tab" data-tab="abilities">Atributos & Talentos</button>
-    <button class="tab" data-tab="spells">Magias</button>
-    <button class="tab" data-tab="features">Características</button>
-    <button class="tab" data-tab="equipment">Equipamento</button>
-    <button class="tab" data-tab="notes">Notas</button>
-    <button class="tab" data-tab="codex">Raças & Classes</button>
-    <button class="tab" data-tab="compendium">Compêndio</button>
+    <button class="tab" data-tab="build" data-i18n="tab.build">Construção</button>
+    <button class="tab active" data-tab="sheet" data-i18n="tab.sheet">Ficha</button>
+    <button class="tab" data-tab="actions" data-i18n="tab.actions">Ações</button>
+    <button class="tab" data-tab="abilities" data-i18n="tab.abilities">Atributos & Talentos</button>
+    <button class="tab" data-tab="spells" data-i18n="tab.spells">Magias</button>
+    <button class="tab" data-tab="features" data-i18n="tab.features">Características</button>
+    <button class="tab" data-tab="equipment" data-i18n="tab.equipment">Equipamento</button>
+    <button class="tab" data-tab="notes" data-i18n="tab.notes">Notas</button>
+    <button class="tab" data-tab="codex" data-i18n="tab.codex">Raças & Classes</button>
+    <button class="tab" data-tab="compendium" data-i18n="tab.compendium">Compêndio</button>
   </nav>
 
   <section class="tab-page" id="tab-build">
