@@ -64,6 +64,8 @@
         <label><span data-i18n="prefs.lang">Idioma</span><select id="lang-select"><option value="pt">Português</option><option value="en">English</option><option value="es">Español</option><option value="ru">Русский</option><option value="zh">中文</option></select></label>
       </div>
     </details>
+    <button id="updates-btn" data-i18n="menu.updates" data-i18n-title="menu.updates.title" title="O que mudou recentemente na ficha">📰 Novidades</button>
+    <button id="report-bug-btn" data-i18n="menu.reportBug" data-i18n-title="menu.reportBug.title" title="Achou um bug ou tem uma sugestão? Manda pra mim">🐛 Relatar bug</button>
     <button id="help-btn" data-i18n="menu.help" data-i18n-title="menu.help.title" title="Guia detalhado de tudo que a ficha faz">❓ Ajuda</button>
     <button id="preview-pdf" class="primary" data-i18n="previewPdf">Ficha em PDF</button>
   </div>
@@ -331,6 +333,10 @@
   <section class="tab-page" id="tab-compendium"><div class="page-title"><h2>Compêndio</h2><p>Pesquise diretamente nos registros carregados do 5etools.</p></div><section class="paper-card compendium-toolbar"><input id="compendium-search" placeholder="Pesquisar no compêndio…"><select id="compendium-type"><option value="all">Tudo</option><option value="class">Classes</option><option value="subclass">Subclasses</option><option value="race">Espécies / Raças</option><option value="background">Backgrounds</option><option value="spell">Magias</option><option value="item">Itens</option><option value="feat">Talentos</option></select></section><div id="compendium-results" class="catalog-grid"></div></section>
 
 </main>
+
+<footer class="site-footer no-print">
+  <p><span data-i18n="footer.disclaimer">Projeto de fã, não-oficial e sem fins lucrativos. Dungeons &amp; Dragons, seus logos, nomes, raças, classes, magias e demais elementos de regra são marcas e propriedade da Wizards of the Coast LLC. Este site não é afiliado, endossado ou patrocinado pela Wizards of the Coast/Hasbro.</span> <button type="button" id="disclaimer-link" class="link-btn" data-i18n="footer.disclaimerLink" data-i18n-title="footer.disclaimerLink.title" title="Ler o aviso legal completo">Aviso legal completo</button></p>
+</footer>
 
 <section class="mestre-shell hidden no-print" id="mestre-shell">
   <div class="mestre-head">
