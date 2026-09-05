@@ -2522,7 +2522,7 @@ function renderConditions() {
   const box = $("conditions-list");
   if (!box) return;
   const list = character.conditions || [];
-  if (!list.length) { box.innerHTML = `<div class="condition-empty">Nenhuma condição ativa.</div>`; return; }
+  if (!list.length) { box.innerHTML = `<div class="condition-empty">${t("dash.noActiveConditions")}</div>`; return; }
   box.innerHTML = list.map((c) => {
     const def = CONDITIONS.find((x) => x.key === c.key);
     const durText = c.rounds == null ? "permanente" : `${c.rounds} rodada(s)`;
@@ -2610,13 +2610,13 @@ function longRest() {
 // Rastreador de Ação / Ação Bônus / Reação — mesma lógica visual das
 // condições, zerado automaticamente por "avançar rodada".
 // ------------------------------------------------------------
-const TURN_ACTION_DEFS = [["action", "Ação"], ["bonus", "Ação Bônus"], ["reaction", "Reação"]];
+const TURN_ACTION_DEFS = () => [["action", t("turn.action")], ["bonus", t("turn.bonus")], ["reaction", t("turn.reaction")]];
 function renderTurnActions() {
   character.turnActions = character.turnActions || { action: false, bonus: false, reaction: false };
   const ta = character.turnActions;
   document.querySelectorAll("[data-turn-actions-slot]").forEach((box) => {
-    box.innerHTML = TURN_ACTION_DEFS.map(([k, label]) => `<button type="button" class="turn-action-chip${ta[k] ? " used" : ""}" data-turn-action="${k}">
-      <b>${label}</b><small>${ta[k] ? "Gasta" : "Disponível"}</small></button>`).join("");
+    box.innerHTML = TURN_ACTION_DEFS().map(([k, label]) => `<button type="button" class="turn-action-chip${ta[k] ? " used" : ""}" data-turn-action="${k}">
+      <b>${label}</b><small>${ta[k] ? t("turn.used") : t("turn.available")}</small></button>`).join("");
     box.querySelectorAll("[data-turn-action]").forEach((b) => b.addEventListener("click", () => {
       const k = b.dataset.turnAction;
       character.turnActions[k] = !character.turnActions[k];
@@ -2732,11 +2732,11 @@ function renderConcentration() {
     const c = character.concentration;
     box.classList.toggle("active", !!c);
     box.innerHTML = c
-      ? `<span class="concentration-label">🎯 Concentrando em <b>${esc(c.name)}</b></span><button type="button" data-clear-concentration title="Parar de concentrar">Parar</button>`
-      : `<button type="button" class="concentration-set-btn" data-open-concentration>🎯 Marcar concentração</button>`;
+      ? `<span class="concentration-label">🎯 ${t("conc.on")} <b>${esc(c.name)}</b></span><button type="button" data-clear-concentration title="${t("conc.stopTitle")}">${t("conc.stop")}</button>`
+      : `<button type="button" class="concentration-set-btn" data-open-concentration>${t("conc.set")}</button>`;
     box.querySelectorAll("[data-open-concentration]").forEach((b) => b.addEventListener("click", openConcentrationPicker));
     box.querySelectorAll("[data-clear-concentration]").forEach((b) => b.addEventListener("click", () => {
-      character.concentration = null; saveCharacter(character); renderConcentration(); toast("Concentração encerrada.");
+      character.concentration = null; saveCharacter(character); renderConcentration(); toast(t("conc.ended"));
     }));
   });
 }
@@ -2747,7 +2747,7 @@ function setConcentration(name) {
   saveCharacter(character);
   renderConcentration();
   $("modal").classList.add("hidden");
-  toast(`Concentrando em ${name}.`);
+  toast(`${t("conc.on")} ${name}.`);
 }
 function openConcentrationPicker() {
   const prepared = [...new Set((character.preparedSpells || []).map((k) => k.split("|")[0]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -3837,12 +3837,12 @@ function renderDashboard() {
   const pct = Math.max(0, Math.min(100, maxHp > 0 ? (curHp / maxHp) * 100 : 0));
   const msi = multiclassSpellcasting();
   const slotsHtml = msi?.slots?.some(Boolean)
-    ? `<div class="dash-pip-set"><span>Espaços de magia</span>${msi.slots.map((n, i) => n ? `<div class="dash-pip-row" title="${i + 1}º nível">${Array.from({ length: n }, (_, p) => `<span class="dash-pip${p < Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0) ? " used" : ""}"></span>`).join("")}</div>` : "").join("")}</div>`
+    ? `<div class="dash-pip-set"><span>${t("dash.spellSlots")}</span>${msi.slots.map((n, i) => n ? `<div class="dash-pip-row" title="${i + 1}º nível">${Array.from({ length: n }, (_, p) => `<span class="dash-pip${p < Math.min(n, Number(character.spellSlotsUsed?.[i]) || 0) ? " used" : ""}"></span>`).join("")}</div>` : "").join("")}</div>`
     : "";
   const hdSources = refs.class ? hitDiceSources() : [];
   const hdHtml = hdSources.map((s) => {
     const used = Math.min(s.count, Number(character.hitDiceUsed?.[s.key]) || 0);
-    return `<div class="dash-pip-set"><span>Dados de vida — ${esc(s.label)} (d${s.die})</span><div class="dash-pip-row">${Array.from({ length: s.count }, (_, p) => `<span class="dash-pip${p < used ? " used" : ""}"></span>`).join("")}</div></div>`;
+    return `<div class="dash-pip-set"><span>${t("dash.hitDiceTitle")} — ${esc(s.label)} (d${s.die})</span><div class="dash-pip-row">${Array.from({ length: s.count }, (_, p) => `<span class="dash-pip${p < used ? " used" : ""}"></span>`).join("")}</div></div>`;
   }).join("");
   const resList = computeClassResources();
   const resHtml = resList.map((r) => {
@@ -3851,26 +3851,26 @@ function renderDashboard() {
   }).join("");
   const condHtml = (character.conditions || []).length
     ? (character.conditions || []).map((cd) => { const def = CONDITIONS.find((x) => x.key === cd.key); return `<span class="condition-chip" title="${esc(def?.effect || "")}"><b>${esc(def?.label || cd.key)}</b>${cd.rounds != null ? `<span class="cond-duration">${cd.rounds}r</span>` : ""}</span>`; }).join("")
-    : `<span class="dash-empty">Nenhuma condição ativa.</span>`;
-  const classLabel = refs.class ? `${titleOf(refs.class)}${refs.subclass ? ` (${titleOf(refs.subclass)})` : ""}` : "Sem classe";
+    : `<span class="dash-empty">${t("dash.noActiveConditions")}</span>`;
+  const classLabel = refs.class ? `${titleOf(refs.class)}${refs.subclass ? ` (${titleOf(refs.subclass)})` : ""}` : t("dash.noClass");
   const primaryHd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
   box.innerHTML = `
     <div class="dash-top">
-      <div class="dash-name">${esc(character.name || "Personagem sem nome")}<small>${esc(classLabel)} · ${refs.race ? esc(titleOf(refs.race)) : "sem espécie"}</small>
+      <div class="dash-name">${esc(character.name || t("dash.unnamed"))}<small>${esc(classLabel)} · ${refs.race ? esc(titleOf(refs.race)) : t("dash.noSpecies")}</small>
         <div class="dash-level-row no-print">
-          <span class="dash-level-stepper" title="Nível da classe principal (multiclasses têm nível próprio — use o assistente)">
-            <button type="button" id="dash-level-dec" ${Number(character.level) <= 1 ? "disabled" : ""} title="Baixar nível">−</button>
-            <b>nível ${totalLevel()}</b>
-            <button type="button" id="dash-level-inc" ${totalLevel() >= 20 ? "disabled" : ""} title="Subir de nível">+</button>
+          <span class="dash-level-stepper" title="${t("dash.levelStepperTitle")}">
+            <button type="button" id="dash-level-dec" ${Number(character.level) <= 1 ? "disabled" : ""} title="${t("dash.levelDownTitle")}">−</button>
+            <b>${t("dash.level")} ${totalLevel()}</b>
+            <button type="button" id="dash-level-inc" ${totalLevel() >= 20 ? "disabled" : ""} title="${t("dash.levelUpTitle")}">+</button>
           </span>
-          ${refs.class && Number(character.level) > 1 ? `<button type="button" id="dash-roll-hd" title="Rola 1d${primaryHd} pro dado de vida do nível mais recente (o 1º nível já usa o máximo do dado, sem rolagem) e ajusta o PV máximo pela diferença em relação à média já usada — pra quem prefere rolar em vez de pegar a média ao subir de nível">🎲 Rolar dado de vida</button>` : ""}
+          ${refs.class && Number(character.level) > 1 ? `<button type="button" id="dash-roll-hd" title="${t("dash.rollHitDieTitle", { hd: primaryHd })}">${t("dash.rollHitDie")}</button>` : ""}
         </div>
       </div>
       <div class="dash-stats">
-        <div class="dash-stat"><span>CA</span><b>${c.ac}</b></div>
-        <div class="dash-stat"><span>Iniciativa</span><b>${fmt(c.init)}</b></div>
-        <div class="dash-stat"><span>Prof.</span><b>${fmt(c.pb)}</b></div>
-        <div class="dash-stat"><span>Desloc.</span><b>${esc(c.speed)}</b></div>
+        <div class="dash-stat"><span>${t("dash.ac")}</span><b>${c.ac}</b></div>
+        <div class="dash-stat"><span>${t("dash.initiative")}</span><b>${fmt(c.init)}</b></div>
+        <div class="dash-stat"><span>${t("dash.prof")}</span><b>${fmt(c.pb)}</b></div>
+        <div class="dash-stat"><span>${t("dash.speed")}</span><b>${esc(c.speed)}</b></div>
       </div>
     </div>
     <div class="dash-row">
@@ -3878,23 +3878,23 @@ function renderDashboard() {
       <div class="concentration-badge" data-concentration-slot></div>
     </div>
     <div class="dash-hp">
-      <div class="dash-hp-delta no-print" title="Dano — escreva um valor e confirme (Enter ou ✓) pra tirar dos PV atuais">
-        <input type="number" min="0" inputmode="numeric" id="dash-hp-dmg" placeholder="dano">
-        <button type="button" id="dash-hp-dmg-btn" title="Aplicar dano">✓</button>
+      <div class="dash-hp-delta no-print" title="${t("dash.damageHint")}">
+        <input type="number" min="0" inputmode="numeric" id="dash-hp-dmg" placeholder="${t("dash.damagePlaceholder")}">
+        <button type="button" id="dash-hp-dmg-btn" title="${t("dash.applyDamageTitle")}">✓</button>
       </div>
-      <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(curHp, maxHp)}" style="width:${pct}%"></div><div class="dash-hp-label">${curHp} / ${maxHp}${character.hpTemp ? ` (+${character.hpTemp} temp)` : ""}</div></div>
-      <div class="dash-hp-delta no-print" title="Cura — escreva um valor e confirme (Enter ou ✓) pra somar aos PV atuais (não passa do máximo)">
-        <input type="number" min="0" inputmode="numeric" id="dash-hp-heal" placeholder="cura">
-        <button type="button" id="dash-hp-heal-btn" title="Aplicar cura">✓</button>
+      <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(curHp, maxHp)}" style="width:${pct}%"></div><div class="dash-hp-label">${curHp} / ${maxHp}${character.hpTemp ? ` (+${character.hpTemp} ${t("dash.tempHpAbbr")})` : ""}</div></div>
+      <div class="dash-hp-delta no-print" title="${t("dash.healHint")}">
+        <input type="number" min="0" inputmode="numeric" id="dash-hp-heal" placeholder="${t("dash.healPlaceholder")}">
+        <button type="button" id="dash-hp-heal-btn" title="${t("dash.applyHealTitle")}">✓</button>
       </div>
-      <input id="dash-hp-input" type="number" value="${curHp}" title="Editar PV atual diretamente (define o valor exato)">
+      <input id="dash-hp-input" type="number" value="${curHp}" title="${t("dash.hpInputTitle")}">
     </div>
     ${(slotsHtml || hdHtml || resHtml) ? `<div class="dash-row">
-      ${hdHtml ? `<div class="dash-group"><div class="dash-group-title">Dados de vida</div><div class="dash-pips">${hdHtml}</div></div>` : ""}
-      ${slotsHtml ? `<div class="dash-group"><div class="dash-group-title">Espaços de magia</div><div class="dash-pips">${slotsHtml}</div></div>` : ""}
-      ${resHtml ? `<div class="dash-group"><div class="dash-group-title">Recursos de classe</div><div class="dash-pips">${resHtml}</div></div>` : ""}
+      ${hdHtml ? `<div class="dash-group"><div class="dash-group-title">${t("dash.hitDiceTitle")}</div><div class="dash-pips">${hdHtml}</div></div>` : ""}
+      ${slotsHtml ? `<div class="dash-group"><div class="dash-group-title">${t("dash.spellSlots")}</div><div class="dash-pips">${slotsHtml}</div></div>` : ""}
+      ${resHtml ? `<div class="dash-group"><div class="dash-group-title">${t("dash.classResources")}</div><div class="dash-pips">${resHtml}</div></div>` : ""}
     </div>` : ""}
-    <div class="dash-row"><div class="dash-group"><div class="dash-group-title">Condições ativas</div><div class="dash-conditions">${condHtml}</div></div></div>`;
+    <div class="dash-row"><div class="dash-group"><div class="dash-group-title">${t("dash.activeConditions")}</div><div class="dash-conditions">${condHtml}</div></div></div>`;
   $("dash-hp-input")?.addEventListener("change", () => {
     character.hpCurrent = Number($("dash-hp-input").value) || 0;
     saveCharacter(character); recalc();
@@ -3926,19 +3926,19 @@ function renderDashboard() {
     saveCharacter(character); recalc();
   });
   $("dash-level-inc")?.addEventListener("click", () => {
-    if (totalLevel() >= 20) { toast("O personagem já está no nível 20."); return; }
+    if (totalLevel() >= 20) { toast(t("dash.maxLevelToast")); return; }
     character.level = Math.max(1, Math.min(20, (Number(character.level) || 1) + 1));
     saveCharacter(character); recalc();
-    toast(`Nível ${totalLevel()}! Confira "Características" e o assistente pra escolhas novas (talento, magias etc.).`);
+    toast(`${t("dash.levelCap", { level: totalLevel() })} ${t("dash.levelUpToast", { features: t("tab.features") })}`);
   });
   $("dash-roll-hd")?.addEventListener("click", () => {
     const hd = Number(character.auto?.hitDice || hitDiceFrom(classInfo()) || 8) || 8;
     const roll = rollDie(hd), avg = hpAverage(hd), delta = roll - avg;
     character.hpModifier = (Number(character.hpModifier) || 0) + delta;
     saveCharacter(character); recalc();
-    const msg = `Dado de vida: d${hd} (${roll}) — média seria ${avg} → PV máximo ${delta >= 0 ? "+" : ""}${delta}`;
+    const msg = `${t("dash.hitDie")}: d${hd} (${roll}) — ${t("dash.average")} ${avg} → ${t("dash.maxHpLabel")} ${delta >= 0 ? "+" : ""}${delta}`;
     toast(msg);
-    broadcastRoll("Dado de vida (nível)", `d${hd} (${roll}) vs média ${avg}`, roll, { type: "outro", note: ` — PV máx ${delta >= 0 ? "+" : ""}${delta}` });
+    broadcastRoll(`${t("dash.hitDie")} (${t("dash.level")})`, `d${hd} (${roll}) vs ${t("dash.average")} ${avg}`, roll, { type: "outro", note: ` — ${t("dash.maxHpShort")} ${delta >= 0 ? "+" : ""}${delta}` });
   });
   renderTurnActions(); renderConcentration();
 }
@@ -6928,7 +6928,7 @@ function setup() {
 
   const langSel = $("lang-select");
   if (langSel) langSel.value = getLang();
-  langSel?.addEventListener("change", (e) => setLang(e.target.value));
+  langSel?.addEventListener("change", (e) => { setLang(e.target.value); renderDashboard(); });
   applyI18n();
 }
 // Cor da barra do navegador no celular por tema — sem isso o topo do
