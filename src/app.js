@@ -3848,6 +3848,70 @@ function renderHelpModal() {
 }
 
 // ------------------------------------------------------------
+// Novidades — resumo das atualizações da ficha, mais recente primeiro.
+// Atualize esta lista à mão a cada leva de mudanças relevante pra quem joga.
+// ------------------------------------------------------------
+const CHANGELOG = [
+  { date: "2026-09-05", items: [
+    "Interface agora disponível em cinco idiomas: português, inglês, espanhol, russo e chinês (Ajustes → Idioma).",
+    "Música da sala sincronizada pra todo mundo — YouTube e SoundCloud, com playlists navegáveis.",
+    "Chat da sala virou chat de verdade: texto, imagem e GIF, além das rolagens.",
+    "Corrigido o bestiário de aventuras (Curse of Strahd e outras) que aparecia com estatísticas zeradas.",
+    "Novo guia de ajuda (❓) com um resumo de cada aba e botão da ficha.",
+  ] },
+  { date: "2026-09-04", items: [
+    "Tamanho do personagem agora pode ser trocado manualmente (metamorfose, itens, variações de tamanho).",
+    "CD de resistência nos ataques e correção do nível de multiclasse na ficha impressa.",
+    "Corrigido o tamanho padrão de raças com escolha entre Pequeno/Médio na ficha oficial.",
+  ] },
+  { date: "2026-09-01", items: [
+    "Retrato do personagem, capacidade de carga, aba \"Ações\" e link somente-leitura pra compartilhar a ficha sem servidor.",
+    "Construção do personagem ganhou aba própria, separada da Ficha usada em jogo.",
+    "Ajustes de ataques, resistências, PV extra, homebrew e evolução de nível pelo celular.",
+  ] },
+  { date: "2026-08-31", items: [
+    "Sala de rolagens compartilhada em tempo real (WebRTC, sem servidor) com cura clicável direto no PV.",
+    "Companheiros & familiares e rastreador de iniciativa dentro da sala.",
+  ] },
+  { date: "2026-08-30", items: [
+    "30 novos backgrounds e atualização do conteúdo homebrew.",
+  ] },
+  { date: "2026-08-29", items: [
+    "Ambiente do Mestre: bestiário oficial completo, listas de monstros por aventura e criação de monstros.",
+    "Exportar personagem pro Foundry VTT com um clique.",
+    "Quatro temas visuais (Noite, Papel, Pergaminho, Mesa) e ficha em PDF com repertório de magias completo.",
+  ] },
+];
+function renderUpdatesModal() {
+  const body = CHANGELOG.map((entry) => `
+    <div class="changelog-entry">
+      <div class="changelog-date">${new Date(entry.date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
+      <ul>${entry.items.map((i) => `<li>${i}</li>`).join("")}</ul>
+    </div>`).join("");
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">NOVIDADES</span><h2>O que mudou na ficha</h2><p class="muted">Resumo das atualizações mais recentes — o dia a dia (histórico completo de código) fica no repositório do GitHub.</p></div></div>
+    <div class="modal-body">${body}</div>`;
+  $("modal").classList.remove("hidden");
+}
+
+// ------------------------------------------------------------
+// Aviso legal / disclaimer — deixa claro que este é um projeto de fã,
+// não-oficial, sem fins lucrativos, e que o conteúdo de regras exibido
+// pertence à Wizards of the Coast (ou aos autores de homebrew citados).
+// ------------------------------------------------------------
+function renderDisclaimerModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">AVISO LEGAL</span><h2>Aviso legal / Disclaimer</h2></div></div>
+    <div class="modal-body">
+      <p><strong>Este é um projeto de fã, não-oficial e sem fins lucrativos.</strong> Não há anúncios, cobrança, assinatura ou qualquer forma de monetização — o código é aberto e a ficha roda de graça direto do navegador.</p>
+      <p><strong>Dungeons &amp; Dragons</strong>, seus logos, nomes de raças, classes, subclasses, magias, monstros, itens e demais elementos de regra e ambientação são marcas registradas e propriedade da <strong>Wizards of the Coast LLC</strong> (uma subsidiária da Hasbro, Inc.). Este site, seu autor e seus colaboradores <strong>não são afiliados, endossados, patrocinados ou aprovados</strong> pela Wizards of the Coast/Hasbro.</p>
+      <p>O conteúdo oficial de regras exibido na ficha (raças, classes, magias, itens, monstros etc.) é lido em tempo de execução, direto do navegador de quem usa, a partir de um espelho de terceiros do <a href="https://5etools-mirror-3.github.io/5etools-src/" target="_blank" rel="noopener">5etools</a> — <strong>nenhum arquivo de conteúdo oficial é copiado ou distribuído por este repositório</strong>, só o código da ficha em si.</p>
+      <p>O conteúdo homebrew (classes, raças, magias, itens etc. feitos pela comunidade) pertence aos respectivos autores, indicados junto de cada item/fonte quando o banco de dados original traz essa informação. A inclusão aqui é só uma leitura/exibição desse material publicado publicamente pelos próprios autores.</p>
+      <p>Esta ficha existe pra uso pessoal em mesas de RPG, no espírito da <a href="https://company.wizards.com/en/legal/fancontentpolicy" target="_blank" rel="noopener">Fan Content Policy</a> da Wizards of the Coast. Se você é detentor de direitos sobre algum conteúdo aqui e quer que algo seja removido, abra uma Issue no repositório do GitHub (veja o botão "🐛 Relatar bug") explicando o pedido.</p>
+      <p>A ficha é fornecida "como está", sem garantias de qualquer tipo. Os personagens que você cria ficam salvos só no seu próprio navegador (ou no arquivo que você exportar) — ninguém além de você tem acesso a eles.</p>
+    </div>`;
+  $("modal").classList.remove("hidden");
+}
+
+// ------------------------------------------------------------
 // Rolador de dados genérico — expressão tipo "2d6+3" sempre à mão
 // (botão flutuante), útil além dos rolamentos de ataque/dano/morte.
 // Histórico é só da sessão atual (não é salvo com o personagem).
@@ -6931,6 +6995,16 @@ function setup() {
   $("fan-disclaimer-dismiss")?.addEventListener("click", () => {
     dismissDisclaimer();
     $("fan-disclaimer-banner")?.classList.add("hidden");
+  });
+  $("updates-btn")?.addEventListener("click", renderUpdatesModal);
+  $("disclaimer-link")?.addEventListener("click", renderDisclaimerModal);
+  $("report-bug-btn")?.addEventListener("click", () => {
+    const url = "https://github.com/vangruver/dnd-sheet/issues/new?" + new URLSearchParams({
+      labels: "bug",
+      title: "",
+      body: "**O que aconteceu?**\n\n\n**Como reproduzir?**\n\n\n**Navegador/dispositivo (ex.: Chrome no Android, Safari no iPhone):**\n",
+    }).toString();
+    window.open(url, "_blank", "noopener");
   });
   $("room-chat-fab")?.addEventListener("click", () => toggleRoomChat());
   $("room-chat-close")?.addEventListener("click", () => toggleRoomChat(false));
