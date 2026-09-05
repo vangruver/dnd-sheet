@@ -218,3 +218,9 @@ export function newMonsterListId() { return genMonsterListId(); }
 
 export function getActiveMonsterListId() { try { return localStorage.getItem(MONSTER_ACTIVE_LIST_KEY) || ""; } catch { return ""; } }
 export function setActiveMonsterListId(id) { try { localStorage.setItem(MONSTER_ACTIVE_LIST_KEY, id || ""); } catch { /* modo privado */ } }
+
+// Aviso "ficha gratuita / conteúdo de fã" no topo — cada navegador dispensa
+// o próprio, não volta a aparecer depois de fechado uma vez ali.
+const DISCLAIMER_DISMISSED_KEY = "dnd-ficha-auto-disclaimer-dismissed";
+export function isDisclaimerDismissed() { try { return localStorage.getItem(DISCLAIMER_DISMISSED_KEY) === "1"; } catch { return false; } }
+export function dismissDisclaimer() { try { localStorage.setItem(DISCLAIMER_DISMISSED_KEY, "1"); } catch { /* modo privado */ } }

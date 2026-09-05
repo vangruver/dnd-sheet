@@ -182,6 +182,18 @@ resistências do Guerreiro, listas de magia não vazias em 2014 e 2024).
 | `sync-data.mjs` | baixa 5etools (2014/2024) + homebrew e gera `data/raw/` + `data/manifest.json` + `data/version.json` |
 | `data/version.json` | gerado pelo `sync-data.mjs`; lista os arquivos de classe/subclasse e de raça/subespécie homebrew, além da data da última sincronização |
 
+## Licença e aviso de conteúdo de fã
+
+Este projeto é **conteúdo de fã não-oficial**, gratuito, feito e distribuído sob a
+[Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy) da Wizards
+of the Coast. Não é publicado, endossado nem especificamente aprovado pela Wizards of
+the Coast. Partes do conteúdo usado (regras, magias, monstros etc.) são propriedade da
+Wizards of the Coast LLC. Parte do conteúdo também vem do System Reference Document
+(SRD) do D&D, licenciado sob [Creative Commons Attribution 4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
+
+A ficha é e sempre vai continuar 100% gratuita — nenhuma função fica trancada atrás de
+doação. O botão "💛 Apoiar o projeto" (Pix ou link internacional) é opcional.
+
 ## Limitações conhecidas (v1)
 
 - Herança `_copy`/`_mod` do 5etools é resolvida de forma parcial.
