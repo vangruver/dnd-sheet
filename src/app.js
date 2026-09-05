@@ -2931,6 +2931,73 @@ function onRoomMessage(msg) {
   roomRolls = roomRolls.slice(-50);
   renderRoomChat();
 }
+// Redimensiona uma foto pro chat da sala (lado maior até 480px, JPEG) —
+// preserva a proporção (ao contrário do retrato, que corta em quadrado).
+// GIF passa direto sem recomprimir (canvas mataria a animação), só com um
+// teto de tamanho pra não travar o canal P2P — GIFs maiores, manda o link.
+function resizeChatImage(file) {
+  return new Promise((resolve, reject) => {
+    if (file.type === "image/gif") {
+      if (file.size > 700 * 1024) { reject(new Error("GIF grande demais pra enviar como arquivo (máx. 700KB) — cole o link dele na mensagem em vez disso.")); return; }
+      const reader = new FileReader();
+      reader.onerror = () => reject(reader.error);
+      reader.onload = () => resolve(reader.result);
+      reader.readAsDataURL(file);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("Não deu pra ler essa imagem."));
+      img.onload = () => {
+        const maxSide = 480;
+        const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * scale)), h = Math.max(1, Math.round(img.naturalHeight * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL("image/jpeg", 0.75));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+const CHAT_IMAGE_URL_RE = /^https?:\/\/\S+\.(?:gif|png|jpe?g|webp)(?:\?\S*)?$/i;
+// Deixa links clicáveis num texto que já passou por esc() — a URL escapada
+// não tem "<"/">" então dá pra casar com regex sem risco de reabrir HTML.
+function linkifyEscaped(text) {
+  return text.replace(/((?:https?:\/\/)[^\s<]+)/gi, (u) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${u}</a>`);
+}
+function pushRoomMessage(text, image) {
+  if (!roomRole) { toast("Entre numa sala primeiro (⚙️)."); return; }
+  const msg = {
+    id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    name: (character?.name || "").trim() || "Personagem sem nome",
+    type: "chat", text: String(text || "").slice(0, 500), image: image || null, ts: Date.now(),
+  };
+  onRoomMessage(msg);
+  if (roomRole === "anfitriao") relayToOthers(msg, null);
+  else if (roomClientConn?.open) roomClientConn.send(msg);
+}
+async function sendRoomChatImage(file) {
+  if (!file) return;
+  if (!roomRole) { toast("Entre numa sala primeiro (⚙️)."); return; }
+  try {
+    const dataUrl = await resizeChatImage(file);
+    pushRoomMessage("", dataUrl);
+  } catch (err) {
+    toast(err?.message || "Não deu pra enviar essa imagem.");
+  }
+}
+function sendRoomChatText() {
+  const input = $("room-chat-text-input");
+  const text = input?.value.trim();
+  if (!text) return;
+  pushRoomMessage(text, null);
+  input.value = "";
+}
 function pushRoomRoll(entry) {
   if (!roomRole) return;
   const msg = {
@@ -2963,12 +3030,24 @@ function renderRoomChat() {
   const status = $("room-chat-status");
   if (status) status.textContent = roomStatusText();
   renderCombatTracker();
-  if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma rolagem na sala ainda.</div>`; return; }
+  if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma mensagem na sala ainda.</div>`; return; }
   const applied = getAppliedHeals();
   box.innerHTML = roomRolls.slice().reverse().map((r) => {
+    const time = r.ts ? new Date(r.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
+    if (r.type === "chat") {
+      const trimmed = (r.text || "").trim();
+      const autoImg = !r.image && CHAT_IMAGE_URL_RE.test(trimmed) ? trimmed : null;
+      const bits = [];
+      if (r.image) bits.push(`<img class="room-chat-image" src="${esc(r.image)}" alt="Imagem enviada na sala" loading="lazy">`);
+      if (autoImg) bits.push(`<img class="room-chat-image" src="${esc(autoImg)}" alt="Imagem/GIF do link" loading="lazy">`);
+      else if (r.text) bits.push(`<span class="room-chat-text">${linkifyEscaped(esc(r.text))}</span>`);
+      return `<div class="room-chat-row room-chat-message">
+        <div class="room-chat-meta"><b>${esc(r.name || "?")}</b><small>${time}</small></div>
+        <div class="room-chat-body room-chat-body-msg">${bits.join("")}</div>
+      </div>`;
+    }
     const canHeal = r.type === "cura" && r.amount != null;
     const done = canHeal && applied.includes(r.id);
-    const time = r.ts ? new Date(r.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
     return `<div class="room-chat-row${canHeal ? " room-chat-heal" : ""}">
       <div class="room-chat-meta"><b>${esc(r.name || "?")}</b><span>${esc(r.label || "")}</span><small>${time}</small></div>
       <div class="room-chat-body"><span class="room-chat-detail">${esc(r.detail || "")}</span><b class="room-chat-total">${esc(String(r.total ?? ""))}</b></div>
@@ -6290,9 +6369,23 @@ function setup() {
     b.classList.add("active");
     const combat = b.dataset.roomtab === "combat";
     $("room-chat-list").classList.toggle("hidden", combat);
+    $("room-chat-compose").classList.toggle("hidden", combat);
     $("room-combat-panel").classList.toggle("hidden", !combat);
     if (combat) renderCombatTracker();
   }));
+  $("room-chat-send-btn")?.addEventListener("click", sendRoomChatText);
+  $("room-chat-text-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendRoomChatText(); });
+  $("room-chat-text-input")?.addEventListener("paste", (e) => {
+    const imgItem = Array.from(e.clipboardData?.items || []).find((it) => it.type?.startsWith("image/"));
+    if (!imgItem) return;
+    e.preventDefault();
+    sendRoomChatImage(imgItem.getAsFile());
+  });
+  $("room-chat-image-btn")?.addEventListener("click", () => $("room-chat-image-input")?.click());
+  $("room-chat-image-input")?.addEventListener("change", (e) => {
+    const file = e.target.files[0]; e.target.value = "";
+    sendRoomChatImage(file);
+  });
   const refresh = $("refresh-data");
   if (refresh) refresh.addEventListener("click", async () => {
     if (!confirm("Baixar novamente os dados do 5etools? O cache local será limpo.")) return;
