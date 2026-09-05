@@ -2864,14 +2864,22 @@ let myPeerId = null;
 // recalcula e redistribui o estado inteiro (kind:"combat-state") pra todo
 // mundo, inclusive quem enviou. Um jogador nunca aplica a ação localmente.
 let roomCombat = { round: 1, currentId: null, list: [] };
-// Música da sala (YouTube) — mesma lógica de autoridade da iniciativa: o
-// anfitrião é quem manda tocar/pausar/trocar, os jogadores só recebem o
-// estado (kind:"music-state") e refletem no próprio player embutido.
-let roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
+// Música da sala (YouTube ou SoundCloud) — mesma lógica de autoridade da
+// iniciativa: o anfitrião é quem manda tocar/pausar/trocar, os jogadores só
+// recebem o estado (kind:"music-state") e refletem no próprio player
+// embutido (um de cada, escondido o que não está em uso).
+let roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
 let ytPlayer = null;
 let ytLoadedVideoId = null;
 let ytLoadedPlaylistId = null;
 let ytApiPromise = null;
+let scWidget = null;
+let scLoadedUrl = null;
+let scApiPromise = null;
+let scPlaylistCache = [];   // sons da playlist/set atual (título+capa), via widget.getSounds()
+let scCurrentIndex = 0;
+let scMuted = false;
+let scLastVolume = 100;
 
 function sanitizeRoomCode(code) {
   return "dndficha-" + String(code || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").slice(0, 50);
@@ -2885,9 +2893,11 @@ function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
-  roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
+  roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
   try { ytPlayer?.destroy?.(); } catch { /* ignore */ }
   ytPlayer = null; ytLoadedVideoId = null; ytLoadedPlaylistId = null;
+  try { $("room-music-player-sc") && ($("room-music-player-sc").innerHTML = ""); } catch { /* ignore */ }
+  scWidget = null; scLoadedUrl = null; scPlaylistCache = []; scCurrentIndex = 0;
   renderRoomChat();
 }
 function hostRoom(code) {
@@ -2947,7 +2957,7 @@ function relayToOthers(msg, exceptPeerId) {
 }
 function onRoomMessage(msg) {
   if (msg?.kind === "combat-state") { roomCombat = msg.combat || roomCombat; renderCombatTracker(); return; }
-  if (msg?.kind === "music-state") { roomMusic = msg.music || roomMusic; renderMusicPanel(); syncYtPlayer(); return; }
+  if (msg?.kind === "music-state") { roomMusic = msg.music || roomMusic; renderMusicPanel(); syncMusicPlayer(); return; }
   if (!msg?.id || roomRolls.some((r) => r.id === msg.id)) return;
   roomRolls.push(msg);
   roomRolls = roomRolls.slice(-50);
@@ -3212,6 +3222,18 @@ function parseYouTubeUrl(url) {
   const videoId = vidMatch ? vidMatch[1] : (/^[\w-]{11}$/.test(s) ? s : null);
   return { videoId, listId: listMatch ? listMatch[1] : null };
 }
+// Descobre se o link colado é do YouTube ou do SoundCloud. O SoundCloud não
+// precisa de ID extraído feito o YouTube — o widget aceita a URL completa
+// da faixa/playlist direto, então só normaliza (garante o https://).
+function parseMusicUrl(url) {
+  let s = String(url || "").trim();
+  if (!s) return null;
+  if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+  if (/^https?:\/\/(www\.|m\.|on\.)?soundcloud\.com\//i.test(s)) return { source: "soundcloud", scUrl: s };
+  const { videoId, listId } = parseYouTubeUrl(url);
+  if (videoId || listId) return { source: "youtube", videoId, listId };
+  return null;
+}
 function ensureYouTubeApi() {
   if (ytApiPromise) return ytApiPromise;
   ytApiPromise = new Promise((resolve) => {
@@ -3223,6 +3245,17 @@ function ensureYouTubeApi() {
   });
   return ytApiPromise;
 }
+function ensureSoundCloudApi() {
+  if (scApiPromise) return scApiPromise;
+  scApiPromise = new Promise((resolve) => {
+    if (window.SC && window.SC.Widget) { resolve(); return; }
+    const s = document.createElement("script");
+    s.src = "https://w.soundcloud.com/player/api.js";
+    s.onload = () => resolve();
+    document.head.appendChild(s);
+  });
+  return scApiPromise;
+}
 function sendMusicAction(action, payload) {
   if (!roomRole) { toast("Entre numa sala primeiro (⚙️)."); return; }
   if (roomRole === "anfitriao") applyMusicAction(action, payload);
@@ -3233,14 +3266,22 @@ function applyMusicAction(action, payload = {}) {
   if (roomRole !== "anfitriao") return;
   const updatedAt = Date.now();
   if (action === "load") {
-    roomMusic = payload.listId
-      ? { videoId: null, playlistId: payload.listId, playlistIndex: 0, playing: true, seekTime: 0, updatedAt }
-      : { videoId: payload.videoId, playlistId: null, playlistIndex: 0, playing: true, seekTime: 0, updatedAt };
+    if (payload.source === "soundcloud") {
+      roomMusic = { source: "soundcloud", scUrl: payload.scUrl, scIndex: 0, videoId: null, playlistId: null, playlistIndex: 0, playing: true, seekTime: 0, updatedAt };
+    } else {
+      roomMusic = payload.listId
+        ? { source: "youtube", videoId: null, playlistId: payload.listId, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt }
+        : { source: "youtube", videoId: payload.videoId, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt };
+    }
   }
   else if (action === "play") roomMusic = { ...roomMusic, playing: true, seekTime: Number(payload.seekTime) || 0, updatedAt };
   else if (action === "pause") roomMusic = { ...roomMusic, playing: false, seekTime: Number(payload.seekTime) || 0, updatedAt };
-  else if (action === "stop") roomMusic = { videoId: null, playlistId: null, playlistIndex: 0, playing: false, seekTime: 0, updatedAt };
-  else if (action === "select") roomMusic = { ...roomMusic, playlistIndex: Number(payload.index) || 0, videoId: null, playing: true, seekTime: 0, updatedAt };
+  else if (action === "stop") roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt };
+  else if (action === "select") {
+    roomMusic = roomMusic.source === "soundcloud"
+      ? { ...roomMusic, scIndex: Number(payload.index) || 0, playing: true, seekTime: 0, updatedAt }
+      : { ...roomMusic, playlistIndex: Number(payload.index) || 0, videoId: null, playing: true, seekTime: 0, updatedAt };
+  }
   else return;
   broadcastMusicState();
 }
@@ -3248,31 +3289,47 @@ function applyMusicAction(action, payload = {}) {
 // de faixa) — sem isso, o resto da sala ficaria preso ouvindo a faixa
 // anterior enquanto o anfitrião já ouve a próxima.
 function hostSyncPlaylistIndex(index, videoId) {
-  if (roomRole !== "anfitriao" || !roomMusic.playlistId) return;
+  if (roomRole !== "anfitriao" || roomMusic.source !== "youtube" || !roomMusic.playlistId) return;
   if (roomMusic.playlistIndex === index && roomMusic.videoId === videoId) return;
   roomMusic = { ...roomMusic, playlistIndex: index, videoId: videoId || roomMusic.videoId, seekTime: 0, updatedAt: Date.now() };
+  broadcastMusicState();
+}
+// Mesma ideia, versão SoundCloud — widget não avisa "playlist" e "índice"
+// separados, então isto lê widget.getCurrentSoundIndex() a cada play/troca.
+function hostSyncScIndex(index) {
+  if (roomRole !== "anfitriao" || roomMusic.source !== "soundcloud") return;
+  if (roomMusic.scIndex === index) return;
+  roomMusic = { ...roomMusic, scIndex: index, seekTime: 0, updatedAt: Date.now() };
   broadcastMusicState();
 }
 function broadcastMusicState() {
   const msg = { kind: "music-state", music: roomMusic };
   roomHostConns.forEach((conn) => { if (conn.open) conn.send(msg); });
   renderMusicPanel();
-  syncYtPlayer();
+  syncMusicPlayer();
 }
 // A posição real "agora" — não só a última registrada. roomMusic.seekTime
 // é uma foto tirada em roomMusic.updatedAt; se o vídeo continua tocando,
 // cada milissegundo que passou desde então precisa ser somado, senão quem
 // entra na sala (ou reabre a aba Música) depois de um tempo cai bem atrás
-// de onde o resto do grupo já está.
+// de onde o resto do grupo já está. Sempre em segundos — quem fala com o
+// SoundCloud (que usa milissegundos) converte na própria borda.
 function liveMusicSeek(music) {
   const base = Number(music.seekTime) || 0;
   if (!music.playing || !music.updatedAt) return base;
   return base + Math.max(0, (Date.now() - music.updatedAt) / 1000);
 }
+// Posição atual (segundos) de quem está tocando agora, YouTube ou
+// SoundCloud — assíncrono porque o widget do SoundCloud só responde por
+// callback (sem equivalente ao getCurrentTime() síncrono do YouTube).
+function getMusicPositionSeconds(cb) {
+  if (roomMusic.source === "soundcloud" && scWidget) { scWidget.getPosition((ms) => cb((Number(ms) || 0) / 1000)); return; }
+  cb(ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime);
+}
 function updateMusicMuteBtn() {
   const btn = $("room-music-mute-btn");
   if (!btn) return;
-  const muted = !!ytPlayer?.isMuted?.();
+  const muted = roomMusic.source === "soundcloud" ? scMuted : !!ytPlayer?.isMuted?.();
   btn.textContent = muted ? "🔇 Sem som" : "🔊 Com som";
 }
 function musicVolumeControlsHtml() {
@@ -3283,41 +3340,59 @@ function musicVolumeControlsHtml() {
 }
 function wireMusicVolumeControls() {
   $("room-music-mute-btn")?.addEventListener("click", () => {
-    try { ytPlayer?.isMuted?.() ? ytPlayer.unMute() : ytPlayer?.mute(); } catch { /* ignore */ }
+    if (roomMusic.source === "soundcloud") {
+      scMuted = !scMuted;
+      try { scWidget?.setVolume(scMuted ? 0 : (scLastVolume || 100)); } catch { /* ignore */ }
+    } else {
+      try { ytPlayer?.isMuted?.() ? ytPlayer.unMute() : ytPlayer?.mute(); } catch { /* ignore */ }
+    }
     updateMusicMuteBtn();
   });
   $("room-music-volume")?.addEventListener("input", (e) => {
-    try { ytPlayer?.setVolume?.(Number(e.target.value)); if (Number(e.target.value) > 0) ytPlayer?.unMute?.(); } catch { /* ignore */ }
+    const v = Number(e.target.value);
+    if (roomMusic.source === "soundcloud") {
+      scLastVolume = v; scMuted = v === 0;
+      try { scWidget?.setVolume?.(v); } catch { /* ignore */ }
+    } else {
+      try { ytPlayer?.setVolume?.(v); if (v > 0) ytPlayer?.unMute?.(); } catch { /* ignore */ }
+    }
     updateMusicMuteBtn();
   });
   updateMusicMuteBtn();
 }
-// Miniaturas (sem chave de API — só a imagem pública do YouTube) de cada
-// faixa da playlist carregada, clicáveis pro anfitrião pular direto pra
-// qualquer uma. Pra jogadores é só uma vitrine do que está tocando.
+// Vitrine de faixas — YouTube só dá o ID (miniatura pública, sem título);
+// SoundCloud dá título e capa de verdade via widget.getSounds(). Clicável
+// só pro anfitrião pular direto pra qualquer faixa; pra jogadores é só
+// uma vitrine sincronizada do que está tocando.
 function renderMusicPlaylist() {
   const wrap = $("room-music-playlist");
   if (!wrap) return;
-  const ids = roomMusic.playlistId ? (ytPlayer?.getPlaylist?.() || []) : [];
-  if (!ids.length) { wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
+  let items = [], curIndex = 0;
+  if (roomMusic.source === "youtube" && roomMusic.playlistId) {
+    items = (ytPlayer?.getPlaylist?.() || []).map((id) => ({ img: `https://i.ytimg.com/vi/${id}/default.jpg`, label: null }));
+    curIndex = ytPlayer?.getPlaylistIndex?.() ?? roomMusic.playlistIndex;
+  } else if (roomMusic.source === "soundcloud" && scPlaylistCache.length > 1) {
+    items = scPlaylistCache.map((snd) => ({ img: snd?.artwork_url || "", label: snd?.title || "" }));
+    curIndex = scCurrentIndex ?? roomMusic.scIndex ?? 0;
+  }
+  if (!items.length) { wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
   wrap.classList.remove("hidden");
   const canPick = roomRole === "anfitriao";
-  const curIndex = ytPlayer?.getPlaylistIndex?.() ?? roomMusic.playlistIndex;
-  wrap.innerHTML = ids.map((id, i) => `
-    <button type="button" class="room-music-track${i === curIndex ? " active" : ""}" data-track-index="${i}" ${canPick ? "" : "disabled"} title="Faixa ${i + 1}">
-      <img src="https://i.ytimg.com/vi/${esc(id)}/default.jpg" alt="" loading="lazy">
-      <span>${i + 1}</span>
+  wrap.innerHTML = items.map((it, i) => `
+    <button type="button" class="room-music-track${i === curIndex ? " active" : ""}" data-track-index="${i}" ${canPick ? "" : "disabled"} title="${esc(it.label || `Faixa ${i + 1}`)}">
+      ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : ""}
+      <span>${it.label ? esc(it.label.length > 16 ? `${it.label.slice(0, 15)}…` : it.label) : i + 1}</span>
     </button>`).join("");
   if (canPick) wrap.querySelectorAll("[data-track-index]").forEach((b) => b.addEventListener("click", () => sendMusicAction("select", { index: Number(b.dataset.trackIndex) })));
 }
 function renderMusicPanel() {
   const box = $("room-music-controls");
   if (!box) return;
-  const hasMedia = !!(roomMusic.videoId || roomMusic.playlistId);
+  const hasMedia = roomMusic.source === "soundcloud" ? !!roomMusic.scUrl : !!(roomMusic.videoId || roomMusic.playlistId);
   const status = $("room-music-status");
   if (status) {
     status.textContent = !roomRole ? "Sala não configurada — clique na engrenagem."
-      : !hasMedia ? (roomRole === "anfitriao" ? "Cole um link do YouTube abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
+      : !hasMedia ? (roomRole === "anfitriao" ? "Cole um link do YouTube ou SoundCloud abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
       : roomMusic.playing ? "▶️ Tocando na sala." : "⏸ Pausado.";
   }
   if (roomRole !== "anfitriao") {
@@ -3326,7 +3401,7 @@ function renderMusicPanel() {
     return;
   }
   box.innerHTML = `
-    <div class="room-music-load"><input type="text" id="room-music-url" placeholder="Link do YouTube (vídeo ou playlist)"><button type="button" class="add-btn" id="room-music-load-btn">Carregar</button></div>
+    <div class="room-music-load"><input type="text" id="room-music-url" placeholder="Link do YouTube ou SoundCloud (faixa ou playlist)"><button type="button" class="add-btn" id="room-music-load-btn">Carregar</button></div>
     <div class="room-music-buttons">
       <button type="button" id="room-music-play-btn" ${hasMedia ? "" : "disabled"}>${roomMusic.playing ? "⏸ Pausar" : "▶️ Tocar"}</button>
       <button type="button" id="room-music-resync-btn" ${hasMedia ? "" : "disabled"}>🔄 Ressincronizar</button>
@@ -3336,16 +3411,15 @@ function renderMusicPanel() {
     <div id="room-music-playlist" class="room-music-playlist hidden"></div>`;
   if (hasMedia) wireMusicVolumeControls();
   $("room-music-load-btn").addEventListener("click", () => {
-    const { videoId, listId } = parseYouTubeUrl($("room-music-url").value);
-    if (!listId && !videoId) { toast("Cole um link válido do YouTube."); return; }
-    sendMusicAction("load", { videoId, listId });
+    const parsed = parseMusicUrl($("room-music-url").value);
+    if (!parsed) { toast("Cole um link válido do YouTube ou SoundCloud."); return; }
+    sendMusicAction("load", parsed);
   });
   $("room-music-play-btn").addEventListener("click", () => {
-    const seekTime = ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime;
-    sendMusicAction(roomMusic.playing ? "pause" : "play", { seekTime });
+    getMusicPositionSeconds((seekTime) => sendMusicAction(roomMusic.playing ? "pause" : "play", { seekTime }));
   });
   $("room-music-resync-btn").addEventListener("click", () => {
-    sendMusicAction(roomMusic.playing ? "play" : "pause", { seekTime: ytPlayer?.getCurrentTime?.() ?? roomMusic.seekTime });
+    getMusicPositionSeconds((seekTime) => sendMusicAction(roomMusic.playing ? "play" : "pause", { seekTime }));
   });
   $("room-music-stop-btn").addEventListener("click", () => sendMusicAction("stop", {}));
   renderMusicPlaylist();
@@ -3354,6 +3428,7 @@ function renderMusicPanel() {
 // estado — usado tanto pra manter a vitrine de faixas atualizada quanto,
 // só no anfitrião, pra detectar quando a playlist avança sozinha.
 function onYtPlayerStateChange(e) {
+  if (roomMusic.source !== "youtube") return;
   if (roomMusic.playlistId) renderMusicPlaylist();
   if (roomRole === "anfitriao" && roomMusic.playlistId && e.data === YT.PlayerState.PLAYING) {
     const idx = ytPlayer.getPlaylistIndex?.();
@@ -3361,15 +3436,32 @@ function onYtPlayerStateChange(e) {
     if (idx != null && idx >= 0) hostSyncPlaylistIndex(idx, vid);
   }
 }
+// Equivalente SoundCloud do onYtPlayerStateChange — o widget só avisa
+// play/pause/fim de faixa por eventos separados, sem um "state" único.
+function onScPlay() {
+  if (roomMusic.source !== "soundcloud" || !scWidget) return;
+  scWidget.getCurrentSoundIndex((idx) => {
+    scCurrentIndex = Number(idx) || 0;
+    renderMusicPlaylist();
+    if (roomRole === "anfitriao") hostSyncScIndex(scCurrentIndex);
+  });
+}
+function refreshScPlaylistCache() {
+  if (!scWidget) return;
+  scWidget.getSounds((sounds) => { scPlaylistCache = sounds || []; renderMusicPlaylist(); });
+}
 async function syncYtPlayer() {
-  if (!$("room-music-player")) return;
+  if (roomMusic.source !== "youtube" || !$("room-music-player")) {
+    if (roomMusic.source !== "youtube") { try { ytPlayer?.stopVideo(); } catch { /* ignore */ } ytLoadedVideoId = null; ytLoadedPlaylistId = null; }
+    return;
+  }
   if (!roomMusic.videoId && !roomMusic.playlistId) {
     try { ytPlayer?.stopVideo(); } catch { /* ignore */ }
     ytLoadedVideoId = null; ytLoadedPlaylistId = null;
     return;
   }
   await ensureYouTubeApi();
-  if (!$("room-music-player")) return; // painel pode ter fechado enquanto a API carregava
+  if (roomMusic.source !== "youtube" || !$("room-music-player")) return; // painel/fonte pode ter mudado enquanto a API carregava
   if (!ytPlayer) {
     await new Promise((resolve) => {
       ytPlayer = new YT.Player("room-music-player", {
@@ -3411,6 +3503,70 @@ async function syncYtPlayer() {
   const target = liveMusicSeek(roomMusic);
   if (Math.abs(cur - target) > 2.5) ytPlayer.seekTo(target, true);
   try { roomMusic.playing ? ytPlayer.playVideo() : ytPlayer.pauseVideo(); } catch { /* ignore */ }
+}
+// Widget do SoundCloud — mesma coreografia do syncYtPlayer, adaptada pra
+// API por callback (sem getCurrentTime()/seekTo() síncronos) e sem
+// "loadVideoById": widget.load(url) troca faixa/playlist no mesmo iframe.
+async function syncScWidget() {
+  if (roomMusic.source !== "soundcloud" || !$("room-music-player-sc")) {
+    if (roomMusic.source !== "soundcloud") { try { scWidget?.pause(); } catch { /* ignore */ } scLoadedUrl = null; }
+    return;
+  }
+  if (!roomMusic.scUrl) {
+    try { scWidget?.pause(); } catch { /* ignore */ }
+    scLoadedUrl = null;
+    return;
+  }
+  await ensureSoundCloudApi();
+  const wrap = $("room-music-player-sc");
+  if (roomMusic.source !== "soundcloud" || !wrap) return; // painel/fonte pode ter mudado enquanto a API carregava
+  if (!scWidget) {
+    await new Promise((resolve) => {
+      const iframe = document.createElement("iframe");
+      iframe.width = "100%"; iframe.height = "100%"; iframe.style.border = "0"; iframe.allow = "autoplay";
+      iframe.src = `https://w.soundcloud.com/player/?url=${encodeURIComponent(roomMusic.scUrl)}&auto_play=true&show_artwork=true&visual=false`;
+      wrap.innerHTML = ""; wrap.appendChild(iframe);
+      scWidget = SC.Widget(iframe);
+      scWidget.bind(SC.Widget.Events.READY, () => {
+        scWidget.bind(SC.Widget.Events.PLAY, onScPlay);
+        refreshScPlaylistCache();
+        resolve();
+      });
+    });
+    scLoadedUrl = roomMusic.scUrl;
+    if (roomRole !== "anfitriao") { scMuted = true; try { scWidget.setVolume(0); } catch { /* autoplay sem som — o jogador ativa depois */ } }
+    const seek = liveMusicSeek(roomMusic) * 1000;
+    if (seek) scWidget.seekTo(seek);
+    if (!roomMusic.playing) scWidget.pause();
+    updateMusicMuteBtn();
+    return;
+  }
+  if (scLoadedUrl !== roomMusic.scUrl) {
+    scLoadedUrl = roomMusic.scUrl;
+    scWidget.load(roomMusic.scUrl, {
+      auto_play: roomMusic.playing, show_artwork: true,
+      callback: () => { refreshScPlaylistCache(); if (roomMusic.scIndex) scWidget.skip(roomMusic.scIndex); },
+    });
+    return;
+  }
+  scWidget.getCurrentSoundIndex((idx) => {
+    if ((Number(idx) || 0) !== (roomMusic.scIndex || 0)) scWidget.skip(roomMusic.scIndex || 0);
+  });
+  scWidget.getPosition((posMs) => {
+    const target = liveMusicSeek(roomMusic) * 1000;
+    if (Math.abs((Number(posMs) || 0) - target) > 2500) scWidget.seekTo(target);
+  });
+  try { roomMusic.playing ? scWidget.play() : scWidget.pause(); } catch { /* ignore */ }
+}
+// Ponto único chamado depois de qualquer música-state novo (local ou
+// recebido da sala) — mostra o player da fonte ativa e esconde o outro,
+// e delega a sincronização de fato pro player certo.
+function syncMusicPlayer() {
+  const ytWrap = $("room-music-player"), scWrap = $("room-music-player-sc");
+  if (ytWrap) ytWrap.classList.toggle("hidden", roomMusic.source !== "youtube");
+  if (scWrap) scWrap.classList.toggle("hidden", roomMusic.source !== "soundcloud");
+  syncYtPlayer();
+  syncScWidget();
 }
 
 function renderCombatTracker() {
@@ -3609,12 +3765,12 @@ function renderHelpModal() {
       </ul>
 
       <h3>🎵 Música da sala</h3>
-      <p>Só o anfitrião carrega/controla — os jogadores recebem o mesmo vídeo sincronizado. Cole um link de vídeo <em>ou de playlist</em> do YouTube em "Carregar".</p>
+      <p>Só o anfitrião carrega/controla — os jogadores recebem a mesma faixa sincronizada. Cole um link de vídeo/playlist do <strong>YouTube</strong> ou de faixa/playlist do <strong>SoundCloud</strong> em "Carregar" — a ficha reconhece sozinha qual é qual.</p>
       <ul>
-        <li><strong>▶️/⏸ Tocar/Pausar</strong>, <strong>🔄 Ressincronizar</strong> (corrige o ponto do vídeo se alguém ficou pra trás) e <strong>⏹ Parar</strong>.</li>
-        <li>Som e volume são <strong>por navegador</strong> — cada jogador ativa/ajusta o próprio som com os controles abaixo do vídeo; isso não afeta o que os outros ouvem.</li>
-        <li>Quando o link é de uma <strong>playlist</strong>, as faixas aparecem em miniatura logo abaixo dos controles; o anfitrião clica em qualquer uma pra pular direto pra ela, e a troca (inclusive quando a playlist avança sozinha) sincroniza pra sala inteira.</li>
-        <li>Quem entra na sala com a música já rolando, ou depois de um tempo parado numa aba, entra no ponto certo do vídeo — a ficha calcula o tempo decorrido, não só a última posição registrada.</li>
+        <li><strong>▶️/⏸ Tocar/Pausar</strong>, <strong>🔄 Ressincronizar</strong> (corrige o ponto se alguém ficou pra trás) e <strong>⏹ Parar</strong>.</li>
+        <li>Som e volume são <strong>por navegador</strong> — cada jogador ativa/ajusta o próprio som com os controles abaixo do player; isso não afeta o que os outros ouvem.</li>
+        <li>Quando o link é de uma <strong>playlist</strong> (YouTube) ou uma <strong>playlist/set</strong> (SoundCloud), as faixas aparecem em miniatura logo abaixo dos controles — com título e capa de verdade no caso do SoundCloud; o anfitrião clica em qualquer uma pra pular direto pra ela, e a troca (inclusive quando a playlist avança sozinha) sincroniza pra sala inteira.</li>
+        <li>Quem entra na sala com a música já rolando, ou depois de um tempo parado numa aba, entra no ponto certo — a ficha calcula o tempo decorrido, não só a última posição registrada.</li>
       </ul>
 
       <h3>Recursos de combate na aba Ficha</h3>
@@ -6722,7 +6878,7 @@ function setup() {
     $("room-combat-panel").classList.toggle("hidden", tab !== "combat");
     $("room-music-panel").classList.toggle("hidden", tab !== "music");
     if (tab === "combat") renderCombatTracker();
-    if (tab === "music") { renderMusicPanel(); syncYtPlayer(); }
+    if (tab === "music") { renderMusicPanel(); syncMusicPlayer(); }
   }));
   $("room-chat-send-btn")?.addEventListener("click", sendRoomChatText);
   $("room-chat-text-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendRoomChatText(); });
