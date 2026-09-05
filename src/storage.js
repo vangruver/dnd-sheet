@@ -130,7 +130,7 @@ export function saveSkin(v) { try { localStorage.setItem(SKIN_KEY, SKINS.include
 // traduz o conteúdo vindo do 5etools (magias, monstros, classes...), só a
 // casca do app. "pt" é o padrão e não depende de dicionário nenhum.
 const LANG_KEY = "dnd-ficha-auto-lang";
-export const LANGS = ["pt", "en"];
+export const LANGS = ["pt", "en", "es", "ru", "zh"];
 export function getSavedLang() {
   try { const v = localStorage.getItem(LANG_KEY); return LANGS.includes(v) ? v : "pt"; } catch { return "pt"; }
 }
