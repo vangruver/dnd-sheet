@@ -18,6 +18,7 @@ import {
   getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
 } from "./storage.js";
+import { applyI18n, setLang, getLang, t } from "./i18n.js";
 
 const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
@@ -6459,7 +6460,7 @@ function setup() {
   });
   $("dashboard-toggle")?.addEventListener("click", () => {
     $("dashboard").classList.toggle("collapsed");
-    $("dashboard-toggle").textContent = $("dashboard").classList.contains("collapsed") ? "Expandir" : "Recolher";
+    $("dashboard-toggle").textContent = $("dashboard").classList.contains("collapsed") ? t("dashboard.expand") : t("dashboard.collapse");
   });
   $("save-character").addEventListener("click", () => { saveCharacter(character); toast("Personagem salvo neste navegador."); });
   $("export-character").addEventListener("click", () => downloadCharacter(character));
@@ -6554,6 +6555,11 @@ function setup() {
 
   $("skin-select")?.addEventListener("change", (e) => applySkin(e.target.value));
   applySkin(getSavedSkin());
+
+  const langSel = $("lang-select");
+  if (langSel) langSel.value = getLang();
+  langSel?.addEventListener("change", (e) => setLang(e.target.value));
+  applyI18n();
 }
 // Cor da barra do navegador no celular por tema — sem isso o topo do
 // aparelho continua preto num tema claro.

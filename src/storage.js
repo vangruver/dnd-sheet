@@ -126,6 +126,16 @@ export function getSavedSkin() {
 }
 export function saveSkin(v) { try { localStorage.setItem(SKIN_KEY, SKINS.includes(v) ? v : "noite"); } catch { /* modo privado */ } }
 
+// Idioma da INTERFACE (menus, abas, rótulos fixos da própria ficha) — não
+// traduz o conteúdo vindo do 5etools (magias, monstros, classes...), só a
+// casca do app. "pt" é o padrão e não depende de dicionário nenhum.
+const LANG_KEY = "dnd-ficha-auto-lang";
+export const LANGS = ["pt", "en"];
+export function getSavedLang() {
+  try { const v = localStorage.getItem(LANG_KEY); return LANGS.includes(v) ? v : "pt"; } catch { return "pt"; }
+}
+export function saveLang(v) { try { localStorage.setItem(LANG_KEY, LANGS.includes(v) ? v : "pt"); } catch { /* modo privado */ } }
+
 const CREATION_MODE_KEY = "dnd-ficha-auto-creation-mode";
 export function getSavedCreationMode() { try { return localStorage.getItem(CREATION_MODE_KEY) || "free"; } catch { return "free"; } }
 export function saveCreationMode(v) { try { localStorage.setItem(CREATION_MODE_KEY, v); } catch { /* modo privado */ } }
