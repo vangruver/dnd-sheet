@@ -15,7 +15,7 @@ import {
   getSavedSkin, saveSkin, SKINS, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
   getDiscordWebhook, saveDiscordWebhook,
-  getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied,
+  getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied, getAppliedDamages, markDamageApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
   isDisclaimerDismissed, dismissDisclaimer,
 } from "./storage.js";
@@ -1755,6 +1755,7 @@ async function recalc() {
   if (active === "features") { renderCustomFeatures(); renderFeatures(); }
   if (active === "spells") renderSpells();
   if (active === "equipment" && eqCat === "inventory") { renderStartingEquipment(); renderCarryCapacity(); }
+  if (active === "actions") await renderActionsBoard();
 }
 // Quando o personagem tem mais de uma Defesa sem Armadura (clássico
 // Monge/Bárbaro), mostra qual está valendo e deixa trocar na mão — a
@@ -2144,36 +2145,52 @@ function renderAttacks() {
     character.attacks[i].damageParts = parts;
     saveCharacter(character); renderAttacks();
   }));
-  $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", (e) => {
-    const i = Number(b.dataset.rollAttack), a = character.attacks[i];
-    const { rolls, roll, mode } = d20WithMode(e);
-    const bonus = computeAttackBonus(a), total = roll + bonus;
-    const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
-    const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
-    attackRollMessages[i] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
-    $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    broadcastRoll(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
-  }));
-  $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", (e) => {
-    const i = Number(b.dataset.rollDamage), a = character.attacks[i];
-    const parts = attackDamageParts(a).filter((p) => parseDiceExpr(p.dice));
-    if (!parts.length) { toast('Preencha um dado de dano, ex.: "1d8".'); return; }
-    const crit = !!e.shiftKey;
-    let total = 0;
-    const segs = parts.map((p, pi) => {
-      const parsed = parseDiceExpr(p.dice);
-      const { rolls, total: diceTotal } = rollDice(crit ? parsed.n * 2 : parsed.n, parsed.faces);
-      let extra = (Number(p.bonus) || 0) + (parsed.bonus || 0);
-      if (pi === 0 && (a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
-      const segTotal = diceTotal + extra;
-      total += segTotal;
-      return `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)}${p.type ? " " + esc(p.type.toLowerCase()) : ""} = ${segTotal}`;
-    });
-    const note = crit ? " — CRÍTICO" : "";
-    attackRollMessages[i] = `${segs.join(" + ")} = <b>${total}</b>${note}`;
-    $(`attack-result-${i}`).innerHTML = attackRollMessages[i];
-    broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, segs.join(" + "), total, { type: "dano", note });
-  }));
+  $("attacks").querySelectorAll("[data-roll-attack]").forEach((b) => b.addEventListener("click", (e) => rollAttackByIndex(Number(b.dataset.rollAttack), e)));
+  $("attacks").querySelectorAll("[data-roll-damage]").forEach((b) => b.addEventListener("click", (e) => rollDamageByIndex(Number(b.dataset.rollDamage), e)));
+}
+// Atualiza tanto o resultado na aba Ataques (id fixo) quanto qualquer cópia
+// do mesmo ataque mostrada na aba Ações (data-attribute, pode haver 0 ou 1
+// — um ataque só aparece na aba Ações quando consome Ação/Bônus/Reação).
+function updateAttackResultDisplays(i) {
+  const msg = attackRollMessages[i] || "";
+  const el = $(`attack-result-${i}`);
+  if (el) el.innerHTML = msg;
+  document.querySelectorAll("[data-action-attack-result]").forEach((s) => { if (Number(s.dataset.actionAttackResult) === i) s.innerHTML = msg; });
+}
+// Extraídas de wireAttacks() pra serem chamadas tanto pelos botões da aba
+// Ataques quanto pelos equivalentes na aba Ações — mesmo cálculo, mesmo
+// broadcast pra sala, só muda de onde o clique veio.
+function rollAttackByIndex(i, e) {
+  const a = character.attacks[i];
+  if (!a) return;
+  const { rolls, roll, mode } = d20WithMode(e);
+  const bonus = computeAttackBonus(a), total = roll + bonus;
+  const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
+  const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
+  attackRollMessages[i] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
+  updateAttackResultDisplays(i);
+  broadcastRoll(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
+}
+function rollDamageByIndex(i, e) {
+  const a = character.attacks[i];
+  if (!a) return;
+  const parts = attackDamageParts(a).filter((p) => parseDiceExpr(p.dice));
+  if (!parts.length) { toast('Preencha um dado de dano, ex.: "1d8".'); return; }
+  const crit = !!e?.shiftKey;
+  let total = 0;
+  const segs = parts.map((p, pi) => {
+    const parsed = parseDiceExpr(p.dice);
+    const { rolls, total: diceTotal } = rollDice(crit ? parsed.n * 2 : parsed.n, parsed.faces);
+    let extra = (Number(p.bonus) || 0) + (parsed.bonus || 0);
+    if (pi === 0 && (a.abilityMode || "str") !== "manual") extra += (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0);
+    const segTotal = diceTotal + extra;
+    total += segTotal;
+    return `${rolls.length}d${parsed.faces} (${rolls.join("+")}) ${fmt(extra)}${p.type ? " " + esc(p.type.toLowerCase()) : ""} = ${segTotal}`;
+  });
+  const note = crit ? " — CRÍTICO" : "";
+  attackRollMessages[i] = `${segs.join(" + ")} = <b>${total}</b>${note}`;
+  updateAttackResultDisplays(i);
+  broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, segs.join(" + "), total, { type: "dano", note, amount: total });
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
 // próprio texto do traço — uma lista embutida ("Deformações" do Lefou,
@@ -2647,18 +2664,23 @@ function featureActionType(text) {
   if (/\bas an action\b/i.test(text)) return "action";
   return null;
 }
+// Índice { chave -> registro da magia } montado a cada computeActionsBoard(),
+// pra os botões de rolagem da aba Ações acharem de novo a magia clicada
+// (o HTML só guarda a chave, não o objeto inteiro).
+let actionsBoardSpellIndex = {};
 async function computeActionsBoard() {
   const items = { action: [], bonus: [], reaction: [], special: [] };
-  const push = (type, kind, name, detail) => (items[type] || items.special).push({ kind, name, detail });
+  actionsBoardSpellIndex = {};
+  const push = (type, kind, name, detail, extra) => (items[type] || items.special).push({ kind, name, detail, ...extra });
 
-  for (const a of character.attacks || []) {
-    if (!a.name) continue;
-    push("action", "attack", a.name, `${a.rollType === "save" ? `${attackTotalLabel(a)} de resistência` : `${attackTotalLabel(a)} para acertar`} · ${attackDamageSummary(a)}${a.range ? ` · ${a.range}` : ""}`);
-  }
+  (character.attacks || []).forEach((a, i) => {
+    if (!a.name) return;
+    push("action", "attack", a.name, `${a.rollType === "save" ? `${attackTotalLabel(a)} de resistência` : `${attackTotalLabel(a)} para acertar`} · ${attackDamageSummary(a)}${a.range ? ` · ${a.range}` : ""}`, { attackIndex: i });
+  });
 
   for (const r of computeClassResources()) {
     const avail = r.max - resourceUsed(r.id);
-    push(r.turnAction || "special", "resource", r.label, `${r.classLabel} · ${avail}/${r.max} disponível(is)`);
+    push(r.turnAction || "special", "resource", r.label, `${r.classLabel} · ${avail}/${r.max} disponível(is)`, { resId: r.id, resMax: r.max });
   }
 
   const casters = spellcastingClasses().filter((cc) => spellcastingInfoFor(cc.cr, cc.sr, cc.level));
@@ -2673,7 +2695,8 @@ async function computeActionsBoard() {
         const at = spellActionType(sp);
         if (!at) continue;
         seenSpell.add(key);
-        push(at, "spell", sp.name, `Magia · Nv. ${spellLevel(sp) === 0 ? "Truque" : spellLevel(sp)}`);
+        actionsBoardSpellIndex[key] = sp;
+        push(at, "spell", sp.name, `Magia · Nv. ${spellLevel(sp) === 0 ? "Truque" : spellLevel(sp)}`, { spellKey: key });
       }
     } catch (err) { console.error(err); }
   }
@@ -2683,7 +2706,8 @@ async function computeActionsBoard() {
     const at = spellActionType(ex);
     if (!at) continue;
     seenSpell.add(key);
-    push(at, "spell", ex.name, `Magia (avulsa) · Nv. ${spellLevel(ex) === 0 ? "Truque" : spellLevel(ex)}`);
+    actionsBoardSpellIndex[key] = ex;
+    push(at, "spell", ex.name, `Magia (avulsa) · Nv. ${spellLevel(ex) === 0 ? "Truque" : spellLevel(ex)}`, { spellKey: key });
   }
 
   const classFeats = refs.class ? await findClassFeatures(refs.class, Number(character.level)).catch(() => []) : [];
@@ -2705,10 +2729,67 @@ async function computeActionsBoard() {
 }
 const ACTION_TAG_ICON = { attack: "⚔", resource: "●", spell: "✦", feature: "★" };
 const ACTION_TAG_LABEL = { attack: "Ataque", resource: "Recurso", spell: "Magia", feature: "Característica" };
+// Ataque com magia (rolagem de d20) e dano rolável de uma magia, direto do
+// texto/campos do 5etools — sem exigir que a magia já tenha algum dado
+// estruturado próprio (a maioria não tem). "spellAttack"/"savingThrow" no
+// próprio registro dizem se é ataque ou resistência; a expressão de dano
+// sai do primeiro {@damage}/{@dice} no texto, ou da escala de truque
+// (scalingLevelDice) pro nível certo, quando existe — isto NÃO calcula
+// dano de upada (gasto de espaço maior que o mínimo), só o valor base.
+function spellRollables(sp) {
+  const isAttack = Array.isArray(sp?.spellAttack) && sp.spellAttack.length > 0;
+  const isSave = Array.isArray(sp?.savingThrow) && sp.savingThrow.length > 0;
+  let damageExpr = null;
+  const scaling = sp?.scalingLevelDice?.scaling;
+  if (scaling && typeof scaling === "object") {
+    const lvl = totalLevel();
+    const thresholds = Object.keys(scaling).map(Number).filter((n) => !Number.isNaN(n)).sort((a, b) => a - b);
+    for (const th of thresholds) if (lvl >= th) damageExpr = scaling[String(th)];
+    if (!damageExpr && thresholds.length) damageExpr = scaling[String(thresholds[0])];
+  }
+  if (!damageExpr) {
+    const raw = JSON.stringify(sp?.entries ?? "");
+    const m = raw.match(/\{@(?:damage|dice)\s+([^}|"\\]+)/i);
+    damageExpr = m ? m[1].trim() : null;
+  }
+  return { isAttack, isSave, damageExpr };
+}
+let spellRollMessages = {};
+// Botões de rolagem embutidos no item da aba Ações — reaproveita o mesmo
+// cálculo/resultado dos ataques (Ataques) e acrescenta ataque/dano de
+// magia (calculado com o bônus de conjuração já mostrado na aba Magias).
+function actionItemExtraHtml(it) {
+  if (it.kind === "attack") {
+    const a = character.attacks[it.attackIndex];
+    if (!a) return "";
+    const isSave = a.rollType === "save";
+    return `<div class="action-item-btns">
+      ${isSave ? "" : `<button type="button" data-action-roll-attack="${it.attackIndex}" title="${D20_MODE_TITLE}">🎲 Ataque</button>`}
+      <button type="button" data-action-roll-damage="${it.attackIndex}" title="${DAMAGE_MODE_TITLE}">🎲 Dano</button>
+    </div><span class="action-item-result" data-action-attack-result="${it.attackIndex}">${attackRollMessages[it.attackIndex] || ""}</span>`;
+  }
+  if (it.kind === "spell") {
+    const sp = actionsBoardSpellIndex[it.spellKey];
+    if (!sp) return "";
+    const { isAttack, isSave, damageExpr } = spellRollables(sp);
+    if (!isAttack && !isSave && !damageExpr) return "";
+    const c = calc();
+    const keyAttr = esc(it.spellKey);
+    return `<div class="action-item-btns">
+      ${isAttack && c.atk != null ? `<button type="button" data-action-roll-spell-atk="${keyAttr}" title="${D20_MODE_TITLE}">🎯 Ataque ${fmt(c.atk)}</button>` : ""}
+      ${isSave ? `<span class="action-item-dc" title="CD de resistência da sua conjuração">🛡 CD ${c.dc ?? "—"}</span>` : ""}
+      ${damageExpr ? `<button type="button" data-action-roll-spell-dmg="${keyAttr}" title="${DAMAGE_MODE_TITLE}">💥 Dano ${esc(damageExpr)}</button>` : ""}
+    </div><span class="action-item-result" data-action-spell-result="${keyAttr}">${spellRollMessages[it.spellKey] || ""}</span>`;
+  }
+  if (it.kind === "resource") {
+    return `<button type="button" class="action-item-use-btn" data-action-res-use="${esc(it.resId)}" data-action-res-max="${it.resMax}">− Usar</button>`;
+  }
+  return "";
+}
 function actionsColumnHtml(title, hint, list) {
   return `<div class="actions-col"><div class="actions-col-head"><h3>${esc(title)}</h3><small>${esc(hint)}</small></div>${
     list.length
-      ? list.map((it) => `<div class="action-item"><span class="action-item-icon" title="${esc(ACTION_TAG_LABEL[it.kind] || "")}">${ACTION_TAG_ICON[it.kind] || "•"}</span><div class="action-item-body"><b>${esc(it.name)}</b><small>${esc(it.detail)}</small></div></div>`).join("")
+      ? list.map((it) => `<div class="action-item"><span class="action-item-icon" title="${esc(ACTION_TAG_LABEL[it.kind] || "")}">${ACTION_TAG_ICON[it.kind] || "•"}</span><div class="action-item-body"><b>${esc(it.name)}</b><small>${esc(it.detail)}</small>${actionItemExtraHtml(it)}</div></div>`).join("")
       : `<p class="muted action-empty">Nada aqui.</p>`
   }</div>`;
 }
@@ -2721,6 +2802,45 @@ async function renderActionsBoard() {
     actionsColumnHtml("Ação Bônus", "Recursos e magias rápidas — só uma por turno.", items.bonus) +
     actionsColumnHtml("Reação", "O que você pode fazer fora do seu turno.", items.reaction) +
     actionsColumnHtml("Especial / Fora de combate", "Não consome uma ação padrão — parte de outra ação, ou só vale em descanso.", items.special);
+  wireActionsBoard();
+}
+function wireActionsBoard() {
+  const box = $("actions-board");
+  if (!box) return;
+  box.querySelectorAll("[data-action-roll-attack]").forEach((b) => b.addEventListener("click", (e) => rollAttackByIndex(Number(b.dataset.actionRollAttack), e)));
+  box.querySelectorAll("[data-action-roll-damage]").forEach((b) => b.addEventListener("click", (e) => rollDamageByIndex(Number(b.dataset.actionRollDamage), e)));
+  box.querySelectorAll("[data-action-roll-spell-atk]").forEach((b) => b.addEventListener("click", (e) => rollSpellAttack(b.dataset.actionRollSpellAtk, e)));
+  box.querySelectorAll("[data-action-roll-spell-dmg]").forEach((b) => b.addEventListener("click", (e) => rollSpellDamage(b.dataset.actionRollSpellDmg, e)));
+  box.querySelectorAll("[data-action-res-use]").forEach((b) => b.addEventListener("click", () => {
+    const id = b.dataset.actionResUse, max = Number(b.dataset.actionResMax) || 0;
+    setResourceUsed(id, resourceUsed(id) + 1, max);
+    saveCharacter(character); renderClassResources(); renderDashboard(); renderActionsBoard();
+  }));
+}
+function rollSpellAttack(key, e) {
+  const sp = actionsBoardSpellIndex[key];
+  const atk = calc().atk;
+  if (!sp || atk == null) return;
+  const { rolls, roll, mode } = d20WithMode(e);
+  const total = roll + atk;
+  const cls = roll === 20 ? "crit" : roll === 1 ? "fumble" : "";
+  const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
+  spellRollMessages[key] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(atk)} = <b>${total}</b>${note}`;
+  document.querySelectorAll("[data-action-spell-result]").forEach((s) => { if (s.dataset.actionSpellResult === key) s.innerHTML = spellRollMessages[key]; });
+  broadcastRoll(`Ataque com magia — ${sp.name}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(atk)}`, total, { type: "ataque", note });
+}
+function rollSpellDamage(key, e) {
+  const sp = actionsBoardSpellIndex[key];
+  if (!sp) return;
+  const { damageExpr } = spellRollables(sp);
+  const parsed = damageExpr && parseDiceExpr(damageExpr);
+  if (!parsed) { toast("Expressão de dano inválida pra essa magia."); return; }
+  const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
+  const total = diceTotal + (parsed.bonus || 0);
+  const note = crit ? " — CRÍTICO" : "";
+  spellRollMessages[key] = `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = <b>${total}</b>${note}`;
+  document.querySelectorAll("[data-action-spell-result]").forEach((s) => { if (s.dataset.actionSpellResult === key) s.innerHTML = spellRollMessages[key]; });
+  broadcastRoll(`Dano — ${sp.name}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total, { type: "dano", note, amount: total });
 }
 
 // ------------------------------------------------------------
@@ -2923,7 +3043,7 @@ function hostRoom(code) {
     conn.on("open", () => {
       // Manda o estado atual pra quem acabou de entrar — sem isso, quem
       // entra no meio da sessão só vê iniciativa/música na próxima ação.
-      conn.send({ kind: "combat-state", combat: roomCombat });
+      conn.send({ kind: "combat-state", combat: publicCombatState() });
       conn.send({ kind: "music-state", music: roomMusic });
       pushRoomSystemMessage(`${joinerName} entrou na sala.`);
     });
@@ -3061,7 +3181,7 @@ function broadcastRoll(label, detail, total, opts = {}) {
 function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
   const note = opts.note || "";
   sendToDiscord(monsterDiscordMessage(m, label, detail, total) + note);
-  pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: "mestre" });
+  pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: opts.type || "mestre", amount: opts.amount ?? null });
 }
 
 function renderRoomChat() {
@@ -3079,6 +3199,7 @@ function renderRoomChat() {
   renderCombatTracker();
   if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma mensagem na sala ainda.</div>`; return; }
   const applied = getAppliedHeals();
+  const appliedDmg = getAppliedDamages();
   box.innerHTML = roomRolls.slice().reverse().map((r) => {
     const time = r.ts ? new Date(r.ts).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
     if (r.type === "system") {
@@ -3098,13 +3219,17 @@ function renderRoomChat() {
     }
     const canHeal = r.type === "cura" && r.amount != null;
     const done = canHeal && applied.includes(r.id);
-    return `<div class="room-chat-row${canHeal ? " room-chat-heal" : ""}">
+    const canDamage = r.type === "dano" && r.amount != null;
+    const doneDmg = canDamage && appliedDmg.includes(r.id);
+    return `<div class="room-chat-row${canHeal ? " room-chat-heal" : ""}${canDamage ? " room-chat-damage" : ""}">
       <div class="room-chat-meta"><b>${esc(r.name || "?")}</b><span>${esc(r.label || "")}</span><small>${time}</small></div>
       <div class="room-chat-body"><span class="room-chat-detail">${esc(r.detail || "")}</span><b class="room-chat-total">${esc(String(r.total ?? ""))}</b></div>
       ${canHeal ? `<button type="button" class="room-chat-heal-btn" data-heal-roll="${esc(r.id)}" ${done ? "disabled" : ""}>${done ? "✓ Cura aplicada" : `+ Aplicar cura (${esc(String(r.amount))} PV)`}</button>` : ""}
+      ${canDamage ? `<button type="button" class="room-chat-damage-btn" data-damage-roll="${esc(r.id)}" ${doneDmg ? "disabled" : ""}>${doneDmg ? "✓ Dano aplicado" : `− Aplicar dano (${esc(String(r.amount))} PV)`}</button>` : ""}
     </div>`;
   }).join("");
   box.querySelectorAll("[data-heal-roll]").forEach((b) => b.addEventListener("click", () => applyHealFromRoom(b.dataset.healRoll)));
+  box.querySelectorAll("[data-damage-roll]").forEach((b) => b.addEventListener("click", () => applyDamageFromRoom(b.dataset.damageRoll)));
 }
 function applyHealFromRoom(rollId) {
   const roll = roomRolls.find((r) => r.id === rollId);
@@ -3119,6 +3244,26 @@ function applyHealFromRoom(rollId) {
   recalc();
   renderRoomChat();
   toast(`+${amount} PV de "${roll.label}" (${roll.name}) aplicado em ${character.name || "seu personagem"}.`);
+}
+// Espelha applyHealFromRoom: o PV temporário absorve o dano primeiro (regra
+// 5e), só o excedente desconta do PV atual — nunca passa de 0.
+function applyDamageFromRoom(rollId) {
+  const roll = roomRolls.find((r) => r.id === rollId);
+  if (!roll || roll.amount == null || getAppliedDamages().includes(rollId)) return;
+  if (!character) { toast("Abra um personagem primeiro."); return; }
+  const maxHp = calc().hp;
+  const beforeHp = character.hpCurrent == null ? maxHp : character.hpCurrent;
+  const beforeTemp = Number(character.hpTemp) || 0;
+  let amount = Number(roll.amount) || 0;
+  const tempAbsorbed = Math.min(beforeTemp, amount);
+  amount -= tempAbsorbed;
+  character.hpTemp = beforeTemp - tempAbsorbed;
+  character.hpCurrent = Math.max(0, beforeHp - amount);
+  markDamageApplied(rollId);
+  saveCharacter(character);
+  recalc();
+  renderRoomChat();
+  toast(`−${roll.amount} PV de "${roll.label}" (${roll.name}) aplicado em ${character.name || "seu personagem"}.`);
 }
 function toggleRoomChat(force) {
   const panel = $("room-chat-panel");
@@ -3140,10 +3285,40 @@ function sortedCombatants() {
 }
 function announceRoomTurn() {
   const c = sortedCombatants().find((x) => x.id === roomCombat.currentId);
-  if (c) sendToDiscord(discordTurnMessage(c.name, roomCombat.round));
+  if (c) sendToDiscord(discordTurnMessage(c.hidden ? mysteryCreatureLabel(c.id) : c.name, roomCombat.round));
+}
+// Nomes de efeito pra criatura "misteriosa" (nome/vida escondidos do
+// resto da mesa) — nada de "Monstro"/"Criatura desconhecida" na cara,
+// só um clima de expectativa. Escolha estável por id (hash simples), pra
+// não trocar de nome a cada re-render enquanto ainda estiver oculta.
+const MYSTERY_CREATURE_LABELS = [
+  "Algo se aproxima nas sombras…",
+  "Uma presença ainda não identificada",
+  "Um vulto oculto pela penumbra",
+  "Uma silhueta que ninguém reconhece",
+  "Algo observa, escondido",
+  "Uma ameaça sem nome — por enquanto",
+];
+function mysteryCreatureLabel(id) {
+  let h = 0;
+  for (const ch of String(id || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return MYSTERY_CREATURE_LABELS[h % MYSTERY_CREATURE_LABELS.length];
+}
+// Versão do estado de combate que vai pros jogadores: combatentes marcados
+// como "hidden" (só o mestre liga isso, via checkbox/botão 🎭) trocam nome
+// e PV por um enigma — quem entra na sala nunca recebe o dado real, então
+// não dá nem pra "espiar" abrindo o DevTools do navegador.
+function publicCombatState() {
+  return {
+    round: roomCombat.round,
+    currentId: roomCombat.currentId,
+    list: roomCombat.list.map((c) => c.hidden
+      ? { id: c.id, name: mysteryCreatureLabel(c.id), init: c.init, ac: c.ac, hpMax: null, hpCur: null, hpTemp: 0, hidden: true }
+      : c),
+  };
 }
 function broadcastCombatState() {
-  const msg = { kind: "combat-state", combat: roomCombat };
+  const msg = { kind: "combat-state", combat: publicCombatState() };
   roomHostConns.forEach((conn) => { if (conn.open) conn.send(msg); });
   renderCombatTracker();
 }
@@ -3171,7 +3346,11 @@ function applyCombatAction(action, payload = {}) {
       name: String(payload.name || "").trim() || "Monstro",
       init: Number(payload.init) || 0, ac: Number(payload.ac) || 0,
       hpMax: Math.max(0, Number(payload.hpMax) || 0), hpCur: Math.max(0, Number(payload.hpMax) || 0), hpTemp: 0,
+      hidden: !!payload.hidden,
     });
+  } else if (action === "toggleHidden") {
+    const c = list.find((x) => x.id === payload.id);
+    if (c) c.hidden = !c.hidden; else return;
   } else if (action === "remove") {
     const i = list.findIndex((c) => c.id === payload.id);
     if (i >= 0) list.splice(i, 1);
@@ -3603,6 +3782,9 @@ function renderCombatTracker() {
       <input id="combat-add-init" type="number" placeholder="Inic.">
       <input id="combat-add-ac" type="number" placeholder="CA">
       <input id="combat-add-hp" type="number" placeholder="PV máx">
+      <label class="room-combat-hidden-check" title="Os jogadores veem a criatura entrar na iniciativa, mas nome e PV ficam ocultos até você revelar.">
+        <input type="checkbox" id="combat-add-hidden"> 🎭 Misteriosa (esconder nome e PV dos jogadores)
+      </label>
       <button type="button" class="add-btn" id="combat-add-btn">+ Adicionar</button>
     </div>
     <div class="room-combat-master">
@@ -3615,14 +3797,24 @@ function renderCombatTracker() {
   `;
   const sorted = sortedCombatants();
   list.innerHTML = sorted.length ? sorted.map((c) => {
+    // Um jogador só recebe dado real de uma criatura "misteriosa" quando é
+    // o próprio mestre olhando — a redação já aconteceu antes de chegar
+    // aqui (ver publicCombatState), então pra quem não é anfitrião isto é
+    // só decidir o visual (o hpMax/hpCur real nem existe no objeto).
+    const mysterious = c.hidden && !isHost;
     const pct = c.hpMax > 0 ? Math.max(0, Math.min(100, (c.hpCur / c.hpMax) * 100)) : 0;
     const isTurn = c.id === roomCombat.currentId;
     const canRemove = isHost || c.id === myPeerId;
-    return `<div class="room-combat-row${isTurn ? " room-combat-turn" : ""}">
-      <div class="room-combat-row-top"><b>${esc(c.name)}</b><span class="room-combat-init" title="Iniciativa">${c.init}</span>${canRemove ? `<button type="button" class="remove-btn" data-combat-remove="${esc(c.id)}" title="Remover">×</button>` : ""}</div>
+    const hostBadge = isHost && c.hidden ? `<span class="room-combat-hidden-badge" title="Jogadores veem só o enigma — nome e PV reais ficam só com você.">🎭 oculta p/ jogadores</span>` : "";
+    const hideToggle = isHost ? `<button type="button" class="room-combat-hide-toggle" data-combat-toggle-hidden="${esc(c.id)}" title="${c.hidden ? "Revelar nome e PV pros jogadores" : "Esconder nome e PV dos jogadores (misteriosa)"}">${c.hidden ? "👁" : "🎭"}</button>` : "";
+    const hpBlock = mysterious
+      ? `<div class="dash-hp-bar mystery-hp-bar" title="O mestre ainda não revelou os detalhes dessa criatura"><div class="dash-hp-label">??? / ???</div></div>`
+      : `<div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(c.hpCur, c.hpMax)}" style="width:${pct}%"></div><div class="dash-hp-label">${c.hpCur} / ${c.hpMax}${c.hpTemp ? ` (+${c.hpTemp})` : ""}</div></div>`;
+    return `<div class="room-combat-row${isTurn ? " room-combat-turn" : ""}${mysterious ? " room-combat-mystery" : ""}">
+      <div class="room-combat-row-top"><b>${esc(c.name)}</b>${hostBadge}<span class="room-combat-init" title="Iniciativa">${c.init}</span>${hideToggle}${canRemove ? `<button type="button" class="remove-btn" data-combat-remove="${esc(c.id)}" title="Remover">×</button>` : ""}</div>
       <div class="room-combat-row-bottom">
         <span>CA ${c.ac}</span>
-        <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(c.hpCur, c.hpMax)}" style="width:${pct}%"></div><div class="dash-hp-label">${c.hpCur} / ${c.hpMax}${c.hpTemp ? ` (+${c.hpTemp})` : ""}</div></div>
+        ${hpBlock}
       </div>
     </div>`;
   }).join("") : `<div class="empty">Ninguém na iniciativa ainda.</div>`;
@@ -3646,9 +3838,10 @@ function renderCombatTracker() {
   $("combat-add-btn")?.addEventListener("click", () => {
     const name = $("combat-add-name").value.trim();
     if (!name) { toast("Digite um nome primeiro."); return; }
-    sendCombatAction("addManual", { name, init: $("combat-add-init").value, ac: $("combat-add-ac").value, hpMax: $("combat-add-hp").value });
-    $("combat-add-name").value = ""; $("combat-add-init").value = ""; $("combat-add-ac").value = ""; $("combat-add-hp").value = "";
+    sendCombatAction("addManual", { name, init: $("combat-add-init").value, ac: $("combat-add-ac").value, hpMax: $("combat-add-hp").value, hidden: $("combat-add-hidden")?.checked });
+    $("combat-add-name").value = ""; $("combat-add-init").value = ""; $("combat-add-ac").value = ""; $("combat-add-hp").value = ""; if ($("combat-add-hidden")) $("combat-add-hidden").checked = false;
   });
+  list.querySelectorAll("[data-combat-toggle-hidden]").forEach((b) => b.addEventListener("click", () => sendCombatAction("toggleHidden", { id: b.dataset.combatToggleHidden })));
   $("combat-start-btn")?.addEventListener("click", () => sendCombatAction("start", {}));
   $("combat-prev-btn")?.addEventListener("click", () => sendCombatAction("prev", {}));
   $("combat-next-btn")?.addEventListener("click", () => sendCombatAction("next", {}));
@@ -3657,7 +3850,7 @@ function renderCombatTracker() {
 }
 function renderRoomSettings() {
   const code = getRoomCode();
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Conecta os navegadores da mesa direto um no outro por WebRTC — sem conta, sem token, sem nenhum serviço de terceiro guardando as rolagens. Um jogador (normalmente o mestre) <b>cria</b> a sala com um código; os outros <b>entram</b> com o mesmo código. Rolagens marcadas como <b>Cura</b> no rolador de dados genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar. Isso fica salvo neste navegador, não no personagem.</p></div></div>
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Conecta os navegadores da mesa direto um no outro por WebRTC — sem conta, sem token, sem nenhum serviço de terceiro guardando as rolagens. Um jogador (normalmente o mestre) <b>cria</b> a sala com um código; os outros <b>entram</b> com o mesmo código. Rolagens de <b>Cura</b> ganham um botão pra somar o PV direto no personagem de quem clicar, e rolagens de <b>Dano</b> (dos seus ataques, das criaturas do mestre ou marcadas assim no rolador de dados genérico) ganham um botão pra descontar o PV do mesmo jeito. Isso fica salvo neste navegador, não no personagem.</p></div></div>
     <div class="modal-body">
       <p class="muted">Combine um código com o grupo (ex.: o nome da campanha). <strong>Só uma pessoa cria a sala</strong> — as outras entram com o mesmo código, no próprio navegador.</p>
       <label>Código da sala<br><input id="room-code-input" placeholder="ex.: mesa-de-sexta" value="${esc(code)}" style="width:100%"></label>
@@ -3927,7 +4120,7 @@ function rollExpression(expr, type) {
   diceHistory = diceHistory.slice(0, 12);
   renderDiceHistory();
   const t = type || $("dice-roll-type")?.value || "outro";
-  broadcastRoll(`${n}d${faces}${bonus ? fmt(bonus) : ""}`, `[${rolls.join(", ")}]${bonus ? ` ${fmt(bonus)}` : ""}`, result, { type: t, amount: t === "cura" ? result : null });
+  broadcastRoll(`${n}d${faces}${bonus ? fmt(bonus) : ""}`, `[${rolls.join(", ")}]${bonus ? ` ${fmt(bonus)}` : ""}`, result, { type: t, amount: (t === "cura" || t === "dano") ? result : null });
   return result;
 }
 function renderDiceHistory() {
@@ -5019,7 +5212,7 @@ function wireMonsterModalRolls() {
     const total = diceTotal + (parsed.bonus || 0);
     const note = crit ? " — CRÍTICO" : "";
     toast(`${a.name || "Dano"}: ${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)} = ${total}${note}`);
-    broadcastMonsterRoll(currentModalMonster, `Dano — ${a.name || "ação"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total, { note });
+    broadcastMonsterRoll(currentModalMonster, `Dano — ${a.name || "ação"}`, `${rolls.length}d${parsed.faces} [${rolls.join(", ")}] ${fmt(parsed.bonus)}`, total, { note, type: "dano", amount: total });
   }); });
   box.querySelectorAll("[data-mon-bonus-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
     const bonus = Number(b.dataset.monBonusRoll) || 0, label = b.dataset.monBonusLabel || "Teste";
@@ -5440,7 +5633,7 @@ function companionDiscordMessage(comp, label, detail, total) {
 function broadcastCompanionRoll(comp, label, detail, total, opts = {}) {
   const note = opts.note || "";
   sendToDiscord(companionDiscordMessage(comp, label, detail, total) + note);
-  pushRoomRoll({ name: `${(comp?.name || "Companheiro").trim()} (companheiro)`, label, detail: detail + note, total, type: opts.type || "outro" });
+  pushRoomRoll({ name: `${(comp?.name || "Companheiro").trim()} (companheiro)`, label, detail: detail + note, total, type: opts.type || "outro", amount: opts.amount ?? null });
 }
 function renderCompanions() {
   const box = $("companion-list");
@@ -5552,7 +5745,7 @@ function renderCompanions() {
     const { rolls, total: diceTotal, crit } = rollDamageWithMode(parsed.n, parsed.faces, e);
     const total = diceTotal + (parsed.bonus || 0);
     $(`companion-attack-result-${comp.id}`).innerHTML = `${crit ? "💥 crítico " : ""}[${rolls.join(", ")}]${parsed.bonus ? ` ${fmt(parsed.bonus)}` : ""} = <b>${total}</b>`;
-    broadcastCompanionRoll(comp, `Dano — ${a.name || "sem nome"}`, `${crit ? "crítico " : ""}[${rolls.join(", ")}]${parsed.bonus ? ` ${fmt(parsed.bonus)}` : ""}`, total, { type: "dano" });
+    broadcastCompanionRoll(comp, `Dano — ${a.name || "sem nome"}`, `${crit ? "crítico " : ""}[${rolls.join(", ")}]${parsed.bonus ? ` ${fmt(parsed.bonus)}` : ""}`, total, { type: "dano", amount: total });
   }));
 }
 function addCompanion() {
