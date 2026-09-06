@@ -2989,7 +2989,7 @@ let roomCombat = { round: 1, currentId: null, list: [] };
 // iniciativa: o anfitrião é quem manda tocar/pausar/trocar, os jogadores só
 // recebem o estado (kind:"music-state") e refletem no próprio player
 // embutido (um de cada, escondido o que não está em uso).
-let roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
+let roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
 let ytPlayer = null;
 let ytLoadedVideoId = null;
 let ytLoadedPlaylistId = null;
@@ -3014,7 +3014,7 @@ function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
-  roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0 };
+  roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
   try { ytPlayer?.destroy?.(); } catch { /* ignore */ }
   ytPlayer = null; ytLoadedVideoId = null; ytLoadedPlaylistId = null;
   try { $("room-music-player-sc") && ($("room-music-player-sc").innerHTML = ""); } catch { /* ignore */ }
@@ -3446,22 +3446,24 @@ function applyMusicAction(action, payload = {}) {
   if (roomRole !== "anfitriao") return;
   const updatedAt = Date.now();
   if (action === "load") {
+    const loop = !!roomMusic.loop; // preserva a preferência de repetir entre uma faixa e outra
     if (payload.source === "soundcloud") {
-      roomMusic = { source: "soundcloud", scUrl: payload.scUrl, scIndex: 0, videoId: null, playlistId: null, playlistIndex: 0, playing: true, seekTime: 0, updatedAt };
+      roomMusic = { source: "soundcloud", scUrl: payload.scUrl, scIndex: 0, videoId: null, playlistId: null, playlistIndex: 0, playing: true, seekTime: 0, updatedAt, loop };
     } else {
       roomMusic = payload.listId
-        ? { source: "youtube", videoId: null, playlistId: payload.listId, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt }
-        : { source: "youtube", videoId: payload.videoId, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt };
+        ? { source: "youtube", videoId: null, playlistId: payload.listId, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt, loop }
+        : { source: "youtube", videoId: payload.videoId, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: true, seekTime: 0, updatedAt, loop };
     }
   }
   else if (action === "play") roomMusic = { ...roomMusic, playing: true, seekTime: Number(payload.seekTime) || 0, updatedAt };
   else if (action === "pause") roomMusic = { ...roomMusic, playing: false, seekTime: Number(payload.seekTime) || 0, updatedAt };
-  else if (action === "stop") roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt };
+  else if (action === "stop") roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt, loop: false };
   else if (action === "select") {
     roomMusic = roomMusic.source === "soundcloud"
       ? { ...roomMusic, scIndex: Number(payload.index) || 0, playing: true, seekTime: 0, updatedAt }
       : { ...roomMusic, playlistIndex: Number(payload.index) || 0, videoId: null, playing: true, seekTime: 0, updatedAt };
   }
+  else if (action === "toggle-loop") roomMusic = { ...roomMusic, loop: !roomMusic.loop };
   else return;
   broadcastMusicState();
 }
@@ -3585,6 +3587,7 @@ function renderMusicPanel() {
     <div class="room-music-buttons">
       <button type="button" id="room-music-play-btn" ${hasMedia ? "" : "disabled"}>${roomMusic.playing ? "⏸ Pausar" : "▶️ Tocar"}</button>
       <button type="button" id="room-music-resync-btn" ${hasMedia ? "" : "disabled"}>🔄 Ressincronizar</button>
+      <button type="button" id="room-music-loop-btn" class="${roomMusic.loop ? "active" : ""}" ${hasMedia ? "" : "disabled"} title="Repetir a faixa/playlist quando terminar">🔁 Repetir</button>
       <button type="button" id="room-music-stop-btn" ${hasMedia ? "" : "disabled"}>⏹ Parar</button>
     </div>
     ${hasMedia ? musicVolumeControlsHtml() : ""}
@@ -3601,6 +3604,7 @@ function renderMusicPanel() {
   $("room-music-resync-btn").addEventListener("click", () => {
     getMusicPositionSeconds((seekTime) => sendMusicAction(roomMusic.playing ? "play" : "pause", { seekTime }));
   });
+  $("room-music-loop-btn").addEventListener("click", () => sendMusicAction("toggle-loop", {}));
   $("room-music-stop-btn").addEventListener("click", () => sendMusicAction("stop", {}));
   renderMusicPlaylist();
 }
@@ -3615,6 +3619,10 @@ function onYtPlayerStateChange(e) {
     const vid = ytPlayer.getVideoData?.()?.video_id;
     if (idx != null && idx >= 0) hostSyncPlaylistIndex(idx, vid);
   }
+  if (roomRole === "anfitriao" && roomMusic.loop && e.data === YT.PlayerState.ENDED) {
+    if (roomMusic.playlistId) { ytPlayer.playVideoAt(0); hostSyncPlaylistIndex(0, ytPlayer.getVideoData?.()?.video_id); }
+    else { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); applyMusicAction("play", { seekTime: 0 }); }
+  }
 }
 // Equivalente SoundCloud do onYtPlayerStateChange — o widget só avisa
 // play/pause/fim de faixa por eventos separados, sem um "state" único.
@@ -3625,6 +3633,13 @@ function onScPlay() {
     renderMusicPlaylist();
     if (roomRole === "anfitriao") hostSyncScIndex(scCurrentIndex);
   });
+}
+// Equivalente ao ENDED do YouTube — dispara quando a faixa/set termina;
+// só o anfitrião reage, reiniciando do começo se o loop estiver ligado.
+function onScFinish() {
+  if (roomMusic.source !== "soundcloud" || !scWidget || roomRole !== "anfitriao" || !roomMusic.loop) return;
+  if (scPlaylistCache.length > 1) { scWidget.skip(0); hostSyncScIndex(0); }
+  else { scWidget.seekTo(0); scWidget.play(); applyMusicAction("play", { seekTime: 0 }); }
 }
 function refreshScPlaylistCache() {
   if (!scWidget) return;
@@ -3709,6 +3724,7 @@ async function syncScWidget() {
       scWidget = SC.Widget(iframe);
       scWidget.bind(SC.Widget.Events.READY, () => {
         scWidget.bind(SC.Widget.Events.PLAY, onScPlay);
+        scWidget.bind(SC.Widget.Events.FINISH, onScFinish);
         refreshScPlaylistCache();
         resolve();
       });
@@ -4017,7 +4033,7 @@ function renderHelpModal() {
       <h3>🎵 Música da sala</h3>
       <p>Só o anfitrião carrega/controla — os jogadores recebem a mesma faixa sincronizada. Cole um link de vídeo/playlist do <strong>YouTube</strong> ou de faixa/playlist do <strong>SoundCloud</strong> em "Carregar" — a ficha reconhece sozinha qual é qual.</p>
       <ul>
-        <li><strong>▶️/⏸ Tocar/Pausar</strong>, <strong>🔄 Ressincronizar</strong> (corrige o ponto se alguém ficou pra trás) e <strong>⏹ Parar</strong>.</li>
+        <li><strong>▶️/⏸ Tocar/Pausar</strong>, <strong>🔄 Ressincronizar</strong> (corrige o ponto se alguém ficou pra trás), <strong>🔁 Repetir</strong> (toca em loop a faixa ou playlist atual — reinicia sozinha quando chega ao fim, sincronizado pra sala inteira) e <strong>⏹ Parar</strong>.</li>
         <li>Som e volume são <strong>por navegador</strong> — cada jogador ativa/ajusta o próprio som com os controles abaixo do player; isso não afeta o que os outros ouvem.</li>
         <li>Quando o link é de uma <strong>playlist</strong> (YouTube) ou uma <strong>playlist/set</strong> (SoundCloud), as faixas aparecem em miniatura logo abaixo dos controles — com título e capa de verdade no caso do SoundCloud; o anfitrião clica em qualquer uma pra pular direto pra ela, e a troca (inclusive quando a playlist avança sozinha) sincroniza pra sala inteira.</li>
         <li>Quem entra na sala com a música já rolando, ou depois de um tempo parado numa aba, entra no ponto certo — a ficha calcula o tempo decorrido, não só a última posição registrada.</li>
@@ -4045,6 +4061,9 @@ function renderHelpModal() {
 // Atualize esta lista à mão a cada leva de mudanças relevante pra quem joga.
 // ------------------------------------------------------------
 const CHANGELOG = [
+  { date: "2026-09-06", items: [
+    "Botão de repetir (🔁) na música da sala — toca a faixa ou playlist em loop, reiniciando sozinha pra todo mundo quando chega ao fim.",
+  ] },
   { date: "2026-09-05", items: [
     "Interface agora disponível em cinco idiomas: português, inglês, espanhol, russo e chinês (Ajustes → Idioma).",
     "Música da sala sincronizada pra todo mundo — YouTube e SoundCloud, com playlists navegáveis.",
