@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-05T11:46:11.597Z",
+  "generatedAt": "2026-09-06T12:03:50.951Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "d8c745cd34bd8ad03a75882dea32f07b95f472fc"
+      "commit": "7af97f5f0f8bbf2d7aed1a033bffd1fe59076b01"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 71628,
+    "entities": 71672,
     "official": 11362,
-    "homebrew": 60266,
+    "homebrew": 60310,
     "external": 68
   },
   "homebrew": {
@@ -442,8 +442,8 @@
       "raw/homebrew/subclass/DXHHH101; The Beyond.json",
       "raw/homebrew/subclass/Dan Powell; Dragoon.json",
       "raw/homebrew/subclass/Desmon9507; The Big Tiddy Goth Girlfriend.json",
+      "raw/homebrew/subclass/DnDMessiah; Animeisekai.json",
       "raw/homebrew/subclass/DnDMessiah; Fortune Arcana Sorcery.json",
-      "raw/homebrew/subclass/DnDMessiah; The Gatekeeper.json",
       "raw/homebrew/subclass/DnDWiki; Arcane Tradition Wild Magic.json",
       "raw/homebrew/subclass/DonavanRex; Witcher Subclasses.json",
       "raw/homebrew/subclass/DrRichtoffen; The Ghost Train.json",
@@ -700,6 +700,7 @@
       "raw/homebrew/collection/BucketListMod; Personal Homebrew.json",
       "raw/homebrew/collection/Chronicle of Heroes; Voyager's Guide to Kyrmordia - Ley Lines & Nexuses.json",
       "raw/homebrew/collection/Cult Of Cthulhu; Vault's Codex.json",
+      "raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
       "raw/homebrew/collection/DMsGuild; Rashemen.json",
       "raw/homebrew/collection/DMsGuild; The Great Dale.json",
       "raw/homebrew/collection/DMsGuild; Xanathar's Lost Notes to Everything Else.json",
@@ -887,7 +888,7 @@
       "raw/homebrew/subrace/Valerion; Silverwit Halfling.json",
       "raw/homebrew/subrace/themagictavern; Genasi Subraces.json"
     ],
-    "raceFileCount": 210,
+    "raceFileCount": 211,
     "filesByType": {
       "item": [
         "raw/homebrew/background/D&D Wiki; Featured Quality Backgrounds.json",
