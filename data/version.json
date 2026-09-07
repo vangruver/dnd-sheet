@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-06T12:03:50.951Z",
+  "generatedAt": "2026-09-07T14:08:02.401Z",
   "sources": [
     {
       "key": "2024",
@@ -21,14 +21,14 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "7af97f5f0f8bbf2d7aed1a033bffd1fe59076b01"
+      "commit": "ae7e5ecaaafa1e536e4d352ae5b655bad75a23d3"
     },
     {
       "key": "prerelease",
       "url": "https://github.com/TheGiddyLimit/unearthed-arcana.git",
       "type": "prerelease",
       "edition": "both",
-      "commit": "76c6b9fb6675322c3f0562d3127f3538d22fb1c8"
+      "commit": "b29aea28fe2ba5d690f7775d6655ba1fa3e8358c"
     },
     {
       "key": "external",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 71672,
+    "entities": 71740,
     "official": 11362,
-    "homebrew": 60310,
+    "homebrew": 60378,
     "external": 68
   },
   "homebrew": {
@@ -239,6 +239,7 @@
       "raw/homebrew/class/sonaplayer; The Customizable Artificer.json",
       "raw/homebrew/class/uI'mFromNASA; Yet Another Ranger Variant.json",
       "raw/homebrew/class/xMartu; Surgebinder.json",
+      "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
       "raw/homebrew/collection/1985 Games; Obojima - Tales from the Tall Grass.json",
       "raw/homebrew/collection/AcidArmy; AcidArmy's Book of Crossovers.json",
       "raw/homebrew/collection/Adam Cohen; Shovel Knight, Shovels & Shields.json",
@@ -674,7 +675,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 627,
+    "classFileCount": 628,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -931,6 +932,7 @@
         "raw/homebrew/class/alterNERDtive; The Ruffian Revised.json",
         "raw/homebrew/class/devikyn; The Tinker Class.json",
         "raw/homebrew/class/morethanwordscansay; Zoologist.json",
+        "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
         "raw/homebrew/collection/1985 Games; Obojima - Tales from the Tall Grass.json",
         "raw/homebrew/collection/Adam Cohen; Shovel Knight, Shovels & Shields.json",
         "raw/homebrew/collection/Aeron Drake; Modern Handbook.json",
@@ -1234,6 +1236,7 @@
         "raw/homebrew/class/devikyn; The Tinker Class.json",
         "raw/homebrew/class/fanatic66; The Swordmage.json",
         "raw/homebrew/class/xMartu; Surgebinder.json",
+        "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
         "raw/homebrew/collection/1985 Games; Obojima - Tales from the Tall Grass.json",
         "raw/homebrew/collection/Aeron Drake; Modern Handbook.json",
         "raw/homebrew/collection/Allan Cudicio; The Wagadu Chronicles.json",
@@ -1499,6 +1502,7 @@
         "raw/homebrew/class/Taron Pounds; Runekeeper.json",
         "raw/homebrew/class/Taron Pounds; Vanguard.json",
         "raw/homebrew/class/d'Artagnan; The Witch Knight.json",
+        "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
         "raw/homebrew/collection/1985 Games; Obojima - Tales from the Tall Grass.json",
         "raw/homebrew/collection/Aeron Drake; Modern Handbook.json",
         "raw/homebrew/collection/Amellwind; Amellwind's Guide to Monster Hunting.json",
@@ -1685,6 +1689,7 @@
         "raw/homebrew/class/Chronicle of Heroes; The Weaveknight (v4.0).json",
         "raw/homebrew/class/McToomin27; Animus.json",
         "raw/homebrew/class/Taron Pounds; Vanguard.json",
+        "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
         "raw/homebrew/collection/1985 Games; Obojima - Tales from the Tall Grass.json",
         "raw/homebrew/collection/Adam Cohen; Shovel Knight, Shovels & Shields.json",
         "raw/homebrew/collection/Alex Clippinger; Tome of the Pact.json",
@@ -2101,6 +2106,7 @@
         "raw/homebrew/class/Taron Pounds; Merchant.json",
         "raw/homebrew/class/badooga; Badooga's Psion.json",
         "raw/homebrew/class/uI'mFromNASA; Yet Another Ranger Variant.json",
+        "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
         "raw/homebrew/collection/Aeron Drake; Modern Handbook.json",
         "raw/homebrew/collection/Amellwind; Amellwind's Guide to Monster Hunting.json",
         "raw/homebrew/collection/Amratat; Dark Souls III - Lord Seeker's Compendium.json",
