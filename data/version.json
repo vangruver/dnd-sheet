@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-10T12:49:54.426Z",
+  "generatedAt": "2026-09-11T12:44:27.730Z",
   "sources": [
     {
       "key": "2024",
@@ -28,7 +28,7 @@
       "url": "https://github.com/TheGiddyLimit/unearthed-arcana.git",
       "type": "prerelease",
       "edition": "both",
-      "commit": "80f3e728954783fe821af31c95ccd3ecdc0b830d"
+      "commit": "2b69467cd0220017de01eebc6d5bbc344ab7a0e3"
     },
     {
       "key": "external",
@@ -39,8 +39,8 @@
     }
   ],
   "totals": {
-    "entities": 71742,
-    "official": 11364,
+    "entities": 71750,
+    "official": 11372,
     "homebrew": 60378,
     "external": 68
   },
@@ -2253,6 +2253,7 @@
       "raw/prerelease/collection/Unearthed Arcana 2023 - Player's Handbook Playtest 7.json",
       "raw/prerelease/collection/Unearthed Arcana 2023 - Player's Handbook Playtest 8.json",
       "raw/prerelease/collection/Unearthed Arcana 2025 - Eberron Updates.json",
+      "raw/prerelease/collection/Unearthed Arcana 2026 - Underdark Options 2.json",
       "raw/prerelease/collection/Unearthed Arcana 2026 - Underdark Options.json",
       "raw/prerelease/collection/Unearthed Arcana 2026 - Villainous Options Update.json",
       "raw/prerelease/collection/Unearthed Arcana 2026 - Villainous Options.json",
@@ -2298,7 +2299,7 @@
       "raw/prerelease/subclass/Unearthed Arcana 2026 - Mystic Subclasses.json",
       "raw/prerelease/subclass/Unearthed Arcana 2026 - Villainous Options 2.json"
     ],
-    "classFileCount": 70,
+    "classFileCount": 71,
     "raceFiles": [
       "raw/prerelease/collection/Unearthed Arcana - Dragonmarks.json",
       "raw/prerelease/collection/Unearthed Arcana - Eberron.json",
@@ -2312,6 +2313,7 @@
       "raw/prerelease/collection/Unearthed Arcana 2022 - Heroes of Krynn.json",
       "raw/prerelease/collection/Unearthed Arcana 2022 - The Cleric and Revised Species.json",
       "raw/prerelease/collection/Unearthed Arcana 2022 - Wonders of the Multiverse.json",
+      "raw/prerelease/collection/Unearthed Arcana 2026 - Underdark Options 2.json",
       "raw/prerelease/collection/Wayfinder's Guide to Eberron.json",
       "raw/prerelease/race/Unearthed Arcana - Centaurs and Minotaurs.json",
       "raw/prerelease/race/Unearthed Arcana - Eladrin and Gith.json",
@@ -2322,7 +2324,7 @@
       "raw/prerelease/race/Unearthed Arcana 2021 - Travelers of the Multiverse.json",
       "raw/prerelease/subrace/Unearthed Arcana - Elf Subraces.json"
     ],
-    "raceFileCount": 21,
+    "raceFileCount": 22,
     "filesByType": {
       "item": [
         "raw/prerelease/class/Unearthed Arcana 2024 - The Artificer.json",
