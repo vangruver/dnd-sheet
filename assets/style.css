@@ -395,9 +395,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 /* Botão de resistência dentro do box do atributo — order:4 pra ficar sempre
    por último (nome → modificador → valor → resistência), já que ele entra
    no mesmo flex column dos outros itens (que usam order pra reordenar). */
-.ability-save-btn{order:4;margin-top:1px;font:700 9px var(--font-head);color:var(--text-dim);background:var(--surface-3);border:1px solid var(--border-2);border-radius:20px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.ability-save-btn{order:5;margin-top:1px;font:700 9px var(--font-head);color:var(--text-dim);background:var(--surface-3);border:1px solid var(--border-2);border-radius:20px;padding:2px 7px;cursor:pointer;white-space:nowrap}
 .ability-save-btn:hover{border-color:var(--red);color:var(--red-hi)}
 .ability-save-btn.prof{border-color:var(--red);color:var(--red-hi);background:var(--red-soft)}
+.ability-check-btn{order:4;margin-top:1px;font:700 9px var(--font-head);color:var(--text-dim);background:var(--surface-3);border:1px solid var(--border-2);border-radius:20px;padding:2px 7px;cursor:pointer;white-space:nowrap}
+.ability-check-btn:hover{border-color:var(--red);color:var(--red-hi)}
 
 /* ---------- Defesa & movimento ---------- */
 .defense-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}

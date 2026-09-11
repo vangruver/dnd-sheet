@@ -736,19 +736,27 @@ function paintAbilityEditor(ns) {
     grid.innerHTML = ABILITIES.map((a) => {
       const base = Number(character.scores[a]) || 10, eff = effScore(a), bonus = eff - base;
       const info = bonus ? `<button type="button" class="ability-info-btn" data-ability-detail="${a}" title="Ver de onde vêm esses pontos">ⓘ</button>` : "";
-      let saveBtn = "";
+      let saveBtn = "", checkBtn = "";
       if (!ns) {
         const ok = character.saveProficiencies.includes(a), sv = mod(eff) + (ok ? pb : 0);
         const formula = `Resistência de ${ABILITY_NAMES[a]}: ${fmt(mod(eff))}${ok ? ` + proficiência ${fmt(pb)}` : ""} = ${fmt(sv)} · ${D20_MODE_TITLE}`;
         saveBtn = `<button type="button" class="ability-save-btn no-print${ok ? " prof" : ""}" data-save-roll-quick="${a}" title="${esc(formula)}">🛡 ${fmt(sv)}</button>`;
+        const checkFormula = `Teste de ${ABILITY_NAMES[a]}: ${fmt(mod(eff))} · ${D20_MODE_TITLE}`;
+        checkBtn = `<button type="button" class="ability-check-btn no-print" data-ability-roll-quick="${a}" title="${esc(checkFormula)}">🎲 ${fmt(mod(eff))}</button>`;
       }
-      return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em>${info}${saveBtn}</div>`;
+      return `<div class="ability-box"><span>${ABILITY_NAMES[a]}</span><b>${eff}${bonus ? `<i>${fmt(bonus)}</i>` : ""}</b><em>${fmt(mod(eff))}</em>${info}${checkBtn}${saveBtn}</div>`;
     }).join("");
     if (!ns) grid.querySelectorAll("[data-save-roll-quick]").forEach((b) => b.addEventListener("click", (e) => {
       const a = b.dataset.saveRollQuick, ok = character.saveProficiencies.includes(a), bonus = mod(effScore(a)) + (ok ? proficiency(totalLevel()) : 0);
       const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
       toast(`Resistência de ${ABILITY_NAMES[a]}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
       broadcastRoll(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "resistencia" });
+    }));
+    if (!ns) grid.querySelectorAll("[data-ability-roll-quick]").forEach((b) => b.addEventListener("click", (e) => {
+      const a = b.dataset.abilityRollQuick, bonus = mod(effScore(a));
+      const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+      toast(`Teste de ${ABILITY_NAMES[a]}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
+      broadcastRoll(`Teste de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "atributo" });
     }));
   }
   if (!editor) return;
@@ -1754,7 +1762,7 @@ async function recalc() {
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") { renderCustomFeatures(); renderFeatures(); }
   if (active === "spells") renderSpells();
-  if (active === "equipment" && eqCat === "inventory") { renderStartingEquipment(); renderCarryCapacity(); }
+  if (active === "equipment" && eqCat === "inventory") { renderStartingEquipment(); await renderInventory(); renderCarryCapacity(); }
   if (active === "actions") await renderActionsBoard();
 }
 // Quando o personagem tem mais de uma Defesa sem Armadura (clássico
@@ -1981,15 +1989,23 @@ function migrateDamageParts(a) {
   const type = DAMAGE_TYPES.find((t) => new RegExp(stripDiacritics(t), "i").test(plainText));
   return [{ dice: parsed ? `${parsed.n}d${parsed.faces}` : "", bonus: parsed ? parsed.bonus : 0, type: type || "" }];
 }
-function damagePartText(p) {
+function damagePartText(p, extra = 0) {
   const dice = String(p?.dice || "").trim();
-  const bonus = Number(p?.bonus) || 0;
+  const bonus = (Number(p?.bonus) || 0) + extra;
   const txt = `${dice}${bonus ? fmt(bonus) : ""}`.trim();
   if (!txt) return "";
   return `${txt}${p?.type ? " " + p.type.toLowerCase() : ""}`;
 }
+// Mostra, junto do dado, o mesmo modificador automático (atributo + bônus de
+// item) que rollDamageByIndex soma de fato na 1ª parte do dano ao rolar —
+// sem isso o resumo (ex. "1d4") não deixava claro o que ia ser rolado de
+// verdade em ataques fora do modo manual.
 function attackDamageSummary(a) {
-  return attackDamageParts(a).map(damagePartText).filter(Boolean).join(" + ") || "—";
+  const manual = (a.abilityMode || "str") === "manual";
+  return attackDamageParts(a).map((p, pi) => {
+    const extra = pi === 0 && !manual ? (attackAbilityMod(a) || 0) + (Number(a.itemBonus) || 0) : 0;
+    return damagePartText(p, extra);
+  }).filter(Boolean).join(" + ") || "—";
 }
 function attackAbilityMod(a) {
   const m = a.abilityMode || "str";
@@ -2041,8 +2057,8 @@ function renderAttacks() {
     return `<div class="attack-card${collapsed ? " collapsed" : ""}" data-attack-idx="${i}">
       <div class="attack-card-top">
         <input data-a="name" data-i="${i}" value="${esc(a.name || "")}" placeholder="Nome (ex.: Espada Longa)">
-        <div class="attack-total dmg-summary" data-attack-dmg-summary="${i}" title="Dano — edite as partes abaixo">${esc(attackDamageSummary(a))}</div>
         <div class="attack-total" data-attack-total="${i}" title="${isSave ? "CD de resistência calculada (8 + atributo + proficiência + bônus de item)" : "Bônus de ataque calculado (atributo + proficiência + bônus de item)"}">${esc(attackTotalLabel(a))}</div>
+        <div class="attack-total dmg-summary" data-attack-dmg-summary="${i}" title="Dano — edite as partes abaixo">${esc(attackDamageSummary(a))}</div>
         <input data-a="notes" data-i="${i}" value="${esc(a.notes || "")}" placeholder="Notas">
         <button class="remove-btn no-print" data-remove-attack="${i}" title="Remover ataque">×</button>
       </div>
@@ -4663,12 +4679,14 @@ async function renderInventory() {
   $("inventory-list").innerHTML = arr.length ? arr.map((x, i) => {
     const at = armorTypeOf(invItemRecord(x));
     const equipBtn = at ? `<button type="button" class="equip-btn${x.equipped ? " on" : ""}" data-equip-inv="${i}" title="${at === "shield" ? "Escudo" : `Armadura ${{ light: "leve", medium: "média", heavy: "pesada" }[at]}`}">${x.equipped ? "✓ Equipada" : "Equipar"}</button>` : "";
-    return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><input type="number" min="0" step="0.1" value="${itemWeight(x) || ""}" placeholder="lb" title="Peso unitário (libras)" data-weight="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
+    const infoBtn = x.id ? `<button type="button" class="no-print" data-info-inv="${i}" title="Ver descrição">ⓘ</button>` : "";
+    return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${infoBtn}${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><input type="number" min="0" step="0.1" value="${itemWeight(x) || ""}" placeholder="lb" title="Peso unitário (libras)" data-weight="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
   }).join("") : `<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
   $("inventory-list").querySelectorAll("[data-qty]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.qty)].qty = Number(i.value) || 0; saveCharacter(character); renderCarryCapacity(); }));
   $("inventory-list").querySelectorAll("[data-weight]").forEach((i) => i.addEventListener("input", () => { character.inventory[Number(i.dataset.weight)].weight = i.value === "" ? null : Number(i.value) || 0; saveCharacter(character); renderCarryCapacity(); }));
   $("inventory-list").querySelectorAll("[data-remove-inv]").forEach((b) => b.addEventListener("click", () => { character.inventory.splice(Number(b.dataset.removeInv), 1); saveCharacter(character); renderInventory(); recalc(); }));
   $("inventory-list").querySelectorAll("[data-equip-inv]").forEach((b) => b.addEventListener("click", () => toggleEquip(Number(b.dataset.equipInv))));
+  $("inventory-list").querySelectorAll("[data-info-inv]").forEach((b) => b.addEventListener("click", () => { const item = character.inventory[Number(b.dataset.infoInv)]; const e = manifest().find((x) => x.id === item.id); if (e) openEntityModal(e); }));
   renderCarryCapacity();
 }
 // Equipar uma armadura de corpo/escudo desequipa automaticamente outro
