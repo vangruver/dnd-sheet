@@ -1759,6 +1759,7 @@ async function recalc() {
   renderUnarmoredDefense(c);
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
   renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
+  syncPartySheetWithRoom(c);
   const active = document.querySelector(".tab.active")?.dataset.tab;
   if (active === "features") { renderCustomFeatures(); renderFeatures(); }
   if (active === "spells") renderSpells();
@@ -3006,6 +3007,14 @@ let roomCombat = { round: 1, currentId: null, list: [] };
 // recebem o estado (kind:"music-state") e refletem no próprio player
 // embutido (um de cada, escondido o que não está em uso).
 let roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
+// Painel "Ficha do Mestre" — só o anfitrião (quem criou a sala) vê. Cada
+// jogador manda um resumo somente-leitura do próprio personagem (kind:
+// "party-sheet") sempre que a ficha recalcula; o anfitrião guarda por
+// peerId (chave "host" pro próprio personagem dele, se tiver um aberto) e
+// nunca repassa esses dados pros outros jogadores — é uma visão exclusiva
+// de quem está mestrando.
+let roomPartySheets = new Map();
+let sendPartySheetTimer = null;
 let ytPlayer = null;
 let ytLoadedVideoId = null;
 let ytLoadedPlaylistId = null;
@@ -3031,6 +3040,15 @@ function leaveRoom() {
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
   roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
+  roomPartySheets = new Map();
+  clearTimeout(sendPartySheetTimer);
+  document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((x) => x.classList.remove("active"));
+  $('#room-chat-tabs [data-roomtab="rolls"]')?.classList.add("active");
+  $("room-chat-list")?.classList.remove("hidden");
+  $("room-chat-compose")?.classList.remove("hidden");
+  $("room-combat-panel")?.classList.add("hidden");
+  $("room-music-panel")?.classList.add("hidden");
+  $("room-party-panel")?.classList.add("hidden");
   try { ytPlayer?.destroy?.(); } catch { /* ignore */ }
   ytPlayer = null; ytLoadedVideoId = null; ytLoadedPlaylistId = null;
   try { $("room-music-player-sc") && ($("room-music-player-sc").innerHTML = ""); } catch { /* ignore */ }
@@ -3042,17 +3060,24 @@ function hostRoom(code) {
   leaveRoom();
   roomRole = "anfitriao";
   roomPeer = new Peer(sanitizeRoomCode(code));
-  roomPeer.on("open", (id) => { myPeerId = id; renderRoomChat(); });
+  roomPeer.on("open", (id) => {
+    myPeerId = id;
+    if (character) roomPartySheets.set("host", { name: (character.name || "").trim() || "Você (mestre)", sheet: mySheetSnapshot(), updatedAt: Date.now() });
+    renderRoomChat();
+  });
   roomPeer.on("connection", (conn) => {
     roomHostConns.set(conn.peer, conn);
     const joinerName = (conn.metadata?.name || "").trim() || "Um jogador";
     conn.on("data", (msg) => {
       if (msg?.kind === "combat-action") { applyCombatAction(msg.action, msg.payload); return; }
       if (msg?.kind === "music-action") { applyMusicAction(msg.action, msg.payload); return; }
+      if (msg?.kind === "party-sheet") { roomPartySheets.set(conn.peer, { name: (msg.sheet?.name || joinerName), sheet: msg.sheet, updatedAt: Date.now() }); renderPartyPanel(); return; }
       onRoomMessage(msg); relayToOthers(msg, conn.peer);
     });
     conn.on("close", () => {
       roomHostConns.delete(conn.peer);
+      roomPartySheets.delete(conn.peer);
+      renderPartyPanel();
       applyCombatAction("remove", { id: conn.peer }); // tira quem desconectou da iniciativa
       pushRoomSystemMessage(`${joinerName} saiu da sala.`);
     });
@@ -3080,7 +3105,7 @@ function joinRoom(code) {
     const myName = (character?.name || "").trim() || "Um jogador";
     roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true, metadata: { name: myName } });
     roomClientConn.on("data", (msg) => onRoomMessage(msg));
-    roomClientConn.on("open", () => { toast(`Você entrou na sala como ${myName}.`); renderRoomChat(); });
+    roomClientConn.on("open", () => { toast(`Você entrou na sala como ${myName}.`); sendMySheetToRoom(); renderRoomChat(); });
     roomClientConn.on("close", () => { toast("Desconectado da sala — o anfitrião pode ter fechado a aba."); renderRoomChat(); });
   });
   roomPeer.on("error", (err) => {
@@ -3200,6 +3225,95 @@ function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
   pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: opts.type || "mestre", amount: opts.amount ?? null });
 }
 
+// ------------------------------------------------------------
+// "Ficha do Mestre" — resumo somente-leitura do personagem, do jeito que
+// quem está mestrando precisa: PV/CA de relance, as três percepções
+// passivas (Percepção, Intuição, Investigação — o que costuma decidir se
+// alguém nota algo sem rolar dado às claras), iniciativa, deslocamento,
+// CD/bônus de ataque mágico e condições ativas. Cada jogador manda o
+// próprio pro anfitrião; o anfitrião nunca repassa isso pros outros.
+// ------------------------------------------------------------
+function mySheetSnapshot(c) {
+  if (!character) return null;
+  c = c || calc();
+  const maxHp = c.hp;
+  const curHp = character.hpCurrent == null ? maxHp : Number(character.hpCurrent) || 0;
+  const passiveFor = (skillKey, ability) => 10 + mod(effScore(ability))
+    + (character.skillProficiencies?.includes(skillKey) ? c.pb : 0)
+    + (character.skillExpertise?.includes(skillKey) ? c.pb : 0);
+  const d = character.deathSaves || { success: 0, failure: 0 };
+  const deathStatus = curHp > 0 ? null : d.success >= 3 ? "stable" : d.failure >= 3 ? "dead" : "dying";
+  return {
+    name: (character.name || "").trim() || "Personagem sem nome",
+    classLabel: $("head-class")?.textContent || "—",
+    level: c.lvl,
+    hp: { current: curHp, max: maxHp, temp: Number(character.hpTemp) || 0 },
+    ac: c.ac,
+    initiative: c.init,
+    speed: c.speed,
+    proficiencyBonus: c.pb,
+    passivePerception: c.passive,
+    passiveInsight: passiveFor("insight", "wis"),
+    passiveInvestigation: passiveFor("investigation", "int"),
+    spellDc: c.dc,
+    spellAtk: c.atk,
+    conditions: (character.conditions || []).map((cd) => CONDITIONS.find((x) => x.key === cd.key)?.label || cd.key),
+    deathSaves: deathStatus ? { success: d.success, failure: d.failure, status: deathStatus } : null,
+  };
+}
+function sendMySheetToRoom() {
+  if (roomRole !== "jogador" || !roomClientConn?.open || !character) return;
+  roomClientConn.send({ kind: "party-sheet", sheet: mySheetSnapshot() });
+}
+// Chamado a cada recalc() da ficha — debate com um pequeno atraso pra não
+// mandar uma mensagem P2P a cada tecla digitada, só quando o personagem
+// "assenta" por um instante.
+function schedulePartySheetSend() {
+  clearTimeout(sendPartySheetTimer);
+  sendPartySheetTimer = setTimeout(sendMySheetToRoom, 400);
+}
+// Ponte entre a ficha e a sala: jogador manda a própria ficha pro
+// anfitrião; o anfitrião (quem criou a sala) atualiza a própria entrada
+// (chave fixa "host") direto, sem round-trip de rede.
+function syncPartySheetWithRoom(c) {
+  if (roomRole === "jogador") schedulePartySheetSend();
+  else if (roomRole === "anfitriao" && character) {
+    roomPartySheets.set("host", { name: (character.name || "").trim() || "Você (mestre)", sheet: mySheetSnapshot(c), updatedAt: Date.now() });
+    renderPartyPanel();
+  }
+}
+function renderPartyPanel() {
+  const box = $("room-party-panel");
+  if (!box || box.classList.contains("hidden")) return;
+  if (roomRole !== "anfitriao") { box.innerHTML = `<div class="empty">Só quem criou a sala (o mestre) vê esta aba.</div>`; return; }
+  const entries = Array.from(roomPartySheets.values())
+    .filter((e) => e.sheet)
+    .sort((a, b) => (a.sheet.name || "").localeCompare(b.sheet.name || "", "pt-BR"));
+  if (!entries.length) { box.innerHTML = `<div class="empty">Ninguém conectado ainda — assim que alguém entrar na sala (ou você abrir um personagem), a ficha dele aparece aqui.</div>`; return; }
+  box.innerHTML = entries.map(({ sheet: s }) => {
+    const pct = s.hp.max > 0 ? Math.max(0, Math.min(100, (s.hp.current / s.hp.max) * 100)) : 0;
+    const deathLabel = s.deathSaves ? (s.deathSaves.status === "stable" ? "ESTABILIZADO" : s.deathSaves.status === "dead" ? "MORREU" : `Testes de morte: ${s.deathSaves.success} sucesso(s) / ${s.deathSaves.failure} falha(s)`) : "";
+    const condHtml = (s.conditions || []).length ? `<div class="room-party-conditions">${s.conditions.map((c) => `<span class="condition-chip">${esc(c)}</span>`).join("")}</div>` : "";
+    return `<div class="room-party-card">
+      <div class="room-party-card-top"><b>${esc(s.name)}</b><span class="muted">${esc(s.classLabel)}${s.level ? ` · Nv. ${s.level}` : ""}</span></div>
+      <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(s.hp.current, s.hp.max)}" style="width:${pct}%"></div><div class="dash-hp-label">${s.hp.current} / ${s.hp.max}${s.hp.temp ? ` (+${s.hp.temp})` : ""}</div></div>
+      ${deathLabel ? `<div class="room-party-death${s.deathSaves?.status === "dead" ? " dead" : ""}">⚠️ ${esc(deathLabel)}</div>` : ""}
+      <div class="room-party-stats">
+        <div><span>CA</span><b>${s.ac}</b></div>
+        <div><span>Iniciativa</span><b>${fmt(s.initiative)}</b></div>
+        <div><span>Deslocamento</span><b>${esc(String(s.speed))}</b></div>
+        <div><span>Bônus Prof.</span><b>${fmt(s.proficiencyBonus)}</b></div>
+        <div><span>Perc. Passiva</span><b>${s.passivePerception}</b></div>
+        <div><span>Intuição Passiva</span><b>${s.passiveInsight}</b></div>
+        <div><span>Investigação Passiva</span><b>${s.passiveInvestigation}</b></div>
+        ${s.spellDc != null ? `<div><span>CD de Magia</span><b>${s.spellDc}</b></div>` : ""}
+        ${s.spellAtk != null ? `<div><span>Atq. Mágico</span><b>${fmt(s.spellAtk)}</b></div>` : ""}
+      </div>
+      ${condHtml}
+    </div>`;
+  }).join("");
+}
+
 function renderRoomChat() {
   // O status do modal de configuração ("Conectando…"/"Conectado…") é
   // atualizado aqui também — não só no painel de chat — porque a conexão
@@ -3212,7 +3326,9 @@ function renderRoomChat() {
   if (!box) return;
   const status = $("room-chat-status");
   if (status) status.textContent = roomStatusText();
+  $("room-tab-party")?.classList.toggle("hidden", roomRole !== "anfitriao");
   renderCombatTracker();
+  renderPartyPanel();
   if (!roomRolls.length) { box.innerHTML = `<div class="empty">Nenhuma mensagem na sala ainda.</div>`; return; }
   const applied = getAppliedHeals();
   const appliedDmg = getAppliedDamages();
@@ -3882,7 +3998,7 @@ function renderCombatTracker() {
 }
 function renderRoomSettings() {
   const code = getRoomCode();
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Conecta os navegadores da mesa direto um no outro por WebRTC — sem conta, sem token, sem nenhum serviço de terceiro guardando as rolagens. Um jogador (normalmente o mestre) <b>cria</b> a sala com um código; os outros <b>entram</b> com o mesmo código. Rolagens de <b>Cura</b> ganham um botão pra somar o PV direto no personagem de quem clicar, e rolagens de <b>Dano</b> (dos seus ataques, das criaturas do mestre ou marcadas assim no rolador de dados genérico) ganham um botão pra descontar o PV do mesmo jeito. Isso fica salvo neste navegador, não no personagem.</p></div></div>
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Sala de rolagens</h2><p class="muted">Conecta os navegadores da mesa direto um no outro por WebRTC — sem conta, sem token, sem nenhum serviço de terceiro guardando as rolagens. Quem <b>cria</b> a sala vira o mestre (anfitrião) e ganha a aba 🧙 <b>Mestre</b>, com PV/CA/percepções passivas de quem estiver conectado; os outros só <b>entram</b> com o mesmo código. Rolagens de <b>Cura</b> ganham um botão pra somar o PV direto no personagem de quem clicar, e rolagens de <b>Dano</b> (dos seus ataques, das criaturas do mestre ou marcadas assim no rolador de dados genérico) ganham um botão pra descontar o PV do mesmo jeito. Isso fica salvo neste navegador, não no personagem.</p></div></div>
     <div class="modal-body">
       <p class="muted">Combine um código com o grupo (ex.: o nome da campanha). <strong>Só uma pessoa cria a sala</strong> — as outras entram com o mesmo código, no próprio navegador.</p>
       <label>Código da sala<br><input id="room-code-input" placeholder="ex.: mesa-de-sexta" value="${esc(code)}" style="width:100%"></label>
@@ -4043,6 +4159,7 @@ function renderHelpModal() {
         <li><strong>Aba Chat</strong> — toda rolagem do personagem (ataque, dano, morte, rolador genérico, monstro do mestre) aparece pra todo mundo, além de mensagens de texto e imagens/GIFs. Rolagens marcadas como <strong>Cura</strong> no rolador genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar — isso fica salvo no navegador de cada um, não na ficha compartilhada.</li>
         <li><strong>Aba Iniciativa</strong> — rastreador de combate compartilhado; o anfitrião é sempre a autoridade (todo mundo vê o mesmo round/turno em tempo real).</li>
         <li><strong>Aba Música</strong> — ver seção abaixo.</li>
+        <li><strong>Aba 🧙 Mestre</strong> — só aparece pra quem criou a sala (o anfitrião). Mostra um cartão por personagem conectado com PV, CA, iniciativa, deslocamento, Percepção/Intuição/Investigação passivas, CD e bônus de ataque mágico (quando o personagem conjura) e condições ativas — os dados que o mestre normalmente precisa espiar sem pedir pro jogador rolar nada. Cada jogador manda só o próprio resumo pro anfitrião; ninguém mais na sala vê essa aba nem os dados dela.</li>
         <li><strong>⚠️ Segurança</strong> — quem tiver o código consegue entrar; combine algo que não seja óbvio se quiser evitar visitantes indesejados.</li>
       </ul>
 
@@ -7232,13 +7349,15 @@ function setup() {
   document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((b) => b.addEventListener("click", () => {
     document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((x) => x.classList.remove("active"));
     b.classList.add("active");
-    const tab = b.dataset.roomtab; // "rolls" | "combat" | "music"
+    const tab = b.dataset.roomtab; // "rolls" | "combat" | "music" | "party"
     $("room-chat-list").classList.toggle("hidden", tab !== "rolls");
     $("room-chat-compose").classList.toggle("hidden", tab !== "rolls");
     $("room-combat-panel").classList.toggle("hidden", tab !== "combat");
     $("room-music-panel").classList.toggle("hidden", tab !== "music");
+    $("room-party-panel").classList.toggle("hidden", tab !== "party");
     if (tab === "combat") renderCombatTracker();
     if (tab === "music") { renderMusicPanel(); syncMusicPlayer(); }
+    if (tab === "party") renderPartyPanel();
   }));
   $("room-chat-send-btn")?.addEventListener("click", sendRoomChatText);
   $("room-chat-text-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") sendRoomChatText(); });

@@ -851,6 +851,21 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .mystery-hp-bar{position:relative;background:repeating-linear-gradient(135deg,var(--surface-2) 0 8px,var(--inset) 8px 16px);background-size:200% 200%;animation:mystery-shimmer 3.5s linear infinite}
 @keyframes mystery-shimmer{0%{background-position:0 0}100%{background-position:32px 32px}}
 
+/* ---------- Ficha do Mestre (painel da sala, só o anfitrião vê) ---------- */
+.room-party-panel{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.room-party-card{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:9px 10px}
+.room-party-card-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.room-party-card-top b{font-size:12px;color:var(--text)}
+.room-party-card-top .muted{font-size:10px;text-align:right}
+.room-party-card .dash-hp-bar{height:18px;margin-bottom:6px}
+.room-party-death{font-size:10px;font-weight:700;color:var(--gold);margin-bottom:6px}
+.room-party-death.dead{color:var(--red-hi)}
+.room-party-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:10px;color:var(--text-mut)}
+.room-party-stats div{display:flex;justify-content:space-between;gap:6px}
+.room-party-stats b{color:var(--text);font-size:11px}
+.room-party-conditions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.room-party-conditions .condition-chip{padding:4px 8px;cursor:default}
+
 /* ---------- Banner de atualização de dados ---------- */
 .data-update-banner{
   display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;

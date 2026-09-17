@@ -99,7 +99,11 @@ uma Issue neste repositório se você é detentor de direitos e quer pedir a rem
   todo mundo vê a ordem e o turno atual em tempo real. Ao adicionar uma criatura, o mestre pode
   marcá-la como **misteriosa** (🎭): ela aparece na ordem de iniciativa normalmente, mas nome e PV
   ficam trocados por um enigma pros jogadores até o mestre revelar (👁) — os dados reais nem saem
-  do navegador do anfitrião enquanto isso.
+  do navegador do anfitrião enquanto isso. Quem **cria** a sala é sempre o mestre (anfitrião) e
+  ganha uma aba própria **🧙 Mestre**: um cartão por personagem conectado com PV, CA, iniciativa,
+  deslocamento, Percepção/Intuição/Investigação passivas, CD e bônus de ataque mágico e condições
+  ativas — os dados que o mestre normalmente precisa saber de cabeça ou perguntar toda hora. Cada
+  jogador manda só o próprio resumo pro anfitrião; ninguém mais na sala vê essa aba.
 - **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
   atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.

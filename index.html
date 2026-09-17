@@ -383,6 +383,7 @@
     <button class="active" data-roomtab="rolls">💬 Chat</button>
     <button data-roomtab="combat">⚔️ Iniciativa</button>
     <button data-roomtab="music">🎵 Música</button>
+    <button data-roomtab="party" id="room-tab-party" class="hidden" title="Ficha do Mestre — resumo de PV, CA e percepções passivas de quem está conectado. Só aparece pra quem criou a sala.">🧙 Mestre</button>
   </div>
   <div id="room-chat-list" class="room-chat-list"></div>
   <div id="room-combat-panel" class="room-combat-panel hidden">
@@ -394,6 +395,7 @@
     <div id="room-music-player-wrap" class="room-music-player-wrap"><div id="room-music-player"></div><div id="room-music-player-sc" class="hidden"></div></div>
     <div id="room-music-controls" class="room-music-controls"></div>
   </div>
+  <div id="room-party-panel" class="room-party-panel hidden"></div>
   <div id="room-chat-compose" class="room-chat-compose">
     <div class="dice-quick-row">
       <button type="button" data-dice-quick="4">d4</button>
