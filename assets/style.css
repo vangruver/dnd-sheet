@@ -439,7 +439,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;
   padding:6px 6px;border-radius:var(--radius-xs);font-size:12px;transition:background .12s
 }
-.skill-row{grid-template-columns:1fr auto auto}
+.skill-row{grid-template-columns:1fr auto auto auto auto}
 .check-row:hover,.skill-row:hover{background:var(--surface-2)}
 .check-row label,.skill-row label{display:flex;align-items:center;gap:8px;overflow:hidden;cursor:pointer}
 .check-row span,.skill-row span{color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -449,7 +449,14 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   border:1px solid var(--border);border-radius:20px;padding:2px 9px;min-width:38px;text-align:center;cursor:pointer
 }
 .check-row .roll-badge:hover,.skill-row .roll-badge:hover{background:linear-gradient(160deg,var(--red),var(--red-dim));border-color:var(--red);color:#fff}
-.skill-row small{font-size:8px;color:var(--red-hi);font-weight:700}
+.skill-adv-icon{font-size:9px;flex:none}
+.skill-adv-icon.adv{color:var(--green)}
+.skill-adv-icon.dis{color:var(--red-hi)}
+.skill-expertise-toggle{border:1px solid var(--border-2);background:var(--surface-3);color:var(--text-mut);border-radius:20px;padding:2px 6px;font:700 8px var(--font-head);letter-spacing:.03em}
+.skill-expertise-toggle:hover{border-color:var(--gold)}
+.skill-expertise-toggle.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.skill-gear-btn{border:0;background:transparent;color:var(--text-mut);font-size:12px;padding:2px 4px}
+.skill-gear-btn:hover{color:var(--text)}
 
 /* ---------- Identidade ---------- */
 .identity-row{display:grid;grid-template-columns:96px 1fr auto;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;align-items:center}
@@ -579,7 +586,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-level-head h3{margin:0;color:var(--text);font:700 13px var(--font-head);letter-spacing:.04em;text-transform:uppercase}
 .spell-level-head span{font-size:10px;color:var(--text-mut)}
 .spell-list{display:grid;grid-template-columns:1fr 1fr}
-.spell-line{display:grid;grid-template-columns:20px 20px 1.2fr 1.5fr 26px 22px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px}
+.spell-line{display:grid;grid-template-columns:20px 20px 1.2fr 1.5fr 22px 26px 22px;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border);font-size:11px}
 .spell-line .remove-btn{font-size:11px;padding:2px 6px;line-height:1}
 .spell-line:hover{background:var(--surface-2)}
 .spell-line:nth-child(odd){border-right:1px solid var(--border)}
@@ -591,8 +598,19 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-origin.from-subclass{color:var(--gold)}
 .spell-origin.from-both{color:var(--green)}
 .spell-origin.from-extra{color:var(--text-mut)}
+.spell-origin.from-innate{color:var(--gold)}
 .spell-info{border:0;background:transparent;color:var(--text-dim)}
 .spell-info:hover{color:var(--red-hi)}
+.spell-innate-toggle{border:0;background:transparent;color:var(--text-mut);font-size:13px;line-height:1}
+.spell-innate-toggle:hover{color:var(--gold)}
+.spell-innate-toggle.on{color:var(--gold)}
+
+/* ---------- Cabeçalho de estatísticas da magia (modal de descrição) ---------- */
+.spell-stat-level{margin:0 0 10px;font:700 12px var(--font-head);letter-spacing:.03em;text-transform:uppercase;color:var(--text-dim)}
+.spell-stat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.spell-stat{display:flex;flex-direction:column;gap:2px}
+.spell-stat span{font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-mut)}
+.spell-stat b{font-size:12px;color:var(--text);font-weight:700}
 
 /* ---------- Características ---------- */
 .feature-columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}

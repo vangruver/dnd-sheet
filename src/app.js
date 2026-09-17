@@ -58,7 +58,9 @@ const fresh = () => ({
   multiclasses: [], // classes adicionais: [{classId, subclassId, level}] — classId/subclassId acima são a classe primária
   scores: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 },
   saveProficiencies: [], skillProficiencies: [], skillExpertise: [],
-  hpCurrent: null, hpTemp: 0, ac: null, udChoice: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
+  skillOverrides: {}, // { [skillKey]: { ability: "str"|null, adv: "adv"|"dis"|null, mod: number } } — vantagem/desvantagem permanente, atributo trocado e bônus manual por perícia
+  customSkills: [], // [{ key, name, ability }] — perícias extras criadas à mão (homebrew)
+  hpCurrent: null, hpTemp: 0, ac: null, udChoice: null, speed: "30 ft", attacks: [], inventory: [], preparedSpells: [], alwaysPreparedSpells: [], extraSpells: [], deathSaves: { success: 0, failure: 0 }, equipApplied: false,
   alignment: "", languages: "", appearance: "", backstory: "", toolProficienciesManual: "", hpModifier: 0,
   sizeOverride: "", // "" = usa o tamanho da espécie escolhida; senão T/S/M/L/H/G
   coins: { cp: 0, pp: 0, pe: 0, po: 0, pl: 0 },
@@ -671,7 +673,9 @@ async function openEntityModal(e) {
   const t = normType(e.type);
   if (t === "race" || t === "class" || t === "subclass") { await openCodexModal(e); return; }
   const r = await firstRecord(e), d = descriptionOf(r, e);
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div><div class="modal-body">${richText(d)}</div>`;
+  const isSpell = t === "spell";
+  const higherLevel = isSpell && r?.entriesHigherLevel ? translateHigherLevelHeadings(richText(r.entriesHigherLevel)) : "";
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">${esc(typeLabel(e.type))}</span><h2>${esc(titleOf(e))}</h2><div>${sourceTag(e)} <span class="tag edition">${esc(editionLabel(e))}</span></div></div></div><div class="modal-body">${isSpell ? spellStatHeaderHtml(r) : ""}${richText(d)}${higherLevel}</div>`;
   $("modal").classList.remove("hidden");
 }
 async function openCodexModal(e) {
@@ -1674,7 +1678,7 @@ function calc() {
   const lvl = totalLevel(), pb = proficiency(lvl);
   const dexMod = mod(effScore("dex"));
   const init = dexMod;
-  const passive = 10 + mod(effScore("wis")) + (character.skillProficiencies.includes("perception") ? pb : 0) + (character.skillExpertise.includes("perception") ? pb : 0);
+  const passive = 10 + skillBonus("perception", "wis", pb);
   const hp = inferHP();
   const equippedArmor = equippedArmorInfo();
   // Unarmored Defense só entra sem armadura de corpo, e a variante usada
@@ -1814,28 +1818,133 @@ function renderSaves(c) {
     broadcastRoll(`Resistência de ${ABILITY_NAMES[a]}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "resistencia" });
   }); });
 }
+// Perícias customizadas (homebrew, adicionadas à mão) entram na MESMA lista
+// e usam os MESMOS arrays de proficiência/especialização das oficiais —
+// só a definição (nome + atributo) vem de character.customSkills.
+function customSkillEntries() { return (character.customSkills || []).map((cs) => [cs.key, cs.name, cs.ability || "str"]); }
+function allSkills() { return [...SKILLS, ...customSkillEntries()]; }
+// Ajustes manuais por perícia: atributo trocado, vantagem/desvantagem
+// permanente e um bônus fixo — cobre os casos que a automação não prevê
+// (furtividade com armadura pesada, um bárbaro intimidando com Força,
+// um dom que já vem sempre com vantagem etc.).
+function skillOverride(k) { return character.skillOverrides?.[k] || {}; }
+function skillBonus(k, defaultAbility, pb) {
+  const ov = skillOverride(k);
+  const ability = ov.ability || defaultAbility;
+  const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
+  return mod(effScore(ability)) + pb * (ex ? 2 : p ? 1 : 0) + (Number(ov.mod) || 0);
+}
 function renderSkills(c) {
-  $("skill-list").innerHTML = SKILLS.map(([k, n, a]) => {
+  $("skill-list").innerHTML = allSkills().map(([k, n, defAbility]) => {
+    const ov = skillOverride(k);
+    const ability = ov.ability || defAbility;
     const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
-    const am = mod(effScore(a)), v = am + c.pb * (ex ? 2 : p ? 1 : 0);
-    const formula = `${ABILITY_NAMES[a]} ${fmt(am)}${ex ? ` + especialização (2× prof. ${fmt(c.pb)})` : p ? ` + proficiência ${fmt(c.pb)}` : ""} = ${fmt(v)}`;
-    return `<div class="skill-row"><label title="${esc(formula)}"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${n}</span></label><button type="button" class="roll-badge" data-skill-roll="${k}" title="${esc(formula)}">${fmt(v)}</button>${ex ? '<small>EXP</small>' : ""}</div>`;
+    const am = mod(effScore(ability));
+    const manualMod = Number(ov.mod) || 0;
+    const v = skillBonus(k, defAbility, c.pb);
+    const abilityNote = ov.ability ? ` (usando ${ABILITY_NAMES[ability]} em vez de ${ABILITY_NAMES[defAbility]})` : "";
+    const advNote = ov.adv === "adv" ? " · vantagem permanente" : ov.adv === "dis" ? " · desvantagem permanente" : "";
+    const modNote = manualMod ? ` ${fmt(manualMod)} (manual)` : "";
+    const formula = `${ABILITY_NAMES[ability]} ${fmt(am)}${ex ? ` + especialização (2× prof. ${fmt(c.pb)})` : p ? ` + proficiência ${fmt(c.pb)}` : ""}${modNote} = ${fmt(v)}${abilityNote}${advNote}`;
+    const isCustom = !SKILLS.some((s) => s[0] === k);
+    const advIcon = ov.adv === "adv" ? `<i class="skill-adv-icon adv" title="Vantagem permanente">▲</i>` : ov.adv === "dis" ? `<i class="skill-adv-icon dis" title="Desvantagem permanente">▼</i>` : "";
+    return `<div class="skill-row"><label title="${esc(formula)}"><input type="checkbox" data-skill="${k}" ${p ? "checked" : ""}><span>${esc(n)}</span>${advIcon}</label><button type="button" class="roll-badge" data-skill-roll="${k}" title="${esc(formula)}">${fmt(v)}</button><button type="button" class="skill-expertise-toggle${ex ? " on" : ""}" data-skill-expertise="${k}" title="${ex ? "Remover especialização" : "Marcar especialização (dobra a proficiência)"}">EXP</button><button type="button" class="skill-gear-btn no-print" data-skill-edit="${k}" title="Atributo, vantagem/desvantagem e modificador manual">⚙</button>${isCustom ? `<button type="button" class="remove-btn no-print" data-remove-custom-skill="${esc(k)}" title="Remover perícia customizada">×</button>` : ""}</div>`;
   }).join("");
   $("skill-list").querySelectorAll("[data-skill]").forEach((i) => i.addEventListener("change", () => {
     const k = i.dataset.skill;
     const auto = [...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || []), ...Object.values(character.choiceSelections?.classSkills || {}).flat(), ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat()];
     if (!auto.includes(k)) toggleIn(character.manualSkillProficiencies, k, i.checked);
     toggleIn(character.skillProficiencies, k, i.checked || auto.includes(k));
+    if (!i.checked && !auto.includes(k)) toggleIn(character.skillExpertise, k, false); // sem proficiência não há especialização
     saveCharacter(character); recalc();
   }));
+  $("skill-list").querySelectorAll("[data-skill-expertise]").forEach((b) => b.addEventListener("click", () => {
+    const k = b.dataset.skillExpertise;
+    character.skillExpertise = character.skillExpertise || [];
+    const turningOn = !character.skillExpertise.includes(k);
+    toggleIn(character.skillExpertise, k, turningOn);
+    if (turningOn && !character.skillProficiencies.includes(k)) {
+      // especialização exige proficiência — skillProficiencies é reconstruído
+      // do zero a cada recalc() a partir de manualSkillProficiencies, então
+      // marcar direto ali seria desfeito na próxima chamada.
+      const auto = [...(character.auto?.classSkills || []), ...(character.auto?.backgroundSkills || []), ...Object.values(character.choiceSelections?.classSkills || {}).flat(), ...Object.values(character.choiceSelections?.backgroundSkills || {}).flat()];
+      if (!auto.includes(k)) toggleIn(character.manualSkillProficiencies, k, true);
+      toggleIn(character.skillProficiencies, k, true);
+    }
+    saveCharacter(character); recalc();
+  }));
+  $("skill-list").querySelectorAll("[data-skill-edit]").forEach((b) => b.addEventListener("click", () => openSkillOverrideModal(b.dataset.skillEdit)));
+  $("skill-list").querySelectorAll("[data-remove-custom-skill]").forEach((b) => b.addEventListener("click", () => removeCustomSkill(b.dataset.removeCustomSkill)));
   $("skill-list").querySelectorAll("[data-skill-roll]").forEach((b) => { b.title = D20_MODE_TITLE; b.addEventListener("click", (e) => {
-    const k = b.dataset.skillRoll, [, n, a] = SKILLS.find((s) => s[0] === k);
-    const p = character.skillProficiencies.includes(k), ex = character.skillExpertise.includes(k);
-    const bonus = mod(effScore(a)) + c.pb * (ex ? 2 : p ? 1 : 0);
-    const { rolls, roll, mode } = d20WithMode(e), total = roll + bonus;
+    const k = b.dataset.skillRoll, [, n, defAbility] = allSkills().find((s) => s[0] === k);
+    const bonus = skillBonus(k, defAbility, c.pb);
+    const { rolls, roll, mode } = d20WithModeFor(e, skillOverride(k).adv), total = roll + bonus;
     toast(`${n}: ${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)} = ${total}`);
     broadcastRoll(n, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "pericia" });
   }); });
+}
+// Modal de ajuste manual de uma perícia — atributo usado no teste,
+// vantagem/desvantagem permanente e um bônus fixo (some no total).
+function openSkillOverrideModal(k) {
+  const entry = allSkills().find((s) => s[0] === k);
+  if (!entry) return;
+  const [, name, defAbility] = entry;
+  const ov = skillOverride(k);
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">PERÍCIA</span><h2>${esc(name)}</h2><p class="muted">Pra casos como furtividade com desvantagem numa armadura pesada, um bárbaro intimidando com Força em vez de Carisma, ou um bônus fixo de um dom/item.</p></div></div>
+    <div class="modal-body">
+      <label class="buff-field">Atributo usado no teste<select id="skill-ov-ability"><option value="">Padrão (${esc(ABILITY_NAMES[defAbility])})</option>${ABILITIES.map((a) => `<option value="${a}" ${ov.ability === a ? "selected" : ""}>${esc(ABILITY_NAMES[a])}</option>`).join("")}</select></label>
+      <label class="buff-field">Vantagem/desvantagem permanente<select id="skill-ov-adv"><option value="" ${!ov.adv ? "selected" : ""}>Normal</option><option value="adv" ${ov.adv === "adv" ? "selected" : ""}>Vantagem</option><option value="dis" ${ov.adv === "dis" ? "selected" : ""}>Desvantagem</option></select></label>
+      <label class="buff-field">Modificador manual (soma ao bônus final)<input id="skill-ov-mod" type="number" value="${ov.mod || 0}"></label>
+      <div class="modal-actions"><button type="button" id="skill-ov-cancel">Cancelar</button><button type="button" class="primary" id="skill-ov-apply">Aplicar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("skill-ov-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("skill-ov-apply").addEventListener("click", () => {
+    const ability = $("skill-ov-ability").value || null;
+    const adv = $("skill-ov-adv").value || null;
+    const modVal = Number($("skill-ov-mod").value) || 0;
+    character.skillOverrides = character.skillOverrides || {};
+    if (!ability && !adv && !modVal) delete character.skillOverrides[k];
+    else character.skillOverrides[k] = { ability, adv, mod: modVal };
+    saveCharacter(character);
+    $("modal").classList.add("hidden");
+    recalc();
+    toast(`Ajustes de ${name} salvos.`);
+  });
+}
+// Adicionar uma perícia homebrew — vira uma linha normal na lista, com os
+// mesmos controles de proficiência/especialização/ajustes das oficiais.
+function openAddCustomSkillModal() {
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">PERÍCIA</span><h2>Nova perícia customizada</h2><p class="muted">Pra perícias homebrew ou de variantes de regra que a 5e oficial não lista.</p></div></div>
+    <div class="modal-body">
+      <label class="buff-field">Nome<input id="custom-skill-name" type="text" placeholder="Ex.: Navegação" maxlength="40"></label>
+      <label class="buff-field">Atributo<select id="custom-skill-ability">${ABILITIES.map((a) => `<option value="${a}">${esc(ABILITY_NAMES[a])}</option>`).join("")}</select></label>
+      <div class="modal-actions"><button type="button" id="custom-skill-cancel">Cancelar</button><button type="button" class="primary" id="custom-skill-add">Adicionar</button></div>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  $("custom-skill-cancel").addEventListener("click", () => $("modal").classList.add("hidden"));
+  $("custom-skill-add").addEventListener("click", () => {
+    const name = $("custom-skill-name").value.trim();
+    if (!name) { toast("Digite um nome pra perícia."); return; }
+    const ability = $("custom-skill-ability").value;
+    const slug = name.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const key = `custom:${slug || "pericia"}-${Date.now().toString(36)}`;
+    character.customSkills = character.customSkills || [];
+    character.customSkills.push({ key, name, ability });
+    saveCharacter(character);
+    $("modal").classList.add("hidden");
+    recalc();
+    toast(`Perícia "${name}" adicionada.`);
+  });
+}
+function removeCustomSkill(key) {
+  if (!confirm("Remover esta perícia customizada?")) return;
+  character.customSkills = (character.customSkills || []).filter((cs) => cs.key !== key);
+  toggleIn(character.skillProficiencies, key, false);
+  toggleIn(character.skillExpertise, key, false);
+  if (character.skillOverrides) delete character.skillOverrides[key];
+  saveCharacter(character);
+  recalc();
 }
 function profLabel(x) {
   if (typeof x === "string") return inlineTags(x).replace(/\s*\|.*$/, "");
@@ -1931,9 +2040,16 @@ function renderIdentity() {
 // cancelam, como na regra. Cada botão que usa isso ganha um title
 // explicando o atalho.
 // ------------------------------------------------------------
-function d20WithMode(e) {
-  const adv = !!e?.shiftKey, dis = !!e?.ctrlKey;
-  if (adv !== dis) {
+// `forced` é a vantagem/desvantagem PERMANENTE de uma perícia (armadura
+// pesada em furtividade, dom que já vem com desvantagem etc.) — combinada
+// com o clique (Shift/Ctrl). Uma fonte de vantagem e uma de desvantagem
+// juntas se cancelam, como manda a regra da 5e — nunca vira "vantagem em
+// dobro".
+function d20WithModeFor(e, forced) {
+  const advN = (forced === "adv" ? 1 : 0) + (e?.shiftKey ? 1 : 0);
+  const disN = (forced === "dis" ? 1 : 0) + (e?.ctrlKey ? 1 : 0);
+  const adv = advN > 0 && disN === 0, dis = disN > 0 && advN === 0;
+  if (adv || dis) {
     const rolls = [rollDie(20), rollDie(20)];
     const roll = adv ? Math.max(...rolls) : Math.min(...rolls);
     return { rolls, roll, mode: adv ? "adv" : "dis" };
@@ -1941,6 +2057,7 @@ function d20WithMode(e) {
   const roll = rollDie(20);
   return { rolls: [roll], roll, mode: "normal" };
 }
+function d20WithMode(e) { return d20WithModeFor(e, null); }
 function d20RollHtml(rolls, roll, mode, cls = "") {
   const picked = `<b class="${cls}">${roll}</b>`;
   if (mode === "normal") return `d20 (${picked})`;
@@ -3007,14 +3124,16 @@ let roomCombat = { round: 1, currentId: null, list: [] };
 // recebem o estado (kind:"music-state") e refletem no próprio player
 // embutido (um de cada, escondido o que não está em uso).
 let roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
-// Painel "Ficha do Mestre" — só o anfitrião (quem criou a sala) vê. Cada
-// jogador manda um resumo somente-leitura do próprio personagem (kind:
-// "party-sheet") sempre que a ficha recalcula; o anfitrião guarda por
-// peerId (chave "host" pro próprio personagem dele, se tiver um aberto) e
-// nunca repassa esses dados pros outros jogadores — é uma visão exclusiva
-// de quem está mestrando.
+// Painel "Ficha do Mestre" — só o anfitrião (quem criou a sala) vê. Modelo
+// de "puxar" (pull): o anfitrião manda um pedido (kind:"party-sheet-request")
+// pra cada jogador conectado a cada poucos segundos; o cliente de cada
+// jogador responde na hora, sem nenhuma ação manual, com um resumo lido
+// direto do personagem que estiver aberto naquele navegador no momento
+// (kind:"party-sheet"). O anfitrião guarda por peerId (chave "host" pro
+// próprio personagem dele, se tiver um aberto) e nunca repassa esses dados
+// pros outros jogadores — é uma visão exclusiva de quem está mestrando.
 let roomPartySheets = new Map();
-let sendPartySheetTimer = null;
+let partyPollTimer = null;
 let ytPlayer = null;
 let ytLoadedVideoId = null;
 let ytLoadedPlaylistId = null;
@@ -3041,7 +3160,7 @@ function leaveRoom() {
   roomCombat = { round: 1, currentId: null, list: [] };
   roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
   roomPartySheets = new Map();
-  clearTimeout(sendPartySheetTimer);
+  clearInterval(partyPollTimer); partyPollTimer = null;
   document.querySelectorAll("#room-chat-tabs [data-roomtab]").forEach((x) => x.classList.remove("active"));
   $('#room-chat-tabs [data-roomtab="rolls"]')?.classList.add("active");
   $("room-chat-list")?.classList.remove("hidden");
@@ -3064,6 +3183,8 @@ function hostRoom(code) {
     myPeerId = id;
     if (character) roomPartySheets.set("host", { name: (character.name || "").trim() || "Você (mestre)", sheet: mySheetSnapshot(), updatedAt: Date.now() });
     renderRoomChat();
+    clearInterval(partyPollTimer);
+    partyPollTimer = setInterval(requestPartySheets, 5000);
   });
   roomPeer.on("connection", (conn) => {
     roomHostConns.set(conn.peer, conn);
@@ -3086,6 +3207,9 @@ function hostRoom(code) {
       // entra no meio da sessão só vê iniciativa/música na próxima ação.
       conn.send({ kind: "combat-state", combat: publicCombatState() });
       conn.send({ kind: "music-state", music: roomMusic });
+      // Puxa a ficha do personagem já na hora que a conexão abre — não
+      // espera o próximo ciclo do polling pra mostrar quem acabou de entrar.
+      conn.send({ kind: "party-sheet-request" });
       pushRoomSystemMessage(`${joinerName} entrou na sala.`);
     });
   });
@@ -3104,8 +3228,13 @@ function joinRoom(code) {
     myPeerId = roomPeer.id;
     const myName = (character?.name || "").trim() || "Um jogador";
     roomClientConn = roomPeer.connect(sanitizeRoomCode(code), { reliable: true, metadata: { name: myName } });
-    roomClientConn.on("data", (msg) => onRoomMessage(msg));
-    roomClientConn.on("open", () => { toast(`Você entrou na sala como ${myName}.`); sendMySheetToRoom(); renderRoomChat(); });
+    roomClientConn.on("data", (msg) => {
+      // O anfitrião "puxa" a ficha do personagem aberto neste navegador —
+      // o jogador não manda nada por conta própria, só responde na hora.
+      if (msg?.kind === "party-sheet-request") { sendMySheetToRoom(); return; }
+      onRoomMessage(msg);
+    });
+    roomClientConn.on("open", () => { toast(`Você entrou na sala como ${myName}.`); renderRoomChat(); });
     roomClientConn.on("close", () => { toast("Desconectado da sala — o anfitrião pode ter fechado a aba."); renderRoomChat(); });
   });
   roomPeer.on("error", (err) => {
@@ -3238,9 +3367,7 @@ function mySheetSnapshot(c) {
   c = c || calc();
   const maxHp = c.hp;
   const curHp = character.hpCurrent == null ? maxHp : Number(character.hpCurrent) || 0;
-  const passiveFor = (skillKey, ability) => 10 + mod(effScore(ability))
-    + (character.skillProficiencies?.includes(skillKey) ? c.pb : 0)
-    + (character.skillExpertise?.includes(skillKey) ? c.pb : 0);
+  const passiveFor = (skillKey, ability) => 10 + skillBonus(skillKey, ability, c.pb);
   const d = character.deathSaves || { success: 0, failure: 0 };
   const deathStatus = curHp > 0 ? null : d.success >= 3 ? "stable" : d.failure >= 3 ? "dead" : "dying";
   return {
@@ -3261,23 +3388,27 @@ function mySheetSnapshot(c) {
     deathSaves: deathStatus ? { success: d.success, failure: d.failure, status: deathStatus } : null,
   };
 }
+// Resposta a um pedido do anfitrião (kind:"party-sheet-request") — nunca
+// uma iniciativa do jogador. Lê o personagem aberto neste exato instante,
+// então reflete sempre o estado mais atual sem o jogador precisar fazer
+// nada nem existir um envio automático rodando em segundo plano o tempo
+// todo (só responde quando o anfitrião pergunta).
 function sendMySheetToRoom() {
   if (roomRole !== "jogador" || !roomClientConn?.open || !character) return;
   roomClientConn.send({ kind: "party-sheet", sheet: mySheetSnapshot() });
 }
-// Chamado a cada recalc() da ficha — debate com um pequeno atraso pra não
-// mandar uma mensagem P2P a cada tecla digitada, só quando o personagem
-// "assenta" por um instante.
-function schedulePartySheetSend() {
-  clearTimeout(sendPartySheetTimer);
-  sendPartySheetTimer = setTimeout(sendMySheetToRoom, 400);
+// O anfitrião chama isto a cada poucos segundos (e assim que alguém entra)
+// pra puxar a ficha atual de cada jogador conectado.
+function requestPartySheets() {
+  if (roomRole !== "anfitriao") return;
+  roomHostConns.forEach((conn) => { if (conn.open) conn.send({ kind: "party-sheet-request" }); });
 }
-// Ponte entre a ficha e a sala: jogador manda a própria ficha pro
-// anfitrião; o anfitrião (quem criou a sala) atualiza a própria entrada
-// (chave fixa "host") direto, sem round-trip de rede.
+// Chamado a cada recalc() da própria ficha: quando quem está mestrando
+// também tem um personagem aberto, atualiza a própria entrada (chave fixa
+// "host") direto, sem round-trip de rede — só os outros jogadores respondem
+// a um pedido; o anfitrião já tem o próprio personagem na mão.
 function syncPartySheetWithRoom(c) {
-  if (roomRole === "jogador") schedulePartySheetSend();
-  else if (roomRole === "anfitriao" && character) {
+  if (roomRole === "anfitriao" && character) {
     roomPartySheets.set("host", { name: (character.name || "").trim() || "Você (mestre)", sheet: mySheetSnapshot(c), updatedAt: Date.now() });
     renderPartyPanel();
   }
@@ -4104,10 +4235,10 @@ function renderHelpModal() {
       <h3>Abas principais (barra logo abaixo do nome)</h3>
       <ul>
         <li><strong>Construção</strong> — o assistente passo a passo pra criar/editar o personagem: espécie, classe (e multiclasse), subclasse, background, atributos, perícias, talentos e equipamento inicial. É por aqui que o nível sobe (veja "Subiu de nível" abaixo).</li>
-        <li><strong>Ficha</strong> — a ficha "de jogo" propriamente dita: atributos, CA/deslocamento, testes de resistência, perícias, identidade, ataques, condições ativas, turno atual, dado de vida/recursos de classe, descanso curto/longo e detalhes do personagem. É a aba que fica aberta durante a sessão.</li>
+        <li><strong>Ficha</strong> — a ficha "de jogo" propriamente dita: atributos, CA/deslocamento, testes de resistência, perícias, identidade, ataques, condições ativas, turno atual, dado de vida/recursos de classe, descanso curto/longo e detalhes do personagem. É a aba que fica aberta durante a sessão. Cada perícia tem um botão <strong>EXP</strong> (especialização, sem depender do limite da classe) e um <strong>⚙</strong> pra ajustar vantagem/desvantagem permanente, trocar o atributo usado no teste ou somar um bônus manual — útil pra casos como furtividade com armadura pesada ou um bárbaro intimidando com Força. O botão "+ Perícia customizada" cria perícias homebrew que entram na lista com os mesmos controles.</li>
         <li><strong>Ações</strong> — atalho só com o painel de "Turno Atual" (ações/bônus/reação/movimento gastos na rodada), útil em telas menores.</li>
         <li><strong>Atributos & Talentos</strong> — os seis atributos com o modo de geração (Point buy 27 pontos, array padrão ou rolagem), talentos extras (além dos automáticos de background/nível) e modificadores temporários (buffs/debuffs de poção, magia, exaustão etc. — afeta tudo que depende do atributo escolhido, recalculado na hora).</li>
-        <li><strong>Magias</strong> — lista completa de magias da classe por nível (filtrada pela edição 2014/2024 escolhida em Ajustes); marque as preparadas/conhecidas nas bolinhas.</li>
+        <li><strong>Magias</strong> — lista completa de magias da classe por nível (filtrada pela edição 2014/2024 escolhida em Ajustes); marque as preparadas/conhecidas nas bolinhas. O botão ⓘ de cada magia mostra a descrição completa (tempo de conjuração, alcance, componentes, duração, "Em Níveis Mais Altos"); a estrela ⭐ marca uma magia como sempre preparada/inata, pra ela não contar no limite normal.</li>
         <li><strong>Características</strong> — características de classe, subclasse, espécie e background já disponíveis no nível atual, com busca; dá pra adicionar características personalizadas também.</li>
         <li><strong>Equipamento</strong> — catálogo completo de itens do 5etools por categoria (armas, armaduras, itens mágicos etc.) pra adicionar ao inventário, com filtros.</li>
         <li><strong>Notas</strong> — notas de sessão (uma por sessão jogada, com exportação em texto) e Companheiros & Familiares (familiar, animal de companhia, montaria — CA/PV/ataques próprios, cuja rolagem também vai pra sala/Discord).</li>
@@ -4159,7 +4290,7 @@ function renderHelpModal() {
         <li><strong>Aba Chat</strong> — toda rolagem do personagem (ataque, dano, morte, rolador genérico, monstro do mestre) aparece pra todo mundo, além de mensagens de texto e imagens/GIFs. Rolagens marcadas como <strong>Cura</strong> no rolador genérico ganham um botão pra aplicar o PV recuperado direto no personagem de quem clicar — isso fica salvo no navegador de cada um, não na ficha compartilhada.</li>
         <li><strong>Aba Iniciativa</strong> — rastreador de combate compartilhado; o anfitrião é sempre a autoridade (todo mundo vê o mesmo round/turno em tempo real).</li>
         <li><strong>Aba Música</strong> — ver seção abaixo.</li>
-        <li><strong>Aba 🧙 Mestre</strong> — só aparece pra quem criou a sala (o anfitrião). Mostra um cartão por personagem conectado com PV, CA, iniciativa, deslocamento, Percepção/Intuição/Investigação passivas, CD e bônus de ataque mágico (quando o personagem conjura) e condições ativas — os dados que o mestre normalmente precisa espiar sem pedir pro jogador rolar nada. Cada jogador manda só o próprio resumo pro anfitrião; ninguém mais na sala vê essa aba nem os dados dela.</li>
+        <li><strong>Aba 🧙 Mestre</strong> — só aparece pra quem criou a sala (o anfitrião). Mostra um cartão por personagem conectado com PV, CA, iniciativa, deslocamento, Percepção/Intuição/Investigação passivas, CD e bônus de ataque mágico (quando o personagem conjura) e condições ativas — os dados que o mestre normalmente precisa espiar sem pedir pro jogador rolar nada. O anfitrião puxa esses dados sozinho a cada poucos segundos, direto do personagem aberto no navegador de cada jogador — ninguém precisa clicar em nada nem mandar nada na mão, e ninguém além do anfitrião vê essa aba.</li>
         <li><strong>⚠️ Segurança</strong> — quem tiver o código consegue entrar; combine algo que não seja óbvio se quiser evitar visitantes indesejados.</li>
       </ul>
 
@@ -4550,10 +4681,91 @@ function renderSpellResources(msi) {
 // Magias
 // ------------------------------------------------------------
 function spellLevel(sp) { return Number(sp.level ?? 0); }
+// Nome em PT-BR de cada escola (código de 1 letra do 5etools: A/C/D/E/N/T/V/I).
+const SCHOOL_NAME_PT = { A: "Abjuração", C: "Conjuração", D: "Divinação", E: "Encantamento", N: "Necromancia", T: "Transmutação", V: "Evocação", I: "Ilusão" };
+function schoolNamePt(code) { return SCHOOL_NAME_PT[String(code || "").toUpperCase()] || code || "—"; }
+// Singular/plural de cada unidade de tempo do 5etools — "action"/"bonus"/
+// "reaction" viram unidades de jogo, não medidas físicas (ao contrário de
+// "ft"/"lb", que a ficha mantém em inglês por convenção), então valem
+// tradução completa.
+const TIME_UNIT_LABEL = {
+  action: ["ação", "ações"], bonus: ["ação bônus", "ações bônus"], reaction: ["reação", "reações"],
+  minute: ["minuto", "minutos"], hour: ["hora", "horas"], round: ["rodada", "rodadas"],
+  day: ["dia", "dias"], turn: ["turno", "turnos"], week: ["semana", "semanas"], year: ["ano", "anos"],
+};
+function timeUnitLabel(n, unit) { const p = TIME_UNIT_LABEL[unit]; return p ? p[n === 1 ? 0 : 1] : (unit || ""); }
 function spellTime(sp) {
   const t = sp.time?.[0];
   if (!t) return "";
-  return `${t.number || 1} ${t.unit || ""}`.trim();
+  const n = t.number || 1;
+  return `${n} ${timeUnitLabel(n, t.unit)}`.trim();
+}
+// Versão completa do tempo de conjuração pro modal de descrição — inclui a
+// condição de reação (ex.: "que você faz quando é atingido por um ataque"),
+// que a versão curta usada na lista de magias omite de propósito.
+function spellTimeFull(sp) {
+  const t = sp?.time?.[0];
+  if (!t) return "—";
+  const base = spellTime(sp);
+  return t.condition ? `${base}, ${inlineTags(t.condition)}` : base;
+}
+function spellDurationText(sp) {
+  const arr = sp?.duration;
+  if (!Array.isArray(arr) || !arr.length) return "—";
+  return arr.map((d) => {
+    if (!d) return "—";
+    if (d.type === "instant") return "Instantânea";
+    if (d.type === "special") return "Especial";
+    if (d.type === "permanent") return d.ends?.length
+      ? `Permanente (até ${d.ends.map((x) => x === "dispel" ? "ser dissipada" : x === "trigger" ? "o gatilho ocorrer" : x).join(" ou ")})`
+      : "Permanente";
+    if (d.type === "timed") {
+      const n = d.duration?.amount ?? 1;
+      return `${d.concentration ? "Concentração, até " : ""}${n} ${timeUnitLabel(n, d.duration?.type)}`;
+    }
+    return "—";
+  }).join(" ou ");
+}
+function spellComponentsText(sp) {
+  const c = sp?.components;
+  if (!c) return "—";
+  const parts = [];
+  if (c.v) parts.push("V");
+  if (c.s) parts.push("S");
+  if (c.m) {
+    const material = typeof c.m === "string" ? c.m : c.m.text;
+    parts.push(`M${material ? ` (${inlineTags(material)})` : ""}`);
+  }
+  return parts.join(", ") || "—";
+}
+// Cabeçalho de estatísticas da magia (nível/escola/ritual + tempo de
+// conjuração, alcance, componentes e duração) pro modal de descrição — o
+// 5etools mostra isso antes do texto corrido, mas a ficha só mostrava o
+// texto em si.
+function spellStatHeaderHtml(sp) {
+  if (!sp) return "";
+  const lvl = spellLevel(sp);
+  const levelLabel = lvl === 0 ? "Truque" : `${lvl}º nível`;
+  const ritual = sp?.meta?.ritual ? " (ritual)" : "";
+  const row = (label, value) => `<div class="spell-stat"><span>${esc(label)}</span><b>${value}</b></div>`;
+  return `<p class="spell-stat-level">${esc(levelLabel)} · ${esc(schoolNamePt(sp.school))}${ritual}</p>
+    <div class="spell-stat-grid">
+      ${row("Tempo de Conjuração", esc(spellTimeFull(sp)))}
+      ${row("Alcance", esc(offSpellRange(sp)))}
+      ${row("Componentes", esc(spellComponentsText(sp)))}
+      ${row("Duração", esc(spellDurationText(sp)))}
+    </div>`;
+}
+// entriesHigherLevel do 5etools vem com o título fixo em inglês (varia
+// pouco: PHB/XGE usam "At Higher Levels", o PHB 2024 separa truque de
+// magia com espaço) — troca só o título conhecido, sem mexer no resto.
+const HIGHER_LEVEL_HEADING_PT = {
+  "At Higher Levels": "Em Níveis Mais Altos",
+  "Cantrip Upgrade": "Aprimoramento de Truque",
+  "Using a Higher-Level Spell Slot": "Usando um Espaço de Magia de Nível Mais Alto",
+};
+function translateHigherLevelHeadings(html) {
+  return Object.entries(HIGHER_LEVEL_HEADING_PT).reduce((h, [en, pt]) => h.replaceAll(en, pt), html);
 }
 // Magias adicionadas manualmente pelo Compêndio (fora da lista da classe
 // — magia de item mágico, dom de raça homebrew sem dado estruturado etc.).
@@ -4576,12 +4788,19 @@ function spellListHtml(spells, hasSubclass, active, limits) {
     if (s._fromClass) return titleOf(active.classEntry);
     return "";
   };
+  // Magias marcadas como "sempre preparadas/inatas" (character.alwaysPreparedSpells)
+  // ficam de fora dessa contagem — são concedidas de graça (traço de
+  // espécie, dom de subclasse etc.) e não devem comer o limite normal.
+  const countsTowardLimit = (s) => {
+    const key = `${s.name}|${s.source || ""}`;
+    return character.preparedSpells.includes(key) && !character.alwaysPreparedSpells?.includes(key);
+  };
   const groups = Array.from({ length: 10 }, (_, i) => spells.filter((s) => spellLevel(s) === i));
   const slots = limits?.slots || [];
   const pact = limits?.pact || null;
   return groups.map((arr, lvl) => arr.length ? `<section class="paper-card spell-level"><div class="spell-level-head"><h3>${lvl === 0 ? "Truques" : `${lvl}º nível`}</h3><span>${arr.length} na lista</span>${
     (() => {
-      const marked = arr.filter((s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`)).length;
+      const marked = arr.filter(countsTowardLimit).length;
       const chips = [];
       if (lvl === 0) {
         if (limits?.cantrips != null) chips.push(`<span class="spell-level-chip${marked > limits.cantrips ? " over" : ""}">${marked}/${limits.cantrips} truques conhecidos</span>`);
@@ -4603,11 +4822,14 @@ function spellListHtml(spells, hasSubclass, active, limits) {
     })()
   }</div><div class="spell-list">${arr.map((s) => {
     const key = `${s.name}|${s.source || ""}`;
-    const checked = character.preparedSpells.includes(key);
+    const always = !!character.alwaysPreparedSpells?.includes(key);
+    const checked = character.preparedSpells.includes(key) || always;
     const origin = spellOrigin(s);
     const originCls = s._extra ? "from-extra" : s._fromSubclass && s._fromClass ? "from-both" : s._fromSubclass ? "from-subclass" : "from-class";
     const originTag = origin ? ` · <b class="spell-origin ${originCls}">${esc(origin)}</b>` : "";
-    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(s.school)}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}</span><button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button>${s._extra ? `<button type="button" class="remove-btn no-print" data-remove-extra-spell="${esc(s._extraId)}" title="Remover">×</button>` : ""}</label>`;
+    const innateBadge = always ? ` · <b class="spell-origin from-innate" title="Concedida de graça — não conta no limite de magias preparadas/conhecidas">Inata</b>` : "";
+    const innateToggle = `<button type="button" class="spell-innate-toggle${always ? " on" : ""}" data-spell-innate="${esc(key)}" title="${always ? "Não é mais sempre preparada — volta a contar no limite normal" : "Marcar como sempre preparada/inata (não conta no limite de magias preparadas)"}">${always ? "⭐" : "☆"}</button>`;
+    return `<label class="spell-line"><input type="checkbox" data-spell="${esc(key)}" ${checked ? "checked" : ""}${always ? " disabled title=\"Sempre preparada — desmarque a estrela ⭐ pra soltar\"" : ""}><span class="spell-dot">${checked ? "●" : "○"}</span><strong>${esc(s.name)}</strong><span class="spell-meta">${esc(s.source || "")}${s.school ? ` · ${esc(schoolNamePt(s.school))}` : ""}${spellTime(s) ? ` · ${esc(spellTime(s))}` : ""}${originTag}${innateBadge}</span>${innateToggle}<button type="button" class="spell-info" data-spell-key="${esc(key)}">ⓘ</button>${s._extra ? `<button type="button" class="remove-btn no-print" data-remove-extra-spell="${esc(s._extraId)}" title="Remover">×</button>` : ""}</label>`;
   }).join("")}</div></section>` : "").join("");
 }
 // Último grimório pintado (magias já carregadas + limites) — permite
@@ -4637,11 +4859,24 @@ function wireSpellListEvents(box) {
     const e = manifest().find((x) => normType(x.type) === "spell" && x.name === name && (x.source || "") === source);
     if (e) openEntityModal(e);
   }));
+  box.querySelectorAll("[data-spell-innate]").forEach((b) => b.addEventListener("click", () => {
+    const key = b.dataset.spellInnate;
+    character.alwaysPreparedSpells = character.alwaysPreparedSpells || [];
+    const turningOn = !character.alwaysPreparedSpells.includes(key);
+    toggleIn(character.alwaysPreparedSpells, key, turningOn);
+    if (turningOn) toggleIn(character.preparedSpells, key, true); // inata: já vem preparada
+    saveCharacter(character);
+    repaintSpellBook();
+  }));
   box.querySelectorAll("[data-remove-extra-spell]").forEach((b) => b.addEventListener("click", () => {
     const id = b.dataset.removeExtraSpell;
     const e = manifest().find((x) => x.id === id);
     character.extraSpells = (character.extraSpells || []).filter((x) => x !== id);
-    if (e) { const key = `${e.name}|${e.source || ""}`; character.preparedSpells = character.preparedSpells.filter((k) => k !== key); }
+    if (e) {
+      const key = `${e.name}|${e.source || ""}`;
+      character.preparedSpells = character.preparedSpells.filter((k) => k !== key);
+      character.alwaysPreparedSpells = (character.alwaysPreparedSpells || []).filter((k) => k !== key);
+    }
     saveCharacter(character); renderSpells();
   }));
 }
@@ -4651,7 +4886,11 @@ function wireSpellListEvents(box) {
 // classe não dizia quantas dela você pode de fato levar pro dia.
 function renderPrepareBanner(spells, limits, active) {
   if (!limits) return "";
-  const isPrepared = (s) => character.preparedSpells.includes(`${s.name}|${s.source || ""}`);
+  // Magias "sempre preparadas/inatas" ficam de fora da conta — são de graça.
+  const isPrepared = (s) => {
+    const key = `${s.name}|${s.source || ""}`;
+    return character.preparedSpells.includes(key) && !character.alwaysPreparedSpells?.includes(key);
+  };
   const markedCantrips = spells.filter((s) => spellLevel(s) === 0 && isPrepared(s)).length;
   const markedSpells = spells.filter((s) => spellLevel(s) > 0 && isPrepared(s)).length;
   const maxSlotLevel = (limits.slots || []).reduce((m, n, i) => (n ? i + 1 : m), 0);
@@ -6013,7 +6252,7 @@ function templateSnapshot() {
     classId: character.classId, subclassId: character.subclassId, raceId: character.raceId, backgroundId: character.backgroundId,
     multiclasses: character.multiclasses, scores: character.scores,
     choiceSelections: character.choiceSelections, manualSkillProficiencies: character.manualSkillProficiencies,
-    skillExpertise: character.skillExpertise, level: character.level,
+    skillExpertise: character.skillExpertise, skillOverrides: character.skillOverrides, customSkills: character.customSkills, level: character.level,
   };
 }
 function templateSummary(t) {
@@ -6050,7 +6289,7 @@ function openTemplatesModal() {
       classId: t.classId, subclassId: t.subclassId, raceId: t.raceId, backgroundId: t.backgroundId,
       multiclasses: t.multiclasses || [], scores: { ...f.scores, ...(t.scores || {}) },
       choiceSelections: t.choiceSelections || f.choiceSelections, manualSkillProficiencies: t.manualSkillProficiencies || [],
-      skillExpertise: t.skillExpertise || [], level: t.level || 1,
+      skillExpertise: t.skillExpertise || [], skillOverrides: t.skillOverrides || {}, customSkills: t.customSkills || [], level: t.level || 1,
     };
     $("edition").value = character.edition; $("content").value = character.content; $("level").value = character.level;
     saveCharacter(character);
@@ -6477,7 +6716,7 @@ function offDistance(d) {
   if (d.type === "miles") return `${d.amount} milhas`;
   return d.amount != null ? `${d.amount} ${d.type}` : "";
 }
-const OFF_SHAPE = { radius: "raio", sphere: "esfera", cube: "cubo", cone: "cone", line: "linha", hemisphere: "hemisfério" };
+const OFF_SHAPE = { radius: "raio", sphere: "esfera", cube: "cubo", cone: "cone", line: "linha", hemisphere: "hemisfério", emanation: "emanação" };
 function offSpellRange(sp) {
   const r = sp?.range;
   if (!r) return "—";
@@ -6977,7 +7216,9 @@ const FOUNDRY_SKILL_KEY = {
   sleightOfHand: "slt", stealth: "ste", survival: "sur",
 };
 const FOUNDRY_SIZE_KEY = { T: "tiny", S: "sm", M: "med", L: "lg", H: "huge", G: "grg" };
-const FOUNDRY_SCHOOL_KEY = { A: "abj", C: "con", D: "div", EN: "enc", EV: "evo", I: "ill", N: "nec", T: "trs" };
+// Códigos de escola do 5etools são de 1 letra (A/C/D/E/N/T/V/I) — "EN"/"EV"
+// nunca batiam com nada e deixavam a escola em branco no Actor exportado.
+const FOUNDRY_SCHOOL_KEY = { A: "abj", C: "con", D: "div", E: "enc", V: "evo", I: "ill", N: "nec", T: "trs" };
 function foundryFeatItem(name, entries) {
   return { name: name || "Característica", type: "feat", img: "icons/svg/book.svg", system: { description: { value: richText(entries) || "" } } };
 }
@@ -7274,6 +7515,7 @@ function setup() {
     rollExpression($("dice-expr-input").value);
   }));
   $("add-buff")?.addEventListener("click", openBuffModal);
+  $("add-custom-skill")?.addEventListener("click", openAddCustomSkillModal);
   $("add-extra-feat")?.addEventListener("click", openExtraFeatPicker);
   $("add-journal")?.addEventListener("click", () => openJournalModal(null));
   $("export-journal")?.addEventListener("click", exportJournalText);

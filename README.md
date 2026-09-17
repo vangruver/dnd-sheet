@@ -33,6 +33,17 @@ uma Issue neste repositório se você é detentor de direitos e quer pedir a rem
   - **Defesa sem Armadura** de todas as classes do personagem: num Monge/Bárbaro a ficha
     usa a de **maior CA** (e desconsidera a do Monge quando há escudo equipado), com um
     seletor pra fixar outra na mão.
+- **Descrição completa de magias**: o botão ⓘ de cada magia mostra nível/escola/ritual,
+  **tempo de conjuração, alcance, componentes (com o material descrito) e duração**, além do
+  texto "Em Níveis Mais Altos" — tudo que o 5etools traz, não só o texto corrido. Qualquer
+  magia pode ser marcada como **⭐ sempre preparada/inata** (traço de espécie, dom de
+  subclasse etc.): ela fica disponível pra usar sem contar no limite normal de
+  magias preparadas/conhecidas.
+- **Ajustes manuais por perícia**: vantagem/desvantagem **permanente**, troca do atributo
+  usado no teste (ex.: Intimidação com Força em vez de Carisma) e um bônus fixo — pelo ⚙ ao
+  lado de cada perícia. O botão **EXP** marca especialização em qualquer perícia na hora, sem
+  depender do limite de escolhas da classe. Dá pra **criar perícias customizadas** (botão "+
+  Perícia customizada"), que entram na lista com os mesmos controles das oficiais.
 - **Point buy** 27 pontos, atributos editáveis, especialização.
 - **Compêndio** e **catálogo de equipamento** pesquisáveis (itens e magias carregam sob demanda).
 - **Aba "Raças & Classes"**: galeria com a descrição narrativa completa (lore) de cada raça/espécie
@@ -102,8 +113,10 @@ uma Issue neste repositório se você é detentor de direitos e quer pedir a rem
   do navegador do anfitrião enquanto isso. Quem **cria** a sala é sempre o mestre (anfitrião) e
   ganha uma aba própria **🧙 Mestre**: um cartão por personagem conectado com PV, CA, iniciativa,
   deslocamento, Percepção/Intuição/Investigação passivas, CD e bônus de ataque mágico e condições
-  ativas — os dados que o mestre normalmente precisa saber de cabeça ou perguntar toda hora. Cada
-  jogador manda só o próprio resumo pro anfitrião; ninguém mais na sala vê essa aba.
+  ativas — os dados que o mestre normalmente precisa saber de cabeça ou perguntar toda hora. O
+  anfitrião puxa esses dados sozinho a cada poucos segundos, direto do personagem aberto no
+  navegador de cada jogador — ninguém precisa mandar nada na mão, e ninguém além do anfitrião vê
+  essa aba.
 - **Modelos de personagem**: salve a construção atual (classe/subclasse/espécie/background/
   atributos/escolhas) como modelo reaproveitável pra criar personagens novos rapidamente.
 - **Cache offline**: os JSON baixados ficam em IndexedDB por 7 dias; botão **"Atualizar dados"** recarrega tudo.
