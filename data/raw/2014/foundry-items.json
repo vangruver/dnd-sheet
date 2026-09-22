@@ -511,28 +511,23 @@
 			"source": "WDH",
 			"activities": [
 				{
-					"type": "damage",
+					"type": "attack",
+					"activation": {
+						"type": "action",
+						"value": 1
+					},
+					"target": {
+						"prompt": false
+					},
+					"attack": {
+						"ability": "str",
+						"type": {
+							"value": "ranged",
+							"classification": "weapon"
+						}
+					},
 					"damage": {
-						"parts": [
-							{
-								"custom": {
-									"enabled": true,
-									"formula": "2"
-								},
-								"types": [
-									"d"
-								]
-							},
-							{
-								"custom": {
-									"enabled": true,
-									"formula": "p"
-								},
-								"types": [
-									"i"
-								]
-							}
-						]
+						"includeBase": true
 					}
 				}
 			],

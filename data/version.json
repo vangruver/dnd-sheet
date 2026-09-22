@@ -1,27 +1,27 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-21T14:59:24.228Z",
+  "generatedAt": "2026-09-22T13:16:30.178Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "e5d052071b635f58cc8006e9727053eaf78ea8f9"
+      "commit": "3a09c05a3a3be94423cd2b3c33936034eeae02f2"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "a106cff08b579217c10e9247980675493f9efdc6"
+      "commit": "fef8f6489fdd774d51d85f5312a2504c4f7bcef7"
     },
     {
       "key": "homebrew",
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "cb588f415d4734a07d6090cbb6fa19ff0786eecd"
+      "commit": "4523c1a9ac248729aaf43b88f05124bfdd938071"
     },
     {
       "key": "prerelease",
@@ -39,8 +39,8 @@
     }
   ],
   "totals": {
-    "entities": 71888,
-    "official": 11372,
+    "entities": 72012,
+    "official": 11496,
     "homebrew": 60516,
     "external": 68
   },
