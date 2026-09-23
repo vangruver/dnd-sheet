@@ -5158,6 +5158,13 @@ function addInventory(id) {
   else character.inventory.push({ id, name: titleOf(e), qty: 1, meta: labelMeta(e) });
   saveCharacter(character); renderInventory(); toast(`${titleOf(e)} adicionado.`);
 }
+function addCustomItem(name) {
+  character.inventory = character.inventory || [];
+  const existing = character.inventory.find((x) => x.name === name && !x.id);
+  if (existing) existing.qty = (existing.qty || 1) + 1;
+  else character.inventory.push({ name, qty: 1 });
+  saveCharacter(character); renderInventory(); toast(`${name} adicionado.`);
+}
 // Adiciona um talento à lista de "Talentos Extras" — mesma ação usada
 // pelo seletor dedicado (openExtraFeatPicker) e pelo botão "+ Adicionar à
 // ficha" do Compêndio.
@@ -7529,6 +7536,15 @@ function setup() {
   }));
   $("equipment-search").addEventListener("input", () => { if (eqCat !== "inventory") renderEquipmentCatalog(); });
   $("weapon-filter").addEventListener("change", () => { if (eqCat !== "inventory") renderEquipmentCatalog(); });
+  $("add-custom-item").addEventListener("click", () => {
+    const name = $("custom-item-name").value.trim();
+    if (!name) { toast("Digite o nome do item."); return; }
+    addCustomItem(name);
+    $("custom-item-name").value = "";
+  });
+  $("custom-item-name").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") $("add-custom-item").click();
+  });
   $("compendium-search").addEventListener("input", renderCompendium);
   $("compendium-type").addEventListener("change", renderCompendium);
   document.querySelectorAll("#monster-view-tabs [data-monview]").forEach((b) => b.addEventListener("click", () => {
