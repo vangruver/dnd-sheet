@@ -70,6 +70,9 @@ const fresh = () => ({
   rolledSet: null, arrayAssignment: {},
   auto: { classSkills: [], backgroundSkills: [], classSaves: [], fixedSkills: [], speed: null, hitDice: null, spellcastingAbility: null },
   choiceSelections: { classSkills: [], backgroundSkills: [], raceSkills: {}, abilityChoices: {}, bgAbility: [], bgAbilityMode: 0, optionalFeatures: {}, asi: [], originFeat: null, raceFeat: null, featAbility: {}, startingEquip: {}, traitPicks: {} }, manualSkillProficiencies: [],
+  spellDcModifier: 0, spellAtkModifier: 0,
+  manualWeaponProficiencies: [], manualArmorProficiencies: [],
+  backgroundManualAbilities: null, backgroundOriginFeat: null,
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
@@ -1280,9 +1283,11 @@ async function buildAutomation() {
   // classe (primária + multiclasse) concede seus próprios slots de ASI
   // nos níveis 4/8/12/16/19 — próprios de cada classe, não do total.
   const asiCount = asiSlotCount(classFeats) + mcClassFeats.reduce((n, f) => n + asiSlotCount(f), 0);
-  const wantsFeats = asiCount || originFeatSpec(br) || raceFeatSpec(rr);
+  const isLegacyBgIn2024 = refs.background && editionOf(refs.background) === "2014" && character.edition === "2024";
+  const wantsFeats = asiCount || originFeatSpec(br) || (isLegacyBgIn2024 && !originFeatSpec(br)) || raceFeatSpec(rr);
   if (wantsFeats) { try { await ensureCatalog("feat"); } catch (e) { console.warn("Catálogo de talentos indisponível:", e); } }
-  const originSpec2 = wantsFeats ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
+  let originSpec2 = wantsFeats ? originFeatSpec(br) : null; // recomputa após carregar o catálogo
+  if (!originSpec2 && isLegacyBgIn2024) originSpec2 = { fixed: null, categories: ["O"] };
   const raceSpec = wantsFeats ? raceFeatSpec(rr) : null;
   if (originSpec2 && originSpec2.fixed) character.choiceSelections.originFeat = originSpec2.fixed.id;
   else if (!originSpec2) character.choiceSelections.originFeat = null;
