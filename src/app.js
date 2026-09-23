@@ -2016,15 +2016,25 @@ function renderAvatar() {
 }
 function renderProficiencies() {
   const { armor, weapons, tools, saves } = computeProficiencySummary();
+  const manualArmor = character.armorProficienciesManual || "";
+  const manualWeapons = character.weaponProficienciesManual || "";
+  const armorList = armor.length ? esc(armor.join(", ")) : "—";
+  const weaponsList = weapons.length ? esc(weapons.join(", ")) : "—";
+  const armorWithManual = manualArmor ? `${armorList} + ${esc(manualArmor)}` : armorList;
+  const weaponsWithManual = manualWeapons ? `${weaponsList} + ${esc(manualWeapons)}` : weaponsList;
   $("proficiency-editor").innerHTML = `
-    <div class="identity-row"><span>Armaduras</span><strong>${armor.length ? esc(armor.join(", ")) : "—"}</strong></div>
-    <div class="identity-row"><span>Armas</span><strong>${weapons.length ? esc(weapons.join(", ")) : "—"}</strong></div>
+    <div class="identity-row"><span>Armaduras</span><strong>${armorWithManual}</strong></div>
+    <div class="identity-row"><span>Armas</span><strong>${weaponsWithManual}</strong></div>
     <div class="identity-row"><span>Ferramentas</span><strong>${tools.length ? esc(tools.join(", ")) : "—"}</strong></div>
     <div class="identity-row"><span>Resistências</span><strong>${saves.map((a) => ABILITY_NAMES[a]).join(", ") || "—"}</strong></div>
+    <div class="identity-row no-print"><span>+ Armadura</span><input id="armor-manual" value="${esc(manualArmor)}" placeholder="Ex.: Cota de malha, Armadura de couro" title="Proficiências de armadura que o banco não preenche (ex.: proficiências concedidas por talentos ou características menores)"></div>
+    <div class="identity-row no-print"><span>+ Arma</span><input id="weapons-manual" value="${esc(manualWeapons)}" placeholder="Ex.: Espada longa, Besta pesada" title="Proficiências de arma que o banco não preenche (ex.: proficiências concedidas por talentos ou características menores)"></div>
     <div class="identity-row no-print"><span>+ Ferramenta/instrumento</span><input id="tools-manual" value="${esc(character.toolProficienciesManual || "")}" placeholder="Ex.: Ferramentas de ferreiro, Alaúde" title="Proficiências de ferramenta/instrumento que o banco não preenche sozinho (ex.: escolha livre de instrumento musical) — some à lista de Ferramentas acima"></div>
     <p class="muted">As perícias com proficiência automática aparecem marcadas na aba Ficha e não podem ser desmarcadas.</p>`;
-  // Só re-renderiza no "change" (ao sair do campo) pra recalcular a linha
-  // "Ferramentas" acima sem perder o foco/cursor a cada letra digitada.
+  $("armor-manual").addEventListener("input", (e) => { character.armorProficienciesManual = e.target.value; saveCharacter(character); });
+  $("armor-manual").addEventListener("change", () => renderProficiencies());
+  $("weapons-manual").addEventListener("input", (e) => { character.weaponProficienciesManual = e.target.value; saveCharacter(character); });
+  $("weapons-manual").addEventListener("change", () => renderProficiencies());
   $("tools-manual").addEventListener("input", (e) => { character.toolProficienciesManual = e.target.value; saveCharacter(character); });
   $("tools-manual").addEventListener("change", () => renderProficiencies());
 }
