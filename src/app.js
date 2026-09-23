@@ -1359,6 +1359,23 @@ function renderAutoChoices(data) {
       return `<label class="asi-pick"><span>+${n}</span><select data-bg-ability="${i}"><option value="">—</option>${opts}</select></label>`;
     }).join("");
     sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Aumento de atributo — ${esc(titleOf(refs.background))}</strong><span>${lbl(weights)}</span></div><p>Regra 2024: o background distribui esses aumentos entre os atributos.</p>${modeBtns}<div class="asi-picks">${selects}</div></div>`);
+  } else if (!bga && refs.background && editionOf(refs.background) === "2014" && character.edition === "2024") {
+    const modeIdx = Number(character.choiceSelections.bgAbilityLegacyMode || 0);
+    const modes = [
+      { weights: [2, 1], label: "+2 e +1" },
+      { weights: [1, 1, 1], label: "+1, +1 e +1" }
+    ];
+    const mode = modes[modeIdx] || modes[0];
+    const weights = mode.weights;
+    const picks = character.choiceSelections.bgAbilityLegacy || [];
+    const modeBtns = `<div class="asi-modes">${modes.map((m, i) => `<button type="button" class="asi-mode${i === modeIdx ? " active" : ""}" data-bg-ability-legacy-mode="${i}">${m.label}</button>`).join("")}</div>`;
+    const selects = weights.map((n, i) => {
+      const chosen = picks[i] || "";
+      const used = picks.filter((_, j) => j !== i);
+      const opts = ABILITIES.map((k) => `<option value="${k}"${k === chosen ? " selected" : ""}${used.includes(k) ? " disabled" : ""}>${ABILITY_NAMES[k]}</option>`).join("");
+      return `<label class="asi-pick"><span>+${n}</span><select data-bg-ability-legacy="${i}"><option value="">—</option>${opts}</select></label>`;
+    }).join("");
+    sections.push(`<div class="auto-choice"><div class="auto-choice-head"><strong>Adaptação de background — ${esc(titleOf(refs.background))}</strong><span>Regra 2024</span></div><p>Background de 2014 sem aumentos de atributo automáticos. Escolha como adaptar à regra 2024.</p>${modeBtns}<div class="asi-picks">${selects}</div></div>`);
   }
   if (data.expertise > 0) {
     const proficient = SKILLS.filter(([k]) => character.skillProficiencies.includes(k));
@@ -1478,6 +1495,17 @@ function renderAutoChoices(data) {
     character.choiceSelections.bgAbility[i] = s.value || null;
     saveCharacter(character); recalc();
   }));
+  box.querySelectorAll("[data-bg-ability-legacy-mode]").forEach((b) => b.addEventListener("click", () => {
+    character.choiceSelections.bgAbilityLegacyMode = Number(b.dataset.bgAbilityLegacyMode);
+    character.choiceSelections.bgAbilityLegacy = [];
+    saveCharacter(character); recalc();
+  }));
+  box.querySelectorAll("[data-bg-ability-legacy]").forEach((s) => s.addEventListener("change", () => {
+    const i = Number(s.dataset.bgAbilityLegacy);
+    character.choiceSelections.bgAbilityLegacy = character.choiceSelections.bgAbilityLegacy || [];
+    character.choiceSelections.bgAbilityLegacy[i] = s.value || null;
+    saveCharacter(character); recalc();
+  }));
   box.querySelectorAll("[data-expertise]").forEach((i) => i.addEventListener("change", () => {
     character.skillExpertise = character.skillExpertise || [];
     toggleIn(character.skillExpertise, i.dataset.expertise, i.checked);
@@ -1578,6 +1606,12 @@ function abilityBonusBreakdown(a) {
       const weights = spec.modes[modeIdx] || [];
       (character.choiceSelections?.bgAbility || []).forEach((k, i) => { if (k === a && weights[i]) parts.push({ label: `${bgName} (escolha)`, value: weights[i] }); });
     }
+  } else if (!spec && details.backgroundRec && editionOf(details.backgroundRec) === "2014" && character.edition === "2024") {
+    // Background antigo (2014) adaptado à regra 2024
+    const modeIdx = Number(character.choiceSelections?.bgAbilityLegacyMode || 0);
+    const modes = [[2, 1], [1, 1, 1]];
+    const weights = modes[modeIdx] || modes[0];
+    (character.choiceSelections?.bgAbilityLegacy || []).forEach((k, i) => { if (k === a && weights[i]) parts.push({ label: `${bgName} (adaptado 2024)`, value: weights[i] }); });
   }
   // Melhorias de atributo dos slots de ASI (+2 em um / +1 em dois)
   for (const slot of character.choiceSelections?.asi || []) {
