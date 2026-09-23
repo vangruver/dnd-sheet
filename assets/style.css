@@ -767,10 +767,10 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
   box-shadow:var(--shadow);cursor:pointer;display:flex;align-items:center;justify-content:center
 }
 #room-chat-fab:hover{border-color:var(--red);transform:translateY(-1px)}
-.room-chat-panel{left:24px;width:320px}
+.room-chat-panel{left:24px;width:320px;display:flex;flex-direction:column;max-height:calc(100vh - 120px)}
 .room-chat-head-actions{display:flex;align-items:center;gap:10px}
 .room-chat-status{font-size:11px;margin-bottom:8px}
-.room-chat-list{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.room-chat-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
 .room-chat-row{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:8px 10px;font-size:11px}
 .room-chat-row.room-chat-heal{border-color:var(--red)}
 .room-chat-meta{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;flex-wrap:wrap}
@@ -806,7 +806,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 /* ---------- Música da sala (YouTube sincronizado pelo anfitrião) ---------- */
 .room-music-player-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:var(--radius-xs);overflow:hidden;margin-bottom:10px}
 .room-music-player-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.room-music-controls{display:flex;flex-direction:column;gap:8px}
+.room-music-controls{display:flex;flex-direction:column;gap:8px;flex:1;min-height:200px}
 .room-music-load{display:flex;gap:6px}
 .room-music-load input{flex:1;min-width:0;border:1px solid var(--border-2);background:var(--inset);color:var(--text);border-radius:var(--radius-xs);padding:8px 10px;font-size:12px}
 .room-music-buttons{display:flex;gap:6px;flex-wrap:wrap}
@@ -816,7 +816,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-music-controls button.active{border-color:var(--red);background:var(--red);color:#fff}
 .room-music-volume-row{display:flex;align-items:center;gap:8px}
 .room-music-volume-row input[type="range"]{flex:1;accent-color:var(--red)}
-.room-music-playlist{display:flex;flex-wrap:wrap;gap:6px;max-height:180px;overflow-y:auto}
+.room-music-playlist{display:flex;flex-wrap:wrap;gap:6px;flex:1;min-height:120px;overflow-y:auto}
 .room-music-playlist.hidden{display:none}
 .room-music-track{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;width:76px;border:1px solid var(--border-2);background:var(--surface-3);border-radius:var(--radius-xs);font-size:10px;font-weight:600}
 .room-music-track img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:2px;display:block}
@@ -868,6 +868,11 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-combat-row.room-combat-mystery .room-combat-row-top b{font-style:italic;color:var(--text-mut);font-weight:600}
 .mystery-hp-bar{position:relative;background:repeating-linear-gradient(135deg,var(--surface-2) 0 8px,var(--inset) 8px 16px);background-size:200% 200%;animation:mystery-shimmer 3.5s linear infinite}
 @keyframes mystery-shimmer{0%{background-position:0 0}100%{background-position:32px 32px}}
+
+/* ---------- Painéis de música, combate e mestre ---------- */
+.room-music-panel{display:flex;flex-direction:column;flex:1}
+.room-combat-panel{display:flex;flex-direction:column;flex:1}
+.room-music-panel-body,.room-combat-panel{display:flex;flex-direction:column;gap:8px;flex:1}
 
 /* ---------- Ficha do Mestre (painel da sala, só o anfitrião vê) ---------- */
 .room-party-panel{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
