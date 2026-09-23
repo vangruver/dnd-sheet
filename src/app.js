@@ -3417,16 +3417,16 @@ function renderPartyPanel() {
   const box = $("room-party-panel");
   if (!box || box.classList.contains("hidden")) return;
   if (roomRole !== "anfitriao") { box.innerHTML = `<div class="empty">Só quem criou a sala (o mestre) vê esta aba.</div>`; return; }
-  const entries = Array.from(roomPartySheets.values())
-    .filter((e) => e.sheet)
-    .sort((a, b) => (a.sheet.name || "").localeCompare(b.sheet.name || "", "pt-BR"));
+  const entries = Array.from(roomPartySheets.entries())
+    .filter(([_, e]) => e.sheet)
+    .sort(([_, a], [__, b]) => (a.sheet.name || "").localeCompare(b.sheet.name || "", "pt-BR"));
   if (!entries.length) { box.innerHTML = `<div class="empty">Ninguém conectado ainda — assim que alguém entrar na sala (ou você abrir um personagem), a ficha dele aparece aqui.</div>`; return; }
-  box.innerHTML = entries.map(({ sheet: s }) => {
+  box.innerHTML = entries.map(([peerId, { sheet: s }]) => {
     const pct = s.hp.max > 0 ? Math.max(0, Math.min(100, (s.hp.current / s.hp.max) * 100)) : 0;
     const deathLabel = s.deathSaves ? (s.deathSaves.status === "stable" ? "ESTABILIZADO" : s.deathSaves.status === "dead" ? "MORREU" : `Testes de morte: ${s.deathSaves.success} sucesso(s) / ${s.deathSaves.failure} falha(s)`) : "";
     const condHtml = (s.conditions || []).length ? `<div class="room-party-conditions">${s.conditions.map((c) => `<span class="condition-chip">${esc(c)}</span>`).join("")}</div>` : "";
-    return `<div class="room-party-card">
-      <div class="room-party-card-top"><b>${esc(s.name)}</b><span class="muted">${esc(s.classLabel)}${s.level ? ` · Nv. ${s.level}` : ""}</span></div>
+    return `<div class="room-party-card" data-peer-id="${esc(peerId)}">
+      <div class="room-party-card-top"><b>${esc(s.name)}</b><span class="muted">${esc(s.classLabel)}${s.level ? ` · Nv. ${s.level}` : ""}</span><button type="button" class="room-party-remove" title="Remover da sala">×</button></div>
       <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(s.hp.current, s.hp.max)}" style="width:${pct}%"></div><div class="dash-hp-label">${s.hp.current} / ${s.hp.max}${s.hp.temp ? ` (+${s.hp.temp})` : ""}</div></div>
       ${deathLabel ? `<div class="room-party-death${s.deathSaves?.status === "dead" ? " dead" : ""}">⚠️ ${esc(deathLabel)}</div>` : ""}
       <div class="room-party-stats">
@@ -3443,6 +3443,21 @@ function renderPartyPanel() {
       ${condHtml}
     </div>`;
   }).join("");
+  $("room-party-panel").querySelectorAll(".room-party-remove").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const peerId = btn.closest(".room-party-card").dataset.peerId;
+      if (peerId === "host") {
+        toast("Não é possível remover o mestre da sala.");
+        return;
+      }
+      roomPartySheets.delete(peerId);
+      const conn = roomHostConns.get(peerId);
+      if (conn) conn.close();
+      roomHostConns.delete(peerId);
+      renderPartyPanel();
+      toast(`Personagem removido da sala.`);
+    });
+  });
 }
 
 function renderRoomChat() {

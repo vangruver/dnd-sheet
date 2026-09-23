@@ -875,7 +875,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-music-panel-body,.room-combat-panel{display:flex;flex-direction:column;gap:8px;flex:1}
 
 /* ---------- Ficha do Mestre (painel da sala, só o anfitrião vê) ---------- */
-.room-party-panel{max-height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
+.room-party-panel{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px}
 .room-party-card{background:var(--surface-3);border:1px solid var(--border);border-radius:var(--radius-xs);padding:9px 10px}
 .room-party-card-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
 .room-party-card-top b{font-size:12px;color:var(--text)}
@@ -886,6 +886,8 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-party-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:10px;color:var(--text-mut)}
 .room-party-stats div{display:flex;justify-content:space-between;gap:6px}
 .room-party-stats b{color:var(--text);font-size:11px}
+.room-party-remove{border:0;background:transparent;color:var(--text-mut);font-size:16px;line-height:1;cursor:pointer;padding:0;margin:0;margin-left:auto;flex-shrink:0}
+.room-party-remove:hover{color:var(--red)}
 .room-party-conditions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .room-party-conditions .condition-chip{padding:4px 8px;cursor:default}
 
