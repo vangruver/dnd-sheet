@@ -1697,8 +1697,10 @@ function calc() {
   const ac = Number(character.ac) || acAuto;
   const speed = character.speed || character.auto?.speed || "30 ft";
   const sa = character.spellAbility || spellAbilityFrom(classInfo());
-  const dc = sa ? spellDc(pb, mod(effScore(sa))) : null;
-  const atk = sa ? spellAttack(pb, mod(effScore(sa))) : null;
+  const dcBase = sa ? spellDc(pb, mod(effScore(sa))) : null;
+  const dc = dcBase !== null ? dcBase + (Number(character.spellDcModifier) || 0) : null;
+  const atkBase = sa ? spellAttack(pb, mod(effScore(sa))) : null;
+  const atk = atkBase !== null ? atkBase + (Number(character.spellAtkModifier) || 0) : null;
   return { lvl, pb, init, passive, hp, ac, acAuto, acBonus: character.auto?.acBonus || 0, ud, udInfo, equippedArmor, speed, sa, dc, atk };
 }
 function acAutoTitle(c) {
@@ -1760,6 +1762,8 @@ async function recalc() {
   $("ac-input").value = character.ac ?? "";
   $("ac-input").placeholder = c.equippedArmor?.bodyArmor ? `Auto: ${c.acAuto} (${c.equippedArmor.bodyArmor.name})` : c.ud ? `Auto: ${c.acAuto} (Unarmored Defense · ${ABILITY_NAMES[c.ud]}${c.udInfo?.label ? ` — ${c.udInfo.label}` : ""})` : `Auto: ${c.acAuto}`;
   $("speed-input").value = character.speed || "30 ft";
+  if ($("spell-dc-modifier")) $("spell-dc-modifier").value = character.spellDcModifier || "";
+  if ($("spell-atk-modifier")) $("spell-atk-modifier").value = character.spellAtkModifier || "";
   renderUnarmoredDefense(c);
   renderSaves(c); renderSkills(c); renderIdentity(); renderAttacks(); renderProficiencies(); renderDeath(c);
   renderHitDiceTracker(); renderClassResources(); renderConditions(); renderBuffs(); renderExtraFeats(); renderDashboard();
@@ -7438,6 +7442,8 @@ function setup() {
     character.spellAbility = v || character.auto?.spellcastingAbility || null;
     saveCharacter(character); recalc();
   });
+  $("spell-dc-modifier")?.addEventListener("input", () => { character.spellDcModifier = Number($("spell-dc-modifier").value) || 0; saveCharacter(character); recalc(); });
+  $("spell-atk-modifier")?.addEventListener("input", () => { character.spellAtkModifier = Number($("spell-atk-modifier").value) || 0; saveCharacter(character); recalc(); });
   document.querySelectorAll(".change-choice").forEach((b) => b.addEventListener("click", () => openPicker(b.dataset.pick)));
   document.querySelectorAll(".tiny-info").forEach((b) => b.addEventListener("click", () => openInfo(b.dataset.info)));
   document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", async () => {
