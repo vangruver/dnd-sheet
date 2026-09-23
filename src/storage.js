@@ -157,6 +157,12 @@ export function saveDiscordWebhook(url) {
   try { url ? localStorage.setItem(DISCORD_WEBHOOK_KEY, url) : localStorage.removeItem(DISCORD_WEBHOOK_KEY); }
   catch { /* modo privado */ }
 }
+const FOUNDRY_VTT_URL_KEY = "dnd-ficha-foundry-vtt-url";
+export function getFoundryVttUrl() { try { return localStorage.getItem(FOUNDRY_VTT_URL_KEY) || ""; } catch { return ""; } }
+export function saveFoundryVttUrl(url) {
+  try { url ? localStorage.setItem(FOUNDRY_VTT_URL_KEY, url) : localStorage.removeItem(FOUNDRY_VTT_URL_KEY); }
+  catch { /* modo privado */ }
+}
 
 // Sala de rolagens — chat de rolagem em tempo real compartilhado entre
 // os jogadores da mesma mesa, ponto-a-ponto via WebRTC (PeerJS): sem

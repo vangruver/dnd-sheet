@@ -14,7 +14,7 @@ import {
   saveCharacter, loadCharacter, downloadCharacter, readCharacterFile, getSeenDataVersion, setSeenDataVersion,
   getSavedSkin, saveSkin, SKINS, getSavedCreationMode, saveCreationMode, getTemplates, saveTemplates,
   migrateLegacyCharacter, getActiveCharacterId, setActiveCharacterId, listCharacters, createCharacterSlot, deleteCharacterSlot, loadCharacterById, saveCharacterAs,
-  getDiscordWebhook, saveDiscordWebhook,
+  getDiscordWebhook, saveDiscordWebhook, getFoundryVttUrl, saveFoundryVttUrl,
   getRoomCode, saveRoomCode, getAppliedHeals, markHealApplied, getAppliedDamages, markDamageApplied,
   getMonsterLists, saveMonsterLists, newMonsterListId, getActiveMonsterListId, setActiveMonsterListId,
   isDisclaimerDismissed, dismissDisclaimer,
@@ -3103,11 +3103,35 @@ async function sendToDiscord(text, opts = {}) {
     toast("Não deu pra enviar a rolagem pro Discord — confira o link do webhook.");
   }
 }
+async function sendToFoundryVtt(roll) {
+  const url = getFoundryVttUrl();
+  if (!url) return;
+  try {
+    const baseUrl = url.replace(/\/$/, "");
+    const res = await fetch(`${baseUrl}/api/rolls`, {
+      method: "POST",
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        formula: roll.detail || "",
+        total: roll.total,
+        flavor: `${character?.name || "Personagem"}: ${roll.label}`,
+      }),
+    });
+    if (!res.ok && res.status !== 404) {
+      console.warn(`Foundry VTT respondeu com HTTP ${res.status}`);
+    }
+  } catch (err) {
+    console.warn("Não deu pra conectar ao Foundry VTT:", err.message);
+  }
+}
 function renderDiscordSettings() {
   const url = getDiscordWebhook();
-  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Discord</h2><p class="muted">Cada rolagem (ataque, dano, dado de vida, teste de morte, rolador genérico) vira uma mensagem no canal do Discord que você configurar abaixo. Isso fica salvo neste navegador, não no personagem — então cada jogador configura o próprio link, podendo usar servidores diferentes ou o mesmo entre o grupo.</p></div></div>
+  const foundryUrl = getFoundryVttUrl();
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">INTEGRAÇÃO</span><h2>Discord & Foundry VTT</h2><p class="muted">Cada rolagem (ataque, dano, dado de vida, teste de morte, rolador genérico) vira uma mensagem no canal do Discord que você configurar abaixo. Isso fica salvo neste navegador, não no personagem — então cada jogador configura o próprio link, podendo usar servidores diferentes ou o mesmo entre o grupo.</p></div></div>
     <div class="modal-body">
-      <h3>Como criar o link do webhook</h3>
+      <h3>Discord</h3>
+      <h4>Como criar o link do webhook</h4>
       <ol>
         <li>Abra o Discord (aplicativo ou navegador) e entre no <strong>servidor</strong> onde as rolagens devem aparecer.</li>
         <li>Ao lado do nome do <strong>canal</strong> desejado (ex.: #mesa, #rolagens), clique na engrenagem ⚙️ de "Editar Canal" (ou clique com o botão direito no canal → "Editar Canal").</li>
@@ -3125,6 +3149,14 @@ function renderDiscordSettings() {
         <button type="button" id="discord-webhook-test">Enviar teste</button>
         ${url ? `<button type="button" id="discord-webhook-remove">Remover</button>` : ""}
       </div>
+      <h3 style="margin-top:24px">Foundry VTT</h3>
+      <p class="muted">Integração opcional com Foundry VTT — envia rolagens diretamente para o servidor Foundry quando disponível.</p>
+      <label>URL do servidor Foundry VTT<br><input id="foundry-vtt-input" placeholder="http://localhost:30000" value="${esc(foundryUrl)}" style="width:100%"></label>
+      <div class="condition-duration-row" style="margin-top:12px">
+        <button type="button" class="add-btn" id="foundry-vtt-save">Salvar</button>
+        <button type="button" id="foundry-vtt-test">Enviar teste</button>
+        ${foundryUrl ? `<button type="button" id="foundry-vtt-remove">Remover</button>` : ""}
+      </div>
     </div>`;
   $("modal").classList.remove("hidden");
   $("discord-webhook-save")?.addEventListener("click", () => {
@@ -3141,6 +3173,22 @@ function renderDiscordSettings() {
   $("discord-webhook-remove")?.addEventListener("click", () => {
     saveDiscordWebhook("");
     toast("Webhook removido.");
+    renderDiscordSettings();
+  });
+  $("foundry-vtt-save")?.addEventListener("click", () => {
+    saveFoundryVttUrl($("foundry-vtt-input").value.trim());
+    toast("URL do Foundry VTT salva.");
+    renderDiscordSettings();
+  });
+  $("foundry-vtt-test")?.addEventListener("click", async () => {
+    const pending = $("foundry-vtt-input").value.trim();
+    if (pending) saveFoundryVttUrl(pending);
+    await sendToFoundryVtt({ type: "test", label: "Teste", detail: "🎉", total: "funcionou!" });
+    toast("Mensagem de teste enviada pro Foundry VTT.");
+  });
+  $("foundry-vtt-remove")?.addEventListener("click", () => {
+    saveFoundryVttUrl("");
+    toast("URL do Foundry VTT removida.");
     renderDiscordSettings();
   });
 }
@@ -3408,12 +3456,14 @@ function broadcastRoll(label, detail, total, opts = {}) {
   const note = opts.note || "";
   const discordOpts = character.avatar ? { avatarUrl: character.avatar } : {};
   sendToDiscord(discordMessage(label, detail, total) + note, discordOpts);
+  sendToFoundryVtt({ label, detail, total });
   pushRoomRoll({ label, detail: detail + note, total, type: opts.type, amount: opts.amount ?? null });
 }
 function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
   const note = opts.note || "";
   const discordOpts = character.avatar ? { avatarUrl: character.avatar } : {};
   sendToDiscord(monsterDiscordMessage(m, label, detail, total) + note, discordOpts);
+  sendToFoundryVtt({ label: `${m?.name || "Monstro"}: ${label}`, detail, total });
   pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: opts.type || "mestre", amount: opts.amount ?? null });
 }
 
