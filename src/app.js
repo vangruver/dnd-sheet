@@ -2351,7 +2351,8 @@ function rollAttackByIndex(i, e) {
   const note = roll === 20 ? " — CRÍTICO!" : roll === 1 ? " — falha crítica" : "";
   attackRollMessages[i] = `${d20RollHtml(rolls, roll, mode, cls)} ${fmt(bonus)} = <b>${total}</b>${note}`;
   updateAttackResultDisplays(i);
-  broadcastRoll(`Ataque — ${a.name || "arma sem nome"}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
+  const details = [a.range, a.notes].filter(Boolean).join(" · ");
+  broadcastRoll(`Ataque — ${a.name || "arma sem nome"}${details ? ` (${details})` : ""}`, `${d20RollPlain(rolls, roll, mode)} ${fmt(bonus)}`, total, { type: "ataque", note });
 }
 function rollDamageByIndex(i, e) {
   const a = character.attacks[i];
@@ -2372,7 +2373,8 @@ function rollDamageByIndex(i, e) {
   const note = crit ? " — CRÍTICO" : "";
   attackRollMessages[i] = `${segs.join(" + ")} = <b>${total}</b>${note}`;
   updateAttackResultDisplays(i);
-  broadcastRoll(`Dano — ${a.name || "arma sem nome"}`, segs.join(" + "), total, { type: "dano", note, amount: total });
+  const details = [a.range, a.notes].filter(Boolean).join(" · ");
+  broadcastRoll(`Dano — ${a.name || "arma sem nome"}${details ? ` (${details})` : ""}`, segs.join(" + "), total, { type: "dano", note, amount: total });
 }
 // Algumas raças/classes homebrew concedem uma escolha narrativa dentro do
 // próprio texto do traço — uma lista embutida ("Deformações" do Lefou,
@@ -3083,15 +3085,18 @@ function discordMessage(label, detail, total) {
 function discordTurnMessage(name, round) {
   return `⚔️ Rodada **${round}** — é a vez de **${name}**!`;
 }
-async function sendToDiscord(text) {
+async function sendToDiscord(text, opts = {}) {
   const url = getDiscordWebhook();
   if (!url) return;
   try {
+    const payload = { content: text.slice(0, 1900) };
+    if (opts.avatarUrl) payload.avatar_url = opts.avatarUrl;
+    if (opts.embeds) payload.embeds = opts.embeds;
     const res = await fetch(url, {
       method: "POST",
       mode: "cors",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: text.slice(0, 1900) }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) toast(`Discord recusou a rolagem (HTTP ${res.status}).`);
   } catch {
@@ -3401,12 +3406,14 @@ function pushRoomRoll(entry) {
 // (se conectado), sem duplicar a lógica de formatação em cada lugar.
 function broadcastRoll(label, detail, total, opts = {}) {
   const note = opts.note || "";
-  sendToDiscord(discordMessage(label, detail, total) + note);
+  const discordOpts = character.avatar ? { avatarUrl: character.avatar } : {};
+  sendToDiscord(discordMessage(label, detail, total) + note, discordOpts);
   pushRoomRoll({ label, detail: detail + note, total, type: opts.type, amount: opts.amount ?? null });
 }
 function broadcastMonsterRoll(m, label, detail, total, opts = {}) {
   const note = opts.note || "";
-  sendToDiscord(monsterDiscordMessage(m, label, detail, total) + note);
+  const discordOpts = character.avatar ? { avatarUrl: character.avatar } : {};
+  sendToDiscord(monsterDiscordMessage(m, label, detail, total) + note, discordOpts);
   pushRoomRoll({ name: `${(m?.name || "Monstro").trim()} (mestre)`, label, detail: detail + note, total, type: opts.type || "mestre", amount: opts.amount ?? null });
 }
 
