@@ -3167,6 +3167,8 @@ let myPeerId = null;
 // recalcula e redistribui o estado inteiro (kind:"combat-state") pra todo
 // mundo, inclusive quem enviou. Um jogador nunca aplica a ação localmente.
 let roomCombat = { round: 1, currentId: null, list: [] };
+// Jogadores com permissão de controlar música: Set de peerId
+let roomMusicControllers = new Set();
 // Música da sala (YouTube ou SoundCloud) — mesma lógica de autoridade da
 // iniciativa: o anfitrião é quem manda tocar/pausar/trocar, os jogadores só
 // recebem o estado (kind:"music-state") e refletem no próprio player
@@ -3206,6 +3208,7 @@ function leaveRoom() {
   try { roomPeer?.destroy(); } catch { /* ignore */ }
   roomPeer = null; roomRole = null; roomHostConns = new Map(); roomClientConn = null; myPeerId = null;
   roomCombat = { round: 1, currentId: null, list: [] };
+  roomMusicControllers = new Set();
   roomMusic = { source: null, videoId: null, playlistId: null, playlistIndex: 0, scUrl: null, scIndex: 0, playing: false, seekTime: 0, updatedAt: 0, loop: false };
   roomPartySheets = new Map();
   clearInterval(partyPollTimer); partyPollTimer = null;
@@ -3297,6 +3300,11 @@ function relayToOthers(msg, exceptPeerId) {
 function onRoomMessage(msg) {
   if (msg?.kind === "combat-state") { roomCombat = msg.combat || roomCombat; renderCombatTracker(); return; }
   if (msg?.kind === "music-state") { roomMusic = msg.music || roomMusic; renderMusicPanel(); syncMusicPlayer(); return; }
+  if (msg?.kind === "music-controller") {
+    if (msg.grant) roomMusicControllers.add(msg.peerId);
+    else roomMusicControllers.delete(msg.peerId);
+    renderMusicPanel(); return;
+  }
   if (!msg?.id || roomRolls.some((r) => r.id === msg.id)) return;
   roomRolls.push(msg);
   roomRolls = roomRolls.slice(-50);
@@ -3473,8 +3481,9 @@ function renderPartyPanel() {
     const pct = s.hp.max > 0 ? Math.max(0, Math.min(100, (s.hp.current / s.hp.max) * 100)) : 0;
     const deathLabel = s.deathSaves ? (s.deathSaves.status === "stable" ? "ESTABILIZADO" : s.deathSaves.status === "dead" ? "MORREU" : `Testes de morte: ${s.deathSaves.success} sucesso(s) / ${s.deathSaves.failure} falha(s)`) : "";
     const condHtml = (s.conditions || []).length ? `<div class="room-party-conditions">${s.conditions.map((c) => `<span class="condition-chip">${esc(c)}</span>`).join("")}</div>` : "";
+    const hasMusicControl = roomMusicControllers.has(peerId);
     return `<div class="room-party-card" data-peer-id="${esc(peerId)}">
-      <div class="room-party-card-top"><b>${esc(s.name)}</b><span class="muted">${esc(s.classLabel)}${s.level ? ` · Nv. ${s.level}` : ""}</span><button type="button" class="room-party-remove" title="Remover da sala">×</button></div>
+      <div class="room-party-card-top"><b>${esc(s.name)}</b><span class="muted">${esc(s.classLabel)}${s.level ? ` · Nv. ${s.level}` : ""}</span><button type="button" class="room-party-music${hasMusicControl ? " active" : ""}" title="${hasMusicControl ? "Remover controle de música" : "Dar controle de música"}">🎵</button><button type="button" class="room-party-remove" title="Remover da sala">×</button></div>
       <div class="dash-hp-bar"><div class="dash-hp-fill ${hpBarClass(s.hp.current, s.hp.max)}" style="width:${pct}%"></div><div class="dash-hp-label">${s.hp.current} / ${s.hp.max}${s.hp.temp ? ` (+${s.hp.temp})` : ""}</div></div>
       ${deathLabel ? `<div class="room-party-death${s.deathSaves?.status === "dead" ? " dead" : ""}">⚠️ ${esc(deathLabel)}</div>` : ""}
       <div class="room-party-stats">
@@ -3491,6 +3500,16 @@ function renderPartyPanel() {
       ${condHtml}
     </div>`;
   }).join("");
+  $("room-party-panel").querySelectorAll(".room-party-music").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const peerId = btn.closest(".room-party-card").dataset.peerId;
+      const grant = !roomMusicControllers.has(peerId);
+      roomMusicControllers[grant ? "add" : "delete"](peerId);
+      relayToOthers({ kind: "music-controller", peerId, grant }, null);
+      renderPartyPanel();
+      toast(grant ? `Controle de música concedido a ${Array.from(roomPartySheets.values()).find(e => e.sheet?.name)?.sheet?.name || peerId}.` : "Controle de música removido.");
+    });
+  });
   $("room-party-panel").querySelectorAll(".room-party-remove").forEach((btn) => {
     btn.addEventListener("click", () => {
       const peerId = btn.closest(".room-party-card").dataset.peerId;
@@ -3502,6 +3521,7 @@ function renderPartyPanel() {
       const conn = roomHostConns.get(peerId);
       if (conn) conn.close();
       roomHostConns.delete(peerId);
+      roomMusicControllers.delete(peerId);
       renderPartyPanel();
       toast(`Personagem removido da sala.`);
     });
@@ -3885,7 +3905,7 @@ function renderMusicPlaylist() {
   }
   if (!items.length) { wrap.innerHTML = ""; wrap.classList.add("hidden"); return; }
   wrap.classList.remove("hidden");
-  const canPick = roomRole === "anfitriao";
+  const canPick = roomRole === "anfitriao" || (roomRole === "jogador" && roomMusicControllers.has(myPeerId));
   wrap.innerHTML = items.map((it, i) => `
     <button type="button" class="room-music-track${i === curIndex ? " active" : ""}" data-track-index="${i}" ${canPick ? "" : "disabled"} title="${esc(it.label || `Faixa ${i + 1}`)}">
       ${it.img ? `<img src="${esc(it.img)}" alt="" loading="lazy">` : ""}
@@ -3903,7 +3923,8 @@ function renderMusicPanel() {
       : !hasMedia ? (roomRole === "anfitriao" ? "Cole um link do YouTube ou SoundCloud abaixo pra tocar pra sala." : "Aguardando o mestre tocar alguma coisa…")
       : roomMusic.playing ? "▶️ Tocando na sala." : "⏸ Pausado.";
   }
-  if (roomRole !== "anfitriao") {
+  const canControlMusic = roomRole === "anfitriao" || (roomRole === "jogador" && roomMusicControllers.has(myPeerId));
+  if (!canControlMusic) {
     box.innerHTML = hasMedia ? `${musicVolumeControlsHtml()}<div id="room-music-playlist" class="room-music-playlist hidden"></div>` : "";
     if (hasMedia) { wireMusicVolumeControls(); renderMusicPlaylist(); }
     return;

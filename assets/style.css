@@ -887,6 +887,9 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .room-party-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:10px;color:var(--text-mut)}
 .room-party-stats div{display:flex;justify-content:space-between;gap:6px}
 .room-party-stats b{color:var(--text);font-size:11px}
+.room-party-music{border:0;background:transparent;color:var(--text-mut);font-size:16px;line-height:1;cursor:pointer;padding:0;margin:0;margin-right:8px;flex-shrink:0}
+.room-party-music:hover{color:var(--gold)}
+.room-party-music.active{color:var(--gold)}
 .room-party-remove{border:0;background:transparent;color:var(--text-mut);font-size:16px;line-height:1;cursor:pointer;padding:0;margin:0;margin-left:auto;flex-shrink:0}
 .room-party-remove:hover{color:var(--red)}
 .room-party-conditions{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
