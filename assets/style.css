@@ -593,6 +593,7 @@ input::placeholder,textarea::placeholder{color:var(--text-mut)}
 .spell-line input{accent-color:var(--red)}
 .spell-dot{font-size:14px;color:var(--red-hi);text-align:center}
 .spell-meta{font-size:8px;color:var(--text-mut)}
+.spell-flags{font-size:9px;margin-left:4px;color:var(--gold);font-weight:600}
 .spell-origin{font-style:normal;font-weight:700}
 .spell-origin.from-class{color:var(--blue)}
 .spell-origin.from-subclass{color:var(--gold)}
