@@ -76,6 +76,38 @@ const fresh = () => ({
 });
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[c]));
 const toast = (t) => { const e = $("toast"); e.textContent = t; e.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => e.classList.remove("show"), 2400); };
+
+// ============================================================
+// Monitoramento de conexão de rede
+// ============================================================
+function setupNetworkMonitoring() {
+  const statusEl = $("db-status");
+  if (!statusEl) return;
+
+  function updateNetworkStatus() {
+    const isOnline = navigator.onLine;
+    if (isOnline) {
+      statusEl.textContent = "Carregando dados do 5etools…";
+      statusEl.style.color = "";
+    } else {
+      statusEl.textContent = "🌐 Sem conexão (modo offline)";
+      statusEl.style.color = "#ffc107";
+    }
+  }
+
+  window.addEventListener("online", () => {
+    updateNetworkStatus();
+    toast("✅ Conexão restaurada!");
+  });
+
+  window.addEventListener("offline", () => {
+    updateNetworkStatus();
+    toast("📡 Sem conexão de rede — alguns recursos podem não estar disponíveis.");
+  });
+
+  updateNetworkStatus();
+}
+
 const manifest = () => manifestEntries();
 const list = (t, q = "") => filterEntities(t, character.edition, character.content, q);
 const editionLabel = (x) => (editionOf(x) === "both" ? "2014/2024" : editionOf(x));
@@ -7514,6 +7546,7 @@ async function buildFoundryActor() {
 }
 
 function setup() {
+  setupNetworkMonitoring();
   $("edition").addEventListener("change", () => {
     character.edition = $("edition").value;
     character.classId = character.subclassId = character.raceId = character.backgroundId = "";
