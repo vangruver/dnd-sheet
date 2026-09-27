@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-26T12:51:31.715Z",
+  "generatedAt": "2026-09-27T13:44:01.586Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "740f121b2cac839805055d7dd541b6773eb99803"
+      "commit": "da187b103ee6e12ac30c9b9079515382b0489c8e"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 72012,
+    "entities": 72224,
     "official": 11496,
-    "homebrew": 60516,
+    "homebrew": 60728,
     "external": 68
   },
   "homebrew": {
@@ -303,6 +303,7 @@
       "raw/homebrew/collection/Hit Point Press; Humblewood Campaign Setting.json",
       "raw/homebrew/collection/Hit Point Press; Humblewood Tales.json",
       "raw/homebrew/collection/Hit Point Press; The Fablemaker's Deck of Many Things.json",
+      "raw/homebrew/collection/Hit Point Press; The Field Guide to Floral Dragons.json",
       "raw/homebrew/collection/InxSinon; Tera's Travels At the Peaks of Gravity.json",
       "raw/homebrew/collection/IrishBandit; Rule of Law.json",
       "raw/homebrew/collection/Jasmine Yang; Hamund's Harvesting Handbook III.json",
@@ -675,7 +676,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 628,
+    "classFileCount": 629,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -728,6 +729,7 @@
       "raw/homebrew/collection/Haven; All Beneath the Yonder Seas and Streams.json",
       "raw/homebrew/collection/Haven; All the Lights in the Sky are Stars.json",
       "raw/homebrew/collection/Hit Point Press; Humblewood Campaign Setting.json",
+      "raw/homebrew/collection/Hit Point Press; The Field Guide to Floral Dragons.json",
       "raw/homebrew/collection/InxSinon; Tera's Travels At the Peaks of Gravity.json",
       "raw/homebrew/collection/JoeyJoestar; Good and Evil.json",
       "raw/homebrew/collection/Jonoman3000; Blazing Dawn Player's Companion.json",
@@ -890,7 +892,7 @@
       "raw/homebrew/subrace/Valerion; Silverwit Halfling.json",
       "raw/homebrew/subrace/themagictavern; Genasi Subraces.json"
     ],
-    "raceFileCount": 212,
+    "raceFileCount": 213,
     "filesByType": {
       "item": [
         "raw/homebrew/background/D&D Wiki; Featured Quality Backgrounds.json",
@@ -1004,6 +1006,7 @@
         "raw/homebrew/collection/Heavyarms; The Complete Armorer's Handbook.json",
         "raw/homebrew/collection/Hit Point Press; Humblewood Campaign Setting.json",
         "raw/homebrew/collection/Hit Point Press; Humblewood Tales.json",
+        "raw/homebrew/collection/Hit Point Press; The Field Guide to Floral Dragons.json",
         "raw/homebrew/collection/InxSinon; Tera's Travels At the Peaks of Gravity.json",
         "raw/homebrew/collection/IrishBandit; Rule of Law.json",
         "raw/homebrew/collection/Jamie Bernstein; Hektula's Khyber Codex.json",
