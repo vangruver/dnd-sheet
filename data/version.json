@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-27T13:44:01.586Z",
+  "generatedAt": "2026-09-28T16:38:24.155Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "da187b103ee6e12ac30c9b9079515382b0489c8e"
+      "commit": "2773a23f112085f1dff1fd801e23fe7aab0cb4e1"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 72224,
+    "entities": 72182,
     "official": 11496,
-    "homebrew": 60728,
+    "homebrew": 60686,
     "external": 68
   },
   "homebrew": {
@@ -445,7 +445,9 @@
       "raw/homebrew/subclass/Dan Powell; Dragoon.json",
       "raw/homebrew/subclass/Desmon9507; The Big Tiddy Goth Girlfriend.json",
       "raw/homebrew/subclass/DnDMessiah; Animeisekai.json",
+      "raw/homebrew/subclass/DnDMessiah; Bloodmoon Reaper.json",
       "raw/homebrew/subclass/DnDMessiah; Fortune Arcana Sorcery.json",
+      "raw/homebrew/subclass/DnDMessiah; Great Wyrm Arcanum.json",
       "raw/homebrew/subclass/DnDWiki; Arcane Tradition Wild Magic.json",
       "raw/homebrew/subclass/DonavanRex; Witcher Subclasses.json",
       "raw/homebrew/subclass/DrRichtoffen; The Ghost Train.json",
@@ -676,7 +678,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 629,
+    "classFileCount": 631,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",

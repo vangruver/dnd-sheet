@@ -37,7 +37,7 @@
 		"status": "ready",
 		"dateAdded": 1787372063,
 		"dateLastModified": 1787372063,
-		"_dateLastModifiedHash": "52ffd332b5"
+		"_dateLastModifiedHash": "8628865541"
 	},
 	"monster": [
 		{
@@ -4402,7 +4402,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Aconite_Dragon_04.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/005-02-004.greater-aconite-dragon.webp"
 					},
 					"title": "{@style {@font Fig. 3 Triple-headed greater aconite dragons are a rare sight.|Amina}|large}",
 					"credit": "Kin Wald"
@@ -4447,7 +4447,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Aconite_Dragon_04.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/005-02-004.greater-aconite-dragon.webp"
 					},
 					"title": "{@style {@font Fig. 3 Triple-headed greater aconite dragons are a rare sight.|Amina}|large}",
 					"credit": "Kin Wald"
@@ -4933,7 +4933,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Ch012-04-003.cherry-blossom-flyingerry_Blossom_Dragon_03.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/012-04-003.cherry-blossom-flying.webp"
 					},
 					"title": "{@style {@font Fig. 2 A cherry blossom dragon flies through the clouds at night.|Amina}|large}",
 					"credit": "Kin Wald"
@@ -5159,7 +5159,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Azalea_Dragon.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/014-05-001.azalea-dragon.webp"
 					},
 					"credit": "Kin Wald"
 				},
@@ -5167,7 +5167,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Azalea_Dragon_02.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/015-05-002.azalea-playing.webp"
 					},
 					"title": "{@style {@font Fig. 1 An adult azalea dragon watches over two wyrmlings at play.|Kaltaar}|large}",
 					"credit": "Kin Wald"
@@ -5176,7 +5176,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Azalea_Dragon_03.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/016-05-003.azalea-finds-hive.webp"
 					},
 					"title": "{@style {@font Fig. 2 An azalea dragon barks to signal the discovery of a vespon hive.|Kaltaar}|large}",
 					"credit": "Kin Wald"
@@ -5185,7 +5185,7 @@
 					"type": "image",
 					"href": {
 						"type": "external",
-						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/Azalea_Dragon_04.webp"
+						"url": "https://raw.githubusercontent.com/TheGiddyLimit/homebrew-img/main/img/FGoFD24/017-05-004.azalea-snarls-sketch.webp"
 					},
 					"title": "{@style {@font Fig. 3 An azalea dragon snarls to warn away trespassers.|Kaltaar}|large}",
 					"credit": "Kin Wald"
