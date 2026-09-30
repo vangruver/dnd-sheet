@@ -14,9 +14,9 @@
 			}
 		],
 		"dateAdded": 1787566080,
-		"dateLastModified": 1790609269,
+		"dateLastModified": 1790774982,
 		"edition": "one",
-		"_dateLastModifiedHash": "5f0c55c72e"
+		"_dateLastModifiedHash": "7f684ecb4f"
 	},
 	"item": [
 		{
@@ -28274,7 +28274,7 @@
 				{
 					"level": 13,
 					"pact": "Pact of Alchemy",
-					"feature": [
+					"optionalfeature": [
 						"Reconstruction|FftForbiddenTome"
 					]
 				}
@@ -28311,7 +28311,7 @@
 				{
 					"level": 15,
 					"pact": "Pact of Alchemy",
-					"feature": [
+					"optionalfeature": [
 						"Reconstruction|FftForbiddenTome"
 					]
 				}
