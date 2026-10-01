@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-09-30T14:50:35.051Z",
+  "generatedAt": "2026-10-01T15:17:29.754Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "4f7b7e32ebcd4f918b70251d1df86049d7235e32"
+      "commit": "583078a178a24c44050bdd21059ab7f2988420fb"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 72182,
+    "entities": 72240,
     "official": 11496,
-    "homebrew": 60686,
+    "homebrew": 60744,
     "external": 68
   },
   "homebrew": {
@@ -176,6 +176,7 @@
       "raw/homebrew/class/Nate Wilson; Weaver.json",
       "raw/homebrew/class/NewPageOfSwords; The Summoner.json",
       "raw/homebrew/class/Nimademe; Astrologer.json",
+      "raw/homebrew/class/Ninefold Library; Quets Psionic Archive - Volume I.json",
       "raw/homebrew/class/Rain-Junkie; Dragon Knight.json",
       "raw/homebrew/class/Ranniery Jesuino; The Magus.json",
       "raw/homebrew/class/Reddit; The Dirge.json",
@@ -678,7 +679,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 631,
+    "classFileCount": 632,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -929,6 +930,7 @@
         "raw/homebrew/class/Middle Finger of Vecna; Binder.json",
         "raw/homebrew/class/Middle Finger of Vecna; Craftsman.json",
         "raw/homebrew/class/Nate Wilson; Weaver.json",
+        "raw/homebrew/class/Ninefold Library; Quets Psionic Archive - Volume I.json",
         "raw/homebrew/class/Tandra_Boy; The Empowered.json",
         "raw/homebrew/class/Taron Pounds; Vanguard.json",
         "raw/homebrew/class/The Baster; The Ruffian.json",
@@ -1503,6 +1505,7 @@
         "raw/homebrew/class/Middle Finger of Vecna; Binder (Foundry Friendly).json",
         "raw/homebrew/class/Middle Finger of Vecna; Binder.json",
         "raw/homebrew/class/Nate Wilson; Weaver.json",
+        "raw/homebrew/class/Ninefold Library; Quets Psionic Archive - Volume I.json",
         "raw/homebrew/class/Taron Pounds; Dancer.json",
         "raw/homebrew/class/Taron Pounds; Merchant.json",
         "raw/homebrew/class/Taron Pounds; Runekeeper.json",
@@ -1850,6 +1853,7 @@
         "raw/homebrew/class/Middle Finger of Vecna; Witch.json",
         "raw/homebrew/class/Nate Wilson; Weaver.json",
         "raw/homebrew/class/NewPageOfSwords; The Summoner.json",
+        "raw/homebrew/class/Ninefold Library; Quets Psionic Archive - Volume I.json",
         "raw/homebrew/class/Ranniery Jesuino; The Magus.json",
         "raw/homebrew/class/Reddit; The Dirge.json",
         "raw/homebrew/class/Rhyzler; Gunsmith.json",
@@ -2108,6 +2112,7 @@
         "raw/homebrew/class/Heavyarms; Gunslinger.json",
         "raw/homebrew/class/LaserLlama; Alternate Ranger.json",
         "raw/homebrew/class/Mage Hand Press; Complete Binder.json",
+        "raw/homebrew/class/Ninefold Library; Quets Psionic Archive - Volume I.json",
         "raw/homebrew/class/Reddit; The Dirge.json",
         "raw/homebrew/class/Taron Pounds; Merchant.json",
         "raw/homebrew/class/badooga; Badooga's Psion.json",
