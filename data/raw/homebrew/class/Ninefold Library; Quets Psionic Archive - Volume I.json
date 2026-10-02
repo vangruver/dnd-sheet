@@ -43,6 +43,11 @@
 				"full": "Zenithurgy",
 				"short": "Zenithurgy",
 				"hasOrder": true
+			},
+			"RAW": {
+				"full": "Raw Talents",
+				"short": "Raw",
+				"hasOrder": true
 			}
 		},
 		"optionalFeatureTypes": {
@@ -54,7 +59,7 @@
 		"status": "ready",
 		"dateAdded": 1790619222,
 		"dateLastModified": 1790619222,
-		"_dateLastModifiedHash": "042d5a51ed"
+		"_dateLastModifiedHash": "0bbb518a2c"
 	},
 	"optionalfeature": [
 		{
@@ -2507,6 +2512,7 @@
 			"name": "Astral Barrage",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2528,6 +2534,7 @@
 			"name": "Beacon of Disparity",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} Self",
@@ -2544,6 +2551,7 @@
 			"name": "Blank",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 60 ft.",
@@ -2565,6 +2573,7 @@
 			"name": "Center",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} Self",
@@ -2590,6 +2599,7 @@
 			"name": "Decompress",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 10 feet",
@@ -2617,6 +2627,7 @@
 			"name": "Deny",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} Self",
@@ -2630,6 +2641,7 @@
 			"name": "Detect Psionics",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} 1 minute",
 				"{@b Range:} Self",
@@ -2646,6 +2658,7 @@
 			"name": "Dyspraxic Wave",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -2661,6 +2674,7 @@
 			"name": "Exert",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2676,6 +2690,7 @@
 			"name": "Force Needle",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 60 ft.",
@@ -2690,6 +2705,7 @@
 			"name": "Inversion",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} Self",
@@ -2717,6 +2733,7 @@
 			"name": "Mind Thrust",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2731,6 +2748,7 @@
 			"name": "Psychometabolism",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} Self",
@@ -2745,6 +2763,7 @@
 			"name": "Realign",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -2767,6 +2786,7 @@
 			"name": "Resonate",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action/✦✦ Bonus Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2782,6 +2802,7 @@
 			"name": "Sapping Grasp",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2797,6 +2818,7 @@
 			"name": "Sever Impulse",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2812,6 +2834,7 @@
 			"name": "Synaptic Burst",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -2826,6 +2849,7 @@
 			"name": "Synesthesiac Wave",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -2841,6 +2865,7 @@
 			"name": "Triplicity",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} ✦ Action",
 				"{@b Range:} 30 ft. | {@optfeature Psychic Strike|QuetsPsionicVolI|PS}",
@@ -2865,6 +2890,7 @@
 			"name": "Warp",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} Self",
@@ -2880,6 +2906,7 @@
 			"name": "Wayfind",
 			"source": "QuetsPsionicVolI",
 			"type": "T",
+			"order": "Raw",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -2900,8 +2927,8 @@
 		{
 			"name": "Aura Slap",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action | ✦ Trigger",
 				"{@b Range:} Touch",
@@ -2923,8 +2950,8 @@
 		{
 			"name": "Beacon of Instigation",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -2939,8 +2966,8 @@
 		{
 			"name": "Captivate",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -2954,8 +2981,8 @@
 		{
 			"name": "Cognitive Sear",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -2970,8 +2997,8 @@
 		{
 			"name": "Dæmonic Figment",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -2989,8 +3016,8 @@
 		{
 			"name": "Daze",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Bonus Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3004,8 +3031,8 @@
 		{
 			"name": "Despair",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3021,8 +3048,8 @@
 		{
 			"name": "Domineer",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3037,8 +3064,8 @@
 		{
 			"name": "Dreamer's Run",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3051,8 +3078,8 @@
 		{
 			"name": "Imagined Decoy",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} Self",
@@ -3068,8 +3095,8 @@
 		{
 			"name": "Psychic Wound",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3086,8 +3113,8 @@
 		{
 			"name": "Psychosomatic Link",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3101,8 +3128,8 @@
 		{
 			"name": "Relinquish",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3123,8 +3150,8 @@
 		{
 			"name": "Sensory Projection",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -3141,8 +3168,8 @@
 		{
 			"name": "Sinister Susurration",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3159,8 +3186,8 @@
 		{
 			"name": "Spirit Shake",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3175,8 +3202,8 @@
 		{
 			"name": "Stigmatize",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3204,8 +3231,8 @@
 		{
 			"name": "Stream of Thought",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -3221,8 +3248,8 @@
 		{
 			"name": "Stricken Record",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action | ✦ Trigger",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3252,8 +3279,8 @@
 		{
 			"name": "Syncopate",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
 				"{@b Range:} Self",
@@ -3268,8 +3295,8 @@
 		{
 			"name": "Telepathic Breach",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -3294,8 +3321,8 @@
 		{
 			"name": "Thought Bubble",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
-			"order": "Psychophonics",
+			"type": "T",
+			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Touch",
@@ -3323,8 +3350,8 @@
 		{
 			"name": "Conveyance",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Activation Time:} Long Rest",
 				"{@b Range:} Touch",
@@ -3427,8 +3454,8 @@
 		{
 			"name": "Delineation",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Prerequisite:} APL 5+",
 				"{@b Activation Time:} Long Rest",
@@ -3476,8 +3503,8 @@
 		{
 			"name": "Division",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Prerequisite:} Charisma 13+",
 				"{@b Activation Time:} Long Rest",
@@ -3546,8 +3573,8 @@
 		{
 			"name": "Endowment",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Prerequisite:} APL 5+",
 				"{@b Activation Time:} Long Rest",
@@ -3566,8 +3593,8 @@
 		{
 			"name": "Extension",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Prerequisite:} APL 5+",
 				"{@b Activation Time:} Long Rest",
@@ -3665,8 +3692,8 @@
 		{
 			"name": "Warding",
 			"source": "QuetsPsionicVolI",
-			"type": "INV",
-			"order": "Spirit Shards",
+			"type": "T",
+			"order": "Investiture",
 			"entries": [
 				"{@b Prerequisite:} APL 5+",
 				"{@b Activation Time:} Long Rest",
@@ -3771,8 +3798,8 @@
 		{
 			"name": "Arcbow",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -3801,8 +3828,8 @@
 		{
 			"name": "Assailance Node",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 feet",
@@ -3817,8 +3844,8 @@
 		{
 			"name": "Astral Construct",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft.",
@@ -3841,8 +3868,8 @@
 		{
 			"name": "Chakram",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} Self",
@@ -3871,8 +3898,8 @@
 		{
 			"name": "Exoskeleton",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Bonus Action; or Reaction, which you take when you or a creature within 30 feet of you falls",
 				"{@b Range:} 30 feet",
@@ -3913,8 +3940,8 @@
 		{
 			"name": "Flux Matrix",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 feet",
@@ -3940,8 +3967,8 @@
 		{
 			"name": "Hone",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Touch",
@@ -3956,8 +3983,8 @@
 		{
 			"name": "Interdiction",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft.",
@@ -3972,8 +3999,8 @@
 		{
 			"name": "Lightpost",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 feet",
@@ -3994,8 +4021,8 @@
 		{
 			"name": "Maintenance Node",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 ft.",
@@ -4010,8 +4037,8 @@
 		{
 			"name": "Mantis Claw",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -4034,8 +4061,8 @@
 		{
 			"name": "Null Sphere",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} 30 feet",
@@ -4051,8 +4078,8 @@
 		{
 			"name": "Passkey",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 10 feet",
@@ -4073,8 +4100,8 @@
 		{
 			"name": "Permeate",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 30 feet",
@@ -4091,8 +4118,8 @@
 		{
 			"name": "Piercing Rain",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 30 ft.",
@@ -4108,8 +4135,8 @@
 		{
 			"name": "Projected Barrier",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 30 ft.",
@@ -4140,8 +4167,8 @@
 		{
 			"name": "Shell",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} Self",
@@ -4155,8 +4182,8 @@
 		{
 			"name": "Surveillance Node",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} {@optfeature Psychophonics|QuetsPsionicVolI|PH}",
@@ -4179,8 +4206,8 @@
 		{
 			"name": "Tiger's Fang",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} Action",
 				"{@b Range:} Self",
@@ -4209,8 +4236,8 @@
 		{
 			"name": "Titan's Gauntlet",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 10 feet",
@@ -4232,8 +4259,8 @@
 		{
 			"name": "Titan's Knife",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
 				"{@b Range:} 10 feet",
@@ -4255,8 +4282,8 @@
 		{
 			"name": "Vantage",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 Action; or ✦1 Reaction, which you take when you become the target of an attack",
 				"{@b Range:} Self",
@@ -4271,8 +4298,8 @@
 		{
 			"name": "Woven Limb",
 			"source": "QuetsPsionicVolI",
-			"type": "MET",
-			"order": "Psychoformation",
+			"type": "T",
+			"order": "Metacreation",
 			"entries": [
 				"{@b Activation Time:} 1 action",
 				"{@b Range:} Touch",
@@ -4289,7 +4316,7 @@
 		{
 			"name": "Accretion Well",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4304,7 +4331,7 @@
 		{
 			"name": "Barrage",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4326,7 +4353,7 @@
 		{
 			"name": "Burden",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4341,7 +4368,7 @@
 		{
 			"name": "Deflect",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Reaction →",
@@ -4356,7 +4383,7 @@
 		{
 			"name": "Diminish",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4373,7 +4400,7 @@
 		{
 			"name": "Distress",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4397,7 +4424,7 @@
 		{
 			"name": "Gravitic Flux",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4413,7 +4440,7 @@
 		{
 			"name": "Hammer",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4428,7 +4455,7 @@
 		{
 			"name": "Kinetic Pulse",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4444,7 +4471,7 @@
 		{
 			"name": "Kinetic Vortex",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4460,7 +4487,7 @@
 		{
 			"name": "Kinetic Ward",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4476,7 +4503,7 @@
 		{
 			"name": "Psi-Lance",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4492,7 +4519,7 @@
 		{
 			"name": "Psycho Cutter",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4507,7 +4534,7 @@
 		{
 			"name": "Rise",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4522,7 +4549,7 @@
 		{
 			"name": "Shear",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4538,7 +4565,7 @@
 		{
 			"name": "Shove",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action or ✦ Reaction →",
@@ -4554,7 +4581,7 @@
 		{
 			"name": "Slingshot",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4577,7 +4604,7 @@
 		{
 			"name": "Slip Disk",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action | ✦✦ Trigger",
@@ -4599,7 +4626,7 @@
 		{
 			"name": "Syzygy",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action or ✦ Reaction →",
@@ -4617,7 +4644,7 @@
 		{
 			"name": "Thrust",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action | ✦ Trigger",
@@ -4640,7 +4667,7 @@
 		{
 			"name": "Unburden",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4662,7 +4689,7 @@
 		{
 			"name": "Unseat",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4678,7 +4705,7 @@
 		{
 			"name": "Adamant's Raiment",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
@@ -4715,7 +4742,7 @@
 		{
 			"name": "Apsis",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4730,7 +4757,7 @@
 		{
 			"name": "Bands of Ardor",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4754,7 +4781,7 @@
 		{
 			"name": "Bands of Might",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4778,7 +4805,7 @@
 		{
 			"name": "Blade of Hope",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4803,7 +4830,7 @@
 		{
 			"name": "Blade of Storms",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4833,7 +4860,7 @@
 		{
 			"name": "Blade of Woe",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4857,7 +4884,7 @@
 		{
 			"name": "Celerity",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4873,7 +4900,7 @@
 		{
 			"name": "Crown of Awe",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4896,7 +4923,7 @@
 		{
 			"name": "Crown of Loathing",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4919,7 +4946,7 @@
 		{
 			"name": "Crown of Secrets",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4942,7 +4969,7 @@
 		{
 			"name": "Eye of Navigation",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -4972,7 +4999,7 @@
 		{
 			"name": "Eye of Prediction",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5003,7 +5030,7 @@
 		{
 			"name": "Eye of Recollection",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5033,7 +5060,7 @@
 		{
 			"name": "Eye of Revelation",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5063,7 +5090,7 @@
 		{
 			"name": "Imager's Raiment",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5102,7 +5129,7 @@
 		{
 			"name": "Mantle of Authority",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5133,7 +5160,7 @@
 		{
 			"name": "Mantle of Glory",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5149,7 +5176,7 @@
 		{
 			"name": "Mantle of Mastery",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5180,7 +5207,7 @@
 		{
 			"name": "Solace",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5196,7 +5223,7 @@
 		{
 			"name": "Striker's Raiment",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5233,7 +5260,7 @@
 		{
 			"name": "Whisper's Raiment",
 			"source": "QuetsPsionicVolI",
-			"type": "ZEN",
+			"type": "T",
 			"order": "Zenithurgy",
 			"entries": [
 				"{@b Activation Time:} 1 Action",
@@ -5270,7 +5297,7 @@
 		{
 			"name": "Collapse",
 			"source": "QuetsPsionicVolI",
-			"type": "PK",
+			"type": "T",
 			"order": "Psychokinetics",
 			"entries": [
 				"{@b Activation Time:} Action",
@@ -5288,7 +5315,7 @@
 		{
 			"name": "Mind Spy",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
+			"type": "T",
 			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} 1 minute",
@@ -5313,7 +5340,7 @@
 		{
 			"name": "Muffle",
 			"source": "QuetsPsionicVolI",
-			"type": "CRY",
+			"type": "T",
 			"order": "Cryptogogy",
 			"entries": [
 				"{@b Activation Time:} Action",
