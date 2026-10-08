@@ -1,27 +1,27 @@
 {
   "schema": 3,
-  "generatedAt": "2026-10-07T15:24:46.274Z",
+  "generatedAt": "2026-10-08T15:25:54.129Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "b9061583536101068b3a59d27e886d1fa664e366"
+      "commit": "8c026b807fac21862a309379a0c3228a0683198b"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "5dbd6bcfcba6a1295c3eac08549986290af909cb"
+      "commit": "27c01a9cf7a808af75c65db678665c7eb0f6d09a"
     },
     {
       "key": "homebrew",
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "ab4012f136dc1224c45d6c13c1d8f71b543c34bb"
+      "commit": "d082bdf4c82e45f5f1ae227d8daf0d1172de49a0"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 72390,
+    "entities": 72687,
     "official": 11496,
-    "homebrew": 60894,
+    "homebrew": 61191,
     "external": 68
   },
   "homebrew": {
@@ -55,8 +55,8 @@
       "raw/homebrew/class/Aussifer; Unchained Warlock.json",
       "raw/homebrew/class/Avaricium; Arbiter.json",
       "raw/homebrew/class/Avaricium; Herrscher of the Void.json",
+      "raw/homebrew/class/Benjamin Huffman; The Magus - 2014.json",
       "raw/homebrew/class/Benjamin Huffman; The Magus - 2024.json",
-      "raw/homebrew/class/Benjamin Huffman; The Magus.json",
       "raw/homebrew/class/Benjamin Huffman; The Pugilist - 2014.json",
       "raw/homebrew/class/Benjamin Huffman; The Pugilist - 2024.json",
       "raw/homebrew/class/Benjamin Huffman; The Scholar.json",
@@ -253,6 +253,7 @@
       "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Psions Primer.json",
       "raw/homebrew/collection/Arcana Games; Arkadia.json",
       "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Player's Guide.json",
+      "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Remastered Edition - Heroes Handbook.json",
       "raw/homebrew/collection/Avantris; Crooked Moon.json",
       "raw/homebrew/collection/Avantris; Neon Odyssey Playtest.json",
       "raw/homebrew/collection/Benevolent Evil; The Elements and Beyond.json",
@@ -526,6 +527,7 @@
       "raw/homebrew/subclass/Korvinagor; Swordcaller Sorcery.json",
       "raw/homebrew/subclass/Lady of Luck; Garlic Bread Domain Cleric.json",
       "raw/homebrew/subclass/LaserLlama; Alternate Barbarian Path of the Blood Knight.json",
+      "raw/homebrew/subclass/LaserLlama; Arcane Traditions.json",
       "raw/homebrew/subclass/LaserLlama; Artificer Specialties & Infusion Options.json",
       "raw/homebrew/subclass/LaserLlama; Bard Colleges.json",
       "raw/homebrew/subclass/LaserLlama; Druid Circles.json",
@@ -535,6 +537,7 @@
       "raw/homebrew/subclass/LaserLlama; Paladin Sacred Oaths.json",
       "raw/homebrew/subclass/LaserLlama; Primal Paths.json",
       "raw/homebrew/subclass/LaserLlama; Roguish Archetypes.json",
+      "raw/homebrew/subclass/LaserLlama; Sorcerous Origins & Metamagics.json",
       "raw/homebrew/subclass/LeBouncer; College of Spectacle.json",
       "raw/homebrew/subclass/LeGeneralHugs; Way of the Dragon Warrior.json",
       "raw/homebrew/subclass/LeonardoDoujinshii; Water Domain Cleric.json",
@@ -680,7 +683,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 633,
+    "classFileCount": 636,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -697,6 +700,7 @@
       "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Psions Primer.json",
       "raw/homebrew/collection/Arcana Games; Arkadia.json",
       "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Player's Guide.json",
+      "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Remastered Edition - Heroes Handbook.json",
       "raw/homebrew/collection/Astro_zealot; Extra Genasi Subraces.json",
       "raw/homebrew/collection/Avantris; Crooked Moon.json",
       "raw/homebrew/collection/Avantris; Neon Odyssey Playtest.json",
@@ -746,6 +750,7 @@
       "raw/homebrew/collection/Keith Baker; Exploring Eberron.json",
       "raw/homebrew/collection/Keith Baker; Frontiers of Eberron Quickstone.json",
       "raw/homebrew/collection/Keith Baker; Morgrave Miscellany.json",
+      "raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "raw/homebrew/collection/Kobold Press; Book of Ebon Tides.json",
       "raw/homebrew/collection/Kobold Press; Northlands Worldbook.json",
       "raw/homebrew/collection/Kobold Press; Tome of Heroes.json",
@@ -896,14 +901,14 @@
       "raw/homebrew/subrace/Valerion; Silverwit Halfling.json",
       "raw/homebrew/subrace/themagictavern; Genasi Subraces.json"
     ],
-    "raceFileCount": 213,
+    "raceFileCount": 215,
     "filesByType": {
       "item": [
         "raw/homebrew/background/D&D Wiki; Featured Quality Backgrounds.json",
         "raw/homebrew/class/AgenderArcee; The Martial Ranger.json",
         "raw/homebrew/class/Aron; Demi-Dragon.json",
+        "raw/homebrew/class/Benjamin Huffman; The Magus - 2014.json",
         "raw/homebrew/class/Benjamin Huffman; The Magus - 2024.json",
-        "raw/homebrew/class/Benjamin Huffman; The Magus.json",
         "raw/homebrew/class/Benjamin Huffman; The Pugilist - 2014.json",
         "raw/homebrew/class/Benjamin Huffman; The Pugilist - 2024.json",
         "raw/homebrew/class/Benjamin Huffman; The Spiritualist.json",
@@ -953,6 +958,7 @@
         "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Psions Primer.json",
         "raw/homebrew/collection/Arcana Games; Arkadia.json",
         "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Player's Guide.json",
+        "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Remastered Edition - Heroes Handbook.json",
         "raw/homebrew/collection/Ashley May; Festival, Feats, and Fairs.json",
         "raw/homebrew/collection/Avantris; Crooked Moon.json",
         "raw/homebrew/collection/Avantris; Neon Odyssey Playtest.json",
@@ -1198,8 +1204,8 @@
       "spell": [
         "raw/homebrew/class/Aeron Drake; The Mesmer.json",
         "raw/homebrew/class/Aron; Demi-Dragon.json",
+        "raw/homebrew/class/Benjamin Huffman; The Magus - 2014.json",
         "raw/homebrew/class/Benjamin Huffman; The Magus - 2024.json",
-        "raw/homebrew/class/Benjamin Huffman; The Magus.json",
         "raw/homebrew/class/Benjamin Huffman; The Spiritualist.json",
         "raw/homebrew/class/Brad Johns; The Harbinger.json",
         "raw/homebrew/class/Bryan Williams; Wychlaran Witch.json",
@@ -1254,6 +1260,7 @@
         "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Adventurers Almanac.json",
         "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Psions Primer.json",
         "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Player's Guide.json",
+        "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Remastered Edition - Heroes Handbook.json",
         "raw/homebrew/collection/Avantris; Crooked Moon.json",
         "raw/homebrew/collection/Avantris; Neon Odyssey Playtest.json",
         "raw/homebrew/collection/Benevolent Evil; The Elements and Beyond.json",
@@ -1709,6 +1716,7 @@
         "raw/homebrew/collection/Allan Cudicio; The Wagadu Chronicles.json",
         "raw/homebrew/collection/Amellwind; Amellwind's Guide to Monster Hunting.json",
         "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Adventurers Almanac.json",
+        "raw/homebrew/collection/Arcanum Worlds; Odyssey of the Dragonlords Remastered Edition - Heroes Handbook.json",
         "raw/homebrew/collection/Ashley May; Festival, Feats, and Fairs.json",
         "raw/homebrew/collection/Avantris; Crooked Moon.json",
         "raw/homebrew/collection/Benevolent Evil; The Elements and Beyond.json",
@@ -2058,6 +2066,7 @@
         "raw/homebrew/subclass/LaserLlama; Otherwordly Patrons.json",
         "raw/homebrew/subclass/LaserLlama; Primal Paths.json",
         "raw/homebrew/subclass/LaserLlama; Roguish Archetypes.json",
+        "raw/homebrew/subclass/LaserLlama; Sorcerous Origins & Metamagics.json",
         "raw/homebrew/subclass/Middle Finger of Vecna; Chronomancy Update.json",
         "raw/homebrew/subclass/Middle Finger of Vecna; Class Packs.json",
         "raw/homebrew/subclass/Middle Finger of Vecna; Tattoo Subclasses.json",
@@ -2154,6 +2163,7 @@
         "raw/homebrew/collection/KajaGrae; Fang Dragons.json",
         "raw/homebrew/collection/Keith Baker; Chronicles of Eberron.json",
         "raw/homebrew/collection/Keith Baker; Frontiers of Eberron Quickstone.json",
+        "raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
         "raw/homebrew/collection/KibblesTasty; Kibbles' Crafting Guide.json",
         "raw/homebrew/collection/Kobold Press; Deep Magic 17 Mythos Magic.json",
         "raw/homebrew/collection/Kobold Press; Deep Magic 18 Combat Divination.json",
