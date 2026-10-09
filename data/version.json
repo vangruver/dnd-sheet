@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-10-08T15:25:54.129Z",
+  "generatedAt": "2026-10-09T15:08:52.962Z",
   "sources": [
     {
       "key": "2024",
@@ -21,14 +21,14 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "d082bdf4c82e45f5f1ae227d8daf0d1172de49a0"
+      "commit": "02b52898783166058fe7bed49352c39ce86dcd54"
     },
     {
       "key": "prerelease",
       "url": "https://github.com/TheGiddyLimit/unearthed-arcana.git",
       "type": "prerelease",
       "edition": "both",
-      "commit": "2b69467cd0220017de01eebc6d5bbc344ab7a0e3"
+      "commit": "804484fecb390416319b01952a7438c8cb242d44"
     },
     {
       "key": "external",
