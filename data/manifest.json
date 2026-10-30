@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-10-29T15:05:50.438Z",
+  "generatedAt": "2026-10-30T14:57:47.158Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "2c5ae3667a341fd39cfa5d7b5007889909696149"
+      "commit": "0c25a3e3fbca9a810578a8a1df5c0c2befb06cbb"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 72968,
+    "entities": 73062,
     "official": 11500,
-    "homebrew": 61468,
+    "homebrew": 61562,
     "external": 68
   },
   "entities": [
@@ -18903,7 +18903,7 @@
       "classSource": null,
       "hd": {
         "number": 1,
-        "faces": 10
+        "faces": 8
       },
       "spellcastingAbility": null
     },
@@ -29439,6 +29439,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:FftForbiddenTome:Battlefield Commander:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Battlefield Commander",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:DarkMatter24:Battleframe Dragoon:raw/homebrew/collection/Mage Hand Press; Dark Matter - 2024.json",
       "type": "feat",
       "name": "Battleframe Dragoon",
@@ -33663,6 +33679,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:FftForbiddenTome:Breaching Force:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Breaching Force",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:TalentTreesMod:Breaker:raw/homebrew/feat/ImFromNASA; Talent Trees (Modified).json",
       "type": "feat",
       "name": "Breaker",
@@ -36383,6 +36415,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:FftForbiddenTome:Close-Quarters Arsenal:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Close-Quarters Arsenal",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:TalentTreesMod:Close-Quarters Shooter:raw/homebrew/feat/ImFromNASA; Talent Trees (Modified).json",
       "type": "feat",
       "name": "Close-Quarters Shooter",
@@ -36856,6 +36904,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Rynosaur94; Planeshift Equestria.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "feat:FftForbiddenTome:Combat Reserves:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Combat Reserves",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -46239,6 +46303,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:FftForbiddenTome:Field Surgeon:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Field Surgeon",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:arkadia:Fieldling:raw/homebrew/collection/Arcana Games; Arkadia.json",
       "type": "feat",
       "name": "Fieldling",
@@ -51634,6 +51714,22 @@
       "id": "feat:FftForbiddenTome:Guardian Step:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "type": "feat",
       "name": "Guardian Step",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "feat:FftForbiddenTome:Guerrilla Warfare:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Guerrilla Warfare",
       "source": "FftForbiddenTome",
       "homebrew": true,
       "prerelease": false,
@@ -70655,6 +70751,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:FftForbiddenTome:Rampage:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Rampage",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:TalentTreesMod:Rapid Application:raw/homebrew/feat/ImFromNASA; Talent Trees (Modified).json",
       "type": "feat",
       "name": "Rapid Application",
@@ -86056,6 +86168,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "feat:FftForbiddenTome:Vital Exchange:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "feat",
+      "name": "Vital Exchange",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -461999,6 +462127,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Age and Ruin:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Age and Ruin",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:TaronPoundsR:Ageas (Shield):raw/homebrew/class/Taron Pounds; Runekeeper.json",
       "type": "optionalfeature",
       "name": "Ageas (Shield)",
@@ -465711,6 +465855,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Angel's Blessing:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Angel's Blessing",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:Cook:Angel's Kiss:raw/homebrew/class/Sam Grierson; The Cook Class.json",
       "type": "optionalfeature",
       "name": "Angel's Kiss",
@@ -467864,6 +468024,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Arcane Conversion:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "optionalfeature",
+      "name": "Arcane Conversion",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -472159,9 +472335,9 @@
       "spellcastingAbility": null
     },
     {
-      "id": "optionalfeature:WizardBunnyEnchanterClass24:Asking for Help:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Ask for Help:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
       "type": "optionalfeature",
-      "name": "Asking for Help",
+      "name": "Ask for Help",
       "source": "WizardBunnyEnchanterClass24",
       "homebrew": true,
       "prerelease": false,
@@ -524207,6 +524383,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Dominion of Weight:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Dominion of Weight",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:MagehandPressMonkTattoo:Donkey:raw/homebrew/subclass/Middle Finger of Vecna; Tattoo Subclasses.json",
       "type": "optionalfeature",
       "name": "Donkey",
@@ -528975,6 +529167,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Duration Control:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Duration Control",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:COFSA:Duskborne Companion:raw/homebrew/collection/Genuine Fantasy Press; The Compendium of Forgotten Secrets - Awakening.json",
       "type": "optionalfeature",
       "name": "Duskborne Companion",
@@ -530216,6 +530424,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Easy to Use:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "optionalfeature",
+      "name": "Easy to Use",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -539471,22 +539695,6 @@
       "spellcastingAbility": null
     },
     {
-      "id": "optionalfeature:KibbleInventor:Erude Darkness:raw/homebrew/class/KibblesTasty; Inventor.json",
-      "type": "optionalfeature",
-      "name": "Erude Darkness",
-      "source": "KibbleInventor",
-      "homebrew": true,
-      "prerelease": false,
-      "external": false,
-      "edition": "both",
-      "file": "raw/homebrew/class/KibblesTasty; Inventor.json",
-      "classes": [],
-      "className": null,
-      "classSource": null,
-      "hd": null,
-      "spellcastingAbility": null
-    },
-    {
       "id": "optionalfeature:LLWrc:Erupting Blast:raw/homebrew/class/LaserLlama; Alternate Warlock.json",
       "type": "optionalfeature",
       "name": "Erupting Blast",
@@ -543976,6 +544184,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Alex Clippinger; Tome of the Pact.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:KibbleInventor:Exude Darkness:raw/homebrew/class/KibblesTasty; Inventor.json",
+      "type": "optionalfeature",
+      "name": "Exude Darkness",
+      "source": "KibbleInventor",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/KibblesTasty; Inventor.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -552207,6 +552431,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Flashy:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "optionalfeature",
+      "name": "Flashy",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:DS:E:Flashy Riposte:raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
       "type": "optionalfeature",
       "name": "Flashy Riposte",
@@ -557999,6 +558239,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Frozen Impact:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Frozen Impact",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:DS:E:Frozen Moment:raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
       "type": "optionalfeature",
       "name": "Frozen Moment",
@@ -558648,6 +558904,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Jyka; Komalitr.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Future Sight:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Future Sight",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -566943,22 +567215,6 @@
       "spellcastingAbility": null
     },
     {
-      "id": "optionalfeature:WizardBunnyEnchanterClass24:Guided Strike:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "type": "optionalfeature",
-      "name": "Guided Strike",
-      "source": "WizardBunnyEnchanterClass24",
-      "homebrew": true,
-      "prerelease": false,
-      "external": false,
-      "edition": "both",
-      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "classes": [],
-      "className": null,
-      "classSource": null,
-      "hd": null,
-      "spellcastingAbility": null
-    },
-    {
       "id": "optionalfeature:KT-CLL:Guided Wrath:raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "type": "optionalfeature",
       "name": "Guided Wrath",
@@ -570415,6 +570671,38 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Heaven Answers My Call:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Heaven Answers My Call",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Heaven's Arsenal:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Heaven's Arsenal",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:AvCA:Heaven's Bane:raw/homebrew/class/Avaricium; Arbiter.json",
       "type": "optionalfeature",
       "name": "Heaven's Bane",
@@ -570472,6 +570760,38 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Benevolent Evil; The Elements and Beyond.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Heavenly Gates:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Heavenly Gates",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Heavenly Law:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Heavenly Law",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -593647,22 +593967,6 @@
       "spellcastingAbility": null
     },
     {
-      "id": "optionalfeature:WizardBunnyEnchanterClass24:Life Burst:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "type": "optionalfeature",
-      "name": "Life Burst",
-      "source": "WizardBunnyEnchanterClass24",
-      "homebrew": true,
-      "prerelease": false,
-      "external": false,
-      "edition": "both",
-      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "classes": [],
-      "className": null,
-      "classSource": null,
-      "hd": null,
-      "spellcastingAbility": null
-    },
-    {
       "id": "optionalfeature:GHPG:Life Drain:raw/homebrew/collection/Ghostfire Gaming; Grim Hollow - Player's Guide - 2014.json",
       "type": "optionalfeature",
       "name": "Life Drain",
@@ -603192,6 +603496,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Ascended_Bebop; Pact of the Claw.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Master of Arms:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Master of Arms",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -620495,6 +620815,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Pact of the Angel:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Pact of the Angel",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:MFOV:MU2:Pact of the Arm:raw/homebrew/collection/Middle Finger of Vecna; Magitech Updates.json",
       "type": "optionalfeature",
       "name": "Pact of the Arm",
@@ -621679,6 +622015,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Pact of the Time:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Pact of the Time",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:PHB:Pact of the Tome:raw/2024/optionalfeatures.json",
       "type": "optionalfeature",
       "name": "Pact of the Tome",
@@ -622024,6 +622376,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Painful:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "optionalfeature",
+      "name": "Painful",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -624376,6 +624744,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/class/KibblesTasty; Psion.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Perfect Follow-Through:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Perfect Follow-Through",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -659359,6 +659743,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:WizardBunnyEnchanterClass24:Sensory Edge:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "optionalfeature",
+      "name": "Sensory Edge",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:KibbleInventor:Sentient Armor:raw/homebrew/class/KibblesTasty; Inventor.json",
       "type": "optionalfeature",
       "name": "Sentient Armor",
@@ -660175,6 +660575,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Seven Trumpets:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Seven Trumpets",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:KT-CLL:Sever Soul (6 Ki):raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "type": "optionalfeature",
       "name": "Sever Soul (6 Ki)",
@@ -660200,6 +660616,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Sever the Unseen:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Sever the Unseen",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -662024,6 +662456,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Shared Discipline:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Shared Discipline",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -672671,6 +673119,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Spectral Colossus:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Spectral Colossus",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:DS:E:Spectral Fade:raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
       "type": "optionalfeature",
       "name": "Spectral Fade",
@@ -673192,6 +673656,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Lord Woolfy; Woolfy's Skill Trees.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Spell and Steel:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Spell and Steel",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -679640,6 +680120,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Mage Hand Press; Dark Matter - 2024.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Stasis Mastery:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Stasis Mastery",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -693967,6 +694463,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:The Chariot of Heaven:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "The Chariot of Heaven",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:MaskCollege:The Deathly Mask:raw/homebrew/subclass/Tsumarru; College of Masks Bard.json",
       "type": "optionalfeature",
       "name": "The Deathly Mask",
@@ -694248,6 +694760,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Anthony Turco; Korranberg Chronicle Psions Primer.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:The Four Winds of Heaven:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "The Four Winds of Heaven",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -694856,6 +695384,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/subclass/Alice Loverdrive; The Bitch With Many Teeth.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:The Seven Seals of Heaven:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "The Seven Seals of Heaven",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -696600,6 +697144,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Benevolent Evil; The Elements and Beyond.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Thousandfold Discipline:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Thousandfold Discipline",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -698735,6 +699295,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "optionalfeature:FftForbiddenTome:Time Travel:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Time Travel",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "optionalfeature:KT-CLL:Time Trick:raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "type": "optionalfeature",
       "name": "Time Trick",
@@ -698792,6 +699368,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Timeline Control:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Timeline Control",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -704712,6 +705304,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Brent Knowles; Raiders of the Serpent Sea - Player's Guide.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Turn the Blade:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Turn the Blade",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -715951,22 +716559,6 @@
       "spellcastingAbility": null
     },
     {
-      "id": "optionalfeature:WizardBunnyEnchanterClass24:Warmage:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "type": "optionalfeature",
-      "name": "Warmage",
-      "source": "WizardBunnyEnchanterClass24",
-      "homebrew": true,
-      "prerelease": false,
-      "external": false,
-      "edition": "both",
-      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
-      "classes": [],
-      "className": null,
-      "classSource": null,
-      "hd": null,
-      "spellcastingAbility": null
-    },
-    {
       "id": "optionalfeature:TCAH:Warmage:raw/homebrew/collection/Heavyarms; The Complete Armorer's Handbook.json",
       "type": "optionalfeature",
       "name": "Warmage",
@@ -722680,6 +723272,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/optionalfeature/Damian Steele; Exploits.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "optionalfeature:FftForbiddenTome:Words of Creation:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "optionalfeature",
+      "name": "Words of Creation",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -765228,6 +765836,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Ambertrap:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Ambertrap",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:AdvancedArcaneries:Ambling Abode:raw/homebrew/spell/Foxfire94; Advanced Arcaneries.json",
       "type": "spell",
       "name": "Ambling Abode",
@@ -772599,6 +773223,26 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:Arcane Workshop:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Arcane Workshop",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Artificer",
+        "Bard",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:FateforgeGrimoire-SRDx:Arcanist's Magic Aura:raw/homebrew/spell/Studio Agate; Fateforge Grimoire.json",
       "type": "spell",
       "name": "Arcanist's Magic Aura",
@@ -776139,6 +776783,25 @@
         "Druid",
         "Sorcerer",
         "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Astral Armor:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Astral Armor",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
         "Wizard"
       ],
       "className": null,
@@ -786311,6 +786974,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Bewitching Phantom:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Bewitching Phantom",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:NationsAndCannonsStarter:Beyond Reproach:raw/homebrew/spell/Nations and Cannons; Starter Rules.json",
       "type": "spell",
       "name": "Beyond Reproach",
@@ -790544,8 +791226,8 @@
       "edition": "both",
       "file": "raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "classes": [
-        "Spellblade",
         "Sorcerer",
+        "Spellblade",
         "Wizard"
       ],
       "className": null,
@@ -864120,6 +864802,26 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Eclipse:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Eclipse",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Druid",
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:AbiDalzims:Eclipse:raw/homebrew/collection/FungusAmongUs; Abi-Dalzim's Abhorrent Adventurers.json",
       "type": "spell",
       "name": "Eclipse",
@@ -868889,6 +869591,28 @@
         "Druid",
         "Warlock",
         "Sorcerer"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Enchant Item:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Enchant Item",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Artificer",
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
       ],
       "className": null,
       "classSource": null,
@@ -878283,6 +879007,27 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:False Floor:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "False Floor",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:SpellsThatDontSuck:False Foes:raw/homebrew/spell/somanyrobots, Omega Ankh; Spells That Don't Suck.json",
       "type": "spell",
       "name": "False Foes",
@@ -878599,6 +879344,27 @@
         "Warlock",
         "Artificer",
         "Sorcerer"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:False Trace:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "False Trace",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Ranger",
+        "Warlock",
+        "Wizard"
       ],
       "className": null,
       "classSource": null,
@@ -890726,6 +891492,27 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:Fold Object:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Fold Object",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Artificer",
+        "Bard",
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:TalentPsionicsOpenPlaytestRound2:Fold Space:raw/homebrew/collection/MCDM Productions; The Talent and Psionics Open Playtest Round 2.json",
       "type": "spell",
       "name": "Fold Space",
@@ -900937,6 +901724,27 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Ghastly Stampede:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Ghastly Stampede",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Cleric",
+        "Druid",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:LM:Ghastly Stench:raw/homebrew/collection/badooga; Libris Mortis.json",
       "type": "spell",
       "name": "Ghastly Stench",
@@ -901010,6 +901818,24 @@
       "classes": [
         "Artificer",
         "Warlock"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Ghost in the Machine:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Ghost in the Machine",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Wizard"
       ],
       "className": null,
       "classSource": null,
@@ -907815,6 +908641,25 @@
       "edition": "2014",
       "file": "raw/2014/spells/spells-egw.json",
       "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Gravity Slam:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Gravity Slam",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
       "className": null,
       "classSource": null,
       "hd": null,
@@ -915058,6 +915903,24 @@
       "classes": [
         "Cleric",
         "Warlock"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Hateful Spirits:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Hateful Spirits",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Cleric"
       ],
       "className": null,
       "classSource": null,
@@ -929700,6 +930563,26 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:Impossible Architecture:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Impossible Architecture",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:Hyperlanes:Impossible Landing:raw/homebrew/spell/Dev&Girafz; Hyperlanes Gambits.json",
       "type": "spell",
       "name": "Impossible Landing",
@@ -933817,6 +934700,26 @@
       "classes": [
         "Bard",
         "Cleric",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Instant Forest:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Instant Forest",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Druid",
+        "Ranger",
         "Wizard"
       ],
       "className": null,
@@ -964074,6 +964977,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Meteor Strike:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Meteor Strike",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:ATLAS:Meteor Strike:raw/homebrew/collection/Haven; All the Lights in the Sky are Stars.json",
       "type": "spell",
       "name": "Meteor Strike",
@@ -970407,6 +971329,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Moonrock:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Moonrock",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:BDPC:Moonsilver:raw/homebrew/collection/Jonoman3000; Blazing Dawn Player's Companion.json",
       "type": "spell",
       "name": "Moonsilver",
@@ -970419,6 +971360,26 @@
       "classes": [
         "Bard",
         "Cleric",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Moonstrike:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Moonstrike",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Druid",
+        "Sorcerer",
         "Wizard"
       ],
       "className": null,
@@ -982561,6 +983522,27 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:Past Witness:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Past Witness",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Cleric",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:GaldeveerTanksandFlanks:Patchwork:raw/homebrew/collection/Galdeveer; Tanks and Flanks.json",
       "type": "spell",
       "name": "Patchwork",
@@ -984809,6 +985791,27 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:FftForbiddenTome:Phantom Audience:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Phantom Audience",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:IRKCore:Phantom Barrage:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Core Book.json",
       "type": "spell",
       "name": "Phantom Barrage",
@@ -986719,6 +987722,24 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Plague Arrow:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Plague Arrow",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Ranger"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:BB1000S:Plague Bearer's Masque:raw/homebrew/spell/Scott Bean, Hearth Harris, Jeremy Forbing; Blackstaff's Book of 1000 Spells.json",
       "type": "spell",
       "name": "Plague Bearer's Masque",
@@ -988407,6 +989428,24 @@
         "Sorcerer",
         "Warlock",
         "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Poison Nova:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Poison Nova",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Druid"
       ],
       "className": null,
       "classSource": null,
@@ -991687,6 +992726,385 @@
       "edition": "both",
       "file": "raw/homebrew/spell/Barnaby Lamper; Oriq Guide to Blood Magic - 30 Sanguimancy Spells.json",
       "classes": [
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Confess:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Confess",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Crave:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Crave",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Hiccup:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Hiccup",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Hush:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Hush",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Inflate:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Inflate",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Intoxicate:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Intoxicate",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Itch:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Itch",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Kneel:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Kneel",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Magnetize:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Magnetize",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Obey:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Obey",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Open:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Open",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Reflect:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Reflect",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Rise:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Rise",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Cleric",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Sneeze:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Sneeze",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Spin:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Spin",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Stick:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Stick",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Torment:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Torment",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Power Word: Yawn:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Power Word: Yawn",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
+        "Warlock",
         "Wizard"
       ],
       "className": null,
@@ -999034,6 +1000452,24 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Putrid Aura:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Putrid Aura",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Druid"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:IRKBnB:Pyg Farm:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Borderlands & Beyond.json",
       "type": "spell",
       "name": "Pyg Farm",
@@ -1005735,6 +1007171,26 @@
       "file": "raw/homebrew/class/Fenrir-Hati-Skoll; Avenger.json",
       "classes": [
         "Avenger"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Rebuild:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Rebuild",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Artificer",
+        "Druid",
+        "Wizard"
       ],
       "className": null,
       "classSource": null,
@@ -1023621,6 +1025077,45 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Shademail:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Shademail",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Shaderazor:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Shaderazor",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:MMMxArtificer:Shadesteel Golem:raw/homebrew/collection/Modnar; Modnar's Manual of Multiple Métier.json",
       "type": "spell",
       "name": "Shadesteel Golem",
@@ -1024246,6 +1025741,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Shadow Dagger:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Shadow Dagger",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:EmperrorsNewGroove:Shadow Door:raw/homebrew/collection/Emperror; Emperror's New Groove.json",
       "type": "spell",
       "name": "Shadow Door",
@@ -1024525,6 +1026039,26 @@
       "edition": "both",
       "file": "raw/homebrew/collection/Kobold Press; Tales from the Shadows.json",
       "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Shadow Hunger:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Shadow Hunger",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Warlock",
+        "Occultist"
+      ],
       "className": null,
       "classSource": null,
       "hd": null,
@@ -1045435,6 +1046969,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Starburst:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Starburst",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:DM04:Starburst:raw/homebrew/collection/Kobold Press; Deep Magic 04 Illumination Magic.json",
       "type": "spell",
       "name": "Starburst",
@@ -1045674,6 +1047227,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Starfire Beam:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Starfire Beam",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:Talons:Starfire Beam:raw/homebrew/collection/nitro_dynamite18; Talon's Codex of Secrets.json",
       "type": "spell",
       "name": "Starfire Beam",
@@ -1045733,6 +1047305,25 @@
         "Wizard",
         "Druid",
         "Rogue"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Starlight:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Starlight",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
       ],
       "className": null,
       "classSource": null,
@@ -1045931,6 +1047522,25 @@
       "classes": [
         "Cleric",
         "Paladin",
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Starlight Sword:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Starlight Sword",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
         "Sorcerer",
         "Wizard"
       ],
@@ -1062810,6 +1064420,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:WizardBunnyEnchanterClass24:Temporary Weapon:raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "type": "spell",
+      "name": "Temporary Weapon",
+      "source": "WizardBunnyEnchanterClass24",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/class/TheWizardBunny; Enchanter Class (2024).json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:EmperrorsNewGroove:Temportation:raw/homebrew/collection/Emperror; Emperror's New Groove.json",
       "type": "spell",
       "name": "Temportation",
@@ -1065279,6 +1066905,26 @@
       "classes": [
         "Sorcerer",
         "Warlock",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Thousand Hands:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Thousand Hands",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Bard",
+        "Sorcerer",
         "Wizard"
       ],
       "className": null,
@@ -1075030,6 +1076676,26 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Twist Shadow:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Twist Shadow",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard",
+        "Occultist"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:WorldofCollabris:Twist the Knife:raw/homebrew/collection/Storyteller; World of Collabris.json",
       "type": "spell",
       "name": "Twist the Knife",
@@ -1081902,7 +1083568,9 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
-      "classes": [],
+      "classes": [
+        "Warlock"
+      ],
       "className": null,
       "classSource": null,
       "hd": null,
@@ -1083475,6 +1085143,25 @@
       "spellcastingAbility": null
     },
     {
+      "id": "spell:SoManySpells:Void Rift:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Void Rift",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "spell:DM03:Void Rift:raw/homebrew/collection/Kobold Press; Deep Magic 03 Void Magic.json",
       "type": "spell",
       "name": "Void Rift",
@@ -1083867,7 +1085554,10 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
-      "classes": [],
+      "classes": [
+        "Druid",
+        "Wizard"
+      ],
       "className": null,
       "classSource": null,
       "hd": null,
@@ -1085152,6 +1086842,26 @@
       "file": "raw/homebrew/collection/Kobold Press; Deep Magic.json",
       "classes": [
         "Sorcerer",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:FftForbiddenTome:Walking House:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "spell",
+      "name": "Walking House",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [
+        "Artificer",
+        "Druid",
         "Wizard"
       ],
       "className": null,
@@ -1090682,6 +1092392,26 @@
       "file": "raw/homebrew/collection/Kobold Press; Deep Magic.json",
       "classes": [
         "Cleric",
+        "Wizard"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:SoManySpells:Wave of Darkness:raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "type": "spell",
+      "name": "Wave of Darkness",
+      "source": "SoManySpells",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/somanyrobots; So Many Spells.json",
+      "classes": [
+        "Sorcerer",
+        "Warlock",
         "Wizard"
       ],
       "className": null,
