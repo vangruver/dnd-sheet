@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-10-31T14:26:39.382Z",
+  "generatedAt": "2026-11-01T14:53:14.319Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "0c25a3e3fbca9a810578a8a1df5c0c2befb06cbb"
+      "commit": "f994b98816e3e8eb71a8cb7496be59912c397c24"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73062,
+    "entities": 73336,
     "official": 11500,
-    "homebrew": 61562,
+    "homebrew": 61836,
     "external": 68
   },
   "homebrew": {
@@ -360,6 +360,7 @@
       "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - Player Pack.json",
       "raw/homebrew/collection/Matthew Mercer; TalDorei Campaign Guide.json",
       "raw/homebrew/collection/Megan Caldwell; Talvakri's Guide to Adar.json",
+      "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
       "raw/homebrew/collection/Middle Finger of Vecna; Channeler.json",
       "raw/homebrew/collection/Middle Finger of Vecna; Evil Archetypes.json",
       "raw/homebrew/collection/Middle Finger of Vecna; Gunslinger.json",
@@ -685,7 +686,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 638,
+    "classFileCount": 639,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -1077,6 +1078,7 @@
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - Player Pack.json",
         "raw/homebrew/collection/Matthew Mercer; TalDorei Campaign Guide.json",
         "raw/homebrew/collection/Megan Caldwell; Talvakri's Guide to Adar.json",
+        "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
         "raw/homebrew/collection/Michael LaBossiere; Mike's free Encounters.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Gunslinger.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Magitech Updates.json",
@@ -1369,6 +1371,7 @@
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - Player Pack.json",
         "raw/homebrew/collection/Masterplaster; Avalonia Shadows of the East.json",
         "raw/homebrew/collection/Megan Caldwell; Talvakri's Guide to Adar.json",
+        "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Channeler.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Sentinels of the Multiverse.json",
         "raw/homebrew/collection/Middle Finger of Vecna; The Oozemasters Apprentice .json",
@@ -1609,6 +1612,7 @@
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - Player Pack.json",
         "raw/homebrew/collection/Matthew Mercer; TalDorei Campaign Guide.json",
         "raw/homebrew/collection/Megan Caldwell; Talvakri's Guide to Adar.json",
+        "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
         "raw/homebrew/collection/Modnar; Cooking and Brewing.json",
         "raw/homebrew/collection/Modnar; Modnar's Manual of Multiple Métier.json",
         "raw/homebrew/collection/Modnar; Modnars Menagerie of (most often Mamialian) Mates - Familiars and Companions.json",
@@ -1984,6 +1988,7 @@
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - 2014.json",
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - 2024.json",
         "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - Player Pack 2.json",
+        "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Evil Archetypes.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Magitech Updates.json",
         "raw/homebrew/collection/Middle Finger of Vecna; Sentinels of the Multiverse.json",
@@ -2189,6 +2194,7 @@
         "raw/homebrew/collection/Mage Hand Press; Mimic Book of Mimics.json",
         "raw/homebrew/collection/Mage Hand Press; Siegeball Sourcebook.json",
         "raw/homebrew/collection/Matthew Mercer; TalDorei Campaign Guide.json",
+        "raw/homebrew/collection/Metis Creative; Historica Arcanum - Echoes Of Renaissance.json",
         "raw/homebrew/collection/Modnar; Modnar's Manual of Multiple Métier.json",
         "raw/homebrew/collection/MonkeyDM; Steinhardt's Guide to the Eldritch Hunt.json",
         "raw/homebrew/collection/Monte Cook; Arcana of the Ancients.json",
