@@ -10,13 +10,13 @@ Este diretório é gerado automaticamente pelo GitHub Actions.
 
 ## Última atualização
 
-2026-11-04T16:05:38.089Z
+2026-11-05T16:20:58.916Z
 
 ## Entidades
 
-Total: 73336
+Total: 73621
 
-Oficial: 11500
+Oficial: 11785
 
 Homebrew: 61836
 
