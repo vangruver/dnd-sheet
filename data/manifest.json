@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-05T16:20:58.916Z",
+  "generatedAt": "2026-11-06T15:49:34.102Z",
   "sources": [
     {
       "key": "2024",
@@ -21,14 +21,14 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "f994b98816e3e8eb71a8cb7496be59912c397c24"
+      "commit": "8a4df310fc7b43c757a848c62b5eca71f739aaa5"
     },
     {
       "key": "prerelease",
       "url": "https://github.com/TheGiddyLimit/unearthed-arcana.git",
       "type": "prerelease",
       "edition": "both",
-      "commit": "804484fecb390416319b01952a7438c8cb242d44"
+      "commit": "7c93aee12ef49937c09aa9a6a76c2199d0f142f1"
     },
     {
       "key": "external",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73621,
+    "entities": 73631,
     "official": 11785,
-    "homebrew": 61836,
+    "homebrew": 61846,
     "external": 68
   },
   "entities": [
@@ -43567,6 +43567,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:DnDBeyondDrops:Elysium Diplomat:raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "type": "feat",
+      "name": "Elysium Diplomat",
+      "source": "DnDBeyondDrops",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:arkadia:Embalmic Alchemist:raw/homebrew/collection/Arcana Games; Arkadia.json",
       "type": "feat",
       "name": "Embalmic Alchemist",
@@ -86031,6 +86047,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "feat:DnDBeyondDrops:Upper Planes Pact:raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "type": "feat",
+      "name": "Upper Planes Pact",
+      "source": "DnDBeyondDrops",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "feat:Dungeons&Doggies:Upright and Alert:raw/homebrew/collection/Steamforged; Dungeon&Doggies Rules Companion.json",
       "type": "feat",
       "name": "Upright and Alert",
@@ -89224,6 +89256,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/1985 Games; Obojima - Tales from Yatamon.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "feat:DnDBeyondDrops:Ysgardian Warrior:raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "type": "feat",
+      "name": "Ysgardian Warrior",
+      "source": "DnDBeyondDrops",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -732111,6 +732159,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "race:DnDBeyondDrops:Bariaur:raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "type": "race",
+      "name": "Bariaur",
+      "source": "DnDBeyondDrops",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/D&D Beyond; D&D Beyond Drops.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "race:BasitinFF:Basitin:raw/homebrew/race/Foxfire94; Basitin.json",
       "type": "race",
       "name": "Basitin",
@@ -1121161,6 +1121225,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "subclass:FftForbiddenTome:Calamity Domain:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Calamity Domain",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "subclass:VSS:Calibarons' Guild:raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - 2014.json",
       "type": "subclass",
       "name": "Calibarons' Guild",
@@ -1124233,6 +1124313,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "subclass:FftForbiddenTome:Circle of the Chimera:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Circle of the Chimera",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": "Druid",
+      "classSource": "XPHB",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "subclass:MH:Circle of the City:raw/homebrew/collection/Aeron Drake; Modern Handbook.json",
       "type": "subclass",
       "name": "Circle of the City",
@@ -1126098,6 +1126194,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Griffin Macaulay; The Griffon's Saddlebag, Book 1 - 2024.json",
+      "classes": [],
+      "className": "Druid",
+      "classSource": "XPHB",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "subclass:FftForbiddenTome:Circle of the Unchanging:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Circle of the Unchanging",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
       "classes": [],
       "className": "Druid",
       "classSource": "XPHB",
@@ -1153097,6 +1153209,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "subclass:FftForbiddenTome:Miracle Domain:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Miracle Domain",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": "Cleric",
+      "classSource": "XPHB",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "subclass:VSS:Mirrorkin:raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - 2014.json",
       "type": "subclass",
       "name": "Mirrorkin",
@@ -1163449,6 +1163577,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "subclass:FftForbiddenTome:Path of the Destroyer:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Path of the Destroyer",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": "Barbarian",
+      "classSource": "XPHB",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "subclass:SIEGESOURCEBOOK:Path of the Die-Hard:raw/homebrew/collection/Mage Hand Press; Siegeball Sourcebook.json",
       "type": "subclass",
       "name": "Path of the Die-Hard",
@@ -1166197,6 +1166341,22 @@
       "classes": [],
       "className": "Barbarian",
       "classSource": "XUA2023PlayersHandbookP8",
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "subclass:FftForbiddenTome:Path of the World-Eater:raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "type": "subclass",
+      "name": "Path of the World-Eater",
+      "source": "FftForbiddenTome",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/The Last Archivist; Fragments of the Forbidden Tome.json",
+      "classes": [],
+      "className": "Barbarian",
+      "classSource": "XPHB",
       "hd": null,
       "spellcastingAbility": null
     },
@@ -1185830,7 +1185990,7 @@
       "className": "Pugilist",
       "classSource": "Pugilist2024",
       "hd": null,
-      "spellcastingAbility": null
+      "spellcastingAbility": "str"
     },
     {
       "id": "subclass:TSSO:The Spellscarred:raw/homebrew/subclass/Alexander Smith; The Spellscarred Sorcerous Origin.json",
