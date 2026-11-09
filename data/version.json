@@ -1,27 +1,27 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-08T14:55:05.515Z",
+  "generatedAt": "2026-11-09T18:33:51.927Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "87471edde497ae786404282fdeabcea168752670"
+      "commit": "32ef600fab87a585a61dd1a22e9b02dfc58c728a"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "60eae4ec198dc589f763c70ec4e8c913a435895a"
+      "commit": "2c5d0e82fce9b0c7226e55f4a92eaab181a29fa2"
     },
     {
       "key": "homebrew",
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "8a4df310fc7b43c757a848c62b5eca71f739aaa5"
+      "commit": "8f910ab15734ca7f86a8810e33fa50f9a5e2372d"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73635,
+    "entities": 73695,
     "official": 11789,
-    "homebrew": 61846,
+    "homebrew": 61906,
     "external": 68
   },
   "homebrew": {
@@ -1230,6 +1230,7 @@
         "raw/homebrew/class/KibblesTasty; Occultist.json",
         "raw/homebrew/class/KibblesTasty; Psion.json",
         "raw/homebrew/class/KibblesTasty; Spellblade.json",
+        "raw/homebrew/class/LaserLlama; Alternate Warlock.json",
         "raw/homebrew/class/LaserLlama; Alternate Wizard.json",
         "raw/homebrew/class/LaserLlama; Psion.json",
         "raw/homebrew/class/Lord Woolfy; Woolfy's Kitsune Witch.json",
