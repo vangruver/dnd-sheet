@@ -8,7 +8,7 @@
 // ============================================================
 
 import { getJson, tryJson, tryLocalJson, getVersionInfo } from "./store.js";
-import { editionOf as editionOfRec, editionMatches } from "./sources.js";
+import { editionOf as editionOfRec, editionMatches, PARTNERED_SOURCES } from "./sources.js";
 
 // ------------------------------------------------------------
 // Tipos
@@ -85,9 +85,55 @@ export function editionOf(x) {
 // campo `reprintedAs` (ex.: "Wizard|XPHB"). É o "filtro de reprint" da
 // interface deles: em uma sessão 2024, esconder o registro 2014 que já
 // tem versão nova evita a duplicata (Mago PHB + Mago XPHB lado a lado).
+//
+// Só conta como "reimpresso" se a versão nova EXISTE de fato no banco como
+// registro 2024 do mesmo tipo. Muitos `reprintedAs` apontam pra outra coisa
+// (ex.: raça "Mark of Healing|ERLW" -> talento EFA; "Genasi (Fire)|EEPC" ->
+// MPMM, que também é 2014): esconder esses deixava raças/subclasses
+// oficiais antigas inacessíveis sem nenhuma versão 2024 pra substituir.
+let reprintIndex = null, reprintIndexSize = -1;
+function reprintKeys() {
+  const all = manifestEntries();
+  if (reprintIndex && reprintIndexSize === all.length) return reprintIndex;
+  reprintIndex = new Set();
+  reprintIndexSize = all.length;
+  for (const e of all) {
+    if (editionOf(e) !== "2024") continue;
+    const t = normType(e.type);
+    const name = String(e.name || "").toLowerCase();
+    const src = String(e.source || "").toLowerCase();
+    if (t === "subclass") {
+      reprintIndex.add(`${t}|${name}|${String(e.className || "").toLowerCase()}|${src}`);
+      if (e.shortName) reprintIndex.add(`${t}|${String(e.shortName).toLowerCase()}|${String(e.className || "").toLowerCase()}|${src}`);
+    } else reprintIndex.add(`${t}|${name}|${src}`);
+  }
+  return reprintIndex;
+}
+const REPRINT_TAG_TYPE = { race: "race", subrace: "race", class: "class", subclass: "subclass", item: "item", spell: "spell", feat: "feat", background: "background", optionalfeature: "optionalfeature" };
 export function isReprinted(x) {
   const rec = (x && (x.__rec || registry.get(x.id)?.__rec)) || {};
-  return Array.isArray(rec.reprintedAs) && rec.reprintedAs.length > 0;
+  if (!Array.isArray(rec.reprintedAs) || !rec.reprintedAs.length) return false;
+  const myType = normType(x.type);
+  const keys = reprintKeys();
+  return rec.reprintedAs.some((r) => {
+    const uid = typeof r === "string" ? r : r && r.uid;
+    if (!uid) return false;
+    const tag = typeof r === "object" && r.tag ? (REPRINT_TAG_TYPE[r.tag] || r.tag) : myType;
+    if (tag !== myType) return false; // reimpresso como outra coisa (ex.: raça -> talento)
+    const p = String(uid).toLowerCase().split("|");
+    if (myType === "subclass") return keys.has(`subclass|${p[0]}|${p[1] || ""}|${p[3] || p[2] || ""}`);
+    return keys.has(`${myType}|${p[0]}|${p[1] || ""}`);
+  });
+}
+
+// Categoria de origem do registro, pro filtro de fonte (itens/compêndio):
+// "official" | "prerelease" | "partnered" | "homebrew".
+export function sourceCategory(x) {
+  if (!x) return "official";
+  if (x.homebrew || x._isBrew || x.brew || x.external) return "homebrew";
+  if (x.prerelease) return "prerelease";
+  if (PARTNERED_SOURCES.has(String(x.source || "").toUpperCase())) return "partnered";
+  return "official";
 }
 // O registro combina com a edição escolhida?
 //  - homebrew (edição "both"): sempre passa;

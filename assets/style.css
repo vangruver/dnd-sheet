@@ -1643,3 +1643,6 @@ body.view-only button:disabled{opacity:.4;cursor:not-allowed}
   .off-page3{break-inside:auto}
   .off-page3 .off-rep-cols{break-inside:auto}
 }
+
+/* Filtro de origem (Oficial / Pré-release / Partnered / Homebrew) */
+.src-filter{margin:8px 0 2px}

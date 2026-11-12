@@ -44,6 +44,18 @@ export const SOURCES_2024 = new Set([
 // `edition` do registro quando presente.
 SOURCES_2024.delete("XGE");
 
+// ------------------------------------------------------------
+// Fontes "Partnered" (conteúdo de parceiros/crossovers oficiais da
+// WotC, fora dos livros principais). No 5etools elas ficam no grupo
+// "supplement-alt" de data/books.json e adventures.json. Lista estática
+// pra não depender de rede; se o espelho ganhar fontes novas nesse
+// grupo, é só acrescentar a sigla aqui.
+// ------------------------------------------------------------
+export const PARTNERED_SOURCES = new Set([
+  "OGA", "AWM", "RMR", "MGELFT", "DoD", "MaBJoV", "MCV1SC", "TD",
+  "HAT-TG", "MCV4EC", "AATM", "ABH", "PL",
+].map((s) => s.toUpperCase()));
+
 export function normalizeEditionTag(tag) {
   const t = String(tag || "").toLowerCase();
   if (t === "one" || t === "2024") return "2024";

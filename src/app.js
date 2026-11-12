@@ -2,7 +2,7 @@ import {
   initDatabase, ensureCatalog, filterEntities, recordsForEntity, getRecordArrays,
   findClassFeatures, findSubclassFeatures, spellsForClass, stats,
   manifestEntries, isHomebrew as hb, isPrerelease as pre, isExternal as ext, normType, editionOf, currentVersionInfo,
-  descriptionEntries, matchesEdition, isReprinted,
+  descriptionEntries, matchesEdition, isReprinted, sourceCategory,
   loadBestiaryIndex, loadBestiarySource, loadAllBestiary, loadLegendaryGroups,
 } from "./database.js";
 import { clearCache } from "./store.js";
@@ -25,6 +25,24 @@ const $ = (id) => document.getElementById(id);
 let character, refs = { class: null, subclass: null, race: null, background: null, multiclasses: [] }, details = {};
 let pickerType = null, eqCat = "inventory", pickerLegacy = true, spellBookClassId = null;
 let codexState = { type: "all", content: "all", query: "", legacy: false };
+// Filtro de origem (multi-seleção) da busca de itens e do Compêndio.
+const SRC_CATS = [["official", "Oficial"], ["prerelease", "Pré-release"], ["partnered", "Partnered"], ["homebrew", "Homebrew"]];
+const srcSel = { eq: new Set(["official"]), comp: new Set(["official", "partnered"]) };
+function srcOk(which, e) { const s = srcSel[which]; return !s.size || s.has(sourceCategory(e)); }
+function mountSrcFilter(which, afterEl, onChange) {
+  if (!afterEl || document.getElementById(`srcf-${which}`)) return;
+  const bar = document.createElement("div");
+  bar.id = `srcf-${which}`; bar.className = "filter-pills src-filter";
+  const paint = () => { bar.innerHTML = SRC_CATS.map(([k, l]) => `<button type="button" data-src="${k}" class="${srcSel[which].has(k) ? "active" : ""}">${l}</button>`).join(""); };
+  bar.addEventListener("click", (ev) => {
+    const b = ev.target.closest("[data-src]"); if (!b) return;
+    const k = b.dataset.src;
+    srcSel[which].has(k) ? srcSel[which].delete(k) : srcSel[which].add(k);
+    paint(); onChange();
+  });
+  paint();
+  afterEl.insertAdjacentElement("afterend", bar);
+}
 let monsterState = { view: "roster", query: "", source: "", listId: "" };
 let monsterBrowseCache = []; // monstros já baixados nesta sessão (por fonte selecionada, ou tudo se "carregar todas")
 let monsterAllLoaded = false;
@@ -5223,7 +5241,7 @@ async function renderEquipmentCatalog() {
   // Catálogo de referência: mostra oficial + homebrew independentemente do
   // seletor "Conteúdo" (que controla o construtor de personagem).
   let arr = manifest()
-    .filter((e) => normType(e.type) === "item" && matchesEdition(e, character.edition, true))
+    .filter((e) => normType(e.type) === "item" && matchesEdition(e, character.edition, true) && srcOk("eq", e))
     .map((e) => ({ e, r: e.__rec || {}, kind: itemKind(e.__rec), family: weaponFamily(e.name) }));
   if (eqCat !== "all" && eqCat !== "inventory") arr = arr.filter((x) => x.kind === eqCat);
   if (wf) arr = arr.filter((x) => x.family === wf);
@@ -5518,6 +5536,7 @@ async function renderCompendium() {
   let arr = manifest().filter((e) =>
     (t === "all" || normType(e.type) === t) &&
     matchesEdition(e, character.edition, true) &&
+    srcOk("comp", e) &&
     (!q || `${titleOf(e)} ${e.source || ""}`.toLowerCase().includes(q))
   ).slice(0, 240);
   $("compendium-results").innerHTML = arr.map((e) => {
@@ -7628,6 +7647,8 @@ function setup() {
   $("custom-item-name").addEventListener("keypress", (e) => {
     if (e.key === "Enter") $("add-custom-item").click();
   });
+  mountSrcFilter("eq", $("equipment-search").closest(".search-row"), () => { if (eqCat !== "inventory") renderEquipmentCatalog(); });
+  mountSrcFilter("comp", $("compendium-search").closest(".compendium-toolbar"), renderCompendium);
   $("compendium-search").addEventListener("input", renderCompendium);
   $("compendium-type").addEventListener("change", renderCompendium);
   document.querySelectorAll("#monster-view-tabs [data-monview]").forEach((b) => b.addEventListener("click", () => {
