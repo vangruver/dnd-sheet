@@ -699,20 +699,66 @@ export async function spellsForClass(classStub, subclassStub, edition) {
 // ------------------------------------------------------------
 // Itens
 // ------------------------------------------------------------
+// Variantes mágicas genéricas (+1/+2/+3 Armor, Shield, Weapon): o 5etools
+// NÃO as lista em items.json, e sim em magicvariants.json como "regra"
+// (requires/excludes + inherits) que gera um item por item-base ("+1 Chain
+// Mail", "+2 Longsword"...). Aqui montamos esses itens concretos, só pra
+// essas três famílias (as demais variantes — Adamantine, Resistência etc. —
+// continuam fora, pra não inflar o catálogo com milhares de itens).
+const GENERIC_VARIANT_RE = /^\+\d (Armor|Shield|Weapon)/;
+function variantMatches(base, rule) {
+  return Object.entries(rule || {}).every(([k, want]) => {
+    const have = base[k];
+    if (typeof want === "boolean") return !!have === want;
+    if (Array.isArray(want)) return want.includes(have);
+    return have === want;
+  });
+}
+function buildGenericVariants(variants, bases) {
+  const out = [];
+  for (const v of variants || []) {
+    if (!GENERIC_VARIANT_RE.test(v.name || "")) continue;
+    const inh = v.inherits || {};
+    const vEd = editionOfRec({ source: inh.source });
+    for (const base of bases) {
+      // Regra de 2014 só vale pra item-base de 2014, e a de 2024 pra de 2024
+      // (senão "+1 Chain Mail" sairia duplicado, uma vez por edição do item-base).
+      if (editionOfRec(base) !== vEd) continue;
+      if (!(v.requires || []).some((r) => variantMatches(base, r))) continue;
+      if (v.excludes && variantMatches(base, v.excludes)) continue;
+      const item = { ...base, ...inh, name: `${inh.namePrefix || ""}${base.name}${inh.nameSuffix || ""}`, source: inh.source || base.source, baseItem: `${base.name}|${base.source}`, _generic: true };
+      delete item.namePrefix; delete item.nameSuffix; delete item.reprintedAs; delete item.hasFluffImages;
+      // As descrições do 5etools usam modelos tipo {=bonusAc}.
+      if (item.entries) item.entries = JSON.parse(JSON.stringify(item.entries).replace(/\{=(\w+)\}/g, (_, k) => String(item[k] ?? "")));
+      out.push(item);
+    }
+  }
+  return out;
+}
 async function loadItemCatalog(onProgress) {
-  const files = ["items.json", "items-base.json"];
+  const files = ["items.json", "items-base.json", "magicvariants.json"];
   let done = 0;
+  const bases = [];
+  const reg = (it) => {
+    register({
+      id: edId(["item", it.source, it.name]),
+      type: "item", name: it.name, source: it.source || "",
+      edition: editionOfRec(it), homebrew: false, __rec: it,
+    });
+  };
   for (const f of files) {
     const json = await tryJson(f);
     done++; onProgress && onProgress(done, files.length);
     if (!json) continue;
+    if (f === "magicvariants.json") {
+      // Precisa de todos os itens-base já lidos; vem por último de propósito.
+      buildGenericVariants(json.magicvariant, bases).forEach(reg);
+      continue;
+    }
     const arr = [].concat(json.item || [], json.baseitem || []);
     for (const it of arr) {
-      register({
-        id: edId(["item", it.source, it.name]),
-        type: "item", name: it.name, source: it.source || "",
-        edition: editionOfRec(it), homebrew: false, __rec: it,
-      });
+      reg(it);
+      if (it.armor || it.weapon || /^(LA|MA|HA|S)(\||$)/.test(String(it.type || ""))) bases.push(it);
     }
   }
 }

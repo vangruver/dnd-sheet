@@ -2251,6 +2251,87 @@ function attackDamagePartsHtml(i, parts) {
     <button type="button" class="add-dmg-part" data-add-dmg="${i}">+ Tipo de dano extra (ex.: arma flamejante)</button>
   </div>`;
 }
+// ------------------------------------------------------------
+// Criar ataque a partir de uma arma do inventário
+// ------------------------------------------------------------
+// Puxa da arma real do catálogo: nome, dado e tipo de dano, alcance,
+// propriedades (acuidade, versátil, maestria...), bônus mágico (+1/+2/+3),
+// atributo certo (Força/Destreza) e se o personagem tem proficiência.
+const WEAPON_DMG_TYPE_PT = { S: "Cortante", P: "Perfurante", B: "Contundente", A: "Ácido", C: "Frio", F: "Fogo", O: "Força", L: "Relâmpago", N: "Necrótico", I: "Veneno", Y: "Psíquico", R: "Radiante", T: "Trovejante" };
+const WEAPON_PROP_PT = { A: "Munição", AF: "Munição", F: "Acuidade", H: "Pesada", L: "Leve", LD: "Recarga", RLD: "Recarga", R: "Alcance", S: "Especial", T: "Arremesso", "2H": "Duas mãos", V: "Versátil", ER: "Alcance estendido", OH: "Mão livre" };
+const weaponProps = (r) => (r?.property || []).map((p) => String(typeof p === "string" ? p : p?.uid || "").split("|")[0]).filter(Boolean);
+function isWeaponRecord(r) { return !!r && (r.weapon === true || (!!r.dmg1 && !!r.weaponCategory)); }
+function weaponProficient(r) {
+  const cat = String(r.weaponCategory || "").toLowerCase();
+  const props = weaponProps(r);
+  const labels = [...computeProficiencySummary().weapons, ...String(character.weaponProficienciesManual || "").split(/[,;]/)]
+    .map((l) => String(l).trim().toLowerCase()).filter(Boolean);
+  const name = String(r.baseItem ? String(r.baseItem).split("|")[0] : r.name || "").toLowerCase();
+  return labels.some((l) => {
+    if (/finesse or light|acuidade ou leve/.test(l)) return cat === "martial" && (props.includes("F") || props.includes("L"));
+    if (/^(simple|simples)/.test(l)) return cat === "simple";
+    if (/^(martial|marciais?)/.test(l)) return cat === "martial";
+    const single = l.replace(/s$/, "");
+    return !!name && (single === name || l === name || l.includes(name));
+  });
+}
+function attackFromWeapon(item, r) {
+  const props = weaponProps(r);
+  const ranged = /^R/.test(String(r.type || ""));
+  const finesse = props.includes("F");
+  const thrown = props.includes("T");
+  let abilityMode = "str";
+  if (ranged) abilityMode = "dex";
+  else if (finesse && mod(effScore("dex")) > mod(effScore("str"))) abilityMode = "dex";
+  const atkBonus = parseBonusText(r.bonusWeaponAttack ?? r.bonusWeapon);
+  const dmgBonus = parseBonusText(r.bonusWeaponDamage ?? r.bonusWeapon);
+  const notes = [];
+  props.forEach((p) => {
+    if (p === "V") notes.push(r.dmg2 ? `Versátil (${r.dmg2})` : "Versátil");
+    else if (WEAPON_PROP_PT[p]) notes.push(WEAPON_PROP_PT[p]);
+  });
+  const mastery = (r.mastery || []).map((m) => String(typeof m === "string" ? m : m?.uid || "").split("|")[0]).filter(Boolean);
+  if (mastery.length) notes.push(`Maestria: ${mastery.join(", ")}`);
+  let range = "";
+  if (ranged) range = `${r.range || ""} ft`.trim();
+  else if (props.includes("R")) range = "Alcance 10 ft";
+  else range = "Corpo a corpo";
+  if (!ranged && thrown && r.range) range += ` · arremesso ${r.range} ft`;
+  return {
+    name: item.name || r.name, bonus: "", range, notes: [...new Set(notes)].join(", "),
+    abilityMode, rollType: "attack", proficient: weaponProficient(r), itemBonus: atkBonus,
+    damageParts: [{ dice: r.dmg1 || "", bonus: dmgBonus - atkBonus, type: WEAPON_DMG_TYPE_PT[r.dmgType] || "" }],
+    sourceItemId: item.id || null,
+  };
+}
+async function openAttackPicker() {
+  const inv = character.inventory || [];
+  if (inv.some((x) => x.id)) { try { await ensureCatalog("item"); } catch (err) { console.warn(err); } }
+  const weapons = inv.map((x) => ({ x, r: invItemRecord(x) })).filter(({ r }) => isWeaponRecord(r));
+  const rows = weapons.map(({ x, r }, i) => {
+    const a = attackFromWeapon(x, r);
+    const dmg = attackDamageSummary(a);
+    return `<button type="button" class="pick-card" data-atk-weapon="${i}"><div class="pick-top"><strong>${esc(x.name)}</strong>${a.proficient ? "" : `<span class="tag">sem proficiência</span>`}</div><div class="pick-meta">Ataque ${esc(fmt(computeAttackBonus(a)))} · Dano ${esc(dmg || "—")}${a.notes ? ` · ${esc(a.notes)}` : ""}</div></button>`;
+  }).join("");
+  $("modal-content").innerHTML = `<div class="modal-title"><div><span class="eyebrow">NOVO ATAQUE</span><h2>Escolher arma</h2></div></div>
+    <p class="muted">${weapons.length ? "Armas do seu inventário. Ao escolher, o ataque já vem com dano, bônus, alcance e propriedades." : "Nenhuma arma no inventário ainda. Adicione na aba Equipamento, ou crie um ataque do zero."}</p>
+    <div class="picker-grid">${rows}
+      <button type="button" class="pick-card" data-atk-unarmed><div class="pick-top"><strong>Ataque desarmado</strong></div><div class="pick-meta">1 + Força, contundente</div></button>
+      <button type="button" class="pick-card" data-atk-blank><div class="pick-top"><strong>Ataque em branco</strong></div><div class="pick-meta">Preencher à mão (magias, armas fora do inventário…)</div></button>
+    </div>`;
+  $("modal").classList.remove("hidden");
+  const add = (a) => {
+    character.attacks.push(a); saveCharacter(character); renderAttacks();
+    $("modal").classList.add("hidden");
+    toast(a.name ? `Ataque "${a.name}" adicionado.` : "Ataque adicionado.");
+  };
+  $("modal-content").querySelectorAll("[data-atk-weapon]").forEach((b) => b.addEventListener("click", () => {
+    const { x, r } = weapons[Number(b.dataset.atkWeapon)];
+    add(attackFromWeapon(x, r));
+  }));
+  $("modal-content").querySelector("[data-atk-unarmed]")?.addEventListener("click", () => add({ name: "Ataque desarmado", bonus: "", range: "Corpo a corpo", notes: "", abilityMode: "str", rollType: "attack", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 1, type: "Contundente" }] }));
+  $("modal-content").querySelector("[data-atk-blank]")?.addEventListener("click", () => add({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", rollType: "attack", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }));
+}
 function renderAttacks() {
   const arr = character.attacks || [];
   $("attacks").innerHTML = arr.length ? arr.map((a, i) => {
@@ -7892,7 +7973,7 @@ function setup() {
     e.target.value = "";
     if (file) await importMonsterSublistFile(file);
   });
-  $("add-attack").addEventListener("click", () => { character.attacks.push({ name: "", bonus: "", range: "", notes: "", abilityMode: "str", rollType: "attack", proficient: true, itemBonus: 0, damageParts: [{ dice: "", bonus: 0, type: "" }] }); saveCharacter(character); renderAttacks(); });
+  $("add-attack").addEventListener("click", openAttackPicker);
   $("add-custom-feature").addEventListener("click", () => {
     const name = $("custom-feature-name").value.trim();
     const text = $("custom-feature-text").value.trim();
