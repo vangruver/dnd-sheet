@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-12T16:44:47.202Z",
+  "generatedAt": "2026-11-13T16:01:23.422Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "8f910ab15734ca7f86a8810e33fa50f9a5e2372d"
+      "commit": "216047b2c4d06cd68969a59e735b51b20545b733"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73695,
+    "entities": 73709,
     "official": 11789,
-    "homebrew": 61906,
+    "homebrew": 61920,
     "external": 68
   },
   "entities": [
@@ -165087,6 +165087,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "item:IRKMoMHoF:Condemner:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Condemner",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "item:TalDoreiCampaignSettingReborn:Condemner (Awakened):raw/homebrew/collection/Darrington Press; Tal'Dorei Campaign Setting Reborn.json",
       "type": "item",
       "name": "Condemner (Awakened)",
@@ -180399,6 +180415,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "item:IRKMoMHoF:Devastator Heavy Warjack Chassis:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Devastator Heavy Warjack Chassis",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "item:AotA:Device Stabilizer:raw/homebrew/collection/Monte Cook; Arcana of the Ancients.json",
       "type": "item",
       "name": "Device Stabilizer",
@@ -184632,6 +184664,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Mage Hand Press; Valda's Spire of Secrets - 2014.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Dozer:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Dozer",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -210463,6 +210511,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "item:IRKMoMHoF:Flame Fists:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Flame Fists",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "item:AotA:Flame Gauntlet:raw/homebrew/collection/Monte Cook; Arcana of the Ancients.json",
       "type": "item",
       "name": "Flame Gauntlet",
@@ -220488,6 +220552,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/item/Faolyn; Encyclopedia Magica.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Generator Blade:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Generator Blade",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -380975,6 +381055,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "item:IRKMoMHoF:Shield Fist:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Shield Fist",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "item:DarkMatter:Shield Generator:raw/homebrew/collection/Mage Hand Press; Dark Matter - 2014.json",
       "type": "item",
       "name": "Shield Generator",
@@ -382216,6 +382312,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Borderlands & Beyond.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Shield System:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Shield System",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -383544,6 +383656,54 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Mage Hand Press; Dark Matter - 2024.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Shoulder Cannon:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Shoulder Cannon",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Shoulder Launcher:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Shoulder Launcher",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Shoulder Mounts:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Shoulder Mounts",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -389576,6 +389736,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Griffin Macaulay; The Griffon's Saddlebag, Book 2.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Skyhammer:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Skyhammer",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -411743,6 +411919,22 @@
       "spellcastingAbility": null
     },
     {
+      "id": "item:IRKMoMHoF:Storm Accumulator:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Storm Accumulator",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
       "id": "item:AGMH:Storm Ammo (12):raw/homebrew/collection/Amellwind; Amellwind's Guide to Monster Hunting.json",
       "type": "item",
       "name": "Storm Ammo (12)",
@@ -411752,6 +411944,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Amellwind; Amellwind's Guide to Monster Hunting.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Storm Blaster:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Storm Blaster",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -431528,6 +431736,22 @@
       "external": false,
       "edition": "both",
       "file": "raw/homebrew/collection/Griffin Macaulay; The Griffon's Saddlebag, Book 3.json",
+      "classes": [],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "item:IRKMoMHoF:Toro Heavy Warjack Chassis:raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
+      "type": "item",
+      "name": "Toro Heavy Warjack Chassis",
+      "source": "IRKMoMHoF",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
       "classes": [],
       "className": null,
       "classSource": null,
@@ -798217,8 +798441,8 @@
       "edition": "both",
       "file": "raw/homebrew/collection/KibblesTasty; Kibbles' Compendium of Legends and Legacies.json",
       "classes": [
-        "Sorcerer",
         "Spellblade",
+        "Sorcerer",
         "Wizard"
       ],
       "className": null,
@@ -1009974,26 +1010198,6 @@
       "spellcastingAbility": null
     },
     {
-      "id": "spell:KibblesTasty:CC:Quick Sand:raw/homebrew/spell/KibblesTasty; Kibbles' Casting Compendium.json",
-      "type": "spell",
-      "name": "Quick Sand",
-      "source": "KibblesTasty:CC",
-      "homebrew": true,
-      "prerelease": false,
-      "external": false,
-      "edition": "both",
-      "file": "raw/homebrew/spell/KibblesTasty; Kibbles' Casting Compendium.json",
-      "classes": [
-        "Druid",
-        "Sorcerer",
-        "Wizard"
-      ],
-      "className": null,
-      "classSource": null,
-      "hd": null,
-      "spellcastingAbility": null
-    },
-    {
       "id": "spell:KibblesGenericElementalSpells:Quick Sand:raw/homebrew/spell/KibblesTasty; Kibbles' Generic Elemental Spells.json",
       "type": "spell",
       "name": "Quick Sand",
@@ -1010284,6 +1010488,26 @@
       "file": "raw/homebrew/spell/Frog God Games; Book of Lost Spells.json",
       "classes": [
         "Druid"
+      ],
+      "className": null,
+      "classSource": null,
+      "hd": null,
+      "spellcastingAbility": null
+    },
+    {
+      "id": "spell:KibblesTasty:CC:Quicksand:raw/homebrew/spell/KibblesTasty; Kibbles' Casting Compendium.json",
+      "type": "spell",
+      "name": "Quicksand",
+      "source": "KibblesTasty:CC",
+      "homebrew": true,
+      "prerelease": false,
+      "external": false,
+      "edition": "both",
+      "file": "raw/homebrew/spell/KibblesTasty; Kibbles' Casting Compendium.json",
+      "classes": [
+        "Druid",
+        "Sorcerer",
+        "Wizard"
       ],
       "className": null,
       "classSource": null,

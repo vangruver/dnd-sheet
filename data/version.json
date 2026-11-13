@@ -1,6 +1,6 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-12T16:44:47.202Z",
+  "generatedAt": "2026-11-13T16:01:23.422Z",
   "sources": [
     {
       "key": "2024",
@@ -21,7 +21,7 @@
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "8f910ab15734ca7f86a8810e33fa50f9a5e2372d"
+      "commit": "216047b2c4d06cd68969a59e735b51b20545b733"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73695,
+    "entities": 73709,
     "official": 11789,
-    "homebrew": 61906,
+    "homebrew": 61920,
     "external": 68
   },
   "homebrew": {
@@ -1108,6 +1108,7 @@
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Borderlands & Beyond.json",
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Core Book.json",
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Deep Wild.json",
+        "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Minds of Metal, Hearts of Fire.json",
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Nightmare Empire.json",
         "raw/homebrew/collection/QL Games; Tasha's Crucible of Everything Else - Volume 1.json",
         "raw/homebrew/collection/Ross Hardy; Kunio's Guide to Seigai.json",
