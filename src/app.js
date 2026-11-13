@@ -1715,21 +1715,37 @@ function armorTypeOf(r) {
   // Alguns registros trazem o tipo como "HA|XPHB" (sigla + fonte).
   const type = String(r.type || "").split("|")[0];
   if (type === "S" || /^shield$/i.test(String(r.name || "").trim())) return "shield";
-  if (r.armor && type === "LA") return "light";
-  if (r.armor && type === "MA") return "medium";
-  if (r.armor && type === "HA") return "heavy";
+  // O tipo LA/MA/HA basta: armaduras mágicas (Dragon Scale Mail, Elven
+  // Chain, Mithral Shirt...) não trazem o flag `armor: true` do 5etools.
+  if (type === "LA") return "light";
+  if (type === "MA") return "medium";
+  if (type === "HA") return "heavy";
   return null;
+}
+// Bônus de CA do item ("+1", "+2" em `bonusAc`): vale tanto pra armadura/
+// escudo mágicos (+1 na CA da peça) quanto pra itens vestíveis que só dão
+// bônus (Anel/Capa de Proteção, Braçadeiras de Defesa...).
+function bonusAcOf(r) {
+  const m = String(r?.bonusAc ?? "").match(/[+-]?\d+/);
+  return m ? Number(m[0]) : 0;
 }
 function equippedArmorInfo() {
   let bodyArmor = null, shield = null;
+  const worn = [];
   for (const x of character.inventory || []) {
     if (!x.equipped) continue;
     const r = invItemRecord(x), at = armorTypeOf(r);
-    if (!at) continue;
-    if (at === "shield") { if (!shield) shield = { name: x.name, ac: Number(r.ac) || 2 }; }
-    else if (!bodyArmor) bodyArmor = { name: x.name, type: at, ac: Number(r.ac) || 10, strength: r.strength ? Number(String(r.strength).replace(/\D/g, "")) || null : null, stealth: !!r.stealth };
+    if (!at) {
+      const b = bonusAcOf(r);
+      if (b) worn.push({ name: x.name, ac: b, noArmor: /bracers of defense/i.test(x.name) });
+      continue;
+    }
+    const bonus = bonusAcOf(r);
+    if (at === "shield") { if (!shield) shield = { name: x.name, ac: (Number(r.ac) || 2) + bonus }; }
+    else if (!bodyArmor) bodyArmor = { name: x.name, type: at, ac: (Number(r.ac) || 10) + bonus, strength: r.strength ? Number(String(r.strength).replace(/\D/g, "")) || null : null, stealth: !!r.stealth };
   }
-  return { bodyArmor, shield };
+  // Braçadeiras de Defesa só valem sem armadura e sem escudo.
+  return { bodyArmor, shield, worn: worn.filter((w) => !w.noArmor || (!bodyArmor && !shield)) };
 }
 function calc() {
   const lvl = totalLevel(), pb = proficiency(lvl);
@@ -1750,6 +1766,7 @@ function calc() {
     acAuto = 10 + dexMod + (ud ? mod(effScore(ud)) : 0);
   }
   if (equippedArmor.shield) acAuto += equippedArmor.shield.ac;
+  acAuto += equippedArmor.worn.reduce((n, w) => n + w.ac, 0); // anéis/capas/braçadeiras de proteção
   acAuto += character.auto?.acBonus || 0; // Carapace (Lefou) e bônus fixos de CA equivalentes
   const ac = Number(character.ac) || acAuto;
   const speed = character.speed || character.auto?.speed || "30 ft";
@@ -1764,7 +1781,7 @@ function acAutoTitle(c) {
   if (character.ac) return "";
   const eq = c.equippedArmor || {};
   const shieldPart = eq.shield ? ` + ${eq.shield.name} ${fmt(eq.shield.ac)}` : "";
-  const bonusPart = c.acBonus ? ` + ${c.acBonus} (Deformações)` : "";
+  const bonusPart = (eq.worn || []).map((w) => ` + ${w.name} ${fmt(w.ac)}`).join("") + (c.acBonus ? ` + ${c.acBonus} (Deformações)` : "");
   if (eq.bodyArmor) {
     const dexMod = mod(effScore("dex"));
     const dexPart = eq.bodyArmor.type === "light" ? dexMod : eq.bodyArmor.type === "medium" ? Math.min(2, dexMod) : 0;
@@ -1781,7 +1798,7 @@ function acAutoTitle(c) {
     const altPart = others.length ? ` Outra opção de Unarmored Defense: ${others.join("; ")} (você usa só uma, a ficha pega a melhor).` : "";
     return `Sem armadura: 10 + DES ${fmt(mod(effScore("dex")))} + ${ABILITY_NAMES[c.ud]} ${fmt(mod(effScore(c.ud)))} (Unarmored Defense${chosen})${shieldPart}${bonusPart} = ${c.ac}.${altPart} Defina uma CA manual pra sobrescrever.`;
   }
-  if (eq.shield || c.acBonus) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
+  if (eq.shield || c.acBonus || eq.worn?.length) return `10 + DES ${fmt(mod(effScore("dex")))}${shieldPart}${bonusPart} = ${c.ac}. Defina uma CA manual pra sobrescrever.`;
   return "";
 }
 async function recalc() {
@@ -5081,6 +5098,199 @@ function renderPrepareBanner(spells, limits, active) {
     </div>
   </section>`;
 }
+// ------------------------------------------------------------
+// Cartões de magia — impressão no tamanho de carta Pokémon (63 × 88 mm)
+// ------------------------------------------------------------
+// Cada magia vira um cartão com nome, nível, escola, tempo de conjuração,
+// alcance, componentes (com o material), duração, concentração/ritual e o
+// texto completo (inclusive "Em Níveis Mais Altos"). O texto é encolhido
+// até caber; se nem no tamanho mínimo couber, continua em outro cartão
+// ("1/2", "2/2"). Impressão: 3 × 3 cartões por folha, sem espaço entre
+// eles (as bordas servem de guia de corte).
+const CARD_SCHOOL_COLOR = { A: "#3b6fb6", C: "#c9822b", D: "#5f8aa6", E: "#b8467a", N: "#4d4d57", T: "#3f8a4f", V: "#b8352b", I: "#7b52a8" };
+const cardCmpAlpha = (a, b) => String(a.name).localeCompare(String(b.name), "pt-BR");
+const cardCmpLevel = (a, b) => spellLevel(a) - spellLevel(b);
+const cardTimeRank = (s) => {
+  const t = s.time?.[0]; if (!t) return 99999;
+  const w = { action: 0, bonus: 1, reaction: 2, round: 3, minute: 4, hour: 5, day: 6 }[t.unit];
+  return (w ?? 9) * 1000 + (t.number || 1);
+};
+const cardIsConc = (s) => ((s.duration || []).some((d) => d?.concentration) ? 0 : 1);
+const CARD_SORTS = {
+  level: ["Nível (truques primeiro)", (a, b) => cardCmpLevel(a, b) || cardCmpAlpha(a, b)],
+  alpha: ["Ordem alfabética", cardCmpAlpha],
+  school: ["Escola de magia", (a, b) => schoolNamePt(a.school).localeCompare(schoolNamePt(b.school), "pt-BR") || cardCmpLevel(a, b) || cardCmpAlpha(a, b)],
+  time: ["Tempo de conjuração", (a, b) => cardTimeRank(a) - cardTimeRank(b) || cardCmpLevel(a, b) || cardCmpAlpha(a, b)],
+  conc: ["Concentração primeiro", (a, b) => cardIsConc(a) - cardIsConc(b) || cardCmpLevel(a, b) || cardCmpAlpha(a, b)],
+};
+const cardOpts = { scope: "marked", sort: "level", paper: "a4", cantrips: true, reverse: false };
+
+// Magias que a pessoa "tem": marcadas (preparadas/conhecidas), inatas e
+// avulsas do Compêndio; ou, no modo "toda a lista", tudo que as classes
+// conjuradoras dela podem aprender.
+async function collectCardSpells(scope) {
+  await ensureCatalog("spell").catch((err) => console.warn("Catálogo de magias indisponível:", err));
+  const out = new Map();
+  const add = (s) => { if (s && s.name) { const k = `${s.name}|${s.source || ""}`; if (!out.has(k)) out.set(k, s); } };
+  if (scope === "all") {
+    for (const cc of spellcastingClasses().filter((c) => spellcastingInfoFor(c.cr, c.sr, c.level))) {
+      const ed = editionOf(cc.classEntry) === "both" ? character.edition : editionOf(cc.classEntry);
+      try { (await spellsForClass(cc.classEntry, cc.subclassEntry, ed)).forEach(add); } catch (err) { console.warn(err); }
+    }
+  } else {
+    const keys = new Set([...(character.preparedSpells || []), ...(character.alwaysPreparedSpells || [])]);
+    const byKey = new Map();
+    for (const e of manifest()) if (normType(e.type) === "spell") byKey.set(`${e.name}|${e.source || ""}`, e);
+    keys.forEach((k) => { const e = byKey.get(k); if (e) add(recordsForEntity(e)[0] || e); });
+  }
+  extraSpellRecords().forEach(add);
+  return [...out.values()];
+}
+function sortedCardSpells(list) {
+  const arr = list.filter((s) => cardOpts.cantrips || spellLevel(s) > 0);
+  arr.sort(CARD_SORTS[cardOpts.sort]?.[1] || CARD_SORTS.level[1]);
+  if (cardOpts.reverse) arr.reverse();
+  return arr;
+}
+function spellCardEl(sp, part) {
+  const lvl = spellLevel(sp);
+  const color = CARD_SCHOOL_COLOR[String(sp.school || "").toUpperCase()] || "#555";
+  const conc = (sp.duration || []).some((d) => d?.concentration);
+  const rit = !!sp.meta?.ritual;
+  const row = (label, value, wide) => `<div class="sc-stat${wide ? " wide" : ""}"><span>${esc(label)}</span><b>${esc(value)}</b></div>`;
+  const el = document.createElement("article");
+  el.className = "spell-card";
+  el.style.setProperty("--sc", color);
+  el.innerHTML = `<header class="sc-head"><h4 class="sc-name">${esc(sp.name)}</h4><span class="sc-lvl">${lvl === 0 ? "Truque" : `${lvl}º nível`}</span></header>
+    <div class="sc-sub">${esc(schoolNamePt(sp.school))}${rit ? " · Ritual" : ""}${conc ? " · Concentração" : ""}<span class="sc-part"></span></div>
+    ${part === 1 ? `<div class="sc-stats">${row("Conjuração", spellTimeFull(sp))}${row("Alcance", offSpellRange(sp))}${row("Componentes", spellComponentsText(sp), true)}${row("Duração", spellDurationText(sp), true)}</div>` : ""}
+    <div class="sc-body"></div>
+    <footer class="sc-foot"><span>${esc(sp.source || "")}</span><span>${conc ? "Ⓒ " : ""}${rit ? "Ⓡ" : ""}</span></footer>`;
+  return el;
+}
+// Quando sobra um único bloco grande que não cabe, tira o final dele
+// (frases de um parágrafo, itens de lista ou linhas de tabela) e devolve
+// como um bloco novo, pro próximo cartão.
+function splitCardBlock(block, fits) {
+  const tag = block.tagName;
+  if (tag === "P") {
+    const sentences = block.textContent.match(/[^.!?]+[.!?]*\s*/g) || [block.textContent];
+    const tail = [];
+    while (!fits() && sentences.length > 1) { tail.unshift(sentences.pop()); block.textContent = sentences.join(""); }
+    if (!tail.length) return null;
+    const p = document.createElement("p"); p.textContent = tail.join(""); return p;
+  }
+  const rows = tag === "UL" ? [...block.children] : tag === "TABLE" ? [...block.querySelectorAll("tr")] : [];
+  if (rows.length < 2) return null;
+  const head = tag === "TABLE" && rows[0].querySelector("th") ? rows[0] : null;
+  const keep = head ? 1 : 0;
+  const tail = [];
+  while (!fits() && rows.length - tail.length > keep + 1) { const r = rows[rows.length - 1 - tail.length]; tail.unshift(r); r.remove(); }
+  if (!tail.length) return null;
+  const out = block.cloneNode(false);
+  if (tag === "TABLE") {
+    const tb = document.createElement("tbody");
+    if (head) tb.appendChild(head.cloneNode(true));
+    tail.forEach((r) => tb.appendChild(r));
+    out.appendChild(tb);
+  } else tail.forEach((r) => out.appendChild(r));
+  return out;
+}
+// Monta os cartões de UMA magia dentro de `stage` (precisa estar no DOM
+// com layout real pra medir) e devolve a lista de elementos.
+function buildSpellCards(sp, stage) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = richText(descriptionOf(sp, null))
+    + (sp.entriesHigherLevel ? translateHigherLevelHeadings(richText(sp.entriesHigherLevel)) : "");
+  let rest = [...tmp.children];
+  const cards = [];
+  for (let part = 1; part <= 8; part++) {
+    const el = spellCardEl(sp, part);
+    stage.appendChild(el);
+    const body = el.querySelector(".sc-body");
+    rest.forEach((b) => body.appendChild(b));
+    const fits = () => body.scrollHeight <= body.clientHeight + 0.5;
+    const setSize = (s) => { body.style.fontSize = `${s}pt`; };
+    let size = 8.2;
+    setSize(size);
+    while (!fits() && size > 5.4) { size = Math.round((size - 0.2) * 10) / 10; setSize(size); }
+    if (fits()) { cards.push(el); break; }
+    // Não coube nem no tamanho mínimo: usa um tamanho confortável e leva o
+    // que sobrar pro próximo cartão (primeiro blocos inteiros, depois frases).
+    setSize(6);
+    const moved = [];
+    while (!fits() && body.children.length > 1) { const last = body.lastElementChild; moved.unshift(last); body.removeChild(last); }
+    if (!fits() && body.children.length === 1) {
+      const tail = splitCardBlock(body.firstElementChild, fits);
+      if (tail) moved.unshift(tail);
+    }
+    cards.push(el);
+    if (!moved.length) break; // um bloco único gigante (ex.: tabela): corta
+    rest = moved;
+  }
+  if (cards.length > 1) cards.forEach((c, i) => { c.querySelector(".sc-part").textContent = ` · ${i + 1}/${cards.length}`; });
+  return cards;
+}
+function ensureCardStage() {
+  let stage = document.getElementById("spell-cards-print");
+  if (!stage) { stage = document.createElement("div"); stage.id = "spell-cards-print"; document.body.appendChild(stage); }
+  return stage;
+}
+// Gera todos os cartões no palco (#spell-cards-print) e devolve as contagens.
+async function buildAllSpellCards() {
+  const spells = sortedCardSpells(await collectCardSpells(cardOpts.scope));
+  const stage = ensureCardStage();
+  stage.innerHTML = "";
+  let total = 0;
+  for (const sp of spells) total += buildSpellCards(sp, stage).length;
+  return { spells: spells.length, cards: total, stage };
+}
+async function printSpellCards() {
+  const btn = $("cards-print");
+  btn.disabled = true; btn.textContent = "Montando cartões…";
+  try {
+    const { spells, cards, stage } = await buildAllSpellCards();
+    if (!spells) { toast("Nenhuma magia pra imprimir. Marque magias na aba Magias (ou escolha \"Toda a lista\")."); return; }
+    let pageCss = document.getElementById("spell-cards-page");
+    if (!pageCss) { pageCss = document.createElement("style"); pageCss.id = "spell-cards-page"; document.head.appendChild(pageCss); }
+    pageCss.textContent = `@media print{@page{size:${cardOpts.paper === "letter" ? "Letter" : "A4"} portrait;margin:7mm}}`;
+    $("modal").classList.add("hidden");
+    document.body.classList.add("print-cards");
+    window.addEventListener("afterprint", () => { document.body.classList.remove("print-cards"); stage.innerHTML = ""; }, { once: true });
+    toast(`${cards} cartões de ${spells} magias prontos.`);
+    setTimeout(() => window.print(), 150);
+  } finally { btn.disabled = false; btn.textContent = "🖨 Imprimir cartões"; }
+}
+async function openSpellCardsDialog() {
+  const content = $("modal-content");
+  const opt = (v, l, cur) => `<option value="${v}"${cur === v ? " selected" : ""}>${l}</option>`;
+  content.innerHTML = `<div class="modal-title"><div><span class="eyebrow">IMPRIMIR</span><h2>Magias em cartões</h2></div></div>
+    <p class="muted">Cartões de 63 × 88 mm (tamanho de carta Pokémon), 9 por folha. Magias com texto muito longo continuam num segundo cartão.</p>
+    <div class="cards-opts">
+      <label>Quais magias<select id="cards-scope">${opt("marked", "As que eu tenho (marcadas, inatas e avulsas)", cardOpts.scope)}${opt("all", "Toda a lista das minhas classes", cardOpts.scope)}</select></label>
+      <label>Ordenar por<select id="cards-sort">${Object.entries(CARD_SORTS).map(([k, [l]]) => opt(k, l, cardOpts.sort)).join("")}</select></label>
+      <label>Papel<select id="cards-paper">${opt("a4", "A4", cardOpts.paper)}${opt("letter", "Carta (Letter)", cardOpts.paper)}</select></label>
+      <label class="chk"><input type="checkbox" id="cards-cantrips" ${cardOpts.cantrips ? "checked" : ""}> Incluir truques</label>
+      <label class="chk"><input type="checkbox" id="cards-reverse" ${cardOpts.reverse ? "checked" : ""}> Ordem inversa</label>
+    </div>
+    <p id="cards-count" class="muted">Contando…</p>
+    <button type="button" id="cards-print" class="preview-print">🖨 Imprimir cartões</button>`;
+  $("modal").classList.remove("hidden");
+  const refreshCount = async () => {
+    const n = sortedCardSpells(await collectCardSpells(cardOpts.scope)).length;
+    const el = $("cards-count");
+    if (el) el.textContent = n ? `${n} magia${n > 1 ? "s" : ""} selecionada${n > 1 ? "s" : ""}.` : "Nenhuma magia nessa seleção. Marque magias na aba Magias ou escolha \"Toda a lista\".";
+  };
+  const bind = (id, key, isBool, recount) => $(id).addEventListener("change", (ev) => {
+    cardOpts[key] = isBool ? ev.target.checked : ev.target.value;
+    if (recount) refreshCount();
+  });
+  bind("cards-scope", "scope", false, true); bind("cards-sort", "sort", false, false); bind("cards-paper", "paper", false, false);
+  bind("cards-cantrips", "cantrips", true, true); bind("cards-reverse", "reverse", true, false);
+  $("cards-print").addEventListener("click", printSpellCards);
+  refreshCount();
+}
+
 async function renderSpells() {
   const box = $("spellbook"), c = calc(), ab = c.sa;
   $("spell-ability").textContent = ab ? ABILITY_NAMES[ab] : "—";
@@ -5200,8 +5410,8 @@ async function renderInventory() {
   const arr = character.inventory || [];
   if (arr.some((x) => x.id)) { try { await ensureCatalog("item"); } catch (err) { console.warn("Catálogo de itens indisponível:", err); } }
   $("inventory-list").innerHTML = arr.length ? arr.map((x, i) => {
-    const at = armorTypeOf(invItemRecord(x));
-    const equipBtn = at ? `<button type="button" class="equip-btn${x.equipped ? " on" : ""}" data-equip-inv="${i}" title="${at === "shield" ? "Escudo" : `Armadura ${{ light: "leve", medium: "média", heavy: "pesada" }[at]}`}">${x.equipped ? "✓ Equipada" : "Equipar"}</button>` : "";
+    const ir = invItemRecord(x), at = armorTypeOf(ir), wb = at ? 0 : bonusAcOf(ir);
+    const equipBtn = at || wb ? `<button type="button" class="equip-btn${x.equipped ? " on" : ""}" data-equip-inv="${i}" title="${at === "shield" ? "Escudo" : at ? `Armadura ${{ light: "leve", medium: "média", heavy: "pesada" }[at]}` : `Bônus de CA ${fmt(wb)}`}">${x.equipped ? "✓ Equipado" : "Equipar"}</button>` : "";
     const infoBtn = x.id ? `<button type="button" class="no-print" data-info-inv="${i}" title="Ver descrição">ⓘ</button>` : "";
     return `<div class="inventory-row"><div><strong>${esc(x.name)}</strong><small>${esc(x.meta || "")}</small></div>${infoBtn}${equipBtn}<input type="number" min="0" value="${Number(x.qty) || 1}" data-qty="${i}"><input type="number" min="0" step="0.1" value="${itemWeight(x) || ""}" placeholder="lb" title="Peso unitário (libras)" data-weight="${i}"><button class="remove-btn no-print" data-remove-inv="${i}">×</button></div>`;
   }).join("") : `<div class="empty">Seu inventário está vazio. Abra uma categoria acima para adicionar itens.</div>`;
@@ -5217,10 +5427,10 @@ async function renderInventory() {
 // por vez) — sem isso a CA somaria peças incompatíveis.
 function toggleEquip(idx) {
   const item = character.inventory?.[idx];
-  const at = armorTypeOf(invItemRecord(item));
-  if (!item || !at) return;
+  const ir = invItemRecord(item), at = armorTypeOf(ir);
+  if (!item || (!at && !bonusAcOf(ir))) return;
   const turningOn = !item.equipped;
-  if (turningOn) {
+  if (turningOn && at) {
     const group = at === "shield" ? "shield" : "body";
     character.inventory.forEach((x, i) => {
       if (i === idx || !x.equipped) return;
@@ -5232,7 +5442,8 @@ function toggleEquip(idx) {
   saveCharacter(character);
   renderInventory();
   recalc();
-  toast(turningOn ? `${item.name} equipada.` : `${item.name} desequipada.`);
+  toast(turningOn ? `${item.name} equipado.` : `${item.name} desequipado.`);
+  if (character.ac) toast("Você definiu uma CA manual, então a CA não muda sozinha. Limpe o campo CA pra voltar ao automático.");
 }
 async function renderEquipmentCatalog() {
   const box = $("equipment-list"), q = $("equipment-search").value.trim().toLowerCase(), wf = $("weapon-filter").value;
@@ -7750,6 +7961,7 @@ function setup() {
   $("random-character")?.addEventListener("click", openRandomCharacterModal);
   $("characters-btn")?.addEventListener("click", openCharactersModal);
   $("print-character").addEventListener("click", async () => { await buildOfficialSheet(); window.print(); });
+  $("print-spell-cards")?.addEventListener("click", openSpellCardsDialog);
   $("preview-pdf").addEventListener("click", openPdfPreview);
   $("import-character").addEventListener("change", async (e) => { try { attackRollMessages = {}; hdRollMessages = {}; applyLoaded(await readCharacterFile(e.target.files[0])); toast("Personagem importado."); } catch { toast("Arquivo inválido."); } });
   $("modal-close").addEventListener("click", () => $("modal").classList.add("hidden"));

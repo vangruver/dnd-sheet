@@ -1646,3 +1646,35 @@ body.view-only button:disabled{opacity:.4;cursor:not-allowed}
 
 /* Filtro de origem (Oficial / Pré-release / Partnered / Homebrew) */
 .src-filter{margin:8px 0 2px}
+
+/* ===== Cartões de magia (63 × 88 mm, tamanho de carta Pokémon) ===== */
+.spell-cards-bar{margin:10px 0}
+.cards-opts{display:grid;gap:10px;margin:12px 0}
+.cards-opts label{display:flex;flex-direction:column;gap:4px;font-size:12px}
+.cards-opts label.chk{flex-direction:row;align-items:center;gap:8px}
+#spell-cards-print{position:fixed;left:-10000px;top:0;width:200mm}
+.spell-card{box-sizing:border-box;width:63mm;height:88mm;display:flex;flex-direction:column;overflow:hidden;
+  border:1.6mm solid var(--sc,#555);border-radius:3.2mm;background:#fffdf6;color:#111;padding:1.6mm 1.8mm;
+  font-family:Georgia,"Times New Roman",serif;break-inside:avoid;page-break-inside:avoid;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sc-head{display:flex;justify-content:space-between;align-items:baseline;gap:2mm;border-bottom:.3mm solid var(--sc,#555);padding-bottom:.7mm}
+.sc-name{margin:0;font-size:9.5pt;line-height:1.05;font-weight:700;color:var(--sc,#555)}
+.sc-lvl{flex:none;font:700 6.2pt Arial,sans-serif;text-transform:uppercase;background:var(--sc,#555);color:#fff;border-radius:1mm;padding:.4mm 1.2mm}
+.sc-sub{font:italic 6pt Arial,sans-serif;color:#444;margin:.6mm 0}
+.sc-stats{display:grid;grid-template-columns:1fr 1fr;gap:.4mm 1.5mm;font:5.8pt/1.15 Arial,sans-serif;background:rgba(0,0,0,.05);border-radius:1mm;padding:.8mm 1.2mm;margin-bottom:.8mm}
+.sc-stat{display:flex;gap:1mm;align-items:baseline;min-width:0}
+.sc-stat.wide{grid-column:1/-1}
+.sc-stat span{flex:none;font-weight:700;color:#555;text-transform:uppercase;font-size:4.8pt}
+.sc-stat b{font-weight:600;min-width:0}
+.sc-body{flex:1;min-height:0;overflow:hidden;font:8.2pt/1.18 Arial,sans-serif;text-align:justify;hyphens:auto}
+.sc-body p{margin:0 0 .8mm}
+.sc-body h3{margin:.6mm 0 .3mm;font-size:1em;color:var(--sc,#555)}
+.sc-body ul{margin:0 0 .8mm;padding-left:3mm}
+.sc-body table{width:100%;border-collapse:collapse;font-size:.92em;margin-bottom:.8mm}
+.sc-body th,.sc-body td{border:.15mm solid #bbb;padding:0 .8mm;text-align:left}
+.sc-foot{display:flex;justify-content:space-between;font:5pt Arial,sans-serif;color:#777;border-top:.2mm solid #ddd;padding-top:.4mm;margin-top:.5mm}
+@media print{
+  body.print-cards > *:not(#spell-cards-print){display:none!important}
+  body.print-cards{background:#fff}
+  body.print-cards #spell-cards-print{position:static;display:grid;grid-template-columns:repeat(3,63mm);grid-auto-rows:88mm;justify-content:center;width:auto;gap:0}
+}
