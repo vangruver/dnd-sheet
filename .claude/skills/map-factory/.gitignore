@@ -1,0 +1,7 @@
+output/
+.map-factory-venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.claude/
+.DS_STORE
