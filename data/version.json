@@ -1,27 +1,27 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-17T17:30:36.361Z",
+  "generatedAt": "2026-11-18T17:05:21.024Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "32ef600fab87a585a61dd1a22e9b02dfc58c728a"
+      "commit": "c3a5185c8f3fc8937725fdc4be249eb7120057c7"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "2c5d0e82fce9b0c7226e55f4a92eaab181a29fa2"
+      "commit": "c52d002995b0e6b3aa81fbebec37e7068aaa611f"
     },
     {
       "key": "homebrew",
       "url": "https://github.com/TheGiddyLimit/homebrew.git",
       "type": "homebrew",
       "edition": "both",
-      "commit": "216047b2c4d06cd68969a59e735b51b20545b733"
+      "commit": "7d9fad55a414a7bb3672c76e366ae19c8d0ec42c"
     },
     {
       "key": "prerelease",
@@ -39,9 +39,9 @@
     }
   ],
   "totals": {
-    "entities": 73709,
-    "official": 11789,
-    "homebrew": 61920,
+    "entities": 73542,
+    "official": 11536,
+    "homebrew": 62006,
     "external": 68
   },
   "homebrew": {
@@ -382,6 +382,7 @@
       "raw/homebrew/collection/Niels de Jong; Legacy of the Dragon.json",
       "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs - 2024.json",
       "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+      "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
       "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
       "raw/homebrew/collection/Pimplup; Pale Knight.json",
       "raw/homebrew/collection/Plus Three Press; Crystalpunk Campaign Guide.json",
@@ -583,6 +584,7 @@
       "raw/homebrew/subclass/MonkeyDM; Pact of the trigger.json",
       "raw/homebrew/subclass/MrDoctorJunior; Shadow Sorcerer (Revised).json",
       "raw/homebrew/subclass/Mutgar; Oath of Rebirth.json",
+      "raw/homebrew/subclass/Nenquel; Combat Sage.json",
       "raw/homebrew/subclass/NeonLightDecay; Path of the Nautilus.json",
       "raw/homebrew/subclass/Nergaahl; RyokoSkeletalBlade.json",
       "raw/homebrew/subclass/Neverending Codex; Soulkeeper Ranger.json",
@@ -686,7 +688,7 @@
       "raw/homebrew/subclass/zeek0; Hearth Domain Cleric.json",
       "raw/homebrew/subclass/zeek0; Ruin Domain.json"
     ],
-    "classFileCount": 639,
+    "classFileCount": 641,
     "raceFiles": [
       "raw/homebrew/class/Aron; Demi-Dragon.json",
       "raw/homebrew/class/High Lord Amaram; Witcher Class.json",
@@ -782,6 +784,7 @@
       "raw/homebrew/collection/Nord Games; Game Master's Toolbox Ultimate Bestiary Revenge of the Horde.json",
       "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs - 2024.json",
       "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+      "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
       "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
       "raw/homebrew/collection/Pimplup; Pale Knight.json",
       "raw/homebrew/collection/Plus Three Press; Crystalpunk Campaign Guide.json",
@@ -904,7 +907,7 @@
       "raw/homebrew/subrace/Valerion; Silverwit Halfling.json",
       "raw/homebrew/subrace/themagictavern; Genasi Subraces.json"
     ],
-    "raceFileCount": 215,
+    "raceFileCount": 216,
     "filesByType": {
       "item": [
         "raw/homebrew/background/D&D Wiki; Featured Quality Backgrounds.json",
@@ -1102,6 +1105,7 @@
         "raw/homebrew/collection/Nord Games; Treacherous Traps.json",
         "raw/homebrew/collection/PD Jakobs; Festival Guide.json",
         "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+        "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
         "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
         "raw/homebrew/collection/Pimplup; Pale Knight.json",
         "raw/homebrew/collection/Plus Three Press; Crystalpunk Campaign Guide.json",
@@ -1392,6 +1396,7 @@
         "raw/homebrew/collection/Nord Games; Game Master's Toolbox Ultimate NPCs Skulduggery.json",
         "raw/homebrew/collection/Nord Games; Treacherous Traps.json",
         "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+        "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
         "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
         "raw/homebrew/collection/Plus Three Press; Crystalpunk Campaign Guide.json",
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Borderlands & Beyond.json",
@@ -1630,6 +1635,7 @@
         "raw/homebrew/collection/Niels de Jong; Legacy of the Dragon.json",
         "raw/homebrew/collection/Normiespy96; Master Strikes.json",
         "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+        "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
         "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
         "raw/homebrew/collection/Pimplup; Pale Knight.json",
         "raw/homebrew/collection/Ross Hardy; Kunio's Guide to Seigai.json",
@@ -1786,6 +1792,7 @@
         "raw/homebrew/collection/Niels de Jong; Legacy of the Dragon.json",
         "raw/homebrew/collection/Nord Games; Treacherous Traps.json",
         "raw/homebrew/collection/Palaeo Games; Dr Dhrolins Dictionary of Dinosaurs.json",
+        "raw/homebrew/collection/Palaeo Games; PartneredDDDoD.json",
         "raw/homebrew/collection/Paper Minitures; Jarlaxle's Bag of Everything.json",
         "raw/homebrew/collection/Plus Three Press; Crystalpunk Campaign Guide.json",
         "raw/homebrew/collection/Privateer Press; Iron Kingdoms Requiem - Borderlands & Beyond.json",
@@ -2088,6 +2095,7 @@
         "raw/homebrew/subclass/Middle Finger of Vecna; Waste Update.json",
         "raw/homebrew/subclass/MonkeyDM; Pact of the trigger.json",
         "raw/homebrew/subclass/MrDoctorJunior; Shadow Sorcerer (Revised).json",
+        "raw/homebrew/subclass/Nenquel; Combat Sage.json",
         "raw/homebrew/subclass/No Name; Wizard of the Citadel.json",
         "raw/homebrew/subclass/OhWyn; Eldritch Blast Patron.json",
         "raw/homebrew/subclass/Pointy Hat; The Martyr.json",
