@@ -1,20 +1,20 @@
 {
   "schema": 3,
-  "generatedAt": "2026-11-23T20:00:03.010Z",
+  "generatedAt": "2026-11-24T19:27:32.993Z",
   "sources": [
     {
       "key": "2024",
       "url": "https://github.com/5etools-mirror-3/5etools-src.git",
       "type": "official",
       "edition": "2024",
-      "commit": "c286d15651c5b79004496132c22164f59728480d"
+      "commit": "2512db75eb48ef06f6190b086a82430887906dca"
     },
     {
       "key": "2014",
       "url": "https://github.com/5etools-mirror-3/5etools-2014-src.git",
       "type": "official",
       "edition": "2014",
-      "commit": "51ca879dbaef229a2c851c29989c2c3410292dcf"
+      "commit": "64de4ff32d343580e69f2212687468ef7e2d59da"
     },
     {
       "key": "homebrew",
